@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.165,
+  "sentences": [
+    {
+      "text": "We should do this every week.",
+      "start": 0.1,
+      "end": 1.465
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.465,
+      "text": "We should do this every week."
+    }
+  ]
+}

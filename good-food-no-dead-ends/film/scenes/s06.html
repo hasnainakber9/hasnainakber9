@@ -1,0 +1,102 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s06 logistics</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 06 | 38–47 s | LOGISTICS — regional food hub. Safe, unserved surplus rerouted to a kitchen before it spoils. People decide.
+// LUIS: "The school kitchen needs two crates by noon."  WORKER: "Those were marked surplus."  LUIS: "Then route them to dinner."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'diamond']);
+K.seed(66);
+const app = new K.App({ duration: 9.0, fov: 32, exposure: 1.0, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.25, bloomThreshold: 0.82, warmth: 1.0, sat: 1.02, vignette: 0.33 });
+await app.hdri('warehouse', { intensity: 0.65, rotation: 0.2 });
+const S = app.scene; S.background = new THREE.Color('#9fa6a8');
+// shell: 22 x 18 m shed, 7 m high; corrugated walls; dock door in the back wall
+const shell = new THREE.Group(); S.add(shell);
+const corr = K.canvasTex(256, 64, (g, w, h) => { const img = g.createImageData(w, h); for (let x = 0; x < w; x++) { const nx = Math.cos(x / w * Math.PI * 16) * 0.6; for (let y = 0; y < h; y++) { const i = (y * w + x) * 4; img.data[i] = (nx * 0.5 + 0.5) * 255; img.data[i + 1] = 128; img.data[i + 2] = 230; img.data[i + 3] = 255; } } g.putImageData(img, 0, 0); }, { linear: true, repeat: [6, 1] });
+const wallM = K.mat('#d9dcd8', { roughness: 0.5, metalness: 0.3, normalMap: corr, normalScale: new THREE.Vector2(0.8, 0.8) });
+const floorTex = K.canvasTex(1024, 1024, (g, w, h) => { g.fillStyle = '#9a9d98'; g.fillRect(0, 0, w, h); for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(${K.rnd() < 0.5 ? '255,255,255' : '0,0,0'},0.04)`; g.fillRect(K.rnd() * w, K.rnd() * h, 6, 6); } g.fillStyle = '#e2b52c'; g.fillRect(w * 0.42, 0, 10, h); g.fillRect(w * 0.6, 0, 10, h); g.fillStyle = 'rgba(40,40,40,0.25)'; for (let x = 0; x < w; x += 128) g.fillRect(x, 0, 2, h); for (let y = 0; y < h; y += 128) g.fillRect(0, y, w, 2); });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 18), K.mat('#ffffff', { map: floorTex, roughness: 0.55, normalMap: K.normalTex('plaster', 8), normalScale: new THREE.Vector2(0.3, 0.3) })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
+const doorW = 3.6, doorH = 3.8, zb = -9;
+shell.add(K.at(K.box(11 - doorW / 2, 7, 0.2, wallM), -(11 + doorW / 2) / 2 - 0.0 + 0, 3.5, zb)); shell.children.at(-1).position.x = -11 + (11 - doorW / 2) / 2 - 1.2 + 1.2;
+shell.add(K.at(K.box(11 - doorW / 2 - 2.4, 7, 0.2, wallM), (doorW / 2 + 2.4 + 11) / 2, 3.5, zb));
+shell.add(K.at(K.box(doorW + 2.4, 7 - doorH, 0.2, wallM), 1.2, doorH + (7 - doorH) / 2, zb));
+shell.children[0].position.x = (-11 + (-doorW / 2 + 1.2)) / 2; shell.children[0].scale.x = (doorW / 2 - 1.2 + 11) / (11 - doorW / 2);
+for (const x of [-11, 11]) shell.add(K.at(K.box(0.2, 7, 18, wallM), x, 3.5, 0));
+shell.add(K.at(K.box(22, 0.2, 18, K.mat('#c9ccc8', { roughness: 0.6, metalness: 0.3 }), { cast: false }), 0, 7.05, 0));
+for (let z = -8; z <= 8; z += 4) { shell.add(K.at(K.box(0.3, 0.5, 0.3, K.mat('#4a6a8a', { roughness: 0.5, metalness: 0.4 })), -10.7, 6.7, z)); shell.add(K.at(K.box(21.5, 0.35, 0.2, K.mat('#4a6a8a', { roughness: 0.5, metalness: 0.4 })), 0, 6.75, z)); }
+const sky = []; for (let z = -6; z <= 6; z += 4) { const s = new THREE.Mesh(new THREE.PlaneGeometry(4, 1.2), K.MAT.emissive('#f4f8ff', 2.2)); s.rotation.x = Math.PI / 2; s.position.set(0, 6.98, z); S.add(s); }
+for (const [x, z] of [[-5, -5], [0, -5], [5, -5], [-5, 0], [0, 0], [5, 0], [0, 5]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.12, 20), K.MAT.emissive('#f6fbff', 4)); l.position.set(x, 6.3, z); S.add(l); const pl = new THREE.PointLight('#eef4ff', 3.2, 12, 1.4); pl.position.set(x, 6.0, z); S.add(pl); }
+// dock door frame, roller shutter (open), daylight beyond; dock bumpers
+shell.add(K.at(K.box(doorW + 0.3, 0.6, 0.4, K.mat('#2c2e31', { roughness: 0.6 })), 1.2, doorH + 0.3, zb + 0.05));
+for (const sx of [-1, 1]) { shell.add(K.at(K.box(0.15, doorH, 0.3, K.mat('#e2b52c', { roughness: 0.5 })), 1.2 + sx * (doorW / 2 + 0.07), doorH / 2, zb + 0.05)); shell.add(K.at(K.box(0.25, 0.35, 0.2, K.MAT.rubber()), 1.2 + sx * 1.2, 1.1, zb + 0.15)); }
+K.bake(shell);
+const outside = new THREE.Mesh(new THREE.PlaneGeometry(40, 20), new THREE.MeshBasicMaterial({ map: P.backdropTex('street', { top: '#9cc0e4', horizon: '#f4e2c4' }), fog: false })); outside.material.color.setScalar(1.6); outside.position.set(1.2, 4, -24); S.add(outside);
+const dayL = new THREE.DirectionalLight('#ffe9c8', 5.0); dayL.position.set(1.2 + 3, 6, zb - 12); dayL.target.position.set(1.2, 0, -4); dayL.castShadow = true; dayL.shadow.mapSize.set(2048, 2048); Object.assign(dayL.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 40 }); dayL.shadow.radius = 4; dayL.shadow.bias = -0.0004; S.add(dayL, dayL.target);
+K.fillLights(app, { sky: '#e6eef6', ground: '#8a8c88', hemi: 0.42 });
+K.motes(app, { count: 220, center: V(1.2, 2.2, -6.5), size: V(4, 3.5, 4), pointSize: 0.02, opacity: 0.5, drift: 0.15, color: '#fff4dc' });
+
+// van backed to the dock, doors open
+const van = P.van({ color: '#eef2f3', accent: '#2f8f6a' }); van.position.set(1.2, 0, -12.05); van.rotation.y = Math.PI; S.add(van); van.userData.setDoors(1);
+for (let i = 0; i < 4; i++) { const c = P.crate({ fill: ['tomato', 'greens', 'pepper', 'onion'][i], color: i % 2 ? '#2f6aa0' : '#2f8a57' }); c.position.set(0.85 + (i % 2) * 0.62 - 0.31, 0.58 + Math.floor(i / 2) * 0.31, -0.9); van.add(c); }
+// racking with crates on the left; pallets
+for (let r = 0; r < 3; r++) { const rk = P.rack({ l: 2.7, d: 1.0, h: 3.2, levels: 3 }); rk.position.set(-8.6, 0, -6 + r * 2.9); rk.rotation.y = Math.PI / 2; S.add(rk);
+  for (const y of rk.userData.levels) for (let k = 0; k < 4; k++) { const c = P.crate({ fill: K.pick(['tomato', 'greens', 'onion', 'potato', 'pepper', 'eggplant']), color: K.pick(['#2f8a57', '#2f6aa0', '#2f8a57', '#c9822a']), layers: 1 }); c.position.set(-8.6 + K.R(-0.15, 0.15), y, -6 + r * 2.9 - 1.0 + k * 0.62); c.rotation.y = Math.PI / 2; S.add(c); if (K.rnd() < 0.6) { const c2 = c.clone(); c2.position.y += 0.31; S.add(c2); } } }
+for (const [x, z] of [[-4.2, -5.5], [-4.6, -2.6], [-3.6, 1.0]]) { const pal = new THREE.Group(); pal.add(K.at(K.box(1.2, 0.14, 0.8, K.MAT.wood('#b08a5a', 1)), 0, 0.07, 0)); for (let k = 0; k < 6; k++) { const c = P.crate({ fill: K.pick(['tomato', 'greens', 'potato', 'onion']), color: K.pick(['#2f8a57', '#2f6aa0']), layers: 1 }); c.position.set((k % 2) * 0.6 - 0.3, 0.14 + Math.floor(k / 2) * 0.305, 0); pal.add(c); } pal.position.set(x, 0, z); pal.rotation.y = K.R(-0.2, 0.2); S.add(pal); }
+// cold room on the right with a strip curtain
+const cold = new THREE.Group(); cold.add(K.at(K.box(5, 3.2, 6, K.mat('#eef1f0', { roughness: 0.35 }), { r: 0.02 }), 0, 1.6, 0)); cold.position.set(7.5, 0, -3.5); S.add(cold);
+const cdoor = new THREE.Group(); cdoor.position.set(5.0 - 0.01, 2.3, -2.6); cdoor.rotation.y = -Math.PI / 2; S.add(cdoor);
+const curtain = P.stripCurtain(1.8, 2.25); cdoor.add(curtain);
+const coldGlow = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.25), new THREE.MeshBasicMaterial({ color: '#cfe6f2' })); coldGlow.position.set(5.02, 1.15, -2.6); coldGlow.rotation.y = -Math.PI / 2; S.add(coldGlow);
+app.on(t => { curtain.userData.strips.forEach((s, i) => { const push = K.pulse(t, 2.6, 3.6, 0.3); s.rotation.x = Math.sin(t * 2 + i) * 0.02 + push * 0.5 * Math.max(0, 1 - Math.abs(i - 4) / 4); }); });
+// a sorting table with tablets/labels and a hub worker in the background
+const sortT = P.table({ l: 2.0, w: 0.8, h: 0.9, color: '#9a9d98' }); sortT.position.set(-1.6, 0, -0.5); S.add(sortT);
+for (let k = 0; k < 3; k++) { const c = P.crate({ fill: K.pick(['tomato', 'greens']), color: '#2f8a57', layers: 1 }); c.position.set(-2.2 + k * 0.62, 0.9, -0.5); S.add(c); }
+const bg1 = puppet('H1', extraSpec(61, { outer: 'hivis', outerColor: '#d2ea3c', hairStyle: 'wrap' })); bg1.place(-1.7, -1.1, 0); app.cast(bg1); bg1.act([{ t: 0, pose: 'pick', mod: { spX: 0.25, drop: -0.25 } }]); bg1.look([{ t: 0, at: V(-1.7, 0.9, -0.5) }]);
+const bg2 = puppet('H2', extraSpec(62, { outer: 'hivis', outerColor: '#d2ea3c' })); app.cast(bg2); bg2.act([{ t: 0, pose: 'carry' }]); bg2.walk([{ t: 0, x: -6.2, z: -7.0, yaw: Math.PI / 2 }, { t: 9, x: -1.5, z: -7.6, yaw: Math.PI / 2 + 0.2, ease: 'linear' }]);
+const bg2c = P.crate({ fill: 'greens', color: '#2f6aa0' }); S.add(bg2c); app.after(t => { const a = bg2.arms.L.grip.getWorldPosition(V()), b = bg2.arms.R.grip.getWorldPosition(V()); bg2c.position.copy(a).lerp(b, 0.5).add(V(0, -0.18, 0)); bg2c.rotation.y = bg2.root.rotation.y + Math.PI / 2; });
+
+// cast: Luis coordinating; the hub worker with a hand truck of two crates tagged surplus (yellow tags)
+const lines = await K.dialogue('s06');
+const luis = puppet('LUIS'); app.cast(luis); luis.speak(lines);
+const wkr = puppet('WORKER'); app.cast(wkr); wkr.speak(lines);
+luis.walk([{ t: 0, x: -1.9, z: 0.9, yaw: 0.9 }, { t: 2.1, x: 0.6, z: -1.15, yaw: 1.0, ease: 'linear' }, { t: 2.6, x: 0.68, z: -1.2, yaw: 1.05 }]);
+wkr.walk([{ t: 0, x: 6.1, z: -2.6, yaw: -Math.PI / 2 }, { t: 2.4, x: 6.1, z: -2.6, yaw: -Math.PI / 2 }, { t: 4.2, x: 2.75, z: -1.75, yaw: -Math.PI / 2 + 0.45 }, { t: 7.4, x: 2.75, z: -1.75, yaw: -Math.PI / 2 + 0.45 }, { t: 9.0, x: 1.9, z: -4.6, yaw: Math.PI + 0.25, turnFast: true }]);
+const truck = P.handTruck(); S.add(truck);
+const tagM = K.mat('#f2c230', { roughness: 0.5 });
+const tc = [P.crate({ fill: 'tomatoUgly', color: '#2f8a57' }), P.crate({ fill: 'greens', color: '#2f8a57' })]; tc.forEach((c, i) => { const tag = K.box(0.08, 0.1, 0.004, tagM); tag.position.set(0.15, 0.2, 0.205); c.add(tag); S.add(c); });
+wkr.act([{ t: 0, pose: 'stand', talk: 0.6 }]);
+const handle = () => truck.localToWorld(V(0, 1.2, -0.16));
+wkr.hand('L', [{ t: 0, at: () => truck.localToWorld(V(-0.18, 1.2, -0.16)), pole: [-0.7, -0.6, -0.2] }]);
+wkr.hand('R', [{ t: 0, at: () => truck.localToWorld(V(0.18, 1.2, -0.16)), pole: [0.7, -0.6, -0.2] }, { t: 4.9, at: null, blend: 0.35 }, { t: 6.0, at: () => truck.localToWorld(V(0.18, 1.2, -0.16)), blend: 0.4 }]);
+app.on(t => { const r = wkr.rootAt(t); const yaw = r.yaw; truck.position.set(r.x + Math.sin(yaw) * 0.55, 0, r.z + Math.cos(yaw) * 0.55); truck.rotation.set(-0.25, yaw + Math.PI, 0); tc.forEach((c, i) => { c.position.copy(truck.localToWorld(V(0, 0.07 + i * 0.305, 0.12))); c.quaternion.copy(truck.quaternion); }); });
+wkr.look([{ t: 0, at: V(3, 1.2, -1) }, { t: 4.2, at: () => luis.head.getWorldPosition(V()), blend: 0.35 }, { t: 7.5, at: V(1.2, 1.2, -8.5), blend: 0.5 }]);
+wkr.face([{ t: 0, smile: 0.2 }, { t: 4.3, smile: 0.05, brow: 0.35, tilt: 0.4 }, { t: 6.8, smile: 0.45, brow: 0.2, tilt: 0 }]);
+const tabAt = () => luis.arms.L.grip.getWorldPosition(V()).lerp(luis.arms.R.grip.getWorldPosition(V()), 0.5);
+luis.act([{ t: 0, pose: 'tablet' }]);
+luis.look([{ t: 0, at: tabAt }, { t: 1.6, at: () => wkr.head.getWorldPosition(V()), blend: 0.5 }, { t: 3.2, at: tabAt, blend: 0.3 }, { t: 4.3, at: () => wkr.head.getWorldPosition(V()), blend: 0.3 }, { t: 6.4, at: () => tc[0].getWorldPosition(V()), blend: 0.3 }, { t: 7.0, at: () => wkr.head.getWorldPosition(V()), blend: 0.3 }]);
+luis.face([{ t: 0, smile: 0.2, brow: 0.1 }, { t: 6.5, smile: 0.5, brow: 0.3 }]);
+// route-map tablet (wordless): hub → school kitchen; the route lights up on "Then route them to dinner."
+const scr = document.createElement('canvas'); scr.width = 320; scr.height = 220; const sg = scr.getContext('2d'); const scrTex = new THREE.CanvasTexture(scr); scrTex.colorSpace = THREE.SRGBColorSpace;
+function drawMap(t) { const g = sg; g.fillStyle = '#eef1ec'; g.fillRect(0, 0, 320, 220); g.strokeStyle = '#cdd3cc'; g.lineWidth = 10; for (const [a, b, c, d] of [[0, 60, 320, 80], [0, 160, 320, 140], [90, 0, 110, 220], [230, 0, 210, 220]]) { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.stroke(); } g.fillStyle = '#b9d8b0'; g.fillRect(130, 95, 60, 35);
+  const u = K.smoother((t - 6.7) / 1.2); g.strokeStyle = '#2f8a57'; g.lineWidth = 6; g.setLineDash([]); g.beginPath(); g.moveTo(60, 150); g.lineTo(60 + 40 * Math.min(1, u * 3), 150 - 6 * Math.min(1, u * 3)); if (u > 0.33) g.lineTo(100 + 0 * u, 145 - 85 * Math.min(1, (u - 0.33) * 3)); if (u > 0.66) g.lineTo(100 + 120 * Math.min(1, (u - 0.66) * 3), 60 + 10 * Math.min(1, (u - 0.66) * 3)); g.stroke();
+  g.fillStyle = '#26364f'; g.beginPath(); g.arc(60, 150, 9, 0, 6.3); g.fill(); g.fillStyle = '#cf5f2a'; g.beginPath(); g.arc(225, 68, 10 + 3 * u, 0, 6.3); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(221, 62); g.lineTo(221, 74); g.moveTo(229, 62); g.lineTo(229, 74); g.stroke(); scrTex.needsUpdate = true; }
+const tab = new THREE.Group(); tab.add(K.box(0.22, 0.012, 0.16, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 })); const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); S.add(tab);
+app.after(t => { drawMap(t); tab.position.copy(tabAt()).add(V(0, 0.02, 0)); const q = new THREE.Quaternion(); luis.spine.getWorldQuaternion(q); tab.quaternion.copy(q); tab.rotateX(0.9); });
+
+// camera
+const luisF = () => luis.head.getWorldPosition(V()).add(V(0, 0.09, 0)), wkrF = () => wkr.head.getWorldPosition(V()).add(V(0, 0.09, 0));
+const pairF = () => luisF().lerp(wkrF(), 0.5);
+app.rig = new K.Rig([
+  { t: 0.0, pos: [-3.4, 1.75, 4.6], look: [1.0, 1.35, -4.5], fov: 40, focus: luisF, aperture: 0.002 },
+  { t: 2.3, pos: [-2.6, 1.7, 3.6], look: [1.2, 1.3, -4.0], fov: 37, focus: luisF, aperture: 0.002 },
+  { t: 2.3001, cut: true, pos: () => luisF().add(V(1.05, -0.12, 0.62)), look: () => luisF().add(V(0.0, -0.12, 0)), fov: 30, focus: luisF, aperture: 0.006 },
+  { t: 4.25, pos: () => luisF().add(V(1.0, -0.12, 0.58)), look: () => luisF().add(V(0.0, -0.13, 0)), fov: 29, focus: luisF, aperture: 0.006 },
+  { t: 4.2501, cut: true, pos: () => wkrF().add(V(-1.05, -0.14, 0.72)), look: () => wkrF().add(V(0.0, -0.2, 0)), fov: 31, focus: wkrF, aperture: 0.005 },
+  { t: 6.4, pos: () => wkrF().add(V(-1.0, -0.14, 0.68)), look: () => wkrF().add(V(0.0, -0.21, 0)), fov: 30, focus: wkrF, aperture: 0.005 },
+  { t: 6.4001, cut: true, pos: () => pairF().add(V(-0.2, -0.25, 2.7)), look: () => pairF().add(V(0, -0.35, 0)), fov: 35, focus: luisF, aperture: 0.004 },
+  { t: 9.0, pos: () => pairF().add(V(-0.4, -0.15, 3.3)), look: () => pairF().add(V(0, -0.3, -0.5)), fov: 36, focus: luisF, aperture: 0.004 },
+], { handheld: 0.6 });
+app.ready();
+</script></body></html>

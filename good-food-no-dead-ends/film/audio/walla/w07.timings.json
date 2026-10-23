@@ -1,0 +1,28 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.491,
+  "sentences": [
+    {
+      "text": "No way, really?",
+      "start": 0.1,
+      "end": 1.38
+    },
+    {
+      "text": "That's brilliant.",
+      "start": 1.66,
+      "end": 2.791
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.38,
+      "text": "No way, really?"
+    },
+    {
+      "start": 1.66,
+      "end": 2.791,
+      "text": "That's brilliant."
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s05 food science</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 05 | 30–38 s | FOOD SCIENCE — a modest pilot fermentation facility. Science as ordinary food craft.
+// COLLEAGUE: "Protein... from microbes?"  MAYA: "Yogurt is microbes."  COLLEAGUE: "Fair."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import { puppet } from '../lib/people.js';
+const { THREE, V } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'tiles', 'diamond']);
+K.seed(55);
+const app = new K.App({ duration: 8.0, fov: 30, exposure: 1.0, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.22, bloomThreshold: 0.85, warmth: 0.99, sat: 1.0, vignette: 0.32, tint: '#fbfdff' });
+await app.hdri('workshop', { intensity: 0.7, rotation: 0.4 });
+const S = app.scene; S.background = new THREE.Color('#cfd6d8');
+// room 14 x 12, 6 m high, clerestory windows on the back wall
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 14), K.mat('#8f9a94', { roughness: 0.35, map: K.grain('plaster', { repeat: 6 }), normalMap: K.normalTex('plaster', 6), normalScale: new THREE.Vector2(0.25, 0.25) })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
+const walls = new THREE.Group(); S.add(walls);
+const tileM = K.mat('#eef1ef', { roughness: 0.3, normalMap: K.normalTex('tiles', 10), normalScale: new THREE.Vector2(0.6, 0.6) }), paintM = K.MAT.plaster('#e6e8e3', 3);
+walls.add(K.at(K.box(16, 2.2, 0.2, tileM), 0, 1.1, -5.5)); walls.add(K.at(K.box(16, 1.6, 0.2, paintM), 0, 2.2 + 0.8, -5.5));
+for (const x of [-6, -3, 0, 3, 6]) walls.add(K.at(K.box(2.4, 0.04, 0.12, K.mat('#d0d4d6', { roughness: 0.4, metalness: 0.6 })), x, 3.85, -5.45));
+const clere = new THREE.Mesh(new THREE.PlaneGeometry(16, 1.6), new THREE.MeshBasicMaterial({ color: '#f4f8fb' })); clere.position.set(0, 4.6, -5.52); S.add(clere);
+walls.add(K.at(K.box(16, 0.8, 0.2, paintM), 0, 5.8, -5.5));
+for (const x of [-7.9, 7.9]) { walls.add(K.at(K.box(0.2, 2.2, 11, tileM), x, 1.1, 0)); walls.add(K.at(K.box(0.2, 4, 11, paintM), x, 4.2, 0)); }
+const ceil = K.box(16, 0.2, 12, K.mat('#dfe2e0', { roughness: 0.9 }), { cast: false }); ceil.position.set(0, 6.1, 0); walls.add(ceil);
+const panels = []; for (let x = -5; x <= 5; x += 2.5) for (let z = -4; z <= 3; z += 2.3) { const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.3), K.MAT.emissive('#f6fbff', 3.5)); p.rotation.x = Math.PI / 2; p.position.set(x, 5.98, z); S.add(p); panels.push(p); }
+K.bake(walls);
+// light: daylight through the clerestory + cool overheads + a warm practical over the bench
+const win = new THREE.DirectionalLight('#eaf3ff', 2.2); win.position.set(-2, 8, -10); win.target.position.set(0.5, 0, 0); win.castShadow = true; win.shadow.mapSize.set(2048, 2048); Object.assign(win.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 30 }); win.shadow.bias = -0.0004; win.shadow.radius = 5; S.add(win, win.target);
+K.fillLights(app, { sky: '#eef4fa', ground: '#7d8580', hemi: 0.7 });
+for (const [x, z] of [[-2.5, -2], [2.5, -2], [0, 1.5]]) { const l = new THREE.PointLight('#f2f7ff', 6, 9, 1.6); l.position.set(x, 5.2, z); S.add(l); }
+const benchLamp = new THREE.PointLight('#ffe6c8', 1.4, 3.5, 2); benchLamp.position.set(0.2, 2.1, 0.3); S.add(benchLamp);
+
+// three pilot fermenters (≈1,000 L class), piping, walkway, control cabinet
+const tanks = [[-2.6, -3.0, 0.62, 1.9], [0.0, -3.4, 0.7, 2.1], [2.7, -3.0, 0.55, 1.7]].map(([x, z, r, h]) => { const f = P.fermenter({ r, h, lift: 0.6 }); f.position.set(x, 0, z); f.rotation.y = -x * 0.15; S.add(f); return f; });
+S.add(P.pipe([[-2.6, 3.0, -3.0], [-2.6, 3.4, -3.0], [0.0, 3.4, -3.3], [2.7, 3.4, -3.0], [2.7, 2.7, -3.0]], 0.035));
+S.add(P.pipe([[-1.9, 0.75, -2.6], [-1.2, 0.75, -2.0], [-0.3, 0.7, -1.9], [0.0, 0.62, -2.6]], 0.03));
+S.add(P.pipe([[3.2, 0.9, -2.7], [4.4, 0.9, -2.2], [4.6, 0.9, -1.2], [4.6, 2.4, -1.2]], 0.03));
+const cab = new THREE.Group(); cab.add(K.box(0.9, 1.6, 0.4, K.mat('#e9ecea', { roughness: 0.4 }), { r: 0.02 })); const hmi = K.canvasTex(256, 160, (g) => { g.fillStyle = '#163238'; g.fillRect(0, 0, 256, 160); g.strokeStyle = '#5fd0a0'; g.lineWidth = 3; g.beginPath(); for (let x = 0; x < 236; x++) { const y = 110 - 50 * (1 - Math.exp(-x / 70)) + Math.sin(x / 9) * 3; x ? g.lineTo(10 + x, y) : g.moveTo(10, y); } g.stroke(); g.fillStyle = '#f2b632'; g.fillRect(20, 20, 40, 10); g.fillStyle = '#5fd0a0'; g.fillRect(70, 20, 60, 10); }, { clamp: true });
+const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.26), new THREE.MeshBasicMaterial({ map: hmi })); scr.position.set(0, 0.35, 0.205); cab.add(scr); for (let i = 0; i < 3; i++) cab.add(K.at(K.cyl(0.025, 0.025, 0.02, K.mat(['#2f8a57', '#c8322a', '#f2b632'][i]), 12), -0.15 + i * 0.15, -0.0, 0.21)).children.at(-1).rotation.x = Math.PI / 2;
+cab.position.set(4.3, 0.8, -1.6); cab.rotation.y = -0.6; S.add(cab);
+
+// stainless lab bench with sample work
+const bench = new THREE.Group(); S.add(bench); bench.position.set(0, 0, 0);
+bench.add(K.at(K.box(2.6, 0.05, 0.75, K.MAT.brushed(), { r: 0.01 }), 0, 0.92, 0)); bench.add(K.at(K.box(2.5, 0.8, 0.7, K.mat('#dfe3e2', { roughness: 0.45 }), { r: 0.02 }), 0, 0.45, 0));
+const rackG = new THREE.Group(); rackG.add(K.box(0.3, 0.05, 0.1, K.mat('#2f6aa0', { roughness: 0.4 }))); for (let i = 0; i < 6; i++) { const tube = K.cyl(0.011, 0.011, 0.11, P.MAT ? null : K.MAT.glass({ opacity: 0.35 }), 10); tube.position.set(-0.125 + i * 0.05, 0.05, 0); rackG.add(tube); const fill = K.cyl(0.0095, 0.0095, 0.06, K.mat(['#f1ead8', '#efe3c6', '#e9dfc0'][i % 3], { roughness: 0.5 }), 10); fill.position.set(-0.125 + i * 0.05, 0.03, 0); rackG.add(fill); }
+rackG.position.set(0.55, 0.96, -0.12); bench.add(rackG);
+const cupsT = []; for (let i = 0; i < 5; i++) { const c = P.ware.cup(0.024, '#f6f4ee'); c.position.set(-0.75 + i * 0.07, 0.945, 0.12 + (i % 2) * 0.05); bench.add(c); const y = K.cyl(0.022, 0.022, 0.006, K.mat('#f3eee2', { roughness: 0.35 }), 14); y.position.set(c.position.x, 0.99, c.position.z); bench.add(y); cupsT.push(c); }
+const micro = new THREE.Group(); micro.add(K.at(K.box(0.18, 0.04, 0.24, K.mat('#e9ecea', { roughness: 0.4 }), { r: 0.01 }), 0, 0.02, 0)); micro.add(K.at(K.box(0.05, 0.3, 0.06, K.mat('#e9ecea', { roughness: 0.4 })), 0, 0.17, -0.08)); micro.add(K.at(K.rot(K.cyl(0.02, 0.025, 0.2, K.mat('#2a2d33', { roughness: 0.3 }), 14), -0.5, 0, 0), 0, 0.3, -0.02)); micro.position.set(1.0, 0.945, -0.1); micro.rotation.y = -0.4; bench.add(micro);
+const dishM = new THREE.MeshPhysicalMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }); for (let i = 0; i < 3; i++) { const d = K.cyl(0.045, 0.045, 0.012, dishM, 20); d.position.set(-0.2 + i * 0.1, 0.952, -0.18); bench.add(d); const cul = K.cyl(0.04, 0.04, 0.004, K.mat('#efe0b0', { roughness: 0.6 }), 20); cul.position.set(-0.2 + i * 0.1, 0.95, -0.18); bench.add(cul); }
+const jar = K.cyl(0.06, 0.06, 0.16, K.MAT.glass({ opacity: 0.3 }), 18); jar.position.set(-1.05, 1.02, -0.15); bench.add(jar); const powder = K.cyl(0.055, 0.055, 0.08, K.mat('#efe6cc', { roughness: 0.95 }), 18); powder.position.set(-1.05, 0.985, -0.15); bench.add(powder);
+K.bake(bench);
+
+// cast
+const lines = await K.dialogue('s05');
+const maya = puppet('MAYA'); maya.place(0.42, -0.58, -0.12); app.cast(maya); maya.speak(lines);
+const col = puppet('COLLEAGUE'); col.place(-0.5, -0.62, 0.32); app.cast(col); col.speak(lines);
+const vial = new THREE.Group(); vial.add(K.cyl(0.012, 0.012, 0.12, K.MAT.glass({ opacity: 0.4 }), 12)); const vf = K.cyl(0.0105, 0.0105, 0.07, K.mat('#f3ead2', { roughness: 0.45, emissive: '#3a3226', emissiveIntensity: 0.3 }), 12); vf.position.y = -0.02; vial.add(vf); vial.add(K.at(K.cyl(0.013, 0.013, 0.02, K.mat('#2f6aa0'), 12), 0, 0.065, 0)); S.add(vial);
+const tcup = P.ware.cup(0.036, '#f6f4ee'); S.add(tcup); const tsur = K.cyl(0.034, 0.034, 0.004, K.mat('#f3eee2', { roughness: 0.35 }), 14); S.add(tsur);
+const spoon = P.ware.spoon(); spoon.scale.setScalar(0.9); S.add(spoon);
+// Maya: holds a vial up to the light, studies it; glances over her glasses for the punchline
+maya.act([{ t: 0, pose: 'stand', talk: 0.3 }]);
+maya.hand('R', [{ t: 0, at: () => maya.root.localToWorld(V(0.12, 1.42, 0.32)), pole: [0.7, -0.6, -0.4] }, { t: 5.6, at: () => maya.root.localToWorld(V(0.18, 1.2, 0.34)), blend: 0.7, pole: [0.7, -0.6, -0.4] }]);
+maya.hand('L', [{ t: 0, at: () => maya.root.localToWorld(V(-0.12, 0.98, 0.36)), pole: [-0.7, -0.6, -0.3] }]);
+maya.look([{ t: 0, at: () => vial.getWorldPosition(V()) }, { t: 4.1, at: () => col.head.getWorldPosition(V()), blend: 0.3, w: 0.8 }, { t: 5.5, at: () => vial.getWorldPosition(V()), blend: 0.4 }]);
+maya.face([{ t: 0, smile: 0.1, brow: 0.1, squint: 0.25 }, { t: 3.9, smile: 0.0, brow: 0.45, tilt: 0.5, squint: 0 }, { t: 5.4, smile: 0.25, brow: 0.1, tilt: 0 }, { t: 6.9, smile: 0.55, brow: 0.2 }]);
+// colleague: tastes, chews, skeptical; considers; "Fair."; another spoonful
+const mouth = () => col.head.getWorldPosition(V()).add(col.dirToWorld([0, 0, 1]).multiplyScalar(0.16)).add(V(0, 0.04, 0));
+col.act([{ t: 0, pose: 'stand', talk: 0.2 }, { t: 5.8, pose: 'shrug', blend: 0.35 }, { t: 6.7, pose: 'stand', blend: 0.4 }]);
+col.hand('L', [{ t: 0, at: () => col.root.localToWorld(V(-0.05, 1.12, 0.3)), pole: [-0.7, -0.6, -0.3] }, { t: 5.8, at: null, blend: 0.35 }, { t: 6.7, at: () => col.root.localToWorld(V(-0.05, 1.12, 0.3)), blend: 0.4 }]);
+col.hand('R', [{ t: 0, at: mouth, pole: [0.7, -0.6, -0.4] }, { t: 0.9, at: () => col.root.localToWorld(V(0.02, 1.18, 0.33)), blend: 0.45 }, { t: 5.8, at: null, blend: 0.35 }, { t: 6.85, at: () => col.root.localToWorld(V(0.02, 1.18, 0.33)), blend: 0.3 }, { t: 7.3, at: mouth, blend: 0.4 }]);
+col.look([{ t: 0, at: () => tcup.getWorldPosition(V()) }, { t: 1.4, at: () => maya.head.getWorldPosition(V()), blend: 0.4, w: 0.85 }, { t: 5.3, at: V(-1.5, 1.9, 2.5), blend: 0.5 }, { t: 6.2, at: () => maya.head.getWorldPosition(V()), blend: 0.3 }, { t: 6.9, at: () => tcup.getWorldPosition(V()), blend: 0.4 }]);
+col.face([{ t: 0, smile: 0.05, chew: 1, brow: 0.0 }, { t: 1.3, smile: -0.2, chew: 0.4, brow: 0.5, tilt: 0.6 }, { t: 3.7, smile: -0.1, chew: 0, brow: 0.2, tilt: 0.3 }, { t: 5.3, smile: 0.1, brow: 0.6, tilt: 0, squint: 0.2 }, { t: 6.4, smile: 0.4, brow: 0.3, squint: 0 }, { t: 7.4, chew: 1, smile: 0.35 }]);
+app.after(t => {
+  vial.position.copy(maya.arms.R.grip.getWorldPosition(V())); vial.rotation.set(0.15, 0, 0.25 + Math.sin(t * 1.6) * 0.15);
+  const gl = col.arms.L.grip.getWorldPosition(V()); tcup.position.copy(gl).add(col.offsetToWorld([0.02, -0.055, 0.05])); tsur.position.copy(tcup.position).add(V(0, 0.068, 0));
+  const gr = col.arms.R.grip.getWorldPosition(V()); spoon.position.copy(gr); spoon.lookAt(gr.clone().add(col.dirToWorld([0, 0.3, 1]))); spoon.rotateX(-0.2);
+});
+
+// camera
+const mayaF = () => maya.head.getWorldPosition(V()).add(V(0, 0.09, 0)), colF = () => col.head.getWorldPosition(V()).add(V(0, 0.09, 0));
+const pair = () => mayaF().lerp(colF(), 0.5);
+app.rig = new K.Rig([
+  { t: 0.0, pos: [3.4, 1.7, 3.6], look: [0.2, 1.3, -1.2], fov: 36, focus: mayaF, aperture: 0.002 },
+  { t: 1.35, pos: [2.9, 1.65, 3.1], look: [0.1, 1.3, -1.0], fov: 34, focus: mayaF, aperture: 0.002 },
+  { t: 1.3501, cut: true, pos: () => pair().add(V(0.05, -0.22, 1.85)), look: () => pair().add(V(0, -0.18, 0)), fov: 30, focus: colF, aperture: 0.005 },
+  { t: 3.85, pos: () => pair().add(V(0.05, -0.22, 1.7)), look: () => pair().add(V(0, -0.17, 0)), fov: 29, focus: colF, aperture: 0.005 },
+  { t: 3.8501, cut: true, pos: () => mayaF().add(V(-0.4, -0.08, 0.8)), look: () => mayaF().add(V(-0.02, -0.06, 0)), fov: 27, focus: mayaF, aperture: 0.007 },
+  { t: 5.55, pos: () => mayaF().add(V(-0.38, -0.08, 0.74)), look: () => mayaF().add(V(-0.02, -0.06, 0)), fov: 26, focus: mayaF, aperture: 0.007 },
+  { t: 5.5501, cut: true, pos: () => colF().add(V(0.5, -0.14, 0.95)), look: () => colF().add(V(0.0, -0.14, 0)), fov: 29, focus: colF, aperture: 0.006 },
+  { t: 8.0, pos: () => colF().add(V(0.46, -0.14, 0.85)), look: () => colF().add(V(0.0, -0.14, 0)), fov: 28, focus: colF, aperture: 0.006 },
+], { handheld: 0.5 });
+app.ready();
+</script></body></html>

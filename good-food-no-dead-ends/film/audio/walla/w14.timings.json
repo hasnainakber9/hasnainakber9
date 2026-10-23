@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.187,
+  "sentences": [
+    {
+      "text": "Do you want some rice with that?",
+      "start": 0.1,
+      "end": 1.487
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.487,
+      "text": "Do you want some rice with that?"
+    }
+  ]
+}

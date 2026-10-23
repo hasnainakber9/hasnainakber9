@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.613,
+  "sentences": [
+    {
+      "text": "That's exactly what I said!",
+      "start": 0.1,
+      "end": 1.913
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.913,
+      "text": "That's exactly what I said!"
+    }
+  ]
+}

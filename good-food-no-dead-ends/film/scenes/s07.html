@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s07 market</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 07 | 47–55.5 s | MARKET + ACCESS — a neighbourhood street market: many cuisines, fair prices, imperfect produce that looks good.
+// VENDOR: "Not the prettiest batch."  COOK: "Good thing we're cooking it."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V, R } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'cobble', 'planks']);
+K.seed(77);
+const app = new K.App({ duration: 8.5, fov: 32, exposure: 1.02, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.22, bloomThreshold: 0.8, warmth: 1.03, sat: 1.06, vignette: 0.32 });
+await app.hdri('city', { intensity: 0.6, rotation: 1.0 });
+const S = app.scene;
+const sunDir = V(0.5, 0.7, 0.45);
+K.skyDome(app, { top: '#4f86c4', mid: '#9fc0e0', horizon: '#efe2c8', sunDir, glow: 0.4, sunIntensity: 2, fogColor: '#e9e2d2', fogNear: 25, fogFar: 140 });
+await K.clouds(app, { count: 8, yaw: 0.3, spread: 2.0, opacity: 0.7, minY: 60, maxY: 120 });
+K.sunLight(app, { dir: sunDir, color: '#fff0d6', intensity: 3.4, size: 12, target: V(0, 0, -3), softness: 3 });
+K.fillLights(app, { sky: '#cfe0f0', ground: '#a08a6a', hemi: 0.55 });
+// cobbled street + kerbs + facades both sides
+const street = K.groundPlane(app, { kind: 'plaster', color: '#b9ab96', size: 80, repeat: 40, normal: 'cobble', ns: 1.0, scale: 10 });
+const facade = new THREE.Group(); S.add(facade);
+const winT = K.canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { g.fillStyle = '#4a5560'; g.fillRect(24 + x * 80, 30 + y * 80, 40, 56); g.fillStyle = '#e8e0d0'; g.fillRect(20 + x * 80, 86 + y * 80, 48, 6); } });
+for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w = K.R(5.5, 8.5), h = K.R(9, 16); const tex = winT.clone(); tex.needsUpdate = true; tex.repeat.set(w / 3.2, h / 3.2); const m = K.mat(K.pick(['#e2c49a', '#d9a27a', '#efe0c4', '#c9846a', '#e8d6a8', '#b9c4b0', '#f0c890']), { roughness: 0.85, map: tex, normalMap: K.normalTex('plaster', 2), normalScale: new THREE.Vector2(0.4, 0.4) }); const b = K.box(4, h, w, m); b.position.set(side * 8.5, h / 2, z - w / 2); facade.add(b);
+  const shopC = K.pick(['#2f6b5a', '#8a3a2a', '#2f4a6a', '#6a4a2a']); const aw = K.box(1.0, 0.08, w * 0.8, K.mat(shopC, { roughness: 0.8 })); aw.position.set(side * 6.15, 3.1, z - w / 2); aw.rotation.z = -side * 0.35; facade.add(aw);
+  const sf = K.box(0.1, 2.6, w * 0.7, K.mat('#2a3036', { roughness: 0.2, metalness: 0.3 })); sf.position.set(side * 6.45, 1.4, z - w / 2); facade.add(sf);
+  for (let k = 0; k < Math.floor(h / 3.2) - 1; k++) { const bal = K.box(0.6, 0.08, 1.4, K.mat('#e8e0d0', { roughness: 0.6 })); bal.position.set(side * 6.2, 4.5 + k * 3.2, z - w / 2 + K.R(-1, 1)); facade.add(bal); const plant = K.mesh(P.bushGeo({ size: 0.4, blobs: 4, flowers: 6, color: '#4f8a3a' }), K.vmat({ roughness: 0.7 })); plant.position.copy(bal.position).add(V(0, 0.05, 0)); facade.add(plant); } }
+for (const side of [-1, 1]) { const kerb = K.box(0.3, 0.15, 80, K.mat('#9a948a', { roughness: 0.8 })); kerb.position.set(side * 6.0, 0.075, -20); facade.add(kerb); const pave = K.box(2.2, 0.14, 80, K.mat('#c9c2b6', { roughness: 0.85, map: K.grain('plaster', { repeat: 10 }) }), { cast: false }); pave.position.set(side * 7.3, 0.07, -20); facade.add(pave); }
+K.bake(facade);
+for (const z of [6, -6, -18, -30]) { const tree = K.mesh(P.treeGeo({ height: 6 }), K.vmat({ roughness: 0.8, normalMap: K.normalTex('rock', 2), normalScale: new THREE.Vector2(0.6, 0.6) })); tree.position.set(K.pick([-5.6, 5.6]), 0, z); S.add(tree); }
+P.stringLights(app, [-6, 4.6, 4], [6, 4.8, 2], 18, 0.6); P.stringLights(app, [-6, 4.6, -4], [6, 4.8, -6], 18, 0.6); P.stringLights(app, [-6, 4.6, -12], [6, 4.8, -14], 18, 0.6);
+
+// stalls: produce (the vendor), spices, flatbreads, fruit, a hot-food pan; two rows facing the centre
+const stalls = [];
+const mk = (x, z, rotY, o) => { const st = P.stall(o); st.position.set(x, 0, z); st.rotation.y = rotY; S.add(st); stalls.push(st); return st; };
+const veg = mk(-3.2, -2.2, Math.PI / 2, { w: 2.8, d: 1.4, c1: '#2f8a57', c2: '#f2ead8', produce: [['tomatoUgly'], ['tomatoUgly', 'tomato'], ['pepper'], ['eggplant'], ['onion']], crate: '#7a5a3a' });
+mk(-3.2, -6.4, Math.PI / 2, { w: 2.6, c1: '#c8433a', c2: '#f4e8d4', produce: [['lemon'], ['potato'], ['carrot'], ['greens']] });
+mk(3.2, -1.0, -Math.PI / 2, { w: 2.6, c1: '#2f4a8a', c2: '#f2ead8', produce: [['greens'], ['pepper', 'lemon'], ['tomato']] });
+mk(3.2, -5.6, -Math.PI / 2, { w: 2.6, c1: '#e2a12a', c2: '#fbf2de', produce: [] });
+mk(-3.2, 2.2, Math.PI / 2, { w: 2.6, c1: '#7a3a6a', c2: '#f4e8d4', produce: [] });
+// spice stall dressing (bowls of colourful spices) on the yellow stall
+const spiceStall = stalls[3]; for (let i = 0; i < 8; i++) { const b = P.ware.bowl(0.13, '#d9cbb3'); b.position.set(-1.0 + (i % 4) * 0.62, 0.86, -0.1 + Math.floor(i / 4) * 0.36); spiceStall.add(b); const mound = K.mesh(new THREE.SphereGeometry(0.12, 18, 10, 0, 6.3, 0, Math.PI / 2), K.mat(['#e2a12a', '#b8321f', '#8a5a2a', '#5a7a2a', '#d9c26a', '#a0401f', '#f0d8a0', '#6a3a1a'][i], { roughness: 0.95, normalMap: K.normalTex('rock', 2), normalScale: new THREE.Vector2(0.5, 0.5) })); mound.scale.y = 0.6; mound.position.set(b.position.x, 0.86 + 0.06, b.position.z); spiceStall.add(mound); }
+// flatbread + hot food stall on the purple stall
+const breadStall = stalls[4]; const bg = P.produceGeo('bread'); for (let i = 0; i < 18; i++) { const b = K.mesh(bg, P.produceMat({ roughness: 0.7, clearcoat: 0 })); b.position.set(-0.8 + (i % 3) * 0.32, 0.88 + Math.floor(i / 3) * 0.013, 0.2); b.rotation.y = K.rnd() * 6; breadStall.add(b); }
+const pan = K.cyl(0.42, 0.38, 0.1, K.MAT.darkMetal(), 32); pan.position.set(0.55, 0.92, 0.1); breadStall.add(pan); const dish = P.stewSurface(0.38, { color: '#c9852a', count: 60 }); dish.position.set(0.55, 0.97, 0.1); breadStall.add(dish);
+K.steam(app, { at: breadStall.localToWorld(V(0.55, 1.0, 0.1)), count: 10, height: 0.8, size: 0.3, opacity: 0.16, spread: 0.2 });
+// price signs (plain, affordable): imperfect tomatoes at half price
+const sign = P.chalkSign('½ PRICE', { w: 0.3 }); sign.position.set(-2.12, 1.1, -1.55); sign.rotation.y = Math.PI / 2 - 0.55; S.add(sign);
+const sign2 = P.chalkSign('2 FOR 1', { w: 0.28 }); sign2.position.set(-2.25, 1.1, -6.0); sign2.rotation.y = Math.PI / 2; S.add(sign2);
+
+// shoppers: older people, families, a cyclist — walking the street (pure functions of t)
+const crowd = [];
+const add = (i, path, o = {}) => { const p = puppet('C' + i, extraSpec(70 + i, o)); app.cast(p); p.walk(path); crowd.push(p); return p; };
+add(0, [{ t: 0, x: 0.8, z: -14, yaw: 0 }, { t: 8.5, x: 0.6, z: -6.5, yaw: 0, ease: 'linear' }], { elder: true });
+add(1, [{ t: 0, x: -0.6, z: 3.5, yaw: Math.PI }, { t: 8.5, x: -0.9, z: -5.0, yaw: Math.PI, ease: 'linear' }]);
+add(2, [{ t: 0, x: 1.8, z: -0.8, yaw: -Math.PI / 2 }]).act([{ t: 0, pose: 'pick', mod: { spX: 0.25, drop: -0.25 } }]);
+add(8, [{ t: 0, x: -0.2, z: -16, yaw: 0.1 }, { t: 8.5, x: 0.3, z: -9.0, yaw: 0.1, ease: 'linear' }], { build: 'f' });
+add(9, [{ t: 0, x: 1.0, z: 9.5, yaw: Math.PI }, { t: 8.5, x: 1.1, z: 2.0, yaw: Math.PI, ease: 'linear' }], { elder: true, build: 'f' });
+add(10, [{ t: 0, x: -1.0, z: -11, yaw: 0 }, { t: 8.5, x: -0.6, z: -4.2, yaw: 0, ease: 'linear' }], { build: 'm' });
+add(11, [{ t: 0, x: 2.0, z: -12.5, yaw: -Math.PI / 2 + 0.4 }], { build: 'f', hairStyle: 'curly' }).act([{ t: 0, pose: 'holdFront', p: { h: 1.0 } }]);
+add(12, [{ t: 0, x: -1.8, z: 5.0, yaw: Math.PI / 2 - 0.3 }], { child: true }).act([{ t: 0, pose: 'stand' }]);
+add(3, [{ t: 0, x: 0.2, z: 6.0, yaw: Math.PI }, { t: 8.5, x: 0.1, z: -1.5, yaw: Math.PI, ease: 'linear' }], { build: 'f' });
+add(4, [{ t: 0, x: 0.35, z: 6.6, yaw: Math.PI }, { t: 8.5, x: 0.4, z: -0.9, yaw: Math.PI, ease: 'linear' }], { child: true });
+add(5, [{ t: 0, x: 1.6, z: -9.0, yaw: -Math.PI / 2 + 0.3 }], { elder: true, build: 'm' }).act([{ t: 0, pose: 'stand' }]);
+add(6, [{ t: 0, x: -1.4, z: -7.2, yaw: Math.PI / 2 - 0.2 }], { build: 'f', hairStyle: 'wrap' }).act([{ t: 0, pose: 'holdFront', p: { h: 1.0 } }]);
+add(7, [{ t: 0, x: 2.2, z: 4.0, yaw: -Math.PI / 2 }, { t: 8.5, x: 2.1, z: 4.0, yaw: -Math.PI / 2 }], { build: 'm' });
+const trolley = new THREE.Group(); trolley.add(K.at(K.box(0.32, 0.45, 0.25, K.mat('#2f4a8a', { roughness: 0.7 }), { r: 0.04 }), 0, 0.42, 0)); trolley.add(K.at(K.rot(K.cyl(0.08, 0.08, 0.04, K.MAT.rubber(), 14), 0, 0, Math.PI / 2), 0, 0.08, -0.05)); trolley.add(K.at(K.cyl(0.01, 0.01, 0.9, K.MAT.darkMetal(), 6), 0, 0.6, -0.12)); S.add(trolley);
+app.after(t => { const p = crowd[0].arms.R.grip.getWorldPosition(V()); trolley.position.set(p.x, 0, p.z - 0.25); });
+crowd[0].hand('R', [{ t: 0, at: () => crowd[0].root.localToWorld(V(0.15, 0.95, -0.2)), pole: [0.7, -0.6, 0.2] }]);
+
+// cast: the vendor behind his stall, the cook (from the community kitchen) in front of it
+const lines = await K.dialogue('s07');
+const vendor = puppet('VENDOR'); vendor.place(-3.75, -2.25, Math.PI / 2); app.cast(vendor); vendor.speak(lines);
+const cook = puppet('COOK'); app.cast(cook); cook.speak(lines);
+cook.walk([{ t: 0, x: -0.6, z: 0.8, yaw: Math.PI }, { t: 1.9, x: -1.55, z: -1.8, yaw: -Math.PI / 2 - 0.25 }, { t: 2.3, x: -1.6, z: -1.95, yaw: -Math.PI / 2 }]);
+// a crate of imperfect tomatoes handed across the stall
+const heroCrate = P.crate({ fill: 'tomatoUgly', color: '#7a5a3a', w: 0.5, d: 0.34, h: 0.2, layers: 2, level: 0.7 }); S.add(heroCrate);
+// before the hand-off the crate rides on the vendor's hands (off-screen behind the close-up camera); at 5.9 s it is in the
+// cook's outstretched hands and she draws it in to a carry. Her hands follow the crate, so the crate must never be placed
+// at her hands (that loop lifted it overhead in the first cut).
+const reachAt = () => cook.root.localToWorld(V(0, 1.12, 0.6)), carryAt = () => cook.root.localToWorld(V(0, 0.96, 0.36));
+const crateAt = (t) => { if (t <= 5.9) { const a = vendor.arms.L.grip.getWorldPosition(V()), b = vendor.arms.R.grip.getWorldPosition(V()); return a.lerp(b, 0.5); } return reachAt().lerp(carryAt(), K.smooth(K.clamp((t - 5.9) / 0.6))); };
+const crateYaw = (t) => { const from = vendor.root.rotation.y + Math.PI / 2; let to = cook.root.rotation.y + Math.PI / 2; to += Math.round((from - to) / Math.PI) * Math.PI;   // the crate is symmetric: take the nearest equivalent turn
+  return t <= 5.9 ? from : K.lerp(from, to, K.smooth(K.clamp((t - 5.9) / 0.6))); };
+vendor.act([{ t: 0, pose: 'stand' }]);
+vendor.hand('L', [{ t: 0, at: () => vendor.root.localToWorld(V(-0.22, 0.96, 0.62)), pole: [-0.6, -0.6, -0.4] }, { t: 1.8, at: () => vendor.root.localToWorld(V(-0.22, 1.05, 0.72)), blend: 0.6 }, { t: 6.2, at: null, blend: 0.4 }]);
+vendor.hand('R', [{ t: 0, at: () => vendor.root.localToWorld(V(0.22, 0.96, 0.62)), pole: [0.6, -0.6, -0.4] }, { t: 1.8, at: () => vendor.root.localToWorld(V(0.22, 1.05, 0.72)), blend: 0.6 }, { t: 6.2, at: null, blend: 0.4 }]);
+vendor.look([{ t: 0, at: () => heroCrate.getWorldPosition(V()) }, { t: 1.8, at: () => cook.head.getWorldPosition(V()), blend: 0.4 }]);
+vendor.face([{ t: 0, smile: 0.2, brow: 0.1 }, { t: 2.2, smile: 0.1, brow: 0.4, tilt: 0.4 }, { t: 5.2, smile: 0.6, brow: 0.3, tilt: 0 }]);
+cook.act([{ t: 0, pose: 'stand' }, { t: 6.0, pose: 'carry', p: { h: 1.0 }, blend: 0.5 }]);
+cook.hand('L', [{ t: 0, at: null }, { t: 5.4, at: () => heroCrate.localToWorld(V(-0.24, 0.16, 0)), blend: 0.45, pole: [-0.7, -0.6, -0.3] }]);
+cook.hand('R', [{ t: 0, at: null }, { t: 5.4, at: () => heroCrate.localToWorld(V(0.24, 0.16, 0)), blend: 0.45, pole: [0.7, -0.6, -0.3] }]);
+cook.look([{ t: 0, at: () => veg.localToWorld(V(0, 1.0, 0.2)) }, { t: 2.0, at: () => heroCrate.getWorldPosition(V()), blend: 0.4 }, { t: 3.9, at: () => vendor.head.getWorldPosition(V()), blend: 0.4 }, { t: 6.4, at: () => heroCrate.getWorldPosition(V()), blend: 0.5 }]);
+cook.face([{ t: 0, smile: 0.35, brow: 0.2 }, { t: 3.7, smile: 0.6, brow: 0.35 }, { t: 6.3, smile: 0.7, brow: 0.2 }]);
+app.after(t => { const p = crateAt(t); heroCrate.position.copy(p).add(V(0, t <= 5.9 ? -0.12 : 0, 0)); heroCrate.rotation.y = crateYaw(t); });
+
+// camera
+const vF = () => vendor.head.getWorldPosition(V()).add(V(0, 0.09, 0)), cF = () => cook.head.getWorldPosition(V()).add(V(0, 0.09, 0));
+app.rig = new K.Rig([
+  { t: 0.0, pos: [1.6, 2.6, 7.5], look: [-0.8, 1.4, -4.0], fov: 40, focus: 8, aperture: 0.0015 },
+  { t: 2.0, pos: [1.2, 2.2, 5.6], look: [-1.4, 1.35, -2.6], fov: 37, focus: cF, aperture: 0.002 },
+  { t: 2.0001, cut: true, pos: () => vF().add(V(1.6, -0.15, 0.85)), look: () => vF().add(V(0.15, -0.3, 0)), fov: 30, focus: vF, aperture: 0.005 },
+  { t: 4.3, pos: () => vF().add(V(1.55, -0.15, 0.78)), look: () => vF().add(V(0.15, -0.3, 0)), fov: 29, focus: vF, aperture: 0.005 },
+  { t: 4.3001, cut: true, pos: () => cF().add(V(-1.25, -0.12, -0.75)), look: () => cF().add(V(-0.1, -0.2, 0)), fov: 30, focus: cF, aperture: 0.005 },
+  { t: 6.5, pos: () => cF().add(V(-1.2, -0.12, -0.7)), look: () => cF().add(V(-0.1, -0.22, 0)), fov: 29, focus: cF, aperture: 0.005 },
+  { t: 6.5001, cut: true, pos: () => cF().lerp(vF(), 0.5).add(V(0.4, -0.2, 2.6)), look: () => cF().lerp(vF(), 0.5).add(V(0, -0.4, 0)), fov: 36, focus: cF, aperture: 0.003 },
+  { t: 8.5, pos: () => cF().lerp(vF(), 0.5).add(V(0.5, -0.1, 3.0)), look: () => cF().lerp(vF(), 0.5).add(V(0, -0.35, 0)), fov: 37, focus: cF, aperture: 0.003 },
+], { handheld: 0.6 });
+app.ready();
+</script></body></html>

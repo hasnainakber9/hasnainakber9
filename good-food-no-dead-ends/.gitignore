@@ -1,0 +1,8 @@
+# renders are rebuilt with film/render_scenes.sh; the finished films live in deliverables/
+film/renders/
+film/__pycache__/
+# regenerable audio: python3 film/audio/build_dialogue.py --skip-tts && python3 film/audio/build_mix.py
+film/audio/mix/
+film/audio/dialogue/s[0-9][0-9].wav
+# local test pages
+film/scenes/test_*.html

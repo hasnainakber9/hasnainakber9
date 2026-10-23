@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><title>verify Unity export</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body style="margin:0;background:#000;overflow:hidden"><script type="module">
+// Round-trip check for the Unity export: load shots/<id>.glb + <id>.json, play the baked performance with the
+// exported camera path, plain lighting from the sidecar (no post). ?shot=s01
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+const id = new URLSearchParams(location.search).get('shot') || 's01';
+const base = `../../unity/GoodFoodNoDeadEnds/Assets/GoodFood/Shots/${id}`;
+const meta = await (await fetch(base + '.json')).json();
+const W = innerWidth, H = innerHeight;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(W, H); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = meta.exposure; document.body.appendChild(r.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(meta.hasFog ? meta.fogColor : '#888');
+if (meta.hasFog) scene.fog = new THREE.Fog(meta.fogColor, meta.fogNear, meta.fogFar);
+if (meta.envHdri) { const m = await import(`../lib/assets/hdri/${meta.envHdri}.exr.js`); const tex = await new EXRLoader().loadAsync(m.default); tex.mapping = THREE.EquirectangularReflectionMapping; scene.environment = tex; scene.environmentIntensity = meta.envIntensity; scene.environmentRotation = new THREE.Euler(0, meta.envRotationY, 0); }
+for (const l of meta.lights) {
+  if (l.type === 'directional') { const d = new THREE.DirectionalLight(l.color, l.intensity); const dir = new THREE.Vector3(...l.dir); d.position.copy(dir.clone().multiplyScalar(-60)); d.castShadow = l.shadows; d.shadow.mapSize.set(2048, 2048); Object.assign(d.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 200 }); d.shadow.bias = -0.0004; scene.add(d); }
+  else if (l.type === 'hemisphere') scene.add(new THREE.HemisphereLight(l.sky, l.ground, l.intensity));
+  else if (l.type === 'ambient') scene.add(new THREE.AmbientLight(l.color, l.intensity));
+  else if (l.type === 'point') { const p = new THREE.PointLight(l.color, l.intensity, l.range); p.position.set(...l.pos); scene.add(p); }
+  else if (l.type === 'spot') { const s = new THREE.SpotLight(l.color, l.intensity, l.range, l.angle, l.penumbra); s.position.set(...l.pos); s.target.position.set(l.pos[0] + l.dir[0], l.pos[1] + l.dir[1], l.pos[2] + l.dir[2]); scene.add(s, s.target); }
+}
+const gltf = await new GLTFLoader().loadAsync(base + '.glb'); scene.add(gltf.scene);
+gltf.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+const mixer = new THREE.AnimationMixer(gltf.scene); const action = gltf.animations[0] ? mixer.clipAction(gltf.animations[0]).play() : null;
+const cam = new THREE.PerspectiveCamera(30, W / H, meta.near, meta.far); const S = meta.camStride, NF = meta.cam.length / S;
+window.__duration = meta.duration;
+window.__seek = (t) => {
+  if (action) { action.time = Math.min(t, gltf.animations[0].duration); mixer.update(0); }
+  const o = Math.min(NF - 1, Math.round(t * meta.fps)) * S, f = meta.cam;
+  cam.position.set(f[o + 1], f[o + 2], f[o + 3]); cam.quaternion.set(f[o + 4], f[o + 5], f[o + 6], f[o + 7]); cam.fov = f[o + 8]; cam.updateProjectionMatrix();
+  r.render(scene, cam);
+};
+</script></body></html>

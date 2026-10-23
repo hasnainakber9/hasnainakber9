@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.765,
+  "sentences": [
+    {
+      "text": "The school kitchen needs two crates by noon.",
+      "start": 0.1,
+      "end": 3.065
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 3.065,
+      "text": "The school kitchen needs\ntwo crates by noon."
+    }
+  ]
+}

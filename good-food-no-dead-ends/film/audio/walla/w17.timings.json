@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.827,
+  "sentences": [
+    {
+      "text": "I'll bring the crates back tomorrow.",
+      "start": 0.1,
+      "end": 2.127
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 2.127,
+      "text": "I'll bring the crates back tomorrow."
+    }
+  ]
+}

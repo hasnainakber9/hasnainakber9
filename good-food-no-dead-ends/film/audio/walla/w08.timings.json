@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.784,
+  "sentences": [
+    {
+      "text": "Come by on Thursday, we'll have greens.",
+      "start": 0.1,
+      "end": 2.084
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 2.084,
+      "text": "Come by on Thursday, we'll have greens."
+    }
+  ]
+}

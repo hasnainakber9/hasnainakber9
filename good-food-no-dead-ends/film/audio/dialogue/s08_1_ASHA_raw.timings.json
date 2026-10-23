@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.637,
+  "sentences": [
+    {
+      "text": "That, the greenhouse, and about six people you didn't see.",
+      "start": 0.1,
+      "end": 2.937
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 2.937,
+      "text": "That, the greenhouse, and about\nsix people you didn't see."
+    }
+  ]
+}

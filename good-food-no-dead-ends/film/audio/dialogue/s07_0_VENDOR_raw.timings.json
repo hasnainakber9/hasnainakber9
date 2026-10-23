@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.229,
+  "sentences": [
+    {
+      "text": "Not the prettiest batch.",
+      "start": 0.1,
+      "end": 1.529
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.529,
+      "text": "Not the prettiest batch."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.168,
+  "sentences": [
+    {
+      "text": "Two of those please, and the onions.",
+      "start": 0.1,
+      "end": 2.468
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 2.468,
+      "text": "Two of those please, and the onions."
+    }
+  ]
+}
