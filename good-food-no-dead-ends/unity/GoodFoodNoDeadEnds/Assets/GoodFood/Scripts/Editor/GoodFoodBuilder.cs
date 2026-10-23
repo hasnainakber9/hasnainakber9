@@ -7,8 +7,9 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.Timeline;
-using UnityEngine.UI;
+using TMPro;
 
 namespace GoodFood.EditorTools
 {
@@ -32,7 +33,7 @@ namespace GoodFood.EditorTools
             if (edlAsset == null) { Debug.LogError("Good Food: Assets/GoodFood/Data/edit.json is missing. Run film/export_unity.py first."); return; }
             var edl = EditDecisionList.FromJson(edlAsset.text);
 
-            foreach (var f in new[] { Gen, Gen + "/Cameras", Gen + "/Clips", Gen + "/Sky", Root + "/Scenes" }) EnsureFolder(f);
+            foreach (var f in new[] { Gen, Gen + "/Cameras", Gen + "/Clips", Gen + "/Sky", Gen + "/UI", Root + "/Scenes" }) EnsureFolder(f);
             if (EnsurePipeline()) ReimportModels();       // glTFast picks URP shaders only when URP is active at import time
             PrepareImports();
 
@@ -316,55 +317,85 @@ namespace GoodFood.EditorTools
         // ------------------------------------------------------------------ captions and title card
         class Overlay { public FilmOverlay component; public GameObject title; }
 
+        const string TitleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,;:!?'\"-()&%/\u2019\u2018\u201C\u201D\u2013\u2014\u2026";
+
         static Overlay BuildOverlay(EditDecisionList edl, TextAsset edlAsset, PlayableDirector director)
         {
-            var black = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Fonts/Inter-Black.otf");
-            var bold = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Fonts/Inter-Bold.otf");
-            var fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (black == null) black = fallback;
-            if (bold == null) bold = fallback;
+            var tc = edl.titleCard;
+            string accent = tc != null ? tc.accent : "#d8401f";
+            var cream = ThreeToUnity.Hex(tc != null ? tc.text : "#f6f1e8", Color.white);
 
-            var go = new GameObject("Film Overlay");
+            // non-interactive overlay: no GraphicRaycaster, every graphic has Raycast Target off
+            var go = new GameObject("FilmOverlay");
             var canvas = go.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
-            var scaler = go.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            var scaler = go.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 1f;
+            scaler.matchWidthOrHeight = 0.5f;          // balanced, so a 9:16 recording keeps the title inside the frame
 
-            var tc = edl.titleCard;
-            var titleGo = Child("Title Card", go.transform);
+            var titleGo = Child("TitleCard", go.transform);
             Stretch(titleGo);
-            var bg = titleGo.AddComponent<Image>();
+            var bg = titleGo.AddComponent<UnityEngine.UI.Image>();
             bg.color = ThreeToUnity.Hex(tc != null ? tc.background : "#070605", Color.black);
+            bg.raycastTarget = false;
             var titleGroup = titleGo.AddComponent<CanvasGroup>();
+            titleGroup.interactable = false; titleGroup.blocksRaycasts = false;
 
             var ringGo = Child("Loop", titleGo.transform);
-            var ringRt = ringGo.GetComponent<RectTransform>();
-            ringRt.sizeDelta = new Vector2(799f, 799f);
-            var ring = ringGo.AddComponent<Image>();
+            ringGo.GetComponent<RectTransform>().sizeDelta = new Vector2(799f, 799f);   // 74 vmin of 1080
+            var ring = ringGo.AddComponent<UnityEngine.UI.Image>();
             ring.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Root + "/UI/loop_ring.png");
-            ring.color = ThreeToUnity.Hex(tc != null ? tc.accent : "#d8401f", Color.red);
-            ring.type = Image.Type.Filled;
-            ring.fillMethod = Image.FillMethod.Radial360;
-            ring.fillOrigin = (int)Image.Origin360.Top;
+            ring.color = ThreeToUnity.Hex(accent, Color.red);
+            ring.type = UnityEngine.UI.Image.Type.Filled;
+            ring.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
+            ring.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Top;
             ring.fillClockwise = true;
             ring.fillAmount = 0f;
-
-            string accent = tc != null ? tc.accent : "#d8401f";
-            var l1 = TitleLine("Line 1", titleGo.transform, black, "GOOD FOOD<color=" + accent + ">.</color>", tc);
-            var l2 = TitleLine("Line 2", titleGo.transform, black, "NO DEAD ENDS<color=" + accent + ">.</color>", tc);
+            ring.raycastTarget = false;
 
             var capGo = Child("Caption", go.transform);
             var capRt = capGo.GetComponent<RectTransform>();
             capRt.anchorMin = new Vector2(0.08f, 0f); capRt.anchorMax = new Vector2(0.92f, 0f); capRt.pivot = new Vector2(0.5f, 0f);
             capRt.anchoredPosition = new Vector2(0f, 81f); capRt.sizeDelta = new Vector2(0f, 140f);
-            var cap = capGo.AddComponent<Text>();
-            cap.font = bold; cap.fontSize = 56; cap.alignment = TextAnchor.LowerCenter; cap.color = Color.white;
-            cap.horizontalOverflow = HorizontalWrapMode.Wrap; cap.verticalOverflow = VerticalWrapMode.Overflow; cap.raycastTarget = false;
-            var outline = capGo.AddComponent<Outline>(); outline.effectColor = new Color(0.08f, 0.08f, 0.08f, 1f); outline.effectDistance = new Vector2(3f, -3f);
-            var shadow = capGo.AddComponent<Shadow>(); shadow.effectColor = new Color(0f, 0f, 0f, 0.5f); shadow.effectDistance = new Vector2(2f, -3f);
+
+            RectTransform l1, l2; UnityEngine.UI.Graphic cap;
+            TMP_FontAsset black = null, bold = null; Material capMat = null;
+            try
+            {
+                EnsureTmpEssentials();
+                black = TmpFont(Root + "/Fonts/Inter-Black.otf", Gen + "/UI/Inter-Black SDF.asset");
+                bold = TmpFont(Root + "/Fonts/Inter-Bold.otf", Gen + "/UI/Inter-Bold SDF.asset");
+                if (bold != null) capMat = CaptionMaterial(bold);
+            }
+            catch (System.Exception e) { Debug.LogWarning("Good Food: TextMeshPro setup failed, using legacy Text: " + e.Message); black = bold = null; }
+
+            if (black != null && bold != null)
+            {
+                l1 = TmpTitleLine("TitleLine1", titleGo.transform, black, "GOOD FOOD<color=" + accent + ">.</color>", cream);
+                l2 = TmpTitleLine("TitleLine2", titleGo.transform, black, "NO DEAD ENDS<color=" + accent + ">.</color>", cream);
+                var t = capGo.AddComponent<TextMeshProUGUI>();
+                t.font = bold; if (capMat != null) t.fontSharedMaterial = capMat;
+                t.fontSize = 56; t.alignment = TextAlignmentOptions.Bottom; t.color = Color.white; t.raycastTarget = false; t.text = "";
+                cap = t;
+            }
+            else
+            {
+                var fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                var lBlack = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Fonts/Inter-Black.otf");
+                var lBold = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Fonts/Inter-Bold.otf");
+                if (lBlack == null) lBlack = fallback;
+                if (lBold == null) lBold = fallback;
+                l1 = LegacyTitleLine("TitleLine1", titleGo.transform, lBlack, "GOOD FOOD<color=" + accent + ">.</color>", cream);
+                l2 = LegacyTitleLine("TitleLine2", titleGo.transform, lBlack, "NO DEAD ENDS<color=" + accent + ">.</color>", cream);
+                var t = capGo.AddComponent<UnityEngine.UI.Text>();
+                t.font = lBold; t.fontSize = 56; t.alignment = TextAnchor.LowerCenter; t.color = Color.white;
+                t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow; t.raycastTarget = false;
+                var outline = capGo.AddComponent<UnityEngine.UI.Outline>(); outline.effectColor = new Color(0.08f, 0.08f, 0.08f, 1f); outline.effectDistance = new Vector2(3f, -3f);
+                var shadow = capGo.AddComponent<UnityEngine.UI.Shadow>(); shadow.effectColor = new Color(0f, 0f, 0f, 0.5f); shadow.effectDistance = new Vector2(2f, -3f);
+                cap = t;
+            }
 
             var fo = go.AddComponent<FilmOverlay>();
             fo.director = director; fo.editDecisionList = edlAsset; fo.caption = cap; fo.title = titleGroup;
@@ -372,14 +403,81 @@ namespace GoodFood.EditorTools
             return new Overlay { component = fo, title = titleGo };
         }
 
-        static RectTransform TitleLine(string name, Transform parent, Font font, string text, EdlTitle tc)
+        // TMP Essential Resources (settings, default shaders) through the non-interactive importer
+        static void EnsureTmpEssentials()
+        {
+            if (AssetDatabase.FindAssets("t:TMP_Settings").Length > 0) return;
+            TMP_PackageResourceImporter.ImportResources(true, false, false);
+            AssetDatabase.Refresh();
+        }
+
+        // a static SDF font asset with every character the film uses, saved with its atlas and material
+        static TMP_FontAsset TmpFont(string fontPath, string assetPath)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
+            if (existing != null) return existing;
+            var font = AssetDatabase.LoadAssetAtPath<Font>(fontPath);
+            if (font == null) return null;
+            EnsureFolder(Path.GetDirectoryName(assetPath).Replace('\\', '/'));
+            var fa = TMP_FontAsset.CreateFontAsset(font, 64, 8, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic, true);
+            if (fa == null) return null;
+            fa.name = Path.GetFileNameWithoutExtension(assetPath);
+            fa.TryAddCharacters(TitleChars);
+            fa.atlasPopulationMode = AtlasPopulationMode.Static;
+            AssetDatabase.CreateAsset(fa, assetPath);
+            for (int i = 0; i < fa.atlasTextures.Length; i++)
+            {
+                if (fa.atlasTextures[i] == null) continue;
+                fa.atlasTextures[i].name = fa.name + " Atlas " + i;
+                AssetDatabase.AddObjectToAsset(fa.atlasTextures[i], fa);
+            }
+            if (fa.material != null) { fa.material.name = fa.name + " Material"; AssetDatabase.AddObjectToAsset(fa.material, fa); }
+            EditorUtility.SetDirty(fa);
+            AssetDatabase.SaveAssets();
+            return fa;
+        }
+
+        // caption material preset: dark outline plus a soft drop shadow, readable on any shot
+        static Material CaptionMaterial(TMP_FontAsset font)
+        {
+            var path = Gen + "/UI/Caption Outline.mat";
+            AssetDatabase.DeleteAsset(path);
+            if (font.material == null) return null;
+            var m = new Material(font.material) { name = "Caption Outline" };
+            m.EnableKeyword("OUTLINE_ON");
+            m.SetFloat("_OutlineWidth", 0.18f);
+            m.SetColor("_OutlineColor", new Color(0.08f, 0.08f, 0.08f, 1f));
+            m.EnableKeyword("UNDERLAY_ON");
+            m.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.5f));
+            m.SetFloat("_UnderlayOffsetX", 0.5f);
+            m.SetFloat("_UnderlayOffsetY", -0.7f);
+            m.SetFloat("_UnderlayDilate", 0.2f);
+            m.SetFloat("_UnderlaySoftness", 0.3f);
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+
+        static RectTransform TmpTitleLine(string name, Transform parent, TMP_FontAsset font, string text, Color colour)
         {
             var go = Child(name, parent);
             var rt = go.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(1800f, 140f);
-            var t = go.AddComponent<Text>();
+            var t = go.AddComponent<TextMeshProUGUI>();
+            t.font = font; t.fontSize = 124; t.alignment = TextAlignmentOptions.Center; t.richText = true; t.text = text;
+            t.characterSpacing = 2f;                    // the film's 0.02 em tracking
+            t.color = colour; t.raycastTarget = false;
+            go.AddComponent<CanvasGroup>().alpha = 0f;
+            return rt;
+        }
+
+        static RectTransform LegacyTitleLine(string name, Transform parent, Font font, string text, Color colour)
+        {
+            var go = Child(name, parent);
+            var rt = go.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(1800f, 140f);
+            var t = go.AddComponent<UnityEngine.UI.Text>();
             t.font = font; t.fontSize = 124; t.alignment = TextAnchor.MiddleCenter; t.supportRichText = true; t.text = text;
-            t.color = ThreeToUnity.Hex(tc != null ? tc.text : "#f6f1e8", Color.white);
+            t.color = colour;
             t.horizontalOverflow = HorizontalWrapMode.Overflow; t.verticalOverflow = VerticalWrapMode.Overflow; t.raycastTarget = false;
             go.AddComponent<CanvasGroup>().alpha = 0f;
             return rt;

@@ -1,6 +1,6 @@
 # GOOD FOOD. NO DEAD ENDS. — Unity project
 
-> **Status: untested.** No Unity editor was available where this was produced, so the project has never been opened. The shot data was exported from the finished film and checked by loading every GLB back into three.js (glTF validator clean; poses, cameras and lip-sync match the film). The C# has not been compiled. Expect to fix small API or package-version issues on first open.
+> **Status: untested.** No Unity editor was available where this was produced, so the project has never been opened. The shot data was exported from the finished film and checked by loading every GLB back into three.js (glTF validator clean; poses, cameras and lip-sync match the film). The C# passes a syntax check with a C# parser but has never been compiled against Unity. Expect to fix small API or package-version issues on first open.
 
 This is a Unity 6 (URP) copy of the film for further editing. It contains:
 
@@ -23,7 +23,8 @@ This is a Unity 6 (URP) copy of the film for further editing. It contains:
    - creates and assigns a URP pipeline asset if the project has none, sets Linear colour space, and re-imports the GLBs so glTFast uses URP shaders;
    - creates `Assets/GoodFood/Scenes/GoodFood_Master.unity` with one root per shot: the animated set and cast, the shot's lights, and a camera rig that replays the film's camera move;
    - builds `Generated/GoodFood_Master.playable`, a Timeline with shot activation, performance and camera tracks, the final mix, muted stems and muted per-character dialogue tracks;
-   - adds a global Volume (ACES, bloom, vignette, Bokeh depth of field, grain), the caption overlay and the end title card.
+   - adds a global Volume (ACES, bloom, vignette, Bokeh depth of field, grain);
+   - adds a uGUI caption overlay and the end title card. Text is TextMeshPro: the builder imports the TMP Essential Resources without a dialog, makes static SDF font assets from Inter, and saves an outline-and-shadow material for captions. If TMP setup fails it falls back to legacy Text and logs a warning.
 4. Press **Play** to watch the film, or scrub the Timeline.
 
 If the scripted pipeline setup gives errors, use the fallback. Create a new project from Unity Hub's **Universal 3D** template. Copy `Assets/GoodFood` into it and add Timeline, Recorder and glTFast in the Package Manager. Then run the same menu item; it skips pipeline setup when the project already has a URP asset.
