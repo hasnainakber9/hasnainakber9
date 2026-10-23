@@ -207,11 +207,13 @@ export class Puppet {
     if (o === 'overshirt' || o === 'labcoat' || o === 'puffer' || o === 'hivis') {
       const gap = o === 'labcoat' ? 0.42 : o === 'overshirt' ? 0.38 : o === 'hivis' ? 0.3 : 0.12;
       const scale = o === 'puffer' ? 1.13 : 1.075;
-      const ridge = o === 'puffer' ? (f) => 1 + 0.035 * Math.abs(Math.sin(f * Math.PI * 6)) : null;
+      // shirts and coats flare a little at the hem so the trouser line never pokes through the cloth (it did by ~1 mm)
+      const ridge = o === 'puffer' ? (f) => 1 + 0.035 * Math.abs(Math.sin(f * Math.PI * 6)) : (o === 'overshirt' || o === 'labcoat') ? (f) => (f < 0.1 ? 1.04 : 1) : null;
       let pts = prof(scale, 0, 0.97, ridge);
       if (o === 'labcoat') { const ext = [[-0.85, 0.205], [-0.55, 0.188], [-0.3, 0.172], [-0.1, 0.16]].map(([f, rr]) => new THREE.Vector2(rr * g * s * (spec.build === 'f' ? 1.04 : 1), f * L)); pts = ext.concat(pts); }
-      if (o === 'overshirt') pts.unshift(new THREE.Vector2(0.158 * g * s * (spec.build === 'f' ? D.hipG : 1), -0.08 * L));
-      this.part(spine, 'outer', new THREE.LatheGeometry(pts, 30, gap / 2, TAU - gap), M4(0, 0, 0, 0, 0, 0, 1, 1, DEPTH * 1.04));
+      if (o === 'overshirt') pts.unshift(new THREE.Vector2(0.165 * g * s * (spec.build === 'f' ? D.hipG : 1), -0.08 * L));
+      const deep = o === 'overshirt' || o === 'labcoat' ? 1.12 : 1.04;   // front-back clearance over the pelvis
+      this.part(spine, 'outer', new THREE.LatheGeometry(pts, 30, gap / 2, TAU - gap), M4(0, 0, 0, 0, 0, 0, 1, 1, DEPTH * deep));
       // collar
       if (o !== 'hivis') this.part(spine, 'outer', new THREE.TorusGeometry(0.068 * s * g, 0.018 * s, 8, 20, TAU * 0.78), M4(0, L * 0.965, -0.004 * s, Math.PI / 2 + 0.25, 0, Math.PI / 2 + TAU * 0.11, 1, 1, DEPTH * 1.3));
       if (o === 'hivis') for (const f of [0.38, 0.62]) this.part(spine, 'teethBand', new THREE.LatheGeometry([new THREE.Vector2(0.152 * g * s * 1.09, f * L - 0.012 * s), new THREE.Vector2(0.155 * g * s * 1.09, f * L + 0.012 * s)], 30, gap / 2, TAU - gap), M4(0, 0, 0, 0, 0, 0, 1, 1, DEPTH * 1.05));

@@ -22,12 +22,12 @@ TOTAL = _t
 # Chosen from the rough cut so the speaker (or the story object) stays in frame. s11 is rendered natively at 9:16.
 VCROP = {
     "s01": [(0, 0.43), (2.4, 0.40), (3.0, 0.58, "pan"), (4.4, 0.47)],
-    "s02": [(0, 0.58), (1.1, 0.46), (2.4, 0.46), (2.9, 0.56, "pan"), (4.3, 0.50), (6.15, 0.47)],
+    "s02": [(0, 0.50), (1.1, 0.46), (2.4, 0.46), (2.9, 0.56, "pan"), (4.3, 0.50), (6.15, 0.47)],
     "s03": [(0, 0.55), (2.7, 0.50), (5.0, 0.55)],
     "s04": [(0, 0.50), (2.1, 0.60), (4.1, 0.37)],
     "s05": [(0, 0.42), (1.35, 0.27), (3.85, 0.60), (5.55, 0.48)],
     "s06": [(0, 0.50), (2.3, 0.48), (4.25, 0.50), (6.4, 0.20), (8.0, 0.20), (8.8, 0.45, "pan")],
-    "s07": [(0, 0.45), (2.0, 0.52), (4.3, 0.48), (6.5, 0.72)],
+    "s07": [(0, 0.45), (2.0, 0.52), (4.3, 0.48), (6.5, 0.75)],
     "s08": [(0, 0.52), (2.0, 0.32), (4.4, 0.47), (7.6, 0.45)],
     "s09a": [(0, 0.20), (0.3, 0.20), (1.1, 0.55, "pan"), (2.45, 0.50), (3.55, 0.45)],
     "s09b": [(0, 0.55), (1.65, 0.42)],
@@ -103,14 +103,22 @@ def main():
     W, H = map(int, run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(joined)]).stdout.strip().split(","))
     cs = cues(); srt = out / "GoodFood_NoDeadEnds.en.srt"; write_srt(srt, cs)
     ass = work / "captions.ass"; write_ass(ass, cs, W, H)
-    common_v = ["-c:v", "libx264", "-preset", "slow", "-crf", "17", "-profile:v", "high", "-pix_fmt", "yuv420p", "-r", str(a.fps),
-                "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-movflags", "+faststart"]
     common_a = ["-c:a", "aac", "-b:a", "320k", "-ar", "48000", "-ac", "2"]
-    master = out / "GoodFood_NoDeadEnds_master_16x9.mp4"
-    run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(joined), "-i", str(mix), "-map", "0:v", "-map", "1:a", *common_v, *common_a, "-t", f"{TOTAL:.3f}",
-         "-metadata", "title=GOOD FOOD. NO DEAD ENDS.", "-metadata", "comment=No narration. Original 3D animation, synthetic character voices (Kokoro TTS), original score.", str(master)])
-    capt = out / "GoodFood_NoDeadEnds_captioned_16x9.mp4"
-    run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(joined), "-i", str(mix), "-map", "0:v", "-map", "1:a", "-vf", f"subtitles={ass.as_posix()}", *common_v, *common_a, "-t", f"{TOTAL:.3f}", str(capt)])
+    meta = ["-metadata", "title=GOOD FOOD. NO DEAD ENDS.", "-metadata", "comment=No narration. Original 3D animation, synthetic character voices (Kokoro TTS), original score."]
+
+    def encode(src, out_path, vf, rate):
+        """two-pass H.264 at a fixed average rate: the film grain makes constant-quality files balloon past 100 MB,
+        and two passes spend the bits where the foliage needs them"""
+        v = ["-c:v", "libx264", "-preset", "slow", "-b:v", rate, "-maxrate", f"{int(rate[:-1]) * 2}M", "-bufsize", f"{int(rate[:-1]) * 2}M",
+             "-profile:v", "high", "-pix_fmt", "yuv420p", "-r", str(a.fps), "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
+        f = ["-vf", vf] if vf else []
+        log = str(work / ("x264_" + out_path.stem))
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), *f, *v, "-pass", "1", "-passlogfile", log, "-an", "-t", f"{TOTAL:.3f}", "-f", "null", "-"])
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-i", str(mix), "-map", "0:v", "-map", "1:a", *f, *v, "-pass", "2", "-passlogfile", log,
+             *common_a, "-t", f"{TOTAL:.3f}", *meta, "-movflags", "+faststart", str(out_path)])
+
+    master = out / "GoodFood_NoDeadEnds_master_16x9.mp4"; encode(joined, master, None, "8M")
+    capt = out / "GoodFood_NoDeadEnds_captioned_16x9.mp4"; encode(joined, capt, f"subtitles={ass.as_posix()}", "8M")
     if not a.no_vertical:
         # 9:16: crop the 16:9 edit with the per-segment window, scale to 1080x1920; the title card comes from a
         # native 1080x1920 render of s11 (renders/<tag>/s11_vertical.mp4) because cropping would cut the words
@@ -131,7 +139,7 @@ def main():
         vjoined = work / "v_joined.mkv"; run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(vl), "-c", "copy", str(vjoined)])
         vass = work / "captions_vertical.ass"; write_ass(vass, cs, 1080, 1920, vertical=True)
         vert = out / "GoodFood_NoDeadEnds_vertical_9x16.mp4"
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(vjoined), "-i", str(mix), "-map", "0:v", "-map", "1:a", "-vf", f"subtitles={vass.as_posix()}", *common_v, *common_a, "-t", f"{TOTAL:.3f}", str(vert)])
+        encode(vjoined, vert, f"subtitles={vass.as_posix()}", "6M")
     print("ok", master, capt, srt)
 
 if __name__ == "__main__":

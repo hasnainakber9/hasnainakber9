@@ -26,6 +26,8 @@ This is a Unity 6 (URP) copy of the film for further editing. It contains:
    - adds a global Volume (ACES, bloom, vignette, Bokeh depth of field, grain), the caption overlay and the end title card.
 4. Press **Play** to watch the film, or scrub the Timeline.
 
+If the scripted pipeline setup gives errors, use the fallback. Create a new project from Unity Hub's **Universal 3D** template. Copy `Assets/GoodFood` into it and add Timeline, Recorder and glTFast in the Package Manager. Then run the same menu item; it skips pipeline setup when the project already has a URP asset.
+
 ## Render the master
 
 **Good Food → Open Recorder**, then add a **Movie** recorder: MP4 (H.264), 1920×1080, **24 fps constant**, record mode **Time Interval 0–84.5 s**, with audio. Click **Start Recording**.
