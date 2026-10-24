@@ -148,7 +148,7 @@ function eyeMap(K, color) {
       const k = Math.pow(clamp(lum / mean, 0.25, 1.8), 0.85) * ring * coll;
       for (let j = 0; j < 3; j++) d[i + j] = lerp(d[i + j], clamp(ir[j] * k, 0, 255), inIris);
     } else if (r >= Ri - 1.5) {
-      const dist = r / Rb, shade = 0.86 * (1 - 0.42 * clamp((dist - 0.4) / 0.6, 0, 1));   // the sclera is never paper-white, and darker towards the lids
+      const dist = r / Rb, shade = 0.74 * (1 - 0.5 * clamp((dist - 0.32) / 0.68, 0, 1));   // the sclera is never paper-white (it sits in the lids' shade), and darker towards them
       d[i] *= shade; d[i + 1] *= shade * 0.965; d[i + 2] *= shade * 0.92; } }
   g.putImageData(id, 0, 0); const o = new THREE.CanvasTexture(cv); o.colorSpace = THREE.SRGBColorSpace; o.anisotropy = 8; o.flipY = t.flipY; return (eyeMaps[color] = o);
 }
@@ -261,8 +261,10 @@ export function buildHuman(cfg) {
   // eyes: a nearly matte eyeball (re-tinted iris) under a clear cornea that adds only sharp reflections. A glossy
   // eyeball spreads the room's light over the whole iris as a milky veil; the cornea's mirror reflection instead shows
   // as distinct catchlights over a dark iris, which is what makes eyes look wet and alive.
-  proxy('eyes', [new THREE.MeshPhysicalMaterial({ map: eyeMap(K, cfg.iris || '#4a2c17'), roughness: 0.55, specularIntensity: 0.25, envMapIntensity: 0.25 }),
-    new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.03, specularIntensity: 1.0, envMapIntensity: 0.55, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })],
+  // (the room seen in the cornea is kept faint: at full strength it lays a grey veil over a brown iris and the eyes read
+  // as glassy or blind; the lights' catchlights stay sharp)
+  proxy('eyes', [new THREE.MeshPhysicalMaterial({ map: eyeMap(K, cfg.iris || '#4a2c17'), roughness: 0.55, specularIntensity: 0.06, envMapIntensity: 0.08 }),
+    new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.07, specularIntensity: 0.45, envMapIntensity: 0.12, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })],
     { shadow: false, group: (c, uv) => (uv.x > 0.85 && uv.y < 0.15 ? 1 : 0) });
   const strand = (key, color, o = {}) => recolor(new THREE.MeshPhysicalMaterial({ map: T(key), alphaTest: o.alphaTest ?? 0.12, alphaToCoverage: !o.blend, transparent: !!o.blend, depthWrite: !o.blend,
     side: THREE.DoubleSide, roughness: o.roughness ?? 0.72, vertexColors: !!o.vertexAlpha,
@@ -291,7 +293,7 @@ export function buildHuman(cfg) {
     cav.morphAttributes.position = units.map((u, k) => { const a = new Float32Array(cp.count * 3); if (k === ui) for (let i = 0; i < cp.count; i++) { const w = clamp((c.y + 0.1 * r.y - cp.getY(i)) / (1.1 * r.y), 0, 1); a[i * 3] = dLow.x * w; a[i * 3 + 1] = dLow.y * w * 1.15; a[i * 3 + 2] = dLow.z * w; } return new THREE.BufferAttribute(a, 3); });
     cav.morphTargetsRelative = true; const n = cp.count, hb = K.meta.bones.findIndex(b => b.name === 'head');
     cav.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(n * 4).map((_, i) => (i % 4 === 0 ? hb : 0)), 4)); cav.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(n * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4));
-    const cm = skinned(cav, new THREE.MeshStandardMaterial({ color: '#1c0b09', roughness: 1, envMapIntensity: 0, side: THREE.BackSide }), 'mouth-cavity'); cm.castShadow = false;
+    const cm = skinned(cav, new THREE.MeshStandardMaterial({ color: '#2e110d', roughness: 1, envMapIntensity: 0, side: THREE.BackSide }), 'mouth-cavity'); cm.castShadow = false;   // (dark red, not a black hole)
     // the inside of the lips and cheeks faces the mouth and lives in its shadow: darken skin near the teeth whose normal points inwards
     const ca = bg.attributes.cavity, bn = bg.attributes.normal, d = V(), nn = V();
     for (let i = 0; i < nb; i++) { d.set(c.x - bp[i * 3], c.y - bp[i * 3 + 1], c.z - bp[i * 3 + 2]); const dist = d.length(); if (dist > 0.05) continue; d.multiplyScalar(1 / dist);

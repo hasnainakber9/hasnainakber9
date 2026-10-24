@@ -431,8 +431,11 @@ export class Puppet {
     const tA = lk && lk.prev ? (resolveTarget(lk.prev.at, t, this) || neutral) : null; const tB = lk ? (resolveTarget(lk.cur.at, t, this) || neutral) : neutral;
     const wA = lk && lk.prev ? (lk.prev.w ?? 1) : 1, wB = lk ? (lk.cur.w ?? 1) : 1;
     const angA = tA ? this.aim(tA) : null, angB = this.aim(tB);
-    let yaw = angB[0] * wB, pitch = angB[1] * wB;
-    if (angA) { const u = lk.u; yaw = lerp(angA[0] * wA, yaw, u); pitch = lerp(angA[1] * wA, pitch, u); }
+    // a look weight below 1 leaves part of the turn to the eyes, but never more than they turn comfortably (beyond
+    // ~17 degrees the whites show and the look reads as an eye roll): the head always takes up the rest
+    const share = (a, w, eye) => Math.sign(a) * Math.max(Math.abs(a * w), Math.abs(a) - eye);
+    let yaw = share(angB[0], wB, 0.3), pitch = share(angB[1], wB, 0.2);
+    if (angA) { const u = lk.u; yaw = lerp(share(angA[0], wA, 0.3), yaw, u); pitch = lerp(share(angA[1], wA, 0.2), pitch, u); }
     const talking = this.speaking(t), e = this.speech(t), ph = this.phase;
     const nod = talking ? (Math.sin(t * 4.7 + ph) * 0.025 + e * 0.035) : 0;
     const drift = (noise2(t * 0.35, this.seed % 97) - 0.5) * 0.06;
@@ -556,7 +559,7 @@ const HUMANS = {
     hair: { style: 'puff', color: '#16100c', tip: '#2b1d14' }, brows: { color: '#1f1610', thick: 0.003, count: 300 },
     clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#e8b52e' }, bottom: { color: '#3d5f94', recolor: 0.35 } }, { key: 'shoes06', color: '#e9e5dc', recolor: 0.8 }] },
   LUIS: { eth: { caucasian: 0.55, african: 0.2, asian: 0.25 }, sex: 1, age: 36, muscle: 0.6, weight: 0.55, skin: 'young_caucasian_male', skinTint: '#d2ab8c', iris: '#4d3320',
-    hair: { style: 'short', color: '#251b14', tip: '#3a2a1e' }, beard: { style: 'beard', color: '#231912', count: 13000, len: 0.009 }, brows: { color: '#2e2219', thick: 0.0042, count: 480, w: 0.00017 }, wear: { puffer: '#26364f' },
+    hair: { style: 'short', color: '#251b14', tip: '#3a2a1e' }, beard: { style: 'beard', color: '#231912', count: 17000, len: 0.009, w: 0.00022 }, brows: { color: '#2e2219', thick: 0.0042, count: 480, w: 0.00017 }, wear: { puffer: '#26364f' },
     clothes: [{ key: 'shirt_m01', top: { color: '#8eaacb' }, bottom: { color: '#2d2f36' } }, { key: 'shoes01' }] },
   MAYA: { eth: { caucasian: 0.75, asian: 0.25 }, sex: 0, age: 34, muscle: 0.42, weight: 0.45, skin: 'young_caucasian_female', iris: '#56693a', glasses: true,
     hair: { style: 'ponytail', color: '#5a321c', tip: '#7a4a2c' }, brows: { color: '#4a2a18', thick: 0.0032 }, wear: { labcoat: '#f2f2ec' },
@@ -568,7 +571,7 @@ const HUMANS = {
     hair: { style: 'capped', color: '#6a4428', tip: '#7a5434' }, brows: { color: '#5a3a22', thick: 0.0038 }, wear: { hivis: '#d2ea3c', cap: '#2f4a63' },
     clothes: [{ key: 'suit_m06', top: { plain: true, color: '#5d6a77' }, bottom: { color: '#34373c' } }, { key: 'shoes03' }] },
   VENDOR: { eth: { african: 0.9, caucasian: 0.1 }, sex: 1, age: 62, muscle: 0.5, weight: 0.62, skin: 'old_african_male', iris: '#24160e',
-    hair: { style: 'capped', color: '#a29d96', tip: '#c4bfb8' }, beard: { style: 'beard', color: '#b9b3aa', len: 0.016 }, brows: { color: '#8f8a84', thick: 0.0042 }, wear: { apron: '#d8ceb6', flatcap: '#5a4a3a' },
+    hair: { style: 'capped', color: '#a29d96', tip: '#c4bfb8' }, beard: { style: 'beard', color: '#b9b3aa', count: 16000, len: 0.015, w: 0.00021 }, brows: { color: '#8f8a84', thick: 0.0042 }, wear: { apron: '#d8ceb6', flatcap: '#5a4a3a' },
     clothes: [{ key: 'suit_m03', top: { color: '#7e3f2c' }, bottom: { color: '#3b3b3b' } }, { key: 'shoes04' }] },
   COOK: { eth: { asian: 0.5, african: 0.3, caucasian: 0.2 }, sex: 0, age: 52, muscle: 0.5, weight: 0.6, skin: 'middleage_asian_female', skinTint: '#caa184', iris: '#2a1a10',
     hair: { style: 'capped', color: '#1b1b1b', tip: '#2b2b2b' }, brows: { color: '#1b1b1b', thick: 0.0032 }, wear: { apron: '#efe6d2', headwrap: '#b8322a' },
@@ -748,7 +751,7 @@ export class HumanPuppet extends Puppet {
     h.group.updateMatrixWorld(true);
     // eyes on the gaze target
     if (this.gazeTarget) for (const s of ['L', 'R']) { const e = B('eye.' + s); e.parent.updateWorldMatrix(true, false); const ep = e.getWorldPosition(va); const d = vb.copy(this.gazeTarget).sub(ep).normalize();
-      B('head').getWorldQuaternion(qb); const dl = d.applyQuaternion(qc.copy(qb).invert()); const yw = clamp(Math.atan2(dl.x, dl.z), -0.45, 0.45), pt = clamp(-Math.atan2(dl.y, Math.hypot(dl.x, dl.z)), -0.24, 0.26);
+      B('head').getWorldQuaternion(qb); const dl = d.applyQuaternion(qc.copy(qb).invert()); const yw = clamp(Math.atan2(dl.x, dl.z), -0.36, 0.36), pt = clamp(-Math.atan2(dl.y, Math.hypot(dl.x, dl.z)), -0.22, 0.24);
       this.eyePitch = pt; qc.setFromEuler(new THREE.Euler(pt, yw, 0, 'YXZ')); setWorldQuat(e, qb.multiply(qc)); }
     // face
     const fs = this.faceState; if (fs) { const { F, bl, open, sm, e, talking } = fs; const tt = fs.t;
@@ -757,7 +760,7 @@ export class HumanPuppet extends Puppet {
       h.setFace({ 'eye-left-opened-up': lidUp, 'eye-right-opened-up': lidUp, 'eye-left-closure': Math.min(1, bl + lidDown), 'eye-right-closure': Math.min(1, bl + lidDown), 'eye-left-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22, 'eye-right-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22,
         'eyebrows-left-up': Math.max(0, F.brow) * 0.8 + Math.max(0, F.tilt) * 0.4 + (talking ? e * 0.15 : 0), 'eyebrows-right-up': Math.max(0, F.brow) * 0.8 + (talking ? e * 0.15 : 0),
         'eyebrows-left-down': Math.max(0, -F.brow) * 0.7, 'eyebrows-right-down': Math.max(0, -F.brow) * 0.7 + Math.max(0, F.tilt) * 0.3,
-        'mouth-corner-puller': Math.max(0, sm) * 0.85, 'mouth-depression': Math.max(0, -sm) * 0.7, 'mouth-open': open * 0.5,
+        'mouth-corner-puller': Math.max(0, sm) * 0.85, 'mouth-depression': Math.max(0, -sm) * 0.7, 'mouth-open': open * 0.34,
         'mouth-pursing': talking ? Math.max(0, v1 - 0.55) * 1.2 * e : 0, 'mouth-retraction': talking ? Math.max(0, v2 - 0.5) * 0.8 * e : 0, 'mouth-compression': talking ? Math.max(0, 0.25 - open) * 0.6 : 0 }); }
     // props held by the driver grips follow the real palms
     for (const s of ['L', 'R']) { const A = this.arms[s], f = this.handFrame(s);
