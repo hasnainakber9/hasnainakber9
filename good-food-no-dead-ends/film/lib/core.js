@@ -9,6 +9,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as BGU from 'three/addons/utils/BufferGeometryUtils.js';
@@ -207,6 +208,7 @@ const GradeShader = {
 // ------------------------------------------------------------------ app
 export class App {
   constructor(o = {}) {
+    const QP = new URLSearchParams(location.search); if (QP.has('ao')) o.ao = +QP.get('ao') || false;   // ?ao=0.9 / ?ao=0 overrides a scene's ambient-occlusion setting (look tests)
     this.o = o; this.duration = o.duration || 8; window.__duration = this.duration; window.__app = this;
     const W = this.w = innerWidth, H = this.h = innerHeight;
     const r = this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -216,7 +218,10 @@ export class App {
     document.body.style.margin = '0'; document.body.style.background = '#000'; document.body.style.overflow = 'hidden'; document.body.appendChild(r.domElement);
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(o.fov || 30, W / H, o.near || 0.03, o.far || 600);
-    const rt = new THREE.WebGLRenderTarget(W, H, { samples: o.msaa ?? 4, type: THREE.HalfFloatType });
+    // anti-aliasing: SMAA on the display image by default (MSAA costs about half the frame time in the software renderer
+    // and, under depth of field, bloom and grain, looks the same); ?msaa=4 or o.msaa restores multisampling
+    const msaa = QP.has('msaa') ? +QP.get('msaa') : (o.msaa ?? 0);
+    const rt = new THREE.WebGLRenderTarget(W, H, { samples: msaa, type: THREE.HalfFloatType });
     this.composer = new EffectComposer(r, rt); this.composer.setPixelRatio(1);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     const scale = Math.min(W / 1920, H / 1080) || 1;
@@ -226,6 +231,7 @@ export class App {
     if (o.dof) { this.dof = new BokehPass(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008) }); this.composer.addPass(this.dof); }
     if (o.bloom !== false) { this.bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), o.bloomStrength ?? 0.16, o.bloomRadius ?? 0.55, o.bloomThreshold ?? 0.88); this.composer.addPass(this.bloom); }
     this.composer.addPass(new OutputPass());
+    if (!msaa) this.composer.addPass(new SMAAPass(W, H));
     this.grade = new ShaderPass(GradeShader); this.grade.uniforms.res.value.set(W, H);
     for (const k of ['vignette', 'grain', 'warmth', 'sat', 'contrast', 'lift']) if (o[k] != null) this.grade.uniforms[k].value = o[k];
     if (o.tint) this.grade.uniforms.tint.value.set(o.tint);

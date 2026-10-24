@@ -595,7 +595,7 @@ function extraHuman(spec, seed) {
 function buildCastHuman(name, spec, seed) {
   const H = HUMANS[name] || extraHuman(spec, seed);
   const h = buildHuman(Object.assign({ height: spec.height }, H, { brows: false, hair: null }));   // strand hair and brows are added below
-  const hair = H.hair || {}; const q = H.extra ? 0.45 : 1;
+  const hair = H.hair || {}; const q = (H.extra ? 0.45 : 1) * (typeof location !== 'undefined' && new URLSearchParams(location.search).has('hairq') ? +new URLSearchParams(location.search).get('hairq') : 1);
   scalpLayer(h, KIT, hair.color || '#1a1411'); scalpTint(h, KIT, hair.color || '#1a1411');
   strandHair(h, KIT, hair.style || 'short', Object.assign({ seed: seed % 997 }, hair, { count: Math.round((hair.count || ({ bun: 9000, ponytail: 9000, puff: 11000, short: 12000, cropped: 12000, capped: 9000 }[hair.style] || 9000)) * q) }));
   if (H.beard) strandHair(h, KIT, H.beard.style, Object.assign({ seed: seed % 991 + 1 }, H.beard, { count: Math.round((H.beard.count || 7000) * q) }));

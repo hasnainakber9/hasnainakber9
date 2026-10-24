@@ -6,7 +6,11 @@ Everything in the film is either original work made for this entry or third-part
 
 | Element | Source | Licence | How it is used |
 |---|---|---|---|
-| All sets, props, characters, animation, camera work and edit | Original, written for this film in `film/` | Owned by the entrant | Every frame of the film |
+| All sets, props, animation, camera work and edit; the strand hair, beards, fitted outer garments, foliage, produce and facade textures | Original, written for this film in `film/` (procedural) | Owned by the entrant | Every frame of the film |
+| Human body model: base mesh, shape targets (macro and expression units), default skeleton and skin weights | MakeHuman 1.x data, github.com/makehumancommunity/makehuman (`makehuman/data`), prepared by `film/tools/mh_prepare.py` into `film/assets/mh/` | CC0 1.0 (MakeHuman relicensed its assets to CC0 in September 2020; notice kept in each source file) | Bodies and faces of every person in the film |
+| Eyes, eyebrows, eyelashes, teeth, tongue, casual suits and shirts, shoes, skin textures | MakeHuman team system assets, from the `makehuman-data` 0.0.2 npm package (per-item list in `film/assets/mh/LICENSES.md`) | CC0 1.0 (MakeHuman team assets, relicensed September 2020) | Every person in the film |
+| Glasses (Maya) | "glasses" by punkduck, MakeHuman community assets | CC BY 3.0 — credit: *Glasses by punkduck, CC BY 3.0* | Maya's glasses |
+| Tight jeans (in the repository only, not shown in the film) | "Tightjeans" by punkduck, MakeHuman community assets | CC BY 3.0 — credit: *Tightjeans by punkduck, CC BY 3.0* | Not used on screen |
 | three.js r170 (renderer, post-processing passes, loaders, exporters) | three.js project, npm `three@0.170.0`, vendored in `film/lib/` | MIT (`film/lib/THREE-LICENSE`) | Real-time 3D rendering of every shot |
 | HDR environment maps: apartment, park, sky, workshop, warehouse, city | Poly Haven HDRIs, resized and re-encoded by `@pmndrs/assets` 1.7.0 | CC0 1.0 (`film/lib/assets/LICENSE-CC0.txt`) | Image-based lighting and reflections only; never shown as a visible background |
 | Tiling normal maps (soil, rock, wood grain, cloth, plaster, skin, knit and others) | `@pmndrs/assets` 1.7.0, from the emmelleppi/normal-maps collection | CC0 1.0 (package licence) | Surface detail on materials |

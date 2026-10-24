@@ -116,7 +116,7 @@ export async function farm(app, o = {}) {
   const lettuce = [0, 1].map(v => P.lettuceGeo(v)); const lm = P.leafMat('lettuce'), lmr = P.leafMat('lettuceRed');
   const ll = [[], []]; for (let b = 3; b <= 8; b++) for (let z = 4; z > -60; z -= 0.35) for (const dx of [-0.25, 0.25]) ll[(b + Math.round(z * 3)) % 2 ? 0 : 1].push({ x: b * bedPitch + dx + R(-0.04, 0.04), y: 0.11, z: z + R(-0.05, 0.05), ry: R(0, TAU), s: R(1.3, 1.7) });
   instanced(S, lettuce[0], lm, ll[0]); instanced(S, lettuce[1], lmr, ll[1]);
-  const beanGeo = P.tomatoPlantGeos(5, { height: 1.5, leaves: 18, fruit: 0 }); const bm = P.leafMat('broad');
+  const beanGeo = P.tomatoPlantGeos(5, { height: 1.5, leaves: 30, fruit: 0 }); const bm = P.leafMat('broad');
   const bl = []; for (let b = -8; b <= -3; b++) for (let z = 4; z > -60; z -= 0.5) { const it = { x: b * bedPitch + R(-0.05, 0.05), y: 0.1, z: z + R(-0.06, 0.06), ry: R(0, TAU), s: R(0.9, 1.15) }; if (o.clear && o.clear(b * bedPitch, z)) continue; bl.push(it); }   // random draws happen before the skip, so clearing never reshuffles the rest of the farm
   instanced(S, beanGeo.leaves, bm, bl); instanced(S, beanGeo.solid, solidM, bl);
   // hedgerows, pollinator strip, trees

@@ -78,8 +78,9 @@ function skinPatch(m, wrap = 0.36, tint = [0.95, 0.52, 0.42]) {
   m.userData.hairRoot = { value: new THREE.Color('#000000') };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.hairRoot = m.userData.hairRoot;
-    sh.vertexShader = 'attribute float hairMask;\nvarying float vHairMask;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vHairMask = hairMask;');
-    sh.fragmentShader = 'uniform vec3 hairRoot;\nvarying float vHairMask;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix( diffuseColor.rgb, hairRoot, vHairMask );');
+    sh.vertexShader = 'attribute float hairMask;\nattribute float cavity;\nvarying float vHairMask;\nvarying float vCavity;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vHairMask = hairMask; vCavity = cavity;');
+    sh.fragmentShader = 'uniform vec3 hairRoot;\nvarying float vHairMask;\nvarying float vCavity;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix( diffuseColor.rgb, hairRoot, vHairMask ) * mix( 1.0, 0.35, vCavity );' + (typeof location !== 'undefined' && location.search.includes('cavdbg') ? '\n diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.0, 1.0, 0.0 ), vCavity );' : ''))
+      .replace('#include <opaque_fragment>', 'outgoingLight *= mix( 1.0, 0.22, vCavity );\n#include <opaque_fragment>');   // the inside of the mouth is in shadow: diffuse, sheen and reflections alike
     const chunk = THREE.ShaderChunk.lights_physical_pars_fragment.replace('reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
       `float sssW = saturate( ( dot( geometryNormal, directLight.direction ) + ${wrap.toFixed(3)} ) / ${(1 + wrap).toFixed(3)} );
        vec3 sssIrr = ( vec3( dotNL ) + vec3( ${tint.map(x => x.toFixed(3)).join(', ')} ) * max( sssW - dotNL, 0.0 ) ) * directLight.color;
@@ -190,7 +191,7 @@ export function buildHuman(cfg) {
   const idx = []; for (let f = 0; f < K.bidx.length; f += 3) { const a = K.bidx[f], b = K.bidx[f + 1], c = K.bidx[f + 2]; if (hide[K.bmap[a]] && hide[K.bmap[b]] && hide[K.bmap[c]]) continue; idx.push(a, b, c); }
   const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(bp, 3)); bg.setAttribute('uv', new THREE.BufferAttribute(K.buv, 2));
   bg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(bi, 4)); bg.setAttribute('skinWeight', new THREE.BufferAttribute(bw, 4)); bg.setIndex(idx); seamlessNormals(bg);
-  bg.setAttribute('hairMask', new THREE.BufferAttribute(new Float32Array(nb), 1));
+  bg.setAttribute('hairMask', new THREE.BufferAttribute(new Float32Array(nb), 1)); bg.setAttribute('cavity', new THREE.BufferAttribute(new Float32Array(nb), 1));
   bg.morphAttributes.position = UD.map(D => { const a = new Float32Array(nb * 3); for (let i = 0; i < nb; i++) a.set(D.subarray(K.bmap[i] * 3, K.bmap[i] * 3 + 3), i * 3); return new THREE.BufferAttribute(a, 3); });
   bg.morphTargetsRelative = true;
   const skinTex = K.tex['skin:' + (cfg.skin || 'young_caucasian_female')];
@@ -246,7 +247,7 @@ export function buildHuman(cfg) {
   // mouth: teeth and tongue are only ever seen in the mouth's shadow, so they are toned down, and a dark oral cavity
   // (an ellipsoid that stretches down with the jaw) stops the open mouth showing through the head
   const teeth = proxy('teeth', new THREE.MeshStandardMaterial({ map: T('teeth'), roughness: 0.42, color: '#e2d8c6', envMapIntensity: 0.55 }), { shadow: false });
-  proxy('tongue', new THREE.MeshStandardMaterial({ map: T('tongue'), roughness: 0.55, color: '#9a6862', envMapIntensity: 0.15 }), { shadow: false });
+  // (no tongue: MakeHuman's expression units push it forward through the teeth when the jaw opens, and the dark cavity reads better)
   { const tp = teeth.geometry.attributes.position; const bb = new THREE.Box3().setFromBufferAttribute(tp); const c = bb.getCenter(V()), sz = bb.getSize(V());
     const r = V(sz.x * 0.4, sz.y * 0.72, sz.z * 0.42); const cav = new THREE.SphereGeometry(1, 24, 16); const cp = cav.attributes.position;
     for (let i = 0; i < cp.count; i++) cp.setXYZ(i, c.x + cp.getX(i) * r.x, c.y + cp.getY(i) * r.y, c.z - sz.z * 0.08 + cp.getZ(i) * r.z);
@@ -255,7 +256,12 @@ export function buildHuman(cfg) {
     cav.morphAttributes.position = units.map((u, k) => { const a = new Float32Array(cp.count * 3); if (k === ui) for (let i = 0; i < cp.count; i++) { const w = clamp((c.y + 0.1 * r.y - cp.getY(i)) / (1.1 * r.y), 0, 1); a[i * 3] = dLow.x * w; a[i * 3 + 1] = dLow.y * w * 1.15; a[i * 3 + 2] = dLow.z * w; } return new THREE.BufferAttribute(a, 3); });
     cav.morphTargetsRelative = true; const n = cp.count, hb = K.meta.bones.findIndex(b => b.name === 'head');
     cav.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(n * 4).map((_, i) => (i % 4 === 0 ? hb : 0)), 4)); cav.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(n * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4));
-    const cm = skinned(cav, new THREE.MeshStandardMaterial({ color: '#1c0b09', roughness: 1, envMapIntensity: 0, side: THREE.BackSide }), 'mouth-cavity'); cm.castShadow = false; }
+    const cm = skinned(cav, new THREE.MeshStandardMaterial({ color: '#1c0b09', roughness: 1, envMapIntensity: 0, side: THREE.BackSide }), 'mouth-cavity'); cm.castShadow = false;
+    // the inside of the lips and cheeks faces the mouth and lives in its shadow: darken skin near the teeth whose normal points inwards
+    const ca = bg.attributes.cavity, bn = bg.attributes.normal, d = V(), nn = V();
+    for (let i = 0; i < nb; i++) { d.set(c.x - bp[i * 3], c.y - bp[i * 3 + 1], c.z - bp[i * 3 + 2]); const dist = d.length(); if (dist > 0.05) continue; d.multiplyScalar(1 / dist);
+      nn.fromBufferAttribute(bn, i); const inward = clamp((nn.dot(d) + 0.05) / 0.28, 0, 1); ca.setX(i, inward * (1 - clamp((dist - 0.034) / 0.016, 0, 1))); }
+  }
   if (cfg.hair) proxy(cfg.hair, strand(cfg.hair, cfg.hairColor, { recolor: cfg.hairRecolor ?? 1, gain: cfg.hairGain ?? 2.4 }), { inflate: cfg.hairInflate || 1 });
   // clothes: one material, or `top`/`bottom` parts split at the waist (MakeHuman suits are shirt + trousers in one mesh)
   const cloth = (c, part) => { const o = Object.assign({}, c, part || {});

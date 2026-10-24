@@ -179,3 +179,60 @@ export function tomatoFlesh(o = {}) {
   const normalMap = new THREE.CanvasTexture(nc); normalMap.colorSpace = THREE.NoColorSpace;
   return (atlasCache[key] = { map, normalMap });
 }
+
+// ------------------------------------------------------------------ kitchen scraps for the organics caddy: onion skins, tomato ends, carrot tops, peel curls
+export function scrap(kind, seed = 1) {
+  const r = prng(seed), g = new THREE.Group(); const add = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
+  if (kind === 'onion') {   // a curled papery shell, darker and drier at the edges
+    const geo = new THREE.SphereGeometry(0.028 + r() * 0.01, 18, 10, 0, 1.6 + r() * 1.2, 0.35, 1.3 + r() * 0.5); const p = geo.attributes.position, col = [];
+    for (let i = 0; i < p.count; i++) { const k = 1 + (r() - 0.5) * 0.06; p.setXYZ(i, p.getX(i) * k, p.getY(i) * 0.75 * k, p.getZ(i) * k); const e = 0.75 + 0.25 * r(); col.push(0.78 * e, 0.5 * e, 0.24 * e); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();
+    add(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, side: THREE.DoubleSide, color: '#ffffff' }));
+  } else if (kind === 'tomato') {   // a cut end: a skin cap with the flesh showing
+    const R = 0.022 + r() * 0.008, cap = new THREE.SphereGeometry(R, 20, 10, 0, TAU, 0, Math.PI * 0.32); const n = cap.attributes.position.count; cap.setAttribute('color', new THREE.Float32BufferAttribute(new Array(n).fill(0).flatMap(() => [0.78, 0.17, 0.1]), 3));
+    add(cap, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.5, clearcoatRoughness: 0.15 }));
+    const TF = tomatoFlesh(); const face = add(new THREE.CircleGeometry(R * Math.sin(Math.PI * 0.32), 28), new THREE.MeshPhysicalMaterial({ map: TF.map, normalMap: TF.normalMap, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1 }));
+    face.rotation.x = Math.PI / 2; face.position.y = R * Math.cos(Math.PI * 0.32) - 0.0005;
+  } else if (kind === 'carrot') {   // the stub of a carrot with its stalks and feathery leaves
+    add(new THREE.CylinderGeometry(0.011, 0.015, 0.03, 14), new THREE.MeshStandardMaterial({ color: '#d9661c', roughness: 0.55 })).position.y = 0.015;
+    const leaf = leafAtlas('herb'), lm = new THREE.MeshStandardMaterial({ map: leaf.map, normalMap: leaf.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.65 }), sm = new THREE.MeshStandardMaterial({ color: '#5f8a34', roughness: 0.6 });
+    for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + r() * 0.5, L = 0.07 + r() * 0.05, tilt = 0.6 + r() * 0.5; const dir = V(Math.sin(tilt) * Math.cos(a), Math.cos(tilt), Math.sin(tilt) * Math.sin(a));
+      const st = add(new THREE.CylinderGeometry(0.0015, 0.0025, L, 5), sm); st.position.copy(V(0, 0.03, 0).addScaledVector(dir, L / 2)); st.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
+      const lf = add(new THREE.PlaneGeometry(0.05, 0.06), lm); lf.position.copy(V(0, 0.03, 0).addScaledVector(dir, L)); lf.quaternion.setFromUnitVectors(V(0, 0, 1), V(dir.x, 0.6, dir.z).normalize()); lf.rotateZ(r() * TAU); }
+  } else {   // a curl of peel
+    const col = kind === 'potato' ? '#b58a5a' : '#d97a2a', pts = []; const turns = 1.2 + r(), L = 0.08 + r() * 0.05;
+    for (let i = 0; i <= 30; i++) { const t = i / 30; pts.push(V(Math.cos(t * turns * TAU) * 0.018, t * 0.012, Math.sin(t * turns * TAU) * 0.018 + t * L * 0.3)); }
+    const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.006, 6, false); tube.scale(1, 0.35, 1);
+    add(tube, new THREE.MeshStandardMaterial({ color: col, roughness: 0.6 }));
+  }
+  return g;
+}
+
+// ------------------------------------------------------------------ a bean's trifoliate leaf: three ovate, pointed leaflets on a petiole
+export function beanLeaf() {
+  if (atlasCache.bean) return atlasCache.bean;
+  const S = 512, r = prng(31); const cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d');
+  const hv = document.createElement('canvas'); hv.width = hv.height = S; const hg = hv.getContext('2d'); hg.fillStyle = '#000'; hg.fillRect(0, 0, S, S);
+  const base = [S / 2, S - 8], fork = [S / 2 + 6, S * 0.58];
+  for (const ctx of [g, hg]) { ctx.strokeStyle = ctx === g ? '#557a2c' : '#a0a0a0'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...base); ctx.quadraticCurveTo(S / 2 - 4, S * 0.78, ...fork); ctx.stroke(); }
+  const leaflet = (x, y, ang, len, wid) => {   // ovate with a drawn-out tip and a rounded base
+    const c = Math.cos(ang), s = Math.sin(ang), P = (u, v) => [x + u * c - v * s, y + u * s + v * c], p = new Path2D();
+    p.moveTo(...P(0, 0)); p.bezierCurveTo(...P(len * 0.02, wid * 0.55), ...P(len * 0.45, wid * 0.62), ...P(len * 0.72, wid * 0.3)); p.quadraticCurveTo(...P(len * 0.88, wid * 0.08), ...P(len, 0));
+    p.quadraticCurveTo(...P(len * 0.88, -wid * 0.08), ...P(len * 0.72, -wid * 0.3)); p.bezierCurveTo(...P(len * 0.45, -wid * 0.62), ...P(len * 0.02, -wid * 0.55), ...P(0, 0));
+    const col = new THREE.Color('#3f6d28').offsetHSL((r() - 0.5) * 0.02, (r() - 0.5) * 0.08, (r() - 0.5) * 0.04);
+    const gr = g.createLinearGradient(...P(0, 0), ...P(len, 0)); gr.addColorStop(0, col.clone().multiplyScalar(0.85).getStyle()); gr.addColorStop(1, col.clone().offsetHSL(0.01, 0, 0.05).getStyle()); g.fillStyle = gr; g.fill(p);
+    g.save(); g.clip(p); for (let k = 0; k < 18; k++) { g.fillStyle = `rgba(${r() < 0.5 ? '20,40,12' : '150,185,95'},${0.04 + r() * 0.06})`; const [cx, cy] = P(len * r(), wid * (r() - 0.5)); g.beginPath(); g.arc(cx, cy, len * (0.05 + r() * 0.12), 0, TAU); g.fill(); }
+    hg.save(); hg.clip(p); const hgr = hg.createRadialGradient(...P(len * 0.45, 0), 2, ...P(len * 0.45, 0), len * 0.6); hgr.addColorStop(0, '#c8c8c8'); hgr.addColorStop(1, '#787878'); hg.fillStyle = hgr; hg.fillRect(0, 0, S, S);
+    g.strokeStyle = 'rgba(170,200,120,0.5)'; g.lineWidth = 2; g.beginPath(); g.moveTo(...P(0, 0)); g.lineTo(...P(len * 0.95, 0)); g.stroke(); hg.strokeStyle = '#555'; hg.lineWidth = 2.5; hg.beginPath(); hg.moveTo(...P(0, 0)); hg.lineTo(...P(len * 0.95, 0)); hg.stroke();
+    for (let k = 1; k <= 6; k++) { const f = k / 7.5; for (const sd of [-1, 1]) { const [ax, ay] = P(len * f, 0), [bx, by] = P(len * (f + 0.16), sd * wid * 0.42 * (1 - f * 0.6));
+      g.strokeStyle = 'rgba(160,195,110,0.32)'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(ax, ay); g.quadraticCurveTo(...P(len * (f + 0.05), sd * wid * 0.25), bx, by); g.stroke();
+      hg.strokeStyle = '#666'; hg.lineWidth = 1.6; hg.beginPath(); hg.moveTo(ax, ay); hg.quadraticCurveTo(...P(len * (f + 0.05), sd * wid * 0.25), bx, by); hg.stroke(); } }
+    g.restore(); hg.restore(); g.strokeStyle = 'rgba(15,30,8,0.4)'; g.lineWidth = 1.2; g.stroke(p); };
+  leaflet(fork[0], fork[1] - 4, -Math.PI / 2 + (r() - 0.5) * 0.15, S * 0.52, S * 0.36);
+  leaflet(fork[0] - 4, fork[1] + 2, Math.PI + 0.35, S * 0.4, S * 0.3);
+  leaflet(fork[0] + 6, fork[1] + 2, -0.35, S * 0.4, S * 0.3);
+  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4; map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+  const nc = document.createElement('canvas'); nc.width = nc.height = S; nc.getContext('2d').putImageData(heightToNormal(hg.getImageData(0, 0, S, S).data, S, S, 2.4), 0, 0);
+  const normalMap = new THREE.CanvasTexture(nc); normalMap.colorSpace = THREE.NoColorSpace;
+  return (atlasCache.bean = { map, normalMap });
+}

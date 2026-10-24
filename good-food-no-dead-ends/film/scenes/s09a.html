@@ -6,6 +6,7 @@
 // NOOR: "And the scraps?"  ASHA: "Back to the soil."
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
 import { kitchen } from '../lib/sets.js';
 import { puppet } from '../lib/people.js';
 const { THREE, V } = K;
@@ -27,9 +28,10 @@ const bag = new THREE.Group(); bag.add(K.box(0.42, 0.32, 0.3, K.mat('#2f5a8a', {
 const board = P.ware.board(0.4, 0.28); board.position.set(2.42, top, -1.12); board.rotation.y = Math.PI / 2; S.add(board);
 const scraps = new THREE.Group(); S.add(scraps);
 const sg = [P.produceGeo('onion', { color: '#c98a4a' }), P.tomatoGeo({ r: 0.022, ugly: true, seg: 10, color: '#a83a22', seed: 5 }), P.produceGeo('carrot')];
-for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(sg[i % 3], i % 3 === 1 ? P.tomatoMat() : P.produceMat({ roughness: 0.6 })); m.scale.setScalar(K.R(0.35, 0.6)); m.scale.y *= 0.4; m.position.set(K.R(-0.12, 0.12), 0.03, K.R(-0.09, 0.09)); m.rotation.set(K.R(0, 3), K.R(0, 6), K.R(0, 3)); m.castShadow = true; scraps.add(m); }
+const KINDS = ['onion', 'tomato', 'carrot', 'peel', 'onion', 'potato'];
+for (let i = 0; i < 16; i++) { const m = F.scrap(KINDS[i % KINDS.length], 300 + i); m.position.set(K.R(-0.12, 0.12), 0.012, K.R(-0.09, 0.09)); m.rotation.set(K.R(-0.4, 0.4), K.R(0, 6), K.R(-0.4, 0.4)); scraps.add(m); }
 const caddy = P.caddy({ color: '#5b4a3a', lid: '#7a9a3a' }); caddy.position.set(2.42, top, -0.62); caddy.rotation.y = -Math.PI / 2; S.add(caddy);
-const falling = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(sg[i % 3], i % 3 === 1 ? P.tomatoMat() : P.produceMat({ roughness: 0.6 })); m.scale.setScalar(K.R(0.4, 0.6)); m.scale.y *= 0.45; m.castShadow = true; S.add(m); falling.push([m, 3.55 + i * 0.09, K.R(-0.05, 0.05), K.R(-0.04, 0.04), K.R(0, 6)]); }
+const falling = []; for (let i = 0; i < 5; i++) { const m = F.scrap(KINDS[i % KINDS.length], 400 + i); S.add(m); falling.push([m, 3.55 + i * 0.09, K.R(-0.05, 0.05), K.R(-0.04, 0.04), K.R(0, 6)]); }
 app.on(t => { const c = caddy.getWorldPosition(V()); for (const [m, t0, dx, dz, r] of falling) { const u = K.clamp((t - t0) / 0.35); m.visible = t > t0 - 0.05; m.position.set(c.x + dx, c.y + 0.42 - 0.24 * u * u, c.z + 0.08 - 0.08 * u + dz); m.rotation.set(r + u * 2, r, u * 3); } });
 const spat = new THREE.Group(); spat.add(K.at(K.box(0.07, 0.004, 0.09, K.MAT.steel()), 0, 0, 0.045)); spat.add(K.at(K.box(0.022, 0.016, 0.11, K.mat('#2a2622'), { r: 0.006 }), 0, 0, -0.05)); S.add(spat);
 // cast

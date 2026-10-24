@@ -21,8 +21,41 @@ K.fillLights(app, { sky: '#cfe0f0', ground: '#a08a6a', hemi: 0.55 });
 // cobbled street + kerbs + facades both sides
 const street = K.groundPlane(app, { kind: 'plaster', color: '#b9ab96', size: 80, repeat: 40, normal: 'cobble', ns: 1.0, scale: 10 });
 const facade = new THREE.Group(); S.add(facade);
-const winT = K.canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { g.fillStyle = '#4a5560'; g.fillRect(24 + x * 80, 30 + y * 80, 40, 56); g.fillStyle = '#e8e0d0'; g.fillRect(20 + x * 80, 86 + y * 80, 48, 6); } });
-for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w = K.R(5.5, 8.5), h = K.R(9, 16); const tex = winT.clone(); tex.needsUpdate = true; tex.repeat.set(w / 3.2, h / 3.2); const m = K.mat(K.pick(['#e2c49a', '#d9a27a', '#efe0c4', '#c9846a', '#e8d6a8', '#b9c4b0', '#f0c890']), { roughness: 0.85, map: tex, normalMap: K.normalTex('plaster', 2), normalScale: new THREE.Vector2(0.4, 0.4) }); const b = K.box(4, h, w, m); b.position.set(side * 8.5, h / 2, z - w / 2); facade.add(b);
+// facade bays (one 3.2 m storey x 3.2 m bay per tile): a tall sash window with frame, glazing bars, sill and lintel,
+// sky reflected in the glass (roughness map), recessed in the wall (normal map); some bays carry louvred shutters
+const facadeCache = {};
+function facadeTex(wall, shut) {
+  const key = wall + shut; if (facadeCache[key]) return facadeCache[key];
+  const S = 512, cv = [0, 1, 2].map(() => { const c = document.createElement('canvas'); c.width = c.height = S; return c; }); const [g, hg, rg] = cv.map(c => c.getContext('2d'));
+  const X = (u) => u * S, Y = (v) => v * S; const box = (ctx, x0, y0, x1, y1, col) => { ctx.fillStyle = col; ctx.fillRect(X(x0), Y(y0), X(x1 - x0), Y(y1 - y0)); };
+  box(g, 0, 0, 1, 1, wall); box(hg, 0, 0, 1, 1, '#808080'); box(rg, 0, 0, 1, 1, '#e8e8e8');
+  for (let i = 0; i < 1400; i++) { const x = Math.random() * S, y = Math.random() * S, r = 2 + Math.random() * 12; g.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${0.02 + Math.random() * 0.03})`; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
+  const wx0 = 0.32, wx1 = 0.68, wy0 = 0.13, wy1 = 0.72;
+  if (shut) for (const [a, b] of [[wx0 - 0.17, wx0 - 0.015], [wx1 + 0.015, wx1 + 0.17]]) { box(g, a, wy0, b, wy1, shut); box(hg, a, wy0, b, wy1, '#9a9a9a'); box(rg, a, wy0, b, wy1, '#a0a0a0');
+    for (let y = wy0 + 0.015; y < wy1 - 0.01; y += 0.022) { box(g, a + 0.01, y, b - 0.01, y + 0.008, 'rgba(0,0,0,0.25)'); box(hg, a + 0.01, y, b - 0.01, y + 0.008, '#707070'); } }
+  box(g, wx0 - 0.03, wy0 - 0.05, wx1 + 0.03, wy0 - 0.005, '#ece4d4'); box(hg, wx0 - 0.03, wy0 - 0.05, wx1 + 0.03, wy0 - 0.005, '#b8b8b8');            // lintel
+  box(g, wx0 - 0.04, wy1 + 0.005, wx1 + 0.04, wy1 + 0.035, '#efe8da'); box(hg, wx0 - 0.04, wy1 + 0.005, wx1 + 0.04, wy1 + 0.035, '#d8d8d8');        // sill
+  box(g, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#f4f0e6'); box(hg, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#a8a8a8'); box(rg, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#909090');   // frame
+  const gl = g.createLinearGradient(0, Y(wy0), 0, Y(wy1)); gl.addColorStop(0, '#a9bccd'); gl.addColorStop(0.45, '#6f8296'); gl.addColorStop(1, '#2f3a46');
+  g.fillStyle = gl; g.fillRect(X(wx0), Y(wy0), X(wx1 - wx0), Y(wy1 - wy0)); box(hg, wx0, wy0, wx1, wy1, '#303030'); box(rg, wx0, wy0, wx1, wy1, '#141414');   // glass, recessed and glossy
+  if (Math.random() < 0.6) { const cc = ['#e9dcc0', '#d9c2a0', '#c9b8a8', '#efe6d6'][Math.floor(Math.random() * 4)]; box(g, wx0 + 0.005, wy0 + 0.005, wx0 + 0.07, wy1 - 0.005, cc); box(g, wx1 - 0.07, wy0 + 0.005, wx1 - 0.005, wy1 - 0.005, cc); box(rg, wx0, wy0, wx0 + 0.07, wy1, '#d0d0d0'); box(rg, wx1 - 0.07, wy0, wx1, wy1, '#d0d0d0'); }   // curtains
+  g.fillStyle = 'rgba(255,255,255,0.18)'; g.beginPath(); g.moveTo(X(wx0), Y(wy0 + 0.25)); g.lineTo(X(wx0 + 0.18), Y(wy0)); g.lineTo(X(wx0 + 0.26), Y(wy0)); g.lineTo(X(wx0), Y(wy0 + 0.36)); g.fill();   // a streak of reflected sky
+  for (const [x0, y0, x1, y1] of [[0.495, wy0, 0.505, wy1], [wx0, 0.425, wx1, 0.435]]) { box(g, x0, y0, x1, y1, '#f4f0e6'); box(hg, x0, y0, x1, y1, '#a0a0a0'); box(rg, x0, y0, x1, y1, '#909090'); }   // glazing bars
+  box(g, 0, 0.965, 1, 1, 'rgba(0,0,0,0.06)'); box(hg, 0, 0.965, 1, 1, '#909090');                                                                     // string course
+  const map = new THREE.CanvasTexture(cv[0]); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
+  const nc = document.createElement('canvas'); nc.width = nc.height = S; const hd = hg.getImageData(0, 0, S, S).data, nimg = new ImageData(S, S), d = nimg.data, H = (x, y) => hd[((Math.min(S - 1, Math.max(0, y))) * S + Math.min(S - 1, Math.max(0, x))) * 4] / 255;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = (H(x + 1, y) - H(x - 1, y)) * 6, dy = (H(x, y + 1) - H(x, y - 1)) * 6, l = Math.hypot(dx, dy, 1), i = (y * S + x) * 4; d[i] = (-dx / l * 0.5 + 0.5) * 255; d[i + 1] = (dy / l * 0.5 + 0.5) * 255; d[i + 2] = (1 / l * 0.5 + 0.5) * 255; d[i + 3] = 255; }
+  nc.getContext('2d').putImageData(nimg, 0, 0); const normalMap = new THREE.CanvasTexture(nc); normalMap.colorSpace = THREE.NoColorSpace;
+  const roughnessMap = new THREE.CanvasTexture(cv[2]); roughnessMap.colorSpace = THREE.NoColorSpace;
+  for (const t of [map, normalMap, roughnessMap]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+  return (facadeCache[key] = { map, normalMap, roughnessMap });
+}
+for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w = K.R(5.5, 8.5), h = 3.2 * Math.round(K.R(9, 16) / 3.2); const T = facadeTex(K.pick(['#e2c49a', '#d9a27a', '#efe0c4', '#c9846a', '#e8d6a8', '#b9c4b0', '#f0c890']), K.pick([null, null, '#2f5a4a', '#4a5f72', '#7a4a3a']));
+  const tx = [T.map, T.normalMap, T.roughnessMap].map(t => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(w / 3.2, h / 3.2); return c; });
+  const m = new THREE.MeshStandardMaterial({ map: tx[0], normalMap: tx[1], normalScale: new THREE.Vector2(1.2, 1.2), roughnessMap: tx[2], roughness: 1, metalness: 0, envMapIntensity: 1.2 });
+  const b = K.box(4, h, w, m); b.position.set(side * 8.5, h / 2, z - w / 2); facade.add(b);
+  const cor = K.box(0.7, 0.42, w + 0.12, K.mat('#efe6d4', { roughness: 0.75 })); cor.position.set(side * 6.55, h - 0.25, z - w / 2); facade.add(cor);                       // cornice
+  const crs = K.box(0.25, 0.18, w, K.mat('#e6dccb', { roughness: 0.8 })); crs.position.set(side * 6.5, 3.35, z - w / 2); facade.add(crs);                                  // string course over the shops
   const shopC = K.pick(['#2f6b5a', '#8a3a2a', '#2f4a6a', '#6a4a2a']); const aw = K.box(1.0, 0.08, w * 0.8, K.mat(shopC, { roughness: 0.8 })); aw.position.set(side * 6.15, 3.1, z - w / 2); aw.rotation.z = -side * 0.35; facade.add(aw);
   const sf = K.box(0.1, 2.6, w * 0.7, K.mat('#2a3036', { roughness: 0.2, metalness: 0.3 })); sf.position.set(side * 6.45, 1.4, z - w / 2); facade.add(sf);
   for (let k = 0; k < Math.floor(h / 3.2) - 1; k++) { const bal = K.box(0.6, 0.08, 1.4, K.mat('#e8e0d0', { roughness: 0.6 })); bal.position.set(side * 6.2, 4.5 + k * 3.2, z - w / 2 + K.R(-1, 1)); facade.add(bal); const plant = F.shrub({ size: 0.32, seed: k + 3 }); plant.position.copy(bal.position).add(V(0, 0.05, 0)); facade.add(plant); } }

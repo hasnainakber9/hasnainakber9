@@ -1,6 +1,6 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
 import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU } from './core.js';
-import { compoundLeaf } from './foliage.js';
+import { compoundLeaf, beanLeaf, scrap } from './foliage.js';
 const TAU = Math.PI * 2;
 
 // ------------------------------------------------------------------ leaf textures (alpha cards)
@@ -37,7 +37,7 @@ export function leafTex(kind) {
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; leafTexCache[kind] = t; return t;
 }
 export function leafMat(kind, o = {}) {
-  if (kind === 'tomato') { const L = compoundLeaf(); return new THREE.MeshStandardMaterial({ map: L.map, normalMap: L.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), alphaTest: 0.5, side: THREE.DoubleSide, roughness: o.roughness ?? 0.6, vertexColors: true, color: o.color || '#ffffff' }); }
+  if (kind === 'tomato' || kind === 'broad') { const L = kind === 'tomato' ? compoundLeaf() : beanLeaf(); return new THREE.MeshStandardMaterial({ map: L.map, normalMap: L.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), alphaTest: 0.5, side: THREE.DoubleSide, roughness: o.roughness ?? 0.6, vertexColors: true, color: o.color || '#ffffff' }); }
   return new THREE.MeshStandardMaterial({ map: leafTex(kind), alphaTest: 0.45, side: THREE.DoubleSide, roughness: o.roughness ?? 0.62, vertexColors: true, color: o.color || '#ffffff' }); }
 // a bent card: base at origin, growing along +y; curl bends tip toward +z
 function cardGeo(w, h, curl = 0.3, twist = 0, segY = 4) {
@@ -343,8 +343,8 @@ export function caddy(o = {}) { // kitchen organics caddy: an OPEN bin (separate
   // what's already inside: peels, cores, coffee grounds — a dark lumpy mass
   const fill = new THREE.Group(); const fm = mat('#4a3424', { roughness: 0.95, normalMap: normalTex('soil', 1), normalScale: new THREE.Vector2(1, 1) });
   const base = mesh(new THREE.PlaneGeometry(W - 0.03, D - 0.03, 10, 10), fm); base.rotation.x = -Math.PI / 2; base.position.y = H * 0.55; const bp = base.geometry.attributes.position; for (let i = 0; i < bp.count; i++) bp.setZ(i, (noise2(bp.getX(i) * 40, bp.getY(i) * 40) - 0.5) * 0.03); base.geometry.computeVertexNormals(); fill.add(base);
-  const bits = [['#c98a4a', 0.035], ['#e0742a', 0.03], ['#a83a22', 0.028], ['#5f8a3a', 0.03], ['#d9c49a', 0.025]];
-  for (let i = 0; i < 14; i++) { const [col, r] = bits[i % bits.length]; const b = mesh(new THREE.SphereGeometry(r, 10, 6), mat(col, { roughness: 0.7 })); b.scale.y = 0.35; b.position.set(R(-W / 2 + 0.04, W / 2 - 0.04), H * 0.56, R(-D / 2 + 0.04, D / 2 - 0.04)); b.rotation.set(R(0, 1), R(0, 6), 0); fill.add(b); }
+  const kinds = ['onion', 'peel', 'tomato', 'carrot', 'potato', 'onion', 'peel'];
+  for (let i = 0; i < 14; i++) { const b = scrap(kinds[i % kinds.length], 200 + i); b.position.set(R(-W / 2 + 0.05, W / 2 - 0.05), H * 0.555, R(-D / 2 + 0.05, D / 2 - 0.05)); b.rotation.set(R(-0.3, 0.3), R(0, 6), R(-0.3, 0.3)); fill.add(b); }
   g.add(fill);
   const lid = new THREE.Group(); lid.position.set(0, H + 0.01, -D / 2); const l = mesh(new RoundedBoxGeometry(W + 0.012, 0.022, D + 0.012, 2, 0.008), mat(o.lid || '#7a9a3a', { roughness: 0.4 })); l.position.z = D / 2; lid.add(l); g.add(lid); g.userData.lid = lid; g.userData.H = H;
   return g;

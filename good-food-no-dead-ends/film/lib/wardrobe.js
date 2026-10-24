@@ -109,7 +109,17 @@ function skinnedMesh(h, g, mat, name) {
 // ------------------------------------------------------------------ the fitted surface
 // o: gap (m beyond the envelope, number or fn(v,p)), loose (max extra standoff), iters, lambda, puff(p) -> extra outward,
 //    wrinkle (amplitude), island(v) -> 0 body/skirt | 1 left sleeve | 2 right sleeve (UV islands), rim (edge thickness), mat, name
+// drop small disconnected islands a cut can leave behind (a few stray triangles at the corner of a V, say)
+function dropIslands(tris, minShare = 0.02) {
+  const par = new Map(), find = (x) => { while (par.get(x) !== x) { par.set(x, par.get(par.get(x))); x = par.get(x); } return x; };
+  for (const v of tris) if (!par.has(v)) par.set(v, v);
+  for (let f = 0; f < tris.length; f += 3) { const a = find(tris[f]), b = find(tris[f + 1]), c = find(tris[f + 2]); par.set(b, a); par.set(find(c), a); }
+  const size = new Map(); for (let f = 0; f < tris.length; f += 3) { const r = find(tris[f]); size.set(r, (size.get(r) || 0) + 1); }
+  const n = tris.length / 3, out = []; for (let f = 0; f < tris.length; f += 3) if (size.get(find(tris[f])) >= Math.max(12, n * minShare)) out.push(tris[f], tris[f + 1], tris[f + 2]);
+  return out;
+}
 function garment(h, K, tris, o) {
+  tris = dropIslands(tris);
   const P = h.P, NB = bodyNormals(h, K), E = envelope(h, K), F = frame(h);
   const loc = new Map(), verts = []; const idx = Uint32Array.from(tris, (v) => { let i = loc.get(v); if (i === undefined) { i = verts.length; loc.set(v, i); verts.push(v); } return i; });
   const n = verts.length; if (!n) return null;

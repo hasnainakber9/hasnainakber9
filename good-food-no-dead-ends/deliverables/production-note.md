@@ -36,14 +36,14 @@ Each technology does one ordinary job and people stay in charge of it. Nothing i
 ## How it was made
 
 - **Tools actually used.** No Unity editor, GPU or generative video model was reachable from the production environment, so Unity, the AI Video Maker plugin and Higgsfield were not used. Every shot is a 3D scene written in three.js and rendered frame by frame, deterministically, in headless Chromium through the video-studio renderer.
-- **Characters.** Eight recurring characters with a fixed wardrobe bible are built as stylised clay figures. Each has a face rig with blinks, brows, smiles and lip-sync driven by the loudness of their own line, two-bone arm IK and walk cycles.
-- **Look.** Image-based lighting from CC0 HDRIs, soft shadows, ambient occlusion, depth of field and focus pulls, bloom, a light film grade and grain.
+- **Characters.** The eight recurring characters and the people in the background are realistic humans built from MakeHuman's CC0 body model. Each body is shaped from age, sex, ancestry and build, skinned to a 163-bone skeleton and given strand hair, brows and beards, skin with soft subsurface-style shading, eyes with a separate wet cornea, and expression morphs for speech, blinks, gaze and smiles. The motion comes from the film's original rig (two-bone arm IK, gaze, walk cycles) retargeted onto that skeleton. Outer garments (lab coats, puffer and hi-vis vests, aprons, a knitted cowl, caps and a headwrap) are fitted in code over the clothes worn beneath them.
+- **Look.** Image-based lighting from CC0 HDRIs, soft shadows, ambient occlusion, depth of field and focus pulls, bloom, a light film grade and grain. Trees and shrubs are crowns of painted leaf-cluster cards; tomato and bean plants use painted leaves with normal maps; tomatoes scatter light under a waxy skin; street facades have recessed, sky-reflecting windows.
 - **Voices.** Kokoro text-to-speech, run locally, one voice per character with small pitch and speed changes. The voices are synthetic.
 - **Music and sound.** The score, room tones, ambience and foley were synthesised in Python for this film. The music is a D–Bm–G–A loop at 96 BPM that lands on D at the title. Dialogue is compressed on its own bus, and music ducks under speech.
 - **Unity project.** The finished shots are exported to a Unity 6 project as animated glTF scenes with the film's exact camera paths, lights and edit data. An editor script rebuilds the master Timeline, and the Recorder renders it. No Unity editor was available here, so the project has never been opened or compiled; its C# passes a syntax check only.
 
 ## Limits worth knowing
 
-- The brief asked for a hyperrealistic film. This version is stylised 3D animation, because photoreal rendering needed Unity HDRP or a video model on a GPU, and neither was available.
+- The brief asked for a hyperrealistic film. The people are realistic 3D humans and the sets are detailed, but everything is still rendered in real time on a software renderer: there is no ray-traced lighting, cloth simulation or photographed texture work, so it reads as high-end real-time 3D rather than live action. Unity HDRP or a GPU video model would be the next step, and neither was available here.
 - The synthetic voices are clear but sometimes flat. Recording real voice actors over the existing timing would be the biggest single upgrade.
 - Total spend was $0. No credits, subscriptions or paid APIs were used.
