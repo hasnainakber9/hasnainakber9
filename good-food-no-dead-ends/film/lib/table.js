@@ -1,7 +1,8 @@
 // GOOD FOOD. NO DEAD ENDS. — the shared evening meal (s08, s10): one seating plan, one place setting, for continuity.
 import { THREE, V, R, seed, mesh, smooth, lerp, keyed } from './core.js';
 import * as P from './props.js';
-import { puppet } from './people.js';
+import { puppet, frameQ } from './people.js';
+import { fork as makeFork, forkGrip } from './cutlery.js';
 import { mealSpread } from './sets.js';
 
 // far side faces +z (towards the main camera), near side faces -z; the two ends face inward
@@ -33,15 +34,22 @@ export function seatCast(app, lines, who = Object.keys(SEATS), o = {}) {
   return cast;
 }
 
-// periodic fork-to-mouth (or bread) with per-person phase; returns the fork mesh
+// a fork held properly in the hand ('R' driver side), and where the palm has to be for its tines to reach a point
+export function heldFork(app, p, side = 'R') {
+  const F = makeFork(); app.scene.add(F); const G = forkGrip(side); p.attach(side, F, { pos: G.pos, q: G.q });
+  const tip = V(0, 0.016, 0.112), grip = V(...G.pos);
+  const palmFor = (P, q) => P.clone().sub(grip.clone().add(tip.clone().applyQuaternion(G.q)).applyQuaternion(q));
+  return { fork: F, tip, palmFor };
+}
+// periodic fork-to-mouth with per-person phase: the hand turns the tines down to the plate, then up to the lips
 export function eating(app, p, top, o = {}) {
-  const plate = plateOf(p.name, top); const rate = o.rate || 0.9, ph = o.phase || 0;
-  const mouth = () => p.head.getWorldPosition(V()).add(p.offsetToWorld([0, -0.02, 0.15])).add(V(0, 0.05, 0));
-  const fork = P.ware.fork(); fork.scale.setScalar(1.1); app.scene.add(fork);
+  const plate = plateOf(p.name, top); const rate = o.rate || 0.9, ph = o.phase || 0; const { fork, palmFor } = heldFork(app, p, 'R');
   const w = (t) => { if (o.from != null && t < o.from) return 0; if (o.until != null && t > o.until) return 0; const c = Math.sin(t * rate * Math.PI + ph); return smooth(Math.max(0, c) * 1.6); };
-  p.hand('R', [{ t: 0, at: (t) => plate.clone().add(V(0.06, 0.03, 0)).lerp(mouth(), w(t)), pole: [0.8, -0.6, -0.3] }]);
-  p.hand('L', [{ t: 0, at: () => plate.clone().add(p.offsetToWorld([-0.18, 0.02, -0.05])), pole: [-0.8, -0.6, -0.3] }]);
-  app.after(t => { const g = p.arms.R.grip.getWorldPosition(V()); fork.position.copy(g); const toward = w(t) > 0.5 ? mouth() : plate; fork.lookAt(toward); });
+  const qPlate = () => frameQ(p.dirToWorld([-0.15, -0.6, 1]), p.dirToWorld([-0.5, -0.8, 0.1])), qMouth = () => frameQ(p.dirToWorld([-0.4, 0.3, -1]), p.dirToWorld([-0.5, -0.8, 0.2]));
+  const q = (t) => qPlate().slerp(qMouth(), w(t));
+  const point = (t) => plate.clone().add(V(0.06, 0.035, 0)).lerp(p.mouthWorld().add(p.offsetToWorld([0, -0.004, 0.03])), w(t));
+  p.hand('R', [{ t: 0, at: (t) => palmFor(point(t), q(t)), aim: (t) => q(t), shape: 'fork', pole: [0.8, -0.6, -0.3] }]);
+  p.hand('L', [{ t: 0, at: () => plate.clone().add(p.offsetToWorld([-0.18, 0.02, -0.05])), pole: [-0.8, -0.6, -0.3], shape: 'relaxed', aim: () => ({ fingers: p.dirToWorld([0.3, -0.2, 1]), palm: V(0, -1, 0) }) }]);
   if (o.chew !== false) p.face([{ t: 0, smile: o.smile ?? 0.35, chew: 0.0 }]);
   return { fork, w };
 }

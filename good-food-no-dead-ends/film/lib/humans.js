@@ -28,12 +28,25 @@ export async function loadKit() {
   for (const [k, p] of Object.entries(meta.proxies)) for (const [slot, f] of Object.entries(p.tex || {})) jobs.push(load(k + ':' + slot, 'proxies/' + f, slot === 'diffuse'));
   await Promise.all(jobs);
   for (const k of Object.keys(tex)) if (/^(teeth|eyelashes|brow_[a-z0-9]+):diffuse$/.test(k)) tex[k] = bleed(tex[k]);
+  for (const k of Object.keys(tex)) if (k.startsWith('skin:')) tex[k] = handBacks(tex[k]);
   await loadNormals(['skin', 'cloth', 'knit']);
   KIT = { meta, N, pos: new Float32Array(pos), bmap: new Uint16Array(bmap), buv: new Float32Array(buv), bidx: new Uint32Array(bidx),
     swI: new Uint8Array(sw, 0, N * 4), swW: new Float32Array(sw, N * 4, N * 4), tgU: new Uint16Array(tg), tgI: new Int16Array(tg), proxies, tex };
   return KIT;
 }
 
+// The skin textures' pale (palm-coloured) hand islands land on the backs of the hands with this mesh's UVs, which on
+// darker skins reads as white gloves. Bring texels in the hand area that are clearly lighter than the arm skin back to
+// the arm's tone (their shading detail is kept); on light skins nothing crosses the threshold.
+function handBacks(t) {
+  const img = t.image, w = img.width, h = img.height; const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0); const id = g.getImageData(0, 0, w, h), d = id.data; const lum = (i) => 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2];
+  const ref = [0, 0, 0]; let n = 0; for (let y = Math.floor(h * 0.3); y < h * 0.6; y += 2) for (let x = Math.floor(w * 0.3); x < w * 0.55; x += 2) { const i = (y * w + x) * 4; for (let c = 0; c < 3; c++) ref[c] += d[i + c]; n++; }
+  for (let c = 0; c < 3; c++) ref[c] /= n; const refL = 0.3 * ref[0] + 0.59 * ref[1] + 0.11 * ref[2]; if (refL > 150) return t;   // light skin: palms and backs already match
+  for (let y = Math.floor(h * 0.74); y < h; y++) for (let x = Math.floor(w * 0.29); x < Math.floor(w * 0.82); x++) { const i = (y * w + x) * 4, L = lum(i), k = clamp((L - refL * 1.12) / (refL * 0.22), 0, 1);
+    if (k > 0) for (let c = 0; c < 3; c++) d[i + c] = lerp(d[i + c], d[i + c] * (ref[c] / Math.max(1, d[i + c])) * (L / refL) ** 0.35 * 0.98, k); }
+  g.putImageData(id, 0, 0); const o = new THREE.CanvasTexture(cv); o.colorSpace = t.colorSpace; o.anisotropy = t.anisotropy; o.flipY = t.flipY; return o;
+}
 // spread colour into a texture's empty (transparent or black) texels, so mipmaps don't pull dark fringes into the islands
 function bleed(t) {
   const img = t.image, w = img.width, h = img.height; const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true });
@@ -269,7 +282,8 @@ export function buildHuman(cfg) {
   // (an ellipsoid that stretches down with the jaw) stops the open mouth showing through the head
   const teeth = proxy('teeth', new THREE.MeshStandardMaterial({ map: T('teeth'), roughness: 0.42, color: '#e2d8c6', envMapIntensity: 0.55 }), { shadow: false });
   // (no tongue: MakeHuman's expression units push it forward through the teeth when the jaw opens, and the dark cavity reads better)
-  { const tp = teeth.geometry.attributes.position; const bb = new THREE.Box3().setFromBufferAttribute(tp); const c = bb.getCenter(V()), sz = bb.getSize(V());
+  let mouthRest = null;
+  { const tp = teeth.geometry.attributes.position; const bb = new THREE.Box3().setFromBufferAttribute(tp); const c = bb.getCenter(V()), sz = bb.getSize(V()); mouthRest = V(c.x, c.y, c.z + sz.z * 0.5 + 0.009);   // between the lips
     const r = V(sz.x * 0.4, sz.y * 0.72, sz.z * 0.42); const cav = new THREE.SphereGeometry(1, 24, 16); const cp = cav.attributes.position;
     for (let i = 0; i < cp.count; i++) cp.setXYZ(i, c.x + cp.getX(i) * r.x, c.y + cp.getY(i) * r.y, c.z - sz.z * 0.08 + cp.getZ(i) * r.z);
     const ui = units.indexOf('mouth-open'), dLow = V(); let nLow = 0;
@@ -301,7 +315,7 @@ export function buildHuman(cfg) {
 
   const unitIndex = Object.fromEntries(units.map((u, i) => [u, i]));
   const human = {
-    K, group, bones, rest, skeleton, meshes, body, height: cfg.height, units, P, UD, clothes,
+    K, group, bones, rest, skeleton, meshes, body, height: cfg.height, units, P, UD, clothes, mouthRest,
     bone: (n) => bones.get(n),
     // expression weights by unit name (0..1); unspecified units relax to 0
     setFace(w) { for (const m of meshes) { const inf = m.morphTargetInfluences; if (!inf) continue; inf.fill(0); for (const k in w) { const i = unitIndex[k]; if (i !== undefined) inf[i] = clamp(w[k], 0, 1.2); } } },

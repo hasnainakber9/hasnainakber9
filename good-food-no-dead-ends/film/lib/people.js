@@ -610,11 +610,11 @@ const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qc = new THREE.Q
 const DOWN = new THREE.Vector3(0, -1, 0), FWD = new THREE.Vector3(0, 0, 1);
 function setWorldQuat(bone, q) { bone.parent.updateWorldMatrix(true, false); bone.parent.getWorldQuaternion(qa); bone.quaternion.copy(qa.invert().multiply(q)); bone.updateMatrixWorld(true); }
 // hand frame from a finger direction and a palm normal (world): Y along the fingers, Z out of the palm, X = Y x Z
-function frameQ(fingers, palm) { const Y = fingers.clone().normalize(), Z = palm.clone().sub(Y.clone().multiplyScalar(palm.dot(Y))).normalize(), X = new THREE.Vector3().crossVectors(Y, Z);
+export function frameQ(fingers, palm) { const Y = fingers.clone().normalize(), Z = palm.clone().sub(Y.clone().multiplyScalar(palm.dot(Y))).normalize(), X = new THREE.Vector3().crossVectors(Y, Z);
   return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)); }
 // hand shapes: curl (rad) of joints 1..3 for thumb, index, middle, ring, little; opp = thumb swung across the palm; spread = fingers fanned
 export const HAND = {
-  relaxed: { f: [[0.12, 0.18, 0.12], [0.18, 0.3, 0.2], [0.22, 0.36, 0.22], [0.28, 0.42, 0.26], [0.34, 0.48, 0.3]], opp: 0.15 },
+  relaxed: { f: [[0.12, 0.18, 0.12], [0.22, 0.34, 0.22], [0.26, 0.4, 0.24], [0.32, 0.46, 0.28], [0.38, 0.52, 0.32]], opp: 0.15, spread: -0.07 },
   flat:    { f: [[0.02, 0.04, 0.02], [0.04, 0.05, 0.03], [0.04, 0.05, 0.03], [0.05, 0.06, 0.04], [0.06, 0.07, 0.04]], opp: 0.0 },
   spread:  { f: [[0.05, 0.08, 0.05], [0.06, 0.08, 0.05], [0.08, 0.1, 0.06], [0.1, 0.12, 0.08], [0.12, 0.14, 0.08]], opp: -0.1, spread: 0.18 },
   hold:    { f: [[0.3, 0.4, 0.3], [0.7, 0.8, 0.5], [0.75, 0.85, 0.55], [0.8, 0.9, 0.55], [0.85, 0.95, 0.6]], opp: 0.45 },
@@ -736,11 +736,13 @@ export class HumanPuppet extends Puppet {
     for (const a of this.held || []) { if (t < a.from || t > a.until) continue; const f = this.handFrame(a.s);
       a.obj.position.copy(f.pos).add(a.pos.clone().applyQuaternion(f.quat)); a.obj.quaternion.copy(f.quat).multiply(a.q); a.obj.updateMatrixWorld(true); }
   }
+  // the point between the lips, in world space (follows the head)
+  mouthWorld() { const hb = this.h.bone('head'); hb.updateWorldMatrix(true, false); return hb.localToWorld(this.h.mouthRest.clone().sub(this.h.joint('head'))); }
   // palm centre and hand frame (Y along the fingers, Z out of the palm) in world space
   handFrame(s) { const H = this.HF[s], Wr = this.h.bone('wrist.' + this.MS[s]); Wr.updateWorldMatrix(true, false); const q = Wr.getWorldQuaternion(new THREE.Quaternion());
     return { pos: H.off.clone().applyQuaternion(q).add(Wr.getWorldPosition(new THREE.Vector3())), quat: q.clone().multiply(H.B) }; }
   // keep a prop in this hand: pos (m) and rot (Euler, rad) in the hand frame, optionally only between from..until
-  attach(s, obj, o = {}) { (this.held = this.held || []).push({ s, obj, pos: V(...(o.pos || [0, 0, 0])), q: new THREE.Quaternion().setFromEuler(new THREE.Euler(...(o.rot || [0, 0, 0]))), from: o.from ?? -1e9, until: o.until ?? 1e9 }); return obj; }
+  attach(s, obj, o = {}) { (this.held = this.held || []).push({ s, obj, pos: V(...(o.pos || [0, 0, 0])), q: o.q ? o.q.clone() : new THREE.Quaternion().setFromEuler(new THREE.Euler(...(o.rot || [0, 0, 0]))), from: o.from ?? -1e9, until: o.until ?? 1e9 }); return obj; }
   // the blended aim of the current hand keys: { q: wanted hand frame (world), w }
   aimAt(hk, t) {
     if (!hk) return null; const qf = (k) => { if (!k || !k.aim) return null; const a = typeof k.aim === 'function' ? k.aim(t, this) : k.aim; if (!a) return null; return a.isQuaternion ? a.clone() : frameQ(a.fingers, a.palm); };
