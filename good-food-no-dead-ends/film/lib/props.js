@@ -411,21 +411,47 @@ export function rescueContainer(o = {}) { // clean, lidded food-rescue tub (safe
   const food = mesh(new RoundedBoxGeometry(w * 0.9, h * 0.6, d * 0.88, 2, 0.012), new THREE.MeshPhysicalMaterial({ color: o.food || '#b8401f', roughness: 0.45, clearcoat: 0.4 })); food.position.y = -h * 0.15; g.add(food);
   const lid = mesh(new RoundedBoxGeometry(w + 0.01, 0.018, d + 0.01, 2, 0.008), mat(o.lid || '#2f8a57', { roughness: 0.4 })); lid.position.y = h / 2 + 0.006; g.add(lid); g.userData.lid = lid; return g;
 }
-export function caddy(o = {}) { // kitchen organics caddy: an OPEN bin (separate stream for peels/inedibles)
-  const g = new THREE.Group(); const c = o.color || '#5b4a3a'; const m = mat(c, { roughness: 0.5, side: THREE.DoubleSide });
-  const W = 0.28, D = 0.24, H = 0.32, t = 0.012;
-  g.add(at(mesh(new RoundedBoxGeometry(W, 0.02, D, 2, 0.008), m), 0, 0.01, 0));
-  g.add(at(mesh(new THREE.BoxGeometry(W, H, t), m), 0, H / 2, D / 2 - t / 2)); g.add(at(mesh(new THREE.BoxGeometry(W, H, t), m), 0, H / 2, -D / 2 + t / 2));
-  g.add(at(mesh(new THREE.BoxGeometry(t, H, D), m), W / 2 - t / 2, H / 2, 0)); g.add(at(mesh(new THREE.BoxGeometry(t, H, D), m), -W / 2 + t / 2, H / 2, 0));
-  const rim = mat(new THREE.Color(c).offsetHSL(0, 0, -0.06).getStyle(), { roughness: 0.45 });
-  for (const [w, d, x, z] of [[W + 0.01, 0.02, 0, D / 2], [W + 0.01, 0.02, 0, -D / 2], [0.02, D, W / 2, 0], [0.02, D, -W / 2, 0]]) g.add(at(box(w, 0.018, d, rim), x, H, z));
-  // what's already inside: peels, cores, coffee grounds — a dark lumpy mass
-  const fill = new THREE.Group(); const fm = mat('#4a3424', { roughness: 0.95, normalMap: normalTex('soil', 1), normalScale: new THREE.Vector2(1, 1) });
-  const base = mesh(new THREE.PlaneGeometry(W - 0.03, D - 0.03, 10, 10), fm); base.rotation.x = -Math.PI / 2; base.position.y = H * 0.55; const bp = base.geometry.attributes.position; for (let i = 0; i < bp.count; i++) bp.setZ(i, (noise2(bp.getX(i) * 40, bp.getY(i) * 40) - 0.5) * 0.03); base.geometry.computeVertexNormals(); fill.add(base);
+// kitchen organics caddy (a separate stream for peels and inedibles): a moulded plastic bin, rounded and a little narrower
+// at the foot, with a lip, a vented lid hinged at the back (userData.lid: rotate .x to open, -1.6 = wide open) and a bail
+// handle folded down behind it
+export function caddy(o = {}) {
+  const g = new THREE.Group(), c = o.color || '#4a5a3c', W = 0.23, D = 0.19, H = 0.25, T = 0.005, NS = 48, NY = 10;
+  const plastic = new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.42, clearcoat: 0.25, clearcoatRoughness: 0.5, side: THREE.DoubleSide });
+  // a rounded rectangle (superellipse) of half sizes a, b at parameter u
+  const rr = (u, a, b) => { const t = u * TAU, cs = Math.cos(t), sn = Math.sin(t), e = 0.32; return [a * Math.sign(cs) * Math.pow(Math.abs(cs), e), b * Math.sign(sn) * Math.pow(Math.abs(sn), e)]; };
+  const wall = (inset, flip) => { const pos = [], idx = [];
+    for (let j = 0; j <= NY; j++) { const y = H * j / NY, k = 0.88 + 0.12 * (j / NY); for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, W / 2 * k - inset, D / 2 * k - inset); pos.push(x, y, z); } }
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NS; i++) { const p0 = j * (NS + 1) + i, p1 = p0 + 1, p2 = p0 + NS + 1, p3 = p2 + 1; if (flip) idx.push(p0, p1, p2, p1, p3, p2); else idx.push(p0, p2, p1, p1, p2, p3); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals(); return mesh(geo, plastic); };
+  g.add(wall(0, false), wall(T, true));
+  { const sh = new THREE.Shape(); for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, W / 2 * 0.88, D / 2 * 0.88); if (i) sh.lineTo(x, z); else sh.moveTo(x, z); }   // the floor
+    const fl = mesh(new THREE.ShapeGeometry(sh, 4), plastic); fl.rotation.x = Math.PI / 2; fl.position.y = 0.004; g.add(fl); }
+  { const pts = []; for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, W / 2 + 0.004, D / 2 + 0.004); pts.push(V(x, H, z)); }   // the lip
+    g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), NS * 2, 0.006, 8, true), plastic)); }
+  // what's already inside: peels, cores, coffee grounds on a dark lumpy mass
+  const fill = new THREE.Group(); const fm = mat('#3a2a1c', { roughness: 0.95, normalMap: normalTex('soil', 1), normalScale: new THREE.Vector2(1, 1) });
+  { const kf = 0.88 + 0.12 * 0.55, sh = new THREE.Shape(); for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, W / 2 * kf - T, D / 2 * kf - T); if (i) sh.lineTo(x, -z); else sh.moveTo(x, -z); }   // the mass fills the bin wall to wall
+    const fg = new THREE.ShapeGeometry(sh, 6), fp = fg.attributes.position; for (let i = 0; i < fp.count; i++) fp.setZ(i, (noise2(fp.getX(i) * 40, fp.getY(i) * 40) - 0.5) * 0.03); fg.computeVertexNormals();
+    const base = mesh(fg, fm); base.rotation.x = -Math.PI / 2; base.position.y = H * 0.55; fill.add(base); }
   const kinds = ['onion', 'peel', 'tomato', 'carrot', 'potato', 'onion', 'peel'];
   for (let i = 0; i < 14; i++) { const b = scrap(kinds[i % kinds.length], 200 + i); b.position.set(R(-W / 2 + 0.05, W / 2 - 0.05), H * 0.555, R(-D / 2 + 0.05, D / 2 - 0.05)); b.rotation.set(R(-0.3, 0.3), R(0, 6), R(-0.3, 0.3)); fill.add(b); }
   g.add(fill);
-  const lid = new THREE.Group(); lid.position.set(0, H + 0.01, -D / 2); const l = mesh(new RoundedBoxGeometry(W + 0.012, 0.022, D + 0.012, 2, 0.008), mat(o.lid || '#7a9a3a', { roughness: 0.4 })); l.position.z = D / 2; lid.add(l); g.add(lid); g.userData.lid = lid; g.userData.H = H;
+  // lid: a shallow dome with a ring of vent slots and a carbon-filter cap, hinged at the back
+  const lid = new THREE.Group(); lid.position.set(0, H + 0.006, -D / 2 - 0.004);
+  { const pos = [], idx = [], NR = 8; for (let j = 0; j <= NR; j++) { const r = 1 - j / NR; for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, (W / 2 + 0.008) * r, (D / 2 + 0.008) * r); pos.push(x, 0.008 + 0.014 * (1 - r * r), z + D / 2 + 0.004); } }
+    for (let j = 0; j < NR; j++) for (let i = 0; i < NS; i++) { const p0 = j * (NS + 1) + i, p1 = p0 + 1, p2 = p0 + NS + 1, p3 = p2 + 1; idx.push(p0, p2, p1, p1, p2, p3); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    const lidMat = new THREE.MeshPhysicalMaterial({ color: o.lid || c, roughness: 0.4, clearcoat: 0.25, clearcoatRoughness: 0.5, side: THREE.DoubleSide }); lid.add(mesh(geo, lidMat));
+    const skirt = []; for (let i = 0; i <= NS; i++) { const [x, z] = rr(i / NS, W / 2 + 0.008, D / 2 + 0.008); skirt.push(V(x, 0.004, z + D / 2 + 0.004)); } lid.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(skirt, true), NS * 2, 0.005, 6, true), lidMat));
+    // vents: two rings of small round holes (dark, recessed) round the carbon-filter cap
+    const hole = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.lid || c).multiplyScalar(0.18), roughness: 0.9 }), hg = new THREE.CircleGeometry(0.0022, 12);
+    for (const [n, rx, rz] of [[18, 0.05, 0.04], [26, 0.066, 0.053]]) for (let k = 0; k < n; k++) { const a = k / n * TAU, x = Math.cos(a) * rx, z = Math.sin(a) * rz, r = Math.hypot(x / (W / 2 + 0.008), z / (D / 2 + 0.008));
+      const hm = new THREE.Mesh(hg, hole); hm.rotation.x = -Math.PI / 2; hm.position.set(x, 0.008 + 0.014 * (1 - Math.min(1, r) ** 2) + 0.0016, z + D / 2 + 0.004); lid.add(hm); }
+    const cap = mesh(new THREE.CylinderGeometry(0.026, 0.028, 0.004, 40), lidMat); cap.position.set(0, 0.0235, D / 2 + 0.004); lid.add(cap); }
+  g.add(lid); g.userData.lid = lid;
+  // bail handle folded down against the back
+  { const pts = []; for (let i = 0; i <= 24; i++) { const a = Math.PI * i / 24; pts.push(V(-Math.cos(a) * (W / 2 + 0.008), H - 0.035 - Math.sin(a) * 0.012, -D / 2 - 0.012 - Math.sin(a) * 0.05)); }
+    g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.0035, 8, false), mat('#2a2e30', { roughness: 0.35, metalness: 0.4 }))); }
   return g;
 }
 // compost as a tiling texture (about 0.6 m across): dark crumbly humus with lighter crumbs and woody bits, and in fresh

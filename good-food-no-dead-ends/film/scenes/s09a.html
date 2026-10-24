@@ -32,9 +32,9 @@ const scraps = new THREE.Group(); S.add(scraps);
 const sg = [P.produceGeo('onion', { color: '#c98a4a' }), P.tomatoGeo({ r: 0.022, ugly: true, seg: 10, color: '#a83a22', seed: 5 }), P.produceGeo('carrot')];
 const KINDS = ['onion', 'tomato', 'carrot', 'peel', 'onion', 'potato'];
 for (let i = 0; i < 16; i++) { const m = F.scrap(KINDS[i % KINDS.length], 300 + i); m.position.set(K.R(-0.12, 0.12), 0.012, K.R(-0.09, 0.09)); m.rotation.set(K.R(-0.4, 0.4), K.R(0, 6), K.R(-0.4, 0.4)); scraps.add(m); }
-const caddy = P.caddy({ color: '#5b4a3a', lid: '#7a9a3a' }); caddy.position.set(BX - 0.04, top, -0.66); caddy.rotation.y = -Math.PI / 2; S.add(caddy);
+const caddy = P.caddy({ color: '#3f5a38', lid: '#4c6e3e' }); caddy.position.set(BX - 0.04, top, -0.66); caddy.rotation.y = -Math.PI / 2; S.add(caddy);
 const falling = []; for (let i = 0; i < 5; i++) { const m = F.scrap(KINDS[i % KINDS.length], 400 + i); S.add(m); falling.push([m, 3.55 + i * 0.09, K.R(-0.05, 0.05), K.R(-0.04, 0.04), K.R(0, 6)]); }
-app.on(t => { const c = caddy.getWorldPosition(V()); for (const [m, t0, dx, dz, r] of falling) { const u = K.clamp((t - t0) / 0.35); m.visible = t > t0 - 0.05; m.position.set(c.x + dx, c.y + 0.42 - 0.24 * u * u, c.z + 0.08 - 0.08 * u + dz); m.rotation.set(r + u * 2, r, u * 3); } });
+app.on(t => { const c = caddy.getWorldPosition(V()); for (const [m, t0, dx, dz, r] of falling) { const u = K.clamp((t - t0) / 0.35); m.visible = t > t0 - 0.05; m.position.set(c.x + dx, c.y + 0.36 - 0.21 * u * u, c.z + 0.06 - 0.06 * u + dz); m.rotation.set(r + u * 2, r, u * 3); } });
 const spat = new THREE.Group(); spat.add(K.at(K.box(0.07, 0.004, 0.09, K.MAT.steel()), 0, 0, 0.045)); spat.add(K.at(K.box(0.022, 0.016, 0.11, K.mat('#2a2622'), { r: 0.006 }), 0, 0, -0.05)); S.add(spat);
 // cast
 const lines = await K.dialogue('s09');
