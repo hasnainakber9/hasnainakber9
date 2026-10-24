@@ -1,6 +1,11 @@
 // GOOD FOOD. NO DEAD ENDS. — recurring cast as hand-sculpted-looking 3D puppets.
 // One build per character → identical in every shot (continuity). All motion is a pure function of t.
 import { THREE, V, clamp, lerp, smooth, prng, M4, clayMat, canvasTex, noise2, BGU, RoundedBoxGeometry } from './core.js';
+import { loadKit, buildHuman } from './humans.js';
+import { strandHair, scalpLayer, scalpTint, strandBrows } from './hair.js';
+import { vest, labCoat, apron, scarf, cap, headwrap } from './wardrobe.js';
+const KIT = await loadKit();                       // MakeHuman (CC0) assets for the realistic cast
+const CLAY = typeof location !== 'undefined' && new URLSearchParams(location.search).has('clay');   // ?clay renders the original puppets
 
 const TAU = Math.PI * 2;
 
@@ -198,7 +203,7 @@ export class Puppet {
     // neck + head
     const neck = this.neck = new THREE.Group(); neck.position.y = L * 0.985; spine.add(neck);
     this.part(neck, 'skin', new THREE.CylinderGeometry(0.05 * s * g, 0.056 * s * g, D.neck * s + 0.03 * s, 14), M4(0, D.neck * s / 2, 0));
-    const head = this.head = new THREE.Group(); head.position.y = D.neck * s; head.rotation.order = 'YXZ'; neck.add(head);
+    const head = this.head = this.hd = new THREE.Group(); head.position.y = D.neck * s; head.rotation.order = 'YXZ'; neck.add(head);
     this.buildHead(head);
     this.finalize();
   }
@@ -431,10 +436,10 @@ export class Puppet {
     const talking = this.speaking(t), e = this.speech(t), ph = this.phase;
     const nod = talking ? (Math.sin(t * 4.7 + ph) * 0.025 + e * 0.035) : 0;
     const drift = (noise2(t * 0.35, this.seed % 97) - 0.5) * 0.06;
-    this.head.rotation.set(clamp(pitch, -0.55, 0.5) + nod + drift * 0.4, clamp(yaw, -1.15, 1.15) + drift, Math.sin(t * 0.5 + ph) * 0.025 + (talking ? Math.sin(t * 1.7 + ph) * 0.02 : 0));
-    this.head.updateMatrixWorld(true);
+    this.hd.rotation.set(clamp(pitch, -0.55, 0.5) + nod + drift * 0.4, clamp(yaw, -1.15, 1.15) + drift, Math.sin(t * 0.5 + ph) * 0.025 + (talking ? Math.sin(t * 1.7 + ph) * 0.02 : 0));
+    this.hd.updateMatrixWorld(true);
     // eyes aim at the exact (blended) target, with tiny saccades
-    const tgt = tA ? tA.clone().lerp(tB, lk.u) : tB;
+    const tgt = this.gazeTarget = tA ? tA.clone().lerp(tB, lk.u) : tB;
     const sacc = [(noise2(Math.floor(t * 1.6) * 3.1, this.seed % 31) - 0.5) * 0.06, (noise2(Math.floor(t * 1.6) * 2.3, this.seed % 17) - 0.5) * 0.04];
     for (const ey of this.eyes) { const lp = ey.eg.parent.worldToLocal(tgt.clone()).sub(ey.eg.position); const yw = Math.atan2(lp.x, lp.z), pt = -Math.atan2(lp.y, Math.hypot(lp.x, lp.z)); ey.eg.rotation.set(clamp(pt, -0.35, 0.35) + sacc[1], clamp(yw, -0.45, 0.45) + sacc[0], 0); }
     // expressions
@@ -457,6 +462,7 @@ export class Puppet {
     if (F.chew > 0 && talking) open = open * 0.75 + F.chew * 0.12 * (1 + Math.sin(t * 9));
     open = Math.max(open, F.jaw);
     const sm = clamp(F.smile, -1, 1);
+    this.faceState = { F, bl, open, sm, e, talking, t };
     this.mouthLine.scale.set(1 + sm * 0.08 - open * 0.15, 0.12 + Math.abs(sm) * 0.55, 1); this.mouthLine.rotation.z = sm < 0 ? Math.PI : 0; this.mouthLine.position.y = sm < 0 ? -0.06 * this.D.headR * this.s : 0;
     this.cavity.scale.y = (0.012 + open * 0.13) * this.D.headR * this.s; this.cavity.scale.x = (0.15 - open * 0.03 + sm * 0.03) * this.D.headR * this.s;
     this.cavity.position.y = -open * 0.05 * this.D.headR * this.s; this.cavity.visible = open > 0.02;
@@ -465,7 +471,7 @@ export class Puppet {
   dirToWorld(d) { return V(...d).applyQuaternion(this.root.getWorldQuaternion(new THREE.Quaternion())).normalize(); }
   offsetToWorld(d) { return V(...d).applyQuaternion(this.root.getWorldQuaternion(new THREE.Quaternion())); }
   aim(target) { // yaw/pitch of the head pivot toward a world target, in the neck frame
-    const lp = this.neck.worldToLocal(target.clone()); const eye = V(0, this.head.position.y + this.skullC.y + 0.06 * this.D.headR * this.s, 0);
+    const lp = this.neck.worldToLocal(target.clone()); const eye = V(0, this.hd.position.y + this.skullC.y + 0.06 * this.D.headR * this.s, 0);
     const d = lp.sub(eye); return [Math.atan2(d.x, d.z), -Math.atan2(d.y, Math.hypot(d.x, d.z))];
   }
   // analytic two-bone IK: places this hand's grip on a world target (elbow bends toward the pole)
@@ -539,4 +545,188 @@ function walkPose(dist, P, carrying) {
     aLx: -sw * 0.32 + 0.05, aRx: sw * 0.32 + 0.05, eL: 0.3, eR: 0.3, spY: sw * 0.06, hpY: -sw * 0.08, spX: 0.06, hy: Math.abs(Math.cos(ph)) * 0.022 * P.s - 0.01 * P.s };
 }
 
-export function puppet(name, spec) { return new Puppet(name, spec || CAST[name]); }
+
+// ------------------------------------------------------------------ realistic cast (MakeHuman bodies driven by the puppet rig)
+// Each character: a MakeHuman description (ancestry mix, sex, age, build), skin texture, iris, strand hair and brows, clothes.
+const HUMANS = {
+  ASHA: { eth: { african: 0.85, caucasian: 0.15 }, sex: 0, age: 44, muscle: 0.62, weight: 0.5, skin: 'middleage_african_female', iris: '#5a3a22',
+    hair: { style: 'bun', color: '#1b1512', tip: '#2a211b' }, brows: { color: '#241a14' }, wear: { scarf: '#b4532a' },
+    clothes: [{ key: 'shirt_m01', top: { color: '#55633a' }, bottom: { color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
+  NOOR: { eth: { african: 0.75, asian: 0.1, caucasian: 0.15 }, sex: 0, age: 11, muscle: 0.45, weight: 0.45, skin: 'young_african_female', iris: '#4e321e',
+    hair: { style: 'puff', color: '#16100c', tip: '#2b1d14' }, brows: { color: '#1f1610', thick: 0.003, count: 300 },
+    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#e8b52e' }, bottom: { color: '#3d5f94', recolor: 0.35 } }, { key: 'shoes06', color: '#e9e5dc', recolor: 0.8 }] },
+  LUIS: { eth: { caucasian: 0.55, african: 0.2, asian: 0.25 }, sex: 1, age: 36, muscle: 0.6, weight: 0.55, skin: 'young_caucasian_male', skinTint: '#d2ab8c', iris: '#4d3320',
+    hair: { style: 'short', color: '#251b14', tip: '#3a2a1e' }, beard: { style: 'beard', color: '#231912', count: 13000, len: 0.009 }, brows: { color: '#2e2219', thick: 0.0042, count: 480, w: 0.00017 }, wear: { puffer: '#26364f' },
+    clothes: [{ key: 'shirt_m01', top: { color: '#8eaacb' }, bottom: { color: '#2d2f36' } }, { key: 'shoes01' }] },
+  MAYA: { eth: { caucasian: 0.75, asian: 0.25 }, sex: 0, age: 34, muscle: 0.42, weight: 0.45, skin: 'young_caucasian_female', iris: '#56693a', glasses: true,
+    hair: { style: 'ponytail', color: '#5a321c', tip: '#7a4a2c' }, brows: { color: '#4a2a18', thick: 0.0032 }, wear: { labcoat: '#f2f2ec' },
+    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#7b5ea8' }, bottom: { color: '#39414f' } }, { key: 'shoes02', color: '#d9d6cf' }] },
+  COLLEAGUE: { eth: { african: 0.9, caucasian: 0.1 }, sex: 1, age: 32, muscle: 0.55, weight: 0.5, skin: 'young_african_male', iris: '#2a1a10',
+    hair: { style: 'cropped', color: '#0f0c0b', tip: '#1a1411' }, brows: { color: '#120e0c', thick: 0.004 }, wear: { labcoat: '#f2f2ec' },
+    clothes: [{ key: 'suit_m06', top: { plain: true, color: '#4f7f68' }, bottom: { color: '#2a2f3a' } }, { key: 'shoes03' }] },
+  WORKER: { eth: { caucasian: 0.7, asian: 0.3 }, sex: 1, age: 28, muscle: 0.65, weight: 0.55, skin: 'young_caucasian_male', skinTint: '#efd5bd', iris: '#3a2a1a',
+    hair: { style: 'capped', color: '#6a4428', tip: '#7a5434' }, brows: { color: '#5a3a22', thick: 0.0038 }, wear: { hivis: '#d2ea3c', cap: '#2f4a63' },
+    clothes: [{ key: 'suit_m06', top: { plain: true, color: '#5d6a77' }, bottom: { color: '#34373c' } }, { key: 'shoes03' }] },
+  VENDOR: { eth: { african: 0.9, caucasian: 0.1 }, sex: 1, age: 62, muscle: 0.5, weight: 0.62, skin: 'old_african_male', iris: '#24160e',
+    hair: { style: 'capped', color: '#a29d96', tip: '#c4bfb8' }, beard: { style: 'beard', color: '#b9b3aa', len: 0.016 }, brows: { color: '#8f8a84', thick: 0.0042 }, wear: { apron: '#d8ceb6', flatcap: '#5a4a3a' },
+    clothes: [{ key: 'suit_m03', top: { color: '#7e3f2c' }, bottom: { color: '#3b3b3b' } }, { key: 'shoes04' }] },
+  COOK: { eth: { asian: 0.5, african: 0.3, caucasian: 0.2 }, sex: 0, age: 52, muscle: 0.5, weight: 0.6, skin: 'middleage_asian_female', skinTint: '#caa184', iris: '#2a1a10',
+    hair: { style: 'capped', color: '#1b1b1b', tip: '#2b2b2b' }, brows: { color: '#1b1b1b', thick: 0.0032 }, wear: { apron: '#efe6d2', headwrap: '#b8322a' },
+    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#5b3e7b' }, bottom: { color: '#2f2f2f' } }, { key: 'shoes03' }] },
+};
+// background people: a realistic description derived from the clay extra's random spec
+function extraHuman(spec, seed) {
+  const r = prng(seed); const c = new THREE.Color(spec.skin); const lum = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
+  const eth = lum < 0.35 ? { african: 0.9, caucasian: 0.1 } : lum < 0.55 ? { african: 0.35, asian: 0.35, caucasian: 0.3 } : r() < 0.5 ? { caucasian: 0.8, asian: 0.2 } : { asian: 0.7, caucasian: 0.3 };
+  const sex = spec.build === 'm' ? 1 : 0, child = spec.build === 'child', elder = (spec.stoop || 0) > 0;
+  const age = child ? 9 + r() * 4 : elder ? 66 + r() * 10 : 22 + r() * 30;
+  const e = Object.entries(eth).sort((a, b) => b[1] - a[1])[0][0]; const band = age < 35 ? 'young' : age < 60 ? 'middleage' : 'old';
+  const skins = Object.keys(KIT.meta.skins); let skin = `${band}_${e}_${sex ? 'male' : 'female'}`; if (!skins.includes(skin)) skin = `young_${e}_${sex ? 'male' : 'female'}`; if (!skins.includes(skin)) skin = sex ? 'young_caucasian_male' : 'young_caucasian_female';
+  const hs = spec.hairStyle; const style = { bun: 'bun', ponytail: 'ponytail', curly: 'puff', short: 'short', cap: 'capped', flatcap: 'capped', bald: 'cropped', wrap: 'bun' }[hs] || 'short';
+  const suit = sex ? (r() < 0.5 ? 'shirt_m01' : r() < 0.5 ? 'suit_m03' : 'suit_m06') : 'suit_f01';
+  const top = suit === 'suit_f01' || suit === 'suit_m06' ? { plain: true, color: spec.top } : { color: spec.top };
+  const wear = {}; if (spec.outer === 'puffer') wear.puffer = spec.outerColor; if (spec.outer === 'apron') wear.apron = spec.outerColor; if (spec.outer === 'labcoat') wear.labcoat = '#f2f2ec'; if (spec.outer === 'hivis') wear.hivis = '#d2ea3c';
+  if (hs === 'cap') wear.cap = spec.capColor; if (hs === 'flatcap') wear.flatcap = spec.capColor; if (hs === 'wrap') wear.headwrap = spec.wrapColor;
+  return { eth, sex, age, muscle: 0.35 + r() * 0.4, weight: 0.3 + r() * 0.45, skin, iris: '#3a2616', extra: true, wear,
+    hair: { style, color: spec.hair, tip: new THREE.Color(spec.hair).offsetHSL(0, 0, 0.06).getStyle(), count: 3500 }, beard: spec.beard ? { style: 'beard', color: spec.beard === 'grey' ? '#b9b3aa' : spec.hair, count: 3000 } : null,
+    brows: { color: new THREE.Color(spec.hair).multiplyScalar(0.8).getStyle(), count: 220 },
+    clothes: [{ key: suit, ...(suit === 'suit_f01' ? { bottomUV: [0, 0, 0.78, 0.57] } : {}), top, bottom: { color: spec.pants } }, { key: ['shoes01', 'shoes03', 'shoes04', 'shoes06'][Math.floor(r() * 4)] }] };
+}
+function buildCastHuman(name, spec, seed) {
+  const H = HUMANS[name] || extraHuman(spec, seed);
+  const h = buildHuman(Object.assign({ height: spec.height }, H, { brows: false, hair: null }));   // strand hair and brows are added below
+  const hair = H.hair || {}; const q = H.extra ? 0.45 : 1;
+  scalpLayer(h, KIT, hair.color || '#1a1411'); scalpTint(h, KIT, hair.color || '#1a1411');
+  strandHair(h, KIT, hair.style || 'short', Object.assign({ seed: seed % 997 }, hair, { count: Math.round((hair.count || ({ bun: 9000, ponytail: 9000, puff: 11000, short: 12000, cropped: 12000, capped: 9000 }[hair.style] || 9000)) * q) }));
+  if (H.beard) strandHair(h, KIT, H.beard.style, Object.assign({ seed: seed % 991 + 1 }, H.beard, { count: Math.round((H.beard.count || 7000) * q) }));
+  strandBrows(h, KIT, Object.assign({ seed: seed % 983 + 2 }, H.brows || {}, { count: Math.round(((H.brows || {}).count || 380) * q) }));
+  const W = (typeof location !== 'undefined' && new URLSearchParams(location.search).has('nowear')) ? {} : Object.fromEntries(Object.entries(H.wear || {}).filter(([k]) => { const only = typeof location !== 'undefined' && new URLSearchParams(location.search).get('wear'); return !only || only === k; }));
+  if (W.puffer) vest(h, KIT, 'puffer', W.puffer); if (W.hivis) vest(h, KIT, 'hivis', W.hivis); if (W.labcoat) labCoat(h, KIT, W.labcoat); if (W.apron) apron(h, KIT, W.apron);
+  if (W.scarf) scarf(h, KIT, W.scarf); if (W.cap) cap(h, KIT, W.cap, 'cap'); if (W.flatcap) cap(h, KIT, W.flatcap, 'flatcap'); if (W.headwrap) headwrap(h, KIT, W.headwrap);
+  return h;
+}
+
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qc = new THREE.Quaternion(), va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3(), ma = new THREE.Matrix4();
+const DOWN = new THREE.Vector3(0, -1, 0), FWD = new THREE.Vector3(0, 0, 1);
+function setWorldQuat(bone, q) { bone.parent.updateWorldMatrix(true, false); bone.parent.getWorldQuaternion(qa); bone.quaternion.copy(qa.invert().multiply(q)); bone.updateMatrixWorld(true); }
+
+export class HumanPuppet extends Puppet {
+  constructor(name, spec) {
+    super(name, spec);
+    this.root.traverse(o => { if (o.isMesh) o.visible = false; });           // the clay rig becomes an invisible driver
+    const h = this.h = buildCastHuman(name, this.spec, this.seed);
+    this.root.add(h.group); this.ikReq = { L: null, R: null };
+    this.fit();
+  }
+  // driver proportions = this body's joints, so poses and IK targets mean the same on both.
+  // The clay rig names sides as seen from the front (its 'L' limbs sit at -x); the body's are anatomical ('.L' at +x).
+  fit() {
+    const h = this.h, J = (n, e) => h.joint(n, e), MS = this.MS = { L: 'R', R: 'L' };
+    const hip = { L: J('upperleg01.R'), R: J('upperleg01.L') }, knee = { L: J('lowerleg01.R'), R: J('lowerleg01.L') }, ank = { L: J('foot.R'), R: J('foot.L') };
+    const thigh = (hip.L.distanceTo(knee.L) + hip.R.distanceTo(knee.R)) / 2, shin = (knee.L.distanceTo(ank.L) + knee.R.distanceTo(ank.R)) / 2;
+    const hipJ = hip.L.clone().add(hip.R).multiplyScalar(0.5);
+    this.hipY = (ank.L.y + ank.R.y) / 2 + thigh + shin; this.lift = this.hipY - hipJ.y;
+    this.hips.position.set(0, this.hipY, 0);
+    for (const s of ['L', 'R']) { const Lg = this.legs[s]; Lg.leg.position.set(hip[s].x, 0, hip[s].z); Lg.knee.position.set(0, -thigh, 0); Lg.ankle.position.set(0, -shin, 0); }
+    const sp = J('spine05'), nk = J('neck01'), hd = J('head');
+    this.spine.position.set(0, sp.y - hipJ.y, sp.z); this.neck.position.copy(nk).sub(sp); this.hd.position.copy(hd).sub(nk);
+    for (const s of ['L', 'R']) { const A = this.arms[s], m = MS[s]; const sh = J('upperarm01.' + m), el = J('lowerarm01.' + m), wr = J('wrist.' + m), mid = J('finger3-1.' + m);
+      A.arm.position.copy(sh).sub(sp); A.up = sh.distanceTo(el); const fore = el.distanceTo(wr), palm = wr.distanceTo(mid) * 0.7;
+      A.elbow.position.set(0, -A.up, 0); A.wrist.position.set(0, -fore, 0); A.fo = fore + palm; A.grip.position.set(0, -palm, 0.015); A.palm = palm; }
+    const eyes = J('eye.L').add(J('eye.R')).multiplyScalar(0.5); this.eyesRest = eyes;
+    this.skullC.set(0, eyes.y - hd.y - 0.06 * this.D.headR * this.s, 0);
+    const ref = new THREE.Object3D(); ref.position.copy(eyes).sub(hd).add(V(0, -0.105, -0.012)); h.bone('head').add(ref); this.head = ref;   // public: scenes aim at head + 0.09..0.12
+    // retarget constants (root-local rest): driver group rest rotation^-1 x alignment of the body's rest segment to the driver's
+    this.root.updateMatrixWorld(true); const rootQ = this.root.getWorldQuaternion(new THREE.Quaternion()).invert();
+    const restQ = (g) => rootQ.clone().multiply(g.getWorldQuaternion(new THREE.Quaternion()));
+    const chord = (a, b) => J(b).sub(J(a)).normalize();
+    const align = (c, to = DOWN) => new THREE.Quaternion().setFromUnitVectors(c, to);
+    this.K = {};
+    for (const s of ['L', 'R']) {
+      const A = this.arms[s], Lg = this.legs[s], m = MS[s];
+      // a hanging arm angles out a little at the shoulder and more at the elbow (carrying angle), so the hands clear the hips
+      const abd = (deg) => new THREE.Quaternion().setFromAxisAngle(FWD, (m === 'L' ? 1 : -1) * deg * Math.PI / 180);
+      const up = abd(6).multiply(align(chord('upperarm01.' + m, 'lowerarm01.' + m)));
+      let fore = align(chord('lowerarm01.' + m, 'wrist.' + m));
+      // twist the forearm so the hanging hand has its thumb side forward (palm towards the thigh)
+      const side = J('finger2-1.' + m).sub(J('finger5-1.' + m)).applyQuaternion(fore); side.y = 0; side.normalize();
+      const tw = new THREE.Quaternion().setFromUnitVectors(side, FWD); fore = abd(14).multiply(tw.multiply(fore));
+      this.K['upperarm01.' + m] = { g: A.arm, k: restQ(A.arm).invert().multiply(up) };
+      this.K['lowerarm01.' + m] = { g: A.elbow, k: restQ(A.elbow).invert().multiply(fore) };
+      this.K['wrist.' + m] = { g: A.hand, k: restQ(A.hand).invert().multiply(fore.clone()) };
+      this.K['upperleg01.' + m] = { g: Lg.leg, k: restQ(Lg.leg).invert().multiply(align(chord('upperleg01.' + m, 'lowerleg01.' + m))) };
+      this.K['lowerleg01.' + m] = { g: Lg.knee, k: restQ(Lg.knee).invert().multiply(align(chord('lowerleg01.' + m, 'foot.' + m))) };
+      this.K['foot.' + m] = { g: Lg.ankle, k: restQ(Lg.ankle).invert() };
+      // finger curl axes (rest frame = bone frame): fingers bend towards the palm
+      const wr = J('wrist.' + m), handDir = J('finger3-1.' + m).sub(wr).normalize(), sd = J('finger2-1.' + m).sub(J('finger5-1.' + m)).normalize();
+      const palmN = new THREE.Vector3().crossVectors(handDir, sd).multiplyScalar(m === 'L' ? -1 : 1).normalize(); this['palmN' + s] = palmN;
+      this['fingers' + s] = [];
+      for (let f = 1; f <= 5; f++) for (let k = 1; k <= 3; k++) { const n = `finger${f}-${k}.${m}`; if (!h.bone(n)) continue; const d = J(n, 't').sub(J(n)).normalize();
+        this['fingers' + s].push({ b: h.bone(n), axis: new THREE.Vector3().crossVectors(d, palmN).normalize(), f, k }); }
+    }
+    // pelvis rigidly attached to the driver hips (lifted to the straight-leg stance)
+    const hipsRest = new THREE.Matrix4().compose(V(0, this.hipY, 0), new THREE.Quaternion(), V(1, 1, 1));
+    const rootRest = h.bone('root').matrix.clone(); rootRest.elements[13] += this.lift;
+    this.pelvisOff = hipsRest.invert().multiply(rootRest);
+  }
+  ik(side, targetW, poleW, w = 1) { this.ikReq[side] = { t: targetW.clone(), p: poleW.clone(), w }; super.ik(side, targetW, poleW, w); }
+  solve(t) { this.ikReq.L = this.ikReq.R = null; super.solve(t); this.cavity.visible = this.teeth.visible = false; this.retarget(t); }   // the clay mouth parts stay hidden
+  retarget(t) {
+    const h = this.h, B = (n) => h.bone(n);
+    this.root.updateMatrixWorld(true);
+    // pelvis
+    const hm = new THREE.Matrix4().compose(this.hips.position, this.hips.quaternion, V(1, 1, 1)).multiply(this.pelvisOff);
+    hm.decompose(B('root').position, B('root').quaternion, va);
+    // spine and neck: spread the driver's single segments over the body's vertebrae
+    const spread = (q, names, wts) => names.forEach((n, i) => B(n).quaternion.identity().slerp(q, wts[i]));
+    spread(this.spine.quaternion, ['spine05', 'spine04', 'spine03', 'spine02', 'spine01'], [0.14, 0.2, 0.24, 0.24, 0.18]);
+    spread(this.neck.quaternion, ['neck01', 'neck02', 'neck03'], [0.34, 0.33, 0.33]);
+    h.group.updateMatrixWorld(true);
+    setWorldQuat(B('head'), this.hd.getWorldQuaternion(qb));
+    // limbs: driver world rotation x rest correction
+    for (const n of ['upperleg01.L', 'upperleg01.R', 'lowerleg01.L', 'lowerleg01.R', 'foot.L', 'foot.R', 'upperarm01.L', 'upperarm01.R', 'lowerarm01.L', 'lowerarm01.R', 'wrist.L', 'wrist.R']) {
+      const k = this.K[n]; k.g.getWorldQuaternion(qb); setWorldQuat(B(n), qb.multiply(k.k));
+    }
+    // arms reaching for something: exact two-bone IK on the real skeleton
+    for (const s of ['L', 'R']) { const r = this.ikReq[s]; if (r && r.w > 0.001) this.bodyIK(s, r.t, r.p, r.w); }
+    // hands: curl when holding
+    for (const s of ['L', 'R']) { const r = this.ikReq[s]; const grip = r ? 0.25 + 0.5 * r.w : 0.22;
+      for (const F of this['fingers' + s]) { const a = F.f === 1 ? [0.25, 0.35, 0.3][F.k - 1] : [0.85, 0.95, 0.55][F.k - 1]; F.b.quaternion.setFromAxisAngle(F.axis, a * grip); } }
+    h.group.updateMatrixWorld(true);
+    // eyes on the gaze target
+    if (this.gazeTarget) for (const s of ['L', 'R']) { const e = B('eye.' + s); e.parent.updateWorldMatrix(true, false); const ep = e.getWorldPosition(va); const d = vb.copy(this.gazeTarget).sub(ep).normalize();
+      B('head').getWorldQuaternion(qb); const dl = d.applyQuaternion(qc.copy(qb).invert()); const yw = clamp(Math.atan2(dl.x, dl.z), -0.45, 0.45), pt = clamp(-Math.atan2(dl.y, Math.hypot(dl.x, dl.z)), -0.24, 0.26);
+      this.eyePitch = pt; qc.setFromEuler(new THREE.Euler(pt, yw, 0, 'YXZ')); setWorldQuat(e, qb.multiply(qc)); }
+    // face
+    const fs = this.faceState; if (fs) { const { F, bl, open, sm, e, talking } = fs; const tt = fs.t;
+      const v1 = talking ? noise2(tt * 7.3, this.seed % 53) : 0.5, v2 = talking ? noise2(tt * 6.1 + 9, this.seed % 41) : 0.5;
+      const lidUp = Math.max(0, -(this.eyePitch || 0)) * 2.2 * (1 - bl), lidDown = Math.max(0, this.eyePitch || 0) * 1.4;
+      h.setFace({ 'eye-left-opened-up': lidUp, 'eye-right-opened-up': lidUp, 'eye-left-closure': Math.min(1, bl + lidDown), 'eye-right-closure': Math.min(1, bl + lidDown), 'eye-left-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22, 'eye-right-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22,
+        'eyebrows-left-up': Math.max(0, F.brow) * 0.8 + Math.max(0, F.tilt) * 0.4 + (talking ? e * 0.15 : 0), 'eyebrows-right-up': Math.max(0, F.brow) * 0.8 + (talking ? e * 0.15 : 0),
+        'eyebrows-left-down': Math.max(0, -F.brow) * 0.7, 'eyebrows-right-down': Math.max(0, -F.brow) * 0.7 + Math.max(0, F.tilt) * 0.3,
+        'mouth-corner-puller': Math.max(0, sm) * 0.85, 'mouth-depression': Math.max(0, -sm) * 0.7, 'mouth-open': open * 0.5,
+        'mouth-pursing': talking ? Math.max(0, v1 - 0.55) * 1.2 * e : 0, 'mouth-retraction': talking ? Math.max(0, v2 - 0.5) * 0.8 * e : 0, 'mouth-compression': talking ? Math.max(0, 0.25 - open) * 0.6 : 0 }); }
+    // props held by the driver grips follow the real palms
+    for (const s of ['L', 'R']) { const A = this.arms[s], m = this.MS[s]; const w = B('wrist.' + m); const pm = w.matrixWorld.clone();
+      const off = this.h.joint('finger3-1.' + m).sub(this.h.joint('wrist.' + m)).multiplyScalar(0.7).add(this['palmN' + s].clone().multiplyScalar(0.018));
+      const pw = off.applyMatrix4(new THREE.Matrix4().extractRotation(pm)).add(va.setFromMatrixPosition(pm));
+      A.grip.parent.updateWorldMatrix(true, false); A.grip.position.copy(A.grip.parent.worldToLocal(pw)); A.grip.updateMatrixWorld(true); }
+  }
+  // analytic two-bone IK on the body's own arm (shoulder from the posed spine), elbow toward the pole
+  bodyIK(s, T, pole, w) {
+    const h = this.h, m = this.MS[s], U = h.bone('upperarm01.' + m), Lw = h.bone('lowerarm01.' + m);
+    h.group.updateMatrixWorld(true); const S = U.getWorldPosition(new THREE.Vector3()), E0 = Lw.getWorldPosition(new THREE.Vector3());
+    const A = this.arms[s]; const L1 = A.up, L2 = A.fo; const Dv = T.clone().sub(S); let d = clamp(Dv.length(), Math.abs(L1 - L2) + 1e-3, (L1 + L2) * 0.999); const dir = Dv.normalize();
+    const a = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+    let k = new THREE.Vector3().crossVectors(dir, pole); if (k.lengthSq() < 1e-6) k.crossVectors(dir, FWD); k.normalize();
+    const E = S.clone().add(dir.clone().applyAxisAngle(k, a).multiplyScalar(L1));
+    const aimSeg = (bone, from, to, wt) => { bone.updateMatrixWorld(true); const cur = bone.getWorldQuaternion(new THREE.Quaternion()); const curDir = (bone === U ? E0.clone().sub(S) : bone.userData.tipW).normalize();
+      const want = to.clone().sub(from).normalize(); const q = new THREE.Quaternion().setFromUnitVectors(curDir, want).multiply(cur); setWorldQuat(bone, cur.slerp(q, wt)); };
+    aimSeg(U, S, E, w);
+    h.group.updateMatrixWorld(true); const E1 = Lw.getWorldPosition(new THREE.Vector3()); const W0 = h.bone('wrist.' + m).getWorldPosition(new THREE.Vector3());
+    const grip = this.arms[s].palm; const tip = W0.clone().sub(E1).normalize().multiplyScalar(L2).add(E1);   // grip lies on the forearm line
+    Lw.userData.tipW = tip.clone().sub(E1); aimSeg(Lw, E1, T, w);
+  }
+}
+
+export function puppet(name, spec) { return CLAY ? new Puppet(name, spec || CAST[name]) : new HumanPuppet(name, spec || CAST[name]); }
