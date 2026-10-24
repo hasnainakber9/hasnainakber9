@@ -110,7 +110,25 @@ function lumSampler(t) {
   for (let i = 0; i < S * S; i++) L[i] = d[i * 4 + 3] > 128 ? 0.2126 * lin(d[i * 4]) + 0.7152 * lin(d[i * 4 + 1]) + 0.0722 * lin(d[i * 4 + 2]) : -1;
   return (t.userData.lum = (u, v) => L[clamp(Math.floor((t.flipY ? 1 - v : v) * S), 0, S - 1) * S + clamp(Math.floor(u * S), 0, S - 1)]);
 }
-// eyes: MakeHuman's iris is blue; re-tint the saturated (iris) texels, keep the sclera
+// eyes: MakeHuman's iris is blue-green. Recolour it once per iris colour at full resolution (so distant, mip-mapped eyes
+// keep their colour), keeping the fibre detail, limbal ring and pupil; the sclera is warmed slightly off pure white
+const eyeMaps = {};
+function eyeMap(K, color) {
+  if (eyeMaps[color]) return eyeMaps[color];
+  const t = K.tex['eyes:diffuse'], img = t.image, w = img.width, h = img.height; const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0); const id = g.getImageData(0, 0, w, h), d = id.data; const c = new THREE.Color(color); const ir = [c.r, c.g, c.b].map(x => Math.round(Math.pow(x, 1 / 2.2) * 255));
+  const blue = (i) => { const r = d[i], gg = d[i + 1], b = d[i + 2], mx = Math.max(r, gg, b); return mx ? (b - r) / mx : 0; };
+  let sum = 0, n = 0; const cen = [[0, 0, 0], [0, 0, 0]];   // iris mean brightness, and the iris centre of each eyeball (the two sit either side of the diagonal)
+  for (let i = 0; i < d.length; i += 4) if (blue(i) > 0.12) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; const x = (i / 4) % w, y = Math.floor(i / 4 / w), e = cen[x * h > y * w ? 0 : 1]; e[0] += x; e[1] += y; e[2]++; }
+  const mean = n ? sum / n : 120, C = cen.map(e => [e[0] / Math.max(1, e[2]), e[1] / Math.max(1, e[2])]), Rb = 0.27 * w;
+  for (let i = 0; i < d.length; i += 4) { const bl = blue(i), lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2], wgt = clamp((bl - 0.02) / 0.1, 0, 1);
+    if (wgt > 0) { const k = clamp(lum / mean, 0, 1.6); for (let j = 0; j < 3; j++) d[i + j] = lerp(d[i + j], clamp(ir[j] * k, 0, 255), wgt); }
+    else { const x = (i / 4) % w, y = Math.floor(i / 4 / w), c = C[x * h > y * w ? 0 : 1], dist = Math.hypot(x - c[0], y - c[1]) / Rb;
+      const shade = 0.88 * (1 - 0.4 * clamp((dist - 0.4) / 0.6, 0, 1));   // the sclera is never paper-white, and darker towards the lids
+      d[i] *= shade; d[i + 1] *= shade * 0.97; d[i + 2] *= shade * 0.93; } }
+  g.putImageData(id, 0, 0); const o = new THREE.CanvasTexture(cv); o.colorSpace = THREE.SRGBColorSpace; o.anisotropy = 8; o.flipY = t.flipY; return (eyeMaps[color] = o);
+}
+// (shader variant kept for reference) MakeHuman's iris is blue; re-tint the saturated (iris) texels, keep the sclera
 function irisTint(m, color) {
   const c = new THREE.Color(color);
   m.onBeforeCompile = (sh) => { sh.uniforms.iris = { value: c };
@@ -217,7 +235,7 @@ export function buildHuman(cfg) {
   };
   const T = (k, s = 'diffuse') => K.tex[k + ':' + s] || null;
   // eyes: eyeball (re-tinted iris) under a clear cornea that only adds reflections, which is what makes eyes look wet
-  proxy('eyes', [irisTint(new THREE.MeshStandardMaterial({ map: T('eyes'), roughness: 0.35 }), cfg.iris || '#4a2c17'),
+  proxy('eyes', [new THREE.MeshStandardMaterial({ map: eyeMap(K, cfg.iris || '#4a2c17'), roughness: 0.35 }),
     new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.04, specularIntensity: 0.8, envMapIntensity: 0.035, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })],
     { shadow: false, group: (c, uv) => (uv.x > 0.85 && uv.y < 0.15 ? 1 : 0) });
   const strand = (key, color, o = {}) => recolor(new THREE.MeshPhysicalMaterial({ map: T(key), alphaTest: o.alphaTest ?? 0.12, alphaToCoverage: true, side: THREE.DoubleSide, roughness: o.roughness ?? 0.72,

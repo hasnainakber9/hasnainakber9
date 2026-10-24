@@ -1,5 +1,6 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
 import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU } from './core.js';
+import { compoundLeaf } from './foliage.js';
 const TAU = Math.PI * 2;
 
 // ------------------------------------------------------------------ leaf textures (alpha cards)
@@ -35,7 +36,9 @@ export function leafTex(kind) {
   });
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; leafTexCache[kind] = t; return t;
 }
-export function leafMat(kind, o = {}) { return new THREE.MeshStandardMaterial({ map: leafTex(kind), alphaTest: 0.45, side: THREE.DoubleSide, roughness: o.roughness ?? 0.62, vertexColors: true, color: o.color || '#ffffff' }); }
+export function leafMat(kind, o = {}) {
+  if (kind === 'tomato') { const L = compoundLeaf(); return new THREE.MeshStandardMaterial({ map: L.map, normalMap: L.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), alphaTest: 0.5, side: THREE.DoubleSide, roughness: o.roughness ?? 0.6, vertexColors: true, color: o.color || '#ffffff' }); }
+  return new THREE.MeshStandardMaterial({ map: leafTex(kind), alphaTest: 0.45, side: THREE.DoubleSide, roughness: o.roughness ?? 0.62, vertexColors: true, color: o.color || '#ffffff' }); }
 // a bent card: base at origin, growing along +y; curl bends tip toward +z
 function cardGeo(w, h, curl = 0.3, twist = 0, segY = 4) {
   const g = new THREE.PlaneGeometry(w, h, 2, segY); g.translate(0, h / 2, 0); const p = g.attributes.position;
@@ -59,7 +62,17 @@ export function tomatoGeo(o = {}) {
   }
   g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals(); return g;
 }
-export function tomatoMat() { return new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.32, clearcoat: 0.7, clearcoatRoughness: 0.22, sheen: 0.2, sheenColor: new THREE.Color('#ffb0a0') }); }
+// tomato skin: thin waxy coat over flesh that scatters red light, so the shadow side glows warm instead of going grey
+let _tomatoMat = null;
+export function tomatoMat() {
+  if (_tomatoMat) return _tomatoMat;
+  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.4, clearcoat: 0.42, clearcoatRoughness: 0.16, specularIntensity: 0.55, normalMap: normalTex('skin', 5), normalScale: new THREE.Vector2(0.14, 0.14), envMapIntensity: 0.38 });
+  m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <lights_physical_pars_fragment>', THREE.ShaderChunk.lights_physical_pars_fragment.replace('reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
+    `float wrapW = saturate( ( dot( geometryNormal, directLight.direction ) + 0.5 ) / 1.5 );
+     vec3 scatter = ( vec3( dotNL ) + vec3( 0.9, 0.28, 0.16 ) * max( wrapW - dotNL, 0.0 ) ) * directLight.color;
+     reflectedLight.directDiffuse += scatter * BRDF_Lambert( material.diffuseColor );`)); };
+  m.customProgramCacheKey = () => 'tomato-scatter'; return (_tomatoMat = m);
+}
 export function calyx(r = 0.04) {
   const parts = []; const n = 6;
   for (let i = 0; i < n; i++) { const a = i / n * TAU; const g = new THREE.CapsuleGeometry(r * 0.07, r * 0.42, 3, 6); parts.push({ geo: g, m: M4(Math.cos(a) * r * 0.25, r * 0.78, Math.sin(a) * r * 0.25, 0, -a, Math.PI / 2 - 0.35, 1, 1, 0.45).premultiply(new THREE.Matrix4().makeRotationY(0)), color: '#4e7a2a' }); }
@@ -227,7 +240,7 @@ export function backdropTex(kind, o = {}) {
     const sky = g.createLinearGradient(0, 0, 0, h * 0.7); sky.addColorStop(0, o.top || '#8fb3d8'); sky.addColorStop(1, o.horizon || '#f1dcc0'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
     if (kind === 'garden' || kind === 'street') {
       for (let i = 0; i < 18; i++) { const x = rnd() * w, y = h * (0.08 + rnd() * 0.3), rr = 30 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
-      for (let layer = 0; layer < 3; layer++) for (let i = 0; i < 34; i++) { const x = rnd() * w, y = h * (0.5 + layer * 0.05 + rnd() * 0.12), r = (30 + rnd() * 70) * (1 - layer * 0.2); const c = new THREE.Color(o.tree || '#5f8a45').offsetHSL((rnd() - 0.5) * 0.04, 0, (rnd() - 0.5) * 0.18 - layer * 0.04 + 0.08 - layer * 0.02); g.fillStyle = c.getStyle(); g.globalAlpha = 0.85 + layer * 0.05; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.globalAlpha = 1; }
+      if (o.trees !== false) for (let layer = 0; layer < 3; layer++) for (let i = 0; i < 34; i++) { const x = rnd() * w, y = h * (0.5 + layer * 0.05 + rnd() * 0.12), r = (30 + rnd() * 70) * (1 - layer * 0.2); const c = new THREE.Color(o.tree || '#5f8a45').offsetHSL((rnd() - 0.5) * 0.04, 0, (rnd() - 0.5) * 0.18 - layer * 0.04 + 0.08 - layer * 0.02); g.fillStyle = c.getStyle(); g.globalAlpha = 0.85 + layer * 0.05; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.globalAlpha = 1; }
       if (kind === 'street') for (let i = 0; i < 9; i++) { const x = i * 120 + rnd() * 40, bw = 90 + rnd() * 60, bh = 140 + rnd() * 160; g.fillStyle = pick(['#d9b48c', '#c97a5a', '#e2d2b4', '#a9b8b0', '#d6a77a']); g.fillRect(x, h * 0.62 - bh, bw, bh); g.fillStyle = 'rgba(40,50,60,0.55)'; for (let yy = h * 0.62 - bh + 14; yy < h * 0.6 - 20; yy += 34) for (let xx = x + 10; xx < x + bw - 14; xx += 26) g.fillRect(xx, yy, 14, 20); }
       g.fillStyle = o.ground || '#6d8a4a'; g.fillRect(0, h * 0.62, w, h);
     }

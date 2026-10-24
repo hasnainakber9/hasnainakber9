@@ -5,6 +5,7 @@
 // Workers pick; a small electric cart carries crates; a person checks quality; hedgerow pollinators; macro leaf → greenhouse.
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
 import { farm } from '../lib/sets.js';
 import { puppet, extraSpec } from '../lib/people.js';
 const { THREE, V } = K;
@@ -50,10 +51,10 @@ const truss = new THREE.Group(); truss.position.set(0.3, 0.0, 1.1); truss.rotati
 const stemPts = [[0, 0.62, 0], [0.03, 0.78, 0.02], [0.02, 0.92, 0.05], [-0.02, 1.02, 0.04]];
 truss.add(P.pipe(stemPts, 0.007, K.mat('#5a7a30', { roughness: 0.6 })));
 [[0.06, 0.8, 0.07, 0.034, '#c9301d'], [0.0, 0.76, 0.1, 0.031, '#d0461e'], [-0.05, 0.82, 0.05, 0.029, '#b8a43a']].forEach(([x, y, z, r, c], i) => { const tm = P.tomato({ r, color: c, shoulder: i === 2 ? '#9ab84a' : '#d9782a', seed: 11 + i }); tm.position.set(x, y, z); truss.add(tm); });
-const leafMat = new THREE.MeshStandardMaterial({ map: P.leafTex('tomato'), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6 }); for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26, 2, 3), leafMat); l.geometry.translate(0, 0.13, 0); l.position.set(-0.02, 0.86 + i * 0.04, 0.03); l.rotation.set(-1.0 + i * 0.25, i * 1.7 + 0.4, 0.2); l.castShadow = true; truss.add(l); }
+const CL = F.compoundLeaf(); const leafMat = new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 }); for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26, 2, 3), leafMat); l.geometry.translate(0, 0.13, 0); l.position.set(-0.02, 0.86 + i * 0.04, 0.03); l.rotation.set(-1.0 + i * 0.25, i * 1.7 + 0.4, 0.2); l.castShadow = true; truss.add(l); }
 const flowerTex = P.leafTex('flower'); const flower = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), new THREE.MeshStandardMaterial({ map: flowerTex, alphaTest: 0.4, side: THREE.DoubleSide })); flower.geometry.attributes.uv.array.set([0, 1, 0.5, 1, 0, 0.5, 0.5, 0.5]); flower.position.set(-0.03, 0.99, 0.07); flower.rotation.set(-0.5, 0, 0); truss.add(flower);
 const dew = new THREE.Mesh(new THREE.SphereGeometry(0.004, 12, 8), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.0, transmission: 0.9, thickness: 0.004, transparent: true, opacity: 0.6 })); dew.position.set(0.075, 0.82, 0.098); truss.add(dew);
-const broad = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.24, 3, 3), new THREE.MeshStandardMaterial({ map: P.leafTex('broad'), alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.55 })); broad.geometry.translate(0, 0.12, 0); broad.position.set(-0.07, 0.82, -0.05); broad.rotation.set(-0.35, 0.3, 0.15); broad.castShadow = true; truss.add(broad);
+const broad = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.28, 3, 3), new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55 })); broad.geometry.translate(0, 0.12, 0); broad.position.set(-0.07, 0.82, -0.05); broad.rotation.set(-0.35, 0.3, 0.15); broad.castShadow = true; truss.add(broad);
 const heroBee = bees[0][0]; app.on(t => { if (t > 4.9) { const u = K.smoother((t - 4.9) / 1.5); const fp = flower.getWorldPosition(V()); heroBee.position.set(fp.x + (1 - u) * 0.3, fp.y + 0.012 + (1 - u) * 0.12 + Math.sin(t * 9) * 0.004 * (1 - u), fp.z + (1 - u) * 0.25); heroBee.rotation.y = -2.2; } });
 
 // camera: A tracking down the furrow past pickers with the cart alongside → B the quality check → C macro truss, push into a leaf (match to greenhouse)

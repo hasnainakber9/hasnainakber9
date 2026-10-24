@@ -5,6 +5,7 @@
 // VENDOR: "Not the prettiest batch."  COOK: "Good thing we're cooking it."
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
 import { puppet, extraSpec } from '../lib/people.js';
 const { THREE, V, R } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'cobble', 'planks']);
@@ -24,10 +25,10 @@ const winT = K.canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#fff'; g.fillRe
 for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w = K.R(5.5, 8.5), h = K.R(9, 16); const tex = winT.clone(); tex.needsUpdate = true; tex.repeat.set(w / 3.2, h / 3.2); const m = K.mat(K.pick(['#e2c49a', '#d9a27a', '#efe0c4', '#c9846a', '#e8d6a8', '#b9c4b0', '#f0c890']), { roughness: 0.85, map: tex, normalMap: K.normalTex('plaster', 2), normalScale: new THREE.Vector2(0.4, 0.4) }); const b = K.box(4, h, w, m); b.position.set(side * 8.5, h / 2, z - w / 2); facade.add(b);
   const shopC = K.pick(['#2f6b5a', '#8a3a2a', '#2f4a6a', '#6a4a2a']); const aw = K.box(1.0, 0.08, w * 0.8, K.mat(shopC, { roughness: 0.8 })); aw.position.set(side * 6.15, 3.1, z - w / 2); aw.rotation.z = -side * 0.35; facade.add(aw);
   const sf = K.box(0.1, 2.6, w * 0.7, K.mat('#2a3036', { roughness: 0.2, metalness: 0.3 })); sf.position.set(side * 6.45, 1.4, z - w / 2); facade.add(sf);
-  for (let k = 0; k < Math.floor(h / 3.2) - 1; k++) { const bal = K.box(0.6, 0.08, 1.4, K.mat('#e8e0d0', { roughness: 0.6 })); bal.position.set(side * 6.2, 4.5 + k * 3.2, z - w / 2 + K.R(-1, 1)); facade.add(bal); const plant = K.mesh(P.bushGeo({ size: 0.4, blobs: 4, flowers: 6, color: '#4f8a3a' }), K.vmat({ roughness: 0.7 })); plant.position.copy(bal.position).add(V(0, 0.05, 0)); facade.add(plant); } }
+  for (let k = 0; k < Math.floor(h / 3.2) - 1; k++) { const bal = K.box(0.6, 0.08, 1.4, K.mat('#e8e0d0', { roughness: 0.6 })); bal.position.set(side * 6.2, 4.5 + k * 3.2, z - w / 2 + K.R(-1, 1)); facade.add(bal); const plant = F.shrub({ size: 0.32, seed: k + 3 }); plant.position.copy(bal.position).add(V(0, 0.05, 0)); facade.add(plant); } }
 for (const side of [-1, 1]) { const kerb = K.box(0.3, 0.15, 80, K.mat('#9a948a', { roughness: 0.8 })); kerb.position.set(side * 6.0, 0.075, -20); facade.add(kerb); const pave = K.box(2.2, 0.14, 80, K.mat('#c9c2b6', { roughness: 0.85, map: K.grain('plaster', { repeat: 10 }) }), { cast: false }); pave.position.set(side * 7.3, 0.07, -20); facade.add(pave); }
 K.bake(facade);
-for (const z of [6, -6, -18, -30]) { const tree = K.mesh(P.treeGeo({ height: 6 }), K.vmat({ roughness: 0.8, normalMap: K.normalTex('rock', 2), normalScale: new THREE.Vector2(0.6, 0.6) })); tree.position.set(K.pick([-5.6, 5.6]), 0, z); S.add(tree); }
+for (const z of [6, -6, -18, -30]) { const tree = F.tree({ height: 6, seed: Math.round(z) + 40 }); tree.position.set(K.pick([-5.6, 5.6]), 0, z); S.add(tree); }
 P.stringLights(app, [-6, 4.6, 4], [6, 4.8, 2], 18, 0.6); P.stringLights(app, [-6, 4.6, -4], [6, 4.8, -6], 18, 0.6); P.stringLights(app, [-6, 4.6, -12], [6, 4.8, -14], 18, 0.6);
 
 // stalls: produce (the vendor), spices, flatbreads, fruit, a hot-food pan; two rows facing the centre

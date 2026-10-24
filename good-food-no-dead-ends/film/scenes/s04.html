@@ -5,6 +5,7 @@
 // NOOR: "So all our food grows here now?"  ASHA: "Nope. Just the greens that like it here."
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
 import { puppet, extraSpec } from '../lib/people.js';
 const { THREE, V, R } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'soil']);
@@ -22,7 +23,7 @@ const deck = K.groundPlane(app, { kind: 'plaster', color: '#a7a39a', size: 120, 
 const cityM = (c) => K.mat(c, { roughness: 0.85, map: K.grain('plaster', { repeat: 3 }) });
 const winTex = K.canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let y = 0; y < 8; y++) { g.fillStyle = 'rgba(0,0,0,0.06)'; g.fillRect(0, y * 32 + 28, w, 4); for (let x = 0; x < 6; x++) { g.fillStyle = K.rnd() < 0.12 ? '#e8d9b8' : '#55606a'; g.fillRect(10 + x * 42, 8 + y * 32, 22, 16); if (K.rnd() < 0.3) { g.fillStyle = '#7a8a5a'; g.fillRect(8 + x * 42, 22 + y * 32, 26, 4); } } } });
 const blocks = [[-55, -10, 16, 8, 26], [-48, -70, 20, 16, 30], [52, -30, 18, 12, 28], [58, 24, 14, 6, 22], [-14, -110, 30, 22, 26], [22, -100, 16, 28, 26], [-70, 36, 14, 4, 20], [70, -80, 18, 14, 30], [0, 60, 26, 4, 20], [-34, -48, 12, 2, 14], [36, -58, 12, 4, 14]];
-for (const [x, z, w, h, d] of blocks) { const tex = winTex.clone(); tex.needsUpdate = true; tex.repeat.set(w / 15, (h + 14) / 24); const m = K.mat(K.pick(['#d6c3a4', '#c9b49a', '#b9b3a6', '#e2d2b6', '#c7a68a']), { roughness: 0.85, map: tex }); const b = K.box(w, h + 14, d, m); b.position.set(x, (h + 14) / 2 - 14, z); S.add(b); const trees = K.mesh(P.treeGeo({ height: 7 }), K.vmat({ roughness: 0.8 })); trees.position.set(x + w / 2 + 3, -0.5, z + d / 2 + 2); S.add(trees); }
+for (const [x, z, w, h, d] of blocks) { const tex = winTex.clone(); tex.needsUpdate = true; tex.repeat.set(w / 15, (h + 14) / 24); const m = K.mat(K.pick(['#d6c3a4', '#c9b49a', '#b9b3a6', '#e2d2b6', '#c7a68a']), { roughness: 0.85, map: tex }); const b = K.box(w, h + 14, d, m); b.position.set(x, (h + 14) / 2 - 14, z); S.add(b); const trees = F.tree({ height: 7, seed: Math.round(Math.abs(x)) + 1 }); trees.position.set(x + w / 2 + 3, -0.5, z + d / 2 + 2); S.add(trees); }
 const sideTex = P.backdropTex('city'); const far = new THREE.Mesh(new THREE.PlaneGeometry(400, 120), new THREE.MeshBasicMaterial({ map: sideTex, fog: false })); far.position.set(0, 20, -180); S.add(far);
 for (const [x, z, w, d] of [[0, -16.5, 22, 0.3], [0, 12.5, 22, 0.3], [-11, -2, 0.3, 29], [11, -2, 0.3, 29]]) S.add(K.at(K.box(w, 1.0, d, K.mat('#b9b3a8', { roughness: 0.9 })), x, 0.5, z));
 

@@ -5,6 +5,7 @@
 // morning; then finished compost worked in around a young tomato seedling. No instant transformation: time has passed.
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
 import { farm } from '../lib/sets.js';
 import { puppet, extraSpec } from '../lib/people.js';
 const { THREE, V } = K;
@@ -36,8 +37,8 @@ seedParts.push({ geo: new THREE.CylinderGeometry(0.004, 0.006, sh, 6), m: K.M4(0
 for (let i = 0; i < 5; i++) { const a = i * 2.39996, y = 0.05 + i * 0.018, sz = 0.07 + (4 - i) * 0.008; const card = new THREE.PlaneGeometry(sz * 0.8, sz, 2, 3); card.translate(0, sz / 2, 0); const pp = card.attributes.position; for (let k = 0; k < pp.count; k++) { const yy = pp.getY(k) / sz; pp.setZ(k, 0.35 * sz * yy * yy); } card.computeVertexNormals(); seedParts.push({ geo: card, m: K.M4(Math.cos(a) * 0.005, y, Math.sin(a) * 0.005, -0.9, -a + Math.PI / 2, 0), color: '#ffffff' }); }
 const seedGeo = K.merged(seedParts.slice(1)); const stemGeo = K.merged([seedParts[0]]);
 const seeds = []; for (let z = 3.6; z > -0.4; z -= 0.45) seeds.push({ x: K.R(-0.03, 0.03), y: 0.12, z, ry: K.R(0, 6), s: K.R(0.9, 1.15) });
-K.instanced(S, seedGeo, new THREE.MeshStandardMaterial({ map: P.leafTex('tomato'), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, vertexColors: true }), seeds); K.instanced(S, stemGeo, K.vmat({ roughness: 0.7 }), seeds);
-const hero = new THREE.Group(); hero.add(new THREE.Mesh(seedGeo, new THREE.MeshStandardMaterial({ map: P.leafTex('tomato'), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.55, vertexColors: true }))); hero.add(new THREE.Mesh(stemGeo, K.vmat({ roughness: 0.7 }))); hero.position.set(0, 0.125, 2.5); hero.scale.setScalar(1.25); hero.traverse(m => { if (m.isMesh) m.castShadow = true; }); S.add(hero);
+const CL = F.compoundLeaf(); K.instanced(S, seedGeo, new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6, vertexColors: true }), seeds); K.instanced(S, stemGeo, K.vmat({ roughness: 0.7 }), seeds);
+const hero = new THREE.Group(); hero.add(new THREE.Mesh(seedGeo, new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55, vertexColors: true }))); hero.add(new THREE.Mesh(stemGeo, K.vmat({ roughness: 0.7 }))); hero.position.set(0, 0.125, 2.5); hero.scale.setScalar(1.25); hero.traverse(m => { if (m.isMesh) m.castShadow = true; }); S.add(hero);
 const macroFill = new THREE.PointLight('#fff1dc', 0.8, 1.5, 2); macroFill.position.set(0.25, 0.45, 2.85); S.add(macroFill);
 const ring = new THREE.Mesh(new THREE.CircleGeometry(0.2, 24), K.mat('#2a1c12', { roughness: 1, normalMap: K.normalTex('soil', 2), normalScale: new THREE.Vector2(1.4, 1.4) })); ring.rotation.x = -Math.PI / 2; ring.position.set(0, 0.125, 2.5); S.add(ring);
 const heap = []; for (let i = 0; i < 90; i++) { const m = new THREE.Mesh(new THREE.IcosahedronGeometry(K.R(0.005, 0.014), 0), K.mat(K.pick(['#2e2016', '#3a2a1c', '#241810', '#4a3826']), { roughness: 1 })); const a = K.R(0, 6.28), d = K.R(0.03, 0.19); m.position.set(Math.cos(a) * d, 0.13 + K.R(0, 0.02), 2.5 + Math.sin(a) * d); m.castShadow = true; S.add(m); heap.push(m); }

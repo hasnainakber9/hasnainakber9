@@ -2,6 +2,7 @@
 // so geography, props and light direction stay continuous across cuts.
 import { THREE, V, R, rnd, seed, pick, mat, clayMat, MAT, grain, normalTex, mesh, box, cyl, at, rot, instanced, groundPlane, sunLight, fillLights, skyDome, clouds, motes, steam, noise2, fbm, smooth, clamp, M4, merged, vmat } from './core.js';
 import * as P from './props.js';
+import * as F from './foliage.js';
 const TAU = Math.PI * 2;
 
 // ================================================================== COMMUNITY KITCHEN (s01, s08, s09a, s10)
@@ -17,13 +18,18 @@ export async function kitchen(app, o = {}) {
   const wins = [[-1.9, 1.7], [1.5, 1.7]]; const sill = 0.95, top = 2.45;
   const piece = (x0, x1, y0, y1) => { const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0) return; g.add(at(box(w, h, 0.22, wallM, { cast: true }), (x0 + x1) / 2, (y0 + y1) / 2, zb)); };
   let x = -4.6; for (const [cx, w] of wins) { piece(x, cx - w / 2, 0, H); piece(cx - w / 2, cx + w / 2, 0, sill); piece(cx - w / 2, cx + w / 2, top, H); x = cx + w / 2; } piece(x, 4.6, 0, H);
-  for (const [cx, w] of wins) { const f = P.windowFrame({ w, h: top - sill }); f.position.set(cx, (sill + top) / 2, zb + 0.02); g.add(f); const plant = mesh(P.bushGeo({ size: 0.28, blobs: 4, color: '#4f7f3a' }), vmat({ roughness: 0.7 })); plant.position.set(cx - 0.5, sill + 0.02, zb + 0.12); g.add(plant); g.add(at(cyl(0.09, 0.07, 0.14, clayMat('#b5643a', { normal: 'clay', ns: 0.2 }), 14), cx - 0.5, sill + 0.07, zb + 0.12)); }
+  for (const [cx, w] of wins) { const f = P.windowFrame({ w, h: top - sill }); f.position.set(cx, (sill + top) / 2, zb + 0.02); g.add(f); const plant = F.shrub({ size: 0.22, seed: Math.round(cx * 10) + 9 }); plant.position.set(cx - 0.5, sill + 0.02, zb + 0.12); g.add(plant); g.add(at(cyl(0.09, 0.07, 0.14, clayMat('#b5643a', { normal: 'clay', ns: 0.2 }), 14), cx - 0.5, sill + 0.07, zb + 0.12)); }
   // side walls + ceiling
   g.add(at(box(0.22, H, 7.0, wallM), -4.5, H / 2, 0.3)); g.add(at(box(0.22, H, 7.0, wallM), 4.5, H / 2, 0.3));
   const ceil = box(9.2, 0.15, 7.0, mat('#efe6d6', { roughness: 0.95 }), { cast: false }); ceil.position.set(0, H + 0.07, 0.3); g.add(ceil);
   for (let i = -3; i <= 3; i++) g.add(at(box(0.16, 0.2, 7.0, MAT.wood('#7a5a3a', 2)), i * 1.3, H - 0.08, 0.3));
   // view outside: afternoon garden / dusk street
-  P.backdrop(app, evening ? 'dusk' : 'garden', { pos: [0, 2.2, -9], w: 24, h: 12, brightness: evening ? 0.9 : 1.9, top: '#a9c6e6', horizon: '#fbe3c0', tree: '#7a9a55', ground: '#8aa060' });
+  P.backdrop(app, evening ? 'dusk' : 'garden', { pos: [0, 2.2, -14], w: 40, h: 18, brightness: evening ? 0.9 : 1.9, top: '#a9c6e6', horizon: '#fbe3c0', tree: '#7a9a55', ground: '#8aa060', trees: false });
+  // the garden outside: a lawn, shrubs under the windows and trees behind (real geometry, so it has depth and parallax)
+  { const lawn = mesh(new THREE.PlaneGeometry(40, 11), mat(evening ? '#2c3a2a' : '#6f8c47', { map: grain('leafy', { repeat: 40, scale: 6 }), roughness: 0.95 }), { cast: false }); lawn.rotation.x = -Math.PI / 2; lawn.position.set(0, -0.01, -8.8); g.add(lawn);
+    const tint = evening ? '#6a7a8a' : '#ffffff';
+    for (const [x, z, h, sd] of [[-6.5, -9.5, 7.5, 1], [-2.2, -11.5, 8.5, 2], [2.6, -9.0, 6.5, 3], [6.8, -10.5, 8, 4], [-9.5, -12, 7, 5]]) { const t = F.tree({ height: h, seed: sd, leafTint: tint }); t.position.set(x, 0, z); g.add(t); }
+    for (const [x, z, s, sd] of [[-3.4, -4.4, 0.6, 11], [-0.4, -4.9, 0.8, 12], [2.3, -4.3, 0.55, 13], [3.9, -5.0, 0.75, 14], [-5.6, -5.2, 0.9, 15]]) { const b = F.shrub({ size: s, seed: sd, tint }); b.position.set(x, 0, z); g.add(b); } }
   // counter run along the right wall with stove, tiles and shelves
   const ctr = new THREE.Group(); ctr.position.set(4.12, 0, -0.4); ctr.rotation.y = -Math.PI / 2; g.add(ctr);
   ctr.add(at(box(4.2, 0.88, 0.62, MAT.wood('#6f5a44', 2)), 0, 0.44, 0));
@@ -34,7 +40,7 @@ export async function kitchen(app, o = {}) {
   const stew = P.stewSurface(0.2); stew.position.set(0.75, 0.97 + 0.2, -0.02); ctr.add(stew);
   const shelf = P.jarShelf({ l: 3.6, levels: 2 }); shelf.position.set(0.1, 1.85, -0.18); ctr.add(shelf);
   for (let i = 0; i < 4; i++) { const b = P.ware.board(0.34, 0.24); b.position.set(-1.2 + i * 0.05, 0.95, 0.05); if (i) continue; ctr.add(b); }
-  const herbs = mesh(P.bushGeo({ size: 0.22, blobs: 5, color: '#3f7a2e' }), vmat({ roughness: 0.7 })); herbs.position.set(-1.7, 0.93, -0.15); ctr.add(herbs);
+  const herbs = F.shrub({ size: 0.17, kind: 'herb', seed: 5, cardScale: 0.5 }); herbs.position.set(-1.7, 0.93, -0.15); ctr.add(herbs);
   // left wall: open shelving with bowls, crates of produce on the floor
   const lsh = P.jarShelf({ l: 2.6, levels: 3 }); lsh.position.set(-4.3, 1.0, -1.2); lsh.rotation.y = Math.PI / 2; g.add(lsh);
   for (let i = 0; i < 3; i++) { const c = P.crate({ fill: ['tomato', 'greens', 'onion'][i], color: ['#2f8a57', '#2f6aa0', '#2f8a57'][i] }); c.position.set(-3.9, 0.0 + (i === 2 ? 0.3 : 0), 0.6 + (i % 2) * 0.45); c.rotation.y = Math.PI / 2 + R(-0.1, 0.1); g.add(c); }
@@ -114,14 +120,14 @@ export async function farm(app, o = {}) {
   const bl = []; for (let b = -8; b <= -3; b++) for (let z = 4; z > -60; z -= 0.5) { const it = { x: b * bedPitch + R(-0.05, 0.05), y: 0.1, z: z + R(-0.06, 0.06), ry: R(0, TAU), s: R(0.9, 1.15) }; if (o.clear && o.clear(b * bedPitch, z)) continue; bl.push(it); }   // random draws happen before the skip, so clearing never reshuffles the rest of the farm
   instanced(S, beanGeo.leaves, bm, bl); instanced(S, beanGeo.solid, solidM, bl);
   // hedgerows, pollinator strip, trees
-  const hedge = P.bushGeo({ size: 1.7, flowers: 26, color: '#35602a', blobs: 9 }); const hm = vmat({ roughness: 0.75, normalMap: normalTex('rock', 2), normalScale: new THREE.Vector2(0.8, 0.8) });
+  const hedge = F.shrubGeo({ size: 1.6, seed: 4, cards: 220, cardScale: 0.32 }); const hm = F.foliageMat('shrub');
   const hl = []; for (let z = 8; z > -110; z -= 1.6) { hl.push({ x: -15.5 + R(-0.5, 0.5), z, ry: R(0, TAU), s: R(0.9, 1.4) }); hl.push({ x: 15.5 + R(-0.5, 0.5), z, ry: R(0, TAU), s: R(0.9, 1.4) }); }
   instanced(S, hedge, hm, hl);
   const flowers = P.flowerCardsGeo(); const fm = P.leafMat('flower'); const grass = P.grassGeo(); const gm = P.leafMat('blade');
   const fl = [], gl = []; for (let z = 6; z > -80; z -= 0.35) for (const sx of [-1, 1]) { fl.push({ x: sx * (13.4 + R(-0.6, 0.6)), z: z + R(-0.15, 0.15), ry: R(0, TAU), s: R(0.8, 1.3) }); gl.push({ x: sx * (13.6 + R(-0.9, 0.9)), z: z + R(-0.2, 0.2), ry: R(0, TAU), s: R(0.8, 1.4) }); }
   instanced(S, flowers, fm, fl, { cast: false }); instanced(S, grass, gm, gl, { cast: false });
-  const tree = P.treeGeo({ height: 8 }); const tl = []; for (let i = 0; i < 40; i++) tl.push({ x: R(-140, 140), z: R(-230, -110), ry: R(0, TAU), s: R(0.7, 1.6) }); for (let i = 0; i < 12; i++) tl.push({ x: R(-60, -22), z: R(-90, -5), ry: R(0, TAU), s: R(0.8, 1.3) }); for (let i = 0; i < 8; i++) tl.push({ x: R(24, 70), z: R(-90, 0), ry: R(0, TAU), s: R(0.8, 1.3) });
-  instanced(S, tree, vmat({ roughness: 0.8, normalMap: normalTex('rock', 2), normalScale: new THREE.Vector2(0.6, 0.6) }), tl);
+  const TG = F.treeGeos({ height: 8, seed: 3 }); const tl = []; for (let i = 0; i < 40; i++) tl.push({ x: R(-140, 140), z: R(-230, -110), ry: R(0, TAU), s: R(0.7, 1.6) }); for (let i = 0; i < 12; i++) tl.push({ x: R(-60, -22), z: R(-90, -5), ry: R(0, TAU), s: R(0.8, 1.3) }); for (let i = 0; i < 8; i++) tl.push({ x: R(24, 70), z: R(-90, 0), ry: R(0, TAU), s: R(0.8, 1.3) });
+  instanced(S, TG.trunk, vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) }), tl); instanced(S, TG.crown, F.foliageMat('cluster'), tl);
   // drip lines along each tomato bed
   for (let b = -2; b <= 2; b++) { const dl = cyl(0.008, 0.008, 72, MAT.rubber(), 6); dl.rotation.x = Math.PI / 2; dl.position.set(b * bedPitch + 0.14, 0.13, -32); S.add(dl); }
   // barn with solar roof + small weather mast in the distance
