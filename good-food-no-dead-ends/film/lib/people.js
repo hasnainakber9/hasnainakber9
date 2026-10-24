@@ -3,7 +3,7 @@
 import { THREE, V, clamp, lerp, smooth, prng, M4, clayMat, canvasTex, noise2, BGU, RoundedBoxGeometry } from './core.js';
 import { loadKit, buildHuman } from './humans.js';
 import { strandHair, scalpLayer, scalpTint, strandBrows } from './hair.js';
-import { vest, labCoat, apron, scarf, cap, headwrap, dressed, setArm } from './wardrobe.js';
+import { vest, labCoat, apron, cap, headwrap, dressed, setArm } from './wardrobe.js';
 const KIT = await loadKit();                       // MakeHuman (CC0) assets for the realistic cast
 const CLAY = typeof location !== 'undefined' && new URLSearchParams(location.search).has('clay');   // ?clay renders the original puppets
 
@@ -506,7 +506,7 @@ function resolveTarget(at, t, P) {
 
 // ------------------------------------------------------------------ pose library (FK + body-space IK)
 const BASE = { drop: 0, hx: 0, hy: 0, hpX: 0, hpY: 0, hpZ: 0, spX: 0.03, spY: 0, spZ: 0, nkX: 0, nkY: 0, nkZ: 0,
-  aLx: 0.06, aLy: 0, aLz: 0.1, aRx: 0.06, aRy: 0, aRz: 0.1, eL: 0.18, eR: 0.18, wLx: 0, wLy: 0, wLz: 0, wRx: 0, wRy: 0, wRz: 0,
+  aLx: 0.06, aLy: 0, aLz: 0.05, aRx: 0.06, aRy: 0, aRz: 0.05, eL: 0.26, eR: 0.26, wLx: 0, wLy: 0, wLz: 0, wRx: 0, wRy: 0, wRz: 0,
   lLx: 0, lLy: 0, lLz: 0.02, lRx: 0, lRy: 0, lRz: 0.02, kL: 0.03, kR: 0.03, fL: 0, fR: 0, talk: 1, ikL: null, ikR: null, carry: 0 };
 const NUM_KEYS = Object.keys(BASE).filter(k => typeof BASE[k] === 'number');
 const WALK_KEYS = ['lLx', 'lRx', 'kL', 'kR', 'fL', 'fR', 'aLx', 'aRx', 'eL', 'eR', 'spY', 'hpY', 'spX'];
@@ -514,7 +514,7 @@ function bodyIK(P, xyz, t) { const v = V(xyz[0] * P.s, xyz[1] * P.s, xyz[2] * P.
 function mk(o) { return Object.assign({}, BASE, o); }
 export const POSES = {
   stand: () => mk({}),
-  relaxed: (t, P) => mk({ hx: 0.02 * P.s, hpZ: 0.04, spZ: -0.03, lLz: 0.06, kR: 0.12, lRx: -0.06, aLz: 0.12, aRz: 0.08 }),
+  relaxed: (t, P) => mk({ hx: 0.02 * P.s, hpZ: 0.04, spZ: -0.03, lLz: 0.06, kR: 0.12, lRx: -0.06, aLz: 0.08, aRz: 0.04 }),
   hipsHands: (t, P) => mk({ aLx: 0.2, aLz: 0.62, eL: 1.75, aRx: 0.2, aRz: 0.62, eR: 1.75, wLz: -0.3, wRz: -0.3, talk: 0.3, hpZ: 0.03, kR: 0.08 }),
   armsCrossed: (t, P) => mk({ aLx: -0.5, aLy: 0.55, aLz: 0.22, eL: 1.95, aRx: -0.38, aRy: 0.6, aRz: 0.18, eR: 2.05, talk: 0 }),
   shrug: (t, P) => mk({ aLx: -0.35, aLz: 0.35, eL: 1.35, aRx: -0.35, aRz: 0.35, eR: 1.35, wLz: 0.4, wRz: 0.4, nkZ: 0.08, talk: 0 }),
@@ -550,7 +550,7 @@ function walkPose(dist, P, carrying) {
 // Each character: a MakeHuman description (ancestry mix, sex, age, build), skin texture, iris, strand hair and brows, clothes.
 const HUMANS = {
   ASHA: { eth: { african: 0.85, caucasian: 0.15 }, sex: 0, age: 44, muscle: 0.62, weight: 0.5, skin: 'middleage_african_female', iris: '#5a3a22',
-    hair: { style: 'bun', color: '#1b1512', tip: '#2a211b' }, brows: { color: '#241a14' }, wear: { scarf: '#b4532a' },
+    hair: { style: 'bun', color: '#1b1512', tip: '#2a211b' }, brows: { color: '#241a14' },
     clothes: [{ key: 'shirt_m01', top: { color: '#55633a' }, bottom: { color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
   NOOR: { eth: { african: 0.75, asian: 0.1, caucasian: 0.15 }, sex: 0, age: 11, muscle: 0.45, weight: 0.45, skin: 'young_african_female', iris: '#4e321e',
     hair: { style: 'puff', color: '#16100c', tip: '#2b1d14' }, brows: { color: '#1f1610', thick: 0.003, count: 300 },
@@ -602,7 +602,7 @@ function buildCastHuman(name, spec, seed) {
   strandBrows(h, KIT, Object.assign({ seed: seed % 983 + 2 }, H.brows || {}, { count: Math.round(((H.brows || {}).count || 380) * q) }));
   const W = (typeof location !== 'undefined' && new URLSearchParams(location.search).has('nowear')) ? {} : Object.fromEntries(Object.entries(H.wear || {}).filter(([k]) => { const only = typeof location !== 'undefined' && new URLSearchParams(location.search).get('wear'); return !only || only === k; }));
   if (W.puffer) vest(h, KIT, 'puffer', W.puffer); if (W.hivis) vest(h, KIT, 'hivis', W.hivis); if (W.labcoat) dressed(h, KIT, (hp) => labCoat(hp, KIT, W.labcoat)); if (W.apron) apron(h, KIT, W.apron);
-  if (W.scarf) scarf(h, KIT, W.scarf); if (W.cap) cap(h, KIT, W.cap, 'cap'); if (W.flatcap) cap(h, KIT, W.flatcap, 'flatcap'); if (W.headwrap) headwrap(h, KIT, W.headwrap);
+  if (W.cap) cap(h, KIT, W.cap, 'cap'); if (W.flatcap) cap(h, KIT, W.flatcap, 'flatcap'); if (W.headwrap) headwrap(h, KIT, W.headwrap);
   return h;
 }
 
@@ -665,11 +665,11 @@ export class HumanPuppet extends Puppet {
       const A = this.arms[s], Lg = this.legs[s], m = MS[s];
       // a hanging arm angles out a little at the shoulder and more at the elbow (carrying angle), so the hands clear the hips
       const abd = (deg) => new THREE.Quaternion().setFromAxisAngle(FWD, (m === 'L' ? 1 : -1) * deg * Math.PI / 180);
-      const up = abd(6).multiply(align(chord('upperarm01.' + m, 'lowerarm01.' + m)));
+      const up = abd(3).multiply(align(chord('upperarm01.' + m, 'lowerarm01.' + m)));
       let fore = align(chord('lowerarm01.' + m, 'wrist.' + m));
       // twist the forearm so the hanging hand has its thumb side forward (palm towards the thigh)
       const side = J('finger2-1.' + m).sub(J('finger5-1.' + m)).applyQuaternion(fore); side.y = 0; side.normalize();
-      const tw = new THREE.Quaternion().setFromUnitVectors(side, FWD); fore = abd(14).multiply(tw.multiply(fore));
+      const tw = new THREE.Quaternion().setFromUnitVectors(side, FWD); fore = abd(10).multiply(tw.multiply(fore));
       this.K['upperarm01.' + m] = { g: A.arm, k: restQ(A.arm).invert().multiply(up) };
       this.K['lowerarm01.' + m] = { g: A.elbow, k: restQ(A.elbow).invert().multiply(fore) };
       this.K['wrist.' + m] = { g: A.hand, k: restQ(A.hand).invert().multiply(fore.clone()) };

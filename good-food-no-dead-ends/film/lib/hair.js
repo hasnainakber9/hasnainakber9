@@ -120,6 +120,8 @@ export function strandHair(h, K, style, o = {}) {
       const away = p.clone().sub(whorl); away.y = Math.min(away.y, 0) - 0.02; const front = (p.z - M.C.z) / M.R.z > 0.2;
       const dir = (q) => { const d = away.clone(); if (front) d.add(V(0.35, 0, 0.15)); return d.normalize(); };
       const pts = grow(p, n, M, { len: L * (0.7 + r() * 0.5), segs: style === 'cropped' ? 3 : 7, dir, lift: style === 'cropped' ? 0.35 : 0.1, hug: style === 'cropped' ? 0.5 : 0.8, release: 0.4, gravity: 0.08, shell0: 0.012, shell1: style === 'cropped' ? 0.02 : 0.035 }, r);
+      if (style === 'capped') for (const q of pts) {   // under the cap's crown (wardrobe.js cap: tilted 0.17 back, down to 1.66 rad) the hair is pressed flat
+        const d = q.clone().sub(M.C), l = d.length(); if (Math.acos(clamp((d.y * 0.9856 - d.z * 0.1692) / l, -1, 1)) > 1.7) continue; const R = surfR(d, M) * 1.02 + 0.004; if (l > R) q.copy(M.C).add(d.multiplyScalar(R / l)); }
       add(pts, style === 'cropped' ? 0.0003 : 0.00036, col(r() * 0.6));
     }
   }
