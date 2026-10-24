@@ -14,7 +14,7 @@ OUT=renders/$TAG; TMP=$OUT/.partial; mkdir -p "$TMP"
 T0=$(date +%s)
 # seconds per 1080p frame on this 4-core software-GL host, with headroom, for the realistic cast with SMAA
 # (multisampling off). Measured: s05 5.5, s06 6.4, s01 10.3, s09a 11.2; the rest scaled from those and the stills.
-declare -A SPF=( [s01]=11 [s02]=22 [s03]=22 [s04]=28 [s05]=6 [s06]=7 [s07]=13 [s08]=15 [s09a]=12 [s09b]=15 [s10]=14 [s11]=1.5 )
+declare -A SPF=( [s01]=11 [s02]=23 [s03]=25 [s04]=28 [s05]=6 [s06]=7 [s07]=18 [s08]=18 [s09a]=12 [s09b]=15 [s10]=18 [s11]=1.5 )
 declare -A DUR=( [s01]=6.0 [s02]=8.5 [s03]=7.5 [s04]=8.0 [s05]=8.0 [s06]=9.0 [s07]=8.5 [s08]=10.0 [s09a]=4.6 [s09b]=3.4 [s10]=6.5 [s11]=4.5 )
 count() { ffprobe -v error -count_packets -select_streams v:0 -show_entries stream=nb_read_packets -of csv=p=0 "$1" 2>/dev/null; }
 

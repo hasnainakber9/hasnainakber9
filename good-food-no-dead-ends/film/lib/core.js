@@ -205,6 +205,22 @@ const GradeShader = {
     }`
 };
 
+// ------------------------------------------------------------------ depth of field
+// BokehPass draws the whole scene a second time with a depth material on every frame. This variant reads the depth
+// buffer the scene pass has just written instead: one render fewer (about a fifth of a frame in the software renderer),
+// and the depth also follows cut-out leaves and back-facing strands, which the depth material cannot see.
+// Needs the pass straight after the RenderPass, on composer buffers that carry depth textures.
+class SceneDepthBokehPass extends BokehPass {
+  constructor(scene, camera, params) { super(scene, camera, params); this.materialBokeh.defines.DEPTH_PACKING = 0; }
+  render(renderer, writeBuffer, readBuffer) {
+    const u = this.uniforms; u.tColor.value = readBuffer.texture; u.tDepth.value = readBuffer.depthTexture;
+    u.nearClip.value = this.camera.near; u.farClip.value = this.camera.far;
+    const oldAutoClear = renderer.autoClear; renderer.autoClear = false;
+    renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer); if (!this.renderToScreen) renderer.clear();
+    this.fsQuad.render(renderer); renderer.autoClear = oldAutoClear;
+  }
+}
+
 // ------------------------------------------------------------------ app
 export class App {
   constructor(o = {}) {
@@ -221,14 +237,17 @@ export class App {
     // anti-aliasing: SMAA on the display image by default (MSAA costs about half the frame time in the software renderer
     // and, under depth of field, bloom and grain, looks the same); ?msaa=4 or o.msaa restores multisampling
     const msaa = QP.has('msaa') ? +QP.get('msaa') : (o.msaa ?? 0);
-    const rt = new THREE.WebGLRenderTarget(W, H, { samples: msaa, type: THREE.HalfFloatType });
+    // depth of field reads the scene pass's depth (?dofpass=1 restores BokehPass's own depth render, for comparison)
+    const dof = o.dof && !QP.has('nodof'), sceneDepth = dof && !msaa && !o.ao && !QP.has('dofpass');
+    const rt = new THREE.WebGLRenderTarget(W, H, { samples: msaa, type: THREE.HalfFloatType, depthTexture: sceneDepth ? new THREE.DepthTexture(W, H) : null });
     this.composer = new EffectComposer(r, rt); this.composer.setPixelRatio(1);
+    if (sceneDepth) this.composer.renderTarget2.depthTexture = new THREE.DepthTexture(W, H);   // clone() would share the first one's texture
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     const scale = Math.min(W / 1920, H / 1080) || 1;
     if (o.ao) { this.ao = new GTAOPass(this.scene, this.camera, W, H); this.ao.output = GTAOPass.OUTPUT.Default; this.ao.blendIntensity = o.ao === true ? 0.9 : o.ao;
       this.ao.updateGtaoMaterial({ radius: o.aoRadius ?? 0.35, distanceExponent: 1, thickness: 1, scale: 1, samples: 12, distanceFallOff: 1, screenSpaceRadius: false });
       this.ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 }); this.composer.addPass(this.ao); }
-    if (o.dof) { this.dof = new BokehPass(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008) }); this.composer.addPass(this.dof); }
+    if (dof) { this.dof = new (sceneDepth ? SceneDepthBokehPass : BokehPass)(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008) }); this.composer.addPass(this.dof); }
     if (o.bloom !== false) { this.bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), o.bloomStrength ?? 0.16, o.bloomRadius ?? 0.55, o.bloomThreshold ?? 0.88); this.composer.addPass(this.bloom); }
     this.composer.addPass(new OutputPass());
     if (!msaa) this.composer.addPass(new SMAAPass(W, H));
