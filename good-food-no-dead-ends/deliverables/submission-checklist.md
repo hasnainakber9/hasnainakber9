@@ -23,6 +23,7 @@ Nothing has been posted or submitted. Every step below that publishes something 
 ## 3. Posting
 
 - [ ] Paste the caption from `social-caption.md`. `#xhopememeprize` is optional but recommended.
+- [ ] Where the description has room (YouTube, LinkedIn), add the credit line from `social-caption.md` for the CC BY 3.0 glasses model.
 - [ ] Add the AI-disclosure line if the platform asks, or turn on its "AI-generated" label: the character voices are synthetic.
 - [ ] Post publicly. Do **not** pay to promote or boost the post; paid promotion is not allowed.
 - [ ] Open the post in a private or logged-out browser window and confirm it plays.
@@ -38,7 +39,7 @@ Nothing has been posted or submitted. Every step below that publishes something 
 ## 5. Rules this entry already meets
 
 - [x] Under two minutes (84.5 s including the title card).
-- [x] Original work. Third-party assets are CC0, MIT, Apache-2.0 or OFL, as recorded in `asset-licence-log.md`.
+- [x] Original work. Third-party assets are CC0 (including the MakeHuman body model and clothing), CC BY 3.0 (one glasses model, credited), MIT, Apache-2.0 or OFL, as recorded in `asset-licence-log.md`.
 - [x] AI tools are allowed. Only the voices are AI-generated, and that is disclosed.
 - [x] No hateful, harmful or discriminatory content.
 - [x] Hopeful but plausible: no claim that hunger or waste is solved; AI assists people and never decides who eats.

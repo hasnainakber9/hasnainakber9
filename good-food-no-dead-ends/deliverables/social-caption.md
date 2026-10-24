@@ -15,11 +15,16 @@
 > The future of food is a loop, not a line. GOOD FOOD. NO DEAD ENDS.
 >
 > Original 3D animation. Character voices are AI-synthesised; there is no narration.
+> People built with MakeHuman (CC0). Glasses by punkduck, CC BY 3.0.
 > #xhopememeprize
 
 ## Alt text
 
 > Animated short. A girl calls a tomato ugly; Asha, a farmer, says "It's a tomato, not a job interview." The film follows the tomato's world: a sunrise farm with a soil sensor, a rooftop greenhouse, a fermentation lab, a food hub rerouting surplus, a street market, a shared dinner and a compost heap. The girl tastes it: "Okay. Not ugly." Title: Good food. No dead ends.
+
+## Credit line (required for the CC BY 3.0 glasses model; add it to any post description that has room)
+
+> Glasses by punkduck (MakeHuman community assets), CC BY 3.0.
 
 ## AI disclosure
 
