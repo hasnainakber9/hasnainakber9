@@ -63,8 +63,8 @@ function skinMaps() {
       rd[i] = 0; rd[i + 1] = clamp(78 + (1 - mott) * 26 + cr * -10, 0, 255); rd[i + 2] = 0; rd[i + 3] = 255; } }
   g.putImageData(img, 0, 0); hg.putImageData(him, 0, 0); rg.putImageData(rim, 0, 0);
   // fine pale speckles (lenticels) and a few darker pin marks
-  for (let n = 0; n < 2600; n++) { const x = r() * W, y = H * (0.12 + r() * 0.8), s = 0.6 + r() * 1.3, pale = r() < 0.8;
-    g.fillStyle = pale ? `rgba(255,214,150,${0.25 + r() * 0.35})` : `rgba(90,20,10,${0.2 + r() * 0.2})`; g.beginPath(); g.arc(x, y, s, 0, TAU); g.fill(); }
+  for (let n = 0; n < 1700; n++) { const x = r() * W, y = H * (0.12 + r() * 0.8), s = 0.45 + r() * 0.8, pale = r() < 0.8;
+    g.fillStyle = pale ? `rgba(255,205,150,${0.1 + r() * 0.22})` : `rgba(90,20,10,${0.12 + r() * 0.16})`; g.beginPath(); g.arc(x, y, s, 0, TAU); g.fill(); }
   // healed growth cracks: concentric arcs round the stem (constant th = horizontal runs) and a few radial ones
   const crack = (pts, w) => { for (const [ctx, style, lw] of [[g, 'rgba(214,150,92,0.55)', w * 4.2], [g, 'rgba(168,118,66,0.95)', w * 2.6], [g, 'rgba(96,60,30,0.9)', w * 0.9], [hg, 'rgb(150,150,150)', w * 4.0], [hg, 'rgb(50,50,50)', w * 1.6], [rg, 'rgb(0,225,0)', w * 3.2]]) {
     ctx.strokeStyle = style; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; for (const shift of [-W, 0, W]) { ctx.beginPath(); pts.forEach(([x, y], k) => (k ? ctx.lineTo(x + shift, y) : ctx.moveTo(x + shift, y))); ctx.stroke(); } } };

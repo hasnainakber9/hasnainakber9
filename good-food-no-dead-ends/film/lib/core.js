@@ -271,6 +271,10 @@ export class App {
   on(fn) { this.updaters.push(fn); return this; }
   after(fn) { this.late.push(fn); return this; }
   cast(...ps) { for (const p of ps) { this.puppets.push(p); this.scene.add(p.root); } return ps[0]; }
+  // pose everything at t without drawing (scenes use it once at load to measure, e.g. a prop's grip at a hand-off)
+  evaluate(t) { this.t = t;
+    for (let pass = 0; pass < 2; pass++) { for (const u of this.updaters) u(t); for (const p of this.puppets) p.pose(t); this.scene.updateMatrixWorld(true);
+      for (const p of this.puppets) p.solve(t); this.scene.updateMatrixWorld(true); for (const u of this.late) u(t); this.scene.updateMatrixWorld(true); } }
   renderAt(t) {
     this.t = t;
     for (let pass = 0; pass < 2; pass++) {          // two passes resolve cross-object targets (props that follow hands, etc.)

@@ -7,6 +7,7 @@ import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
 import { kitchen } from '../lib/sets.js';
 import { puppet, extraSpec } from '../lib/people.js';
+import { heroTomato } from '../lib/hero.js';
 const { THREE, V } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'planks', 'tiles', 'soil']);
 const app = new K.App({ duration: 6.0, fov: 28, exposure: 1.05, dof: { aperture: 0.006, maxblur: 0.012 }, bloomStrength: 0.22, warmth: 1.03, vignette: 0.34 });
@@ -26,13 +27,13 @@ const knife = P.ware.knife(); knife.position.set(0.4, top + 0.015, 0.02); knife.
 const greens = new THREE.Mesh(P.produceGeo('greens'), P.produceMat({ roughness: 0.6, clearcoat: 0.1 })); greens.position.set(0.62, top, -0.2); greens.scale.setScalar(1.3); greens.rotation.z = 1.4; app.add(greens);
 
 // hero: the imperfect, perfectly edible tomato
-const hero = P.tomato({ r: 0.05, ugly: true, seed: 4, color: '#cf3a1f', shoulder: '#e08a2a' }); hero.traverse(m => { if (m.isMesh) m.castShadow = true; }); app.add(hero);
+const hero = heroTomato(); app.add(hero);
 
 // cast
 const lines = await K.dialogue('s01');
 const noor = puppet('NOOR'); noor.place(-0.4, -0.74, 0); app.cast(noor); noor.speak(lines);
 const asha = puppet('ASHA'); app.cast(asha); asha.speak(lines);
-asha.walk([{ t: 0, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 0.9, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 2.35, x: 0.22, z: -0.92, yaw: -0.5, turnFast: true }]);
+asha.walk([{ t: 0, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 0.9, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 2.35, x: 0.08, z: -0.9, yaw: -0.55, turnFast: true }]);
 for (const c of K1.chairs) if (Math.abs(c.position.x - 0.4) < 0.1 && c.position.z < 0) c.visible = false;
 const cook = puppet('COOK'); cook.place(3.55, 0.35, Math.PI / 2); app.cast(cook); cook.act([{ t: 0, pose: 'stir', p: { h: 1.08 } }]); cook.look([{ t: 0, at: V(4.15, 1.0, 0.35) }]);
 const helper = puppet('HELPER', extraSpec(4, { build: 'm', elder: true, outer: 'apron', outerColor: '#d8cfba' })); helper.place(2.9, -1.35, Math.PI / 2 - 0.2); app.cast(helper); helper.act([{ t: 0, pose: 'chop', p: { h: 0.95 } }]); helper.look([{ t: 0, at: V(3.8, 0.9, -1.3) }]);
@@ -40,28 +41,40 @@ const helper = puppet('HELPER', extraSpec(4, { build: 'm', elder: true, outer: '
 // Noor: sitting, sorting; holds the tomato over the discard bowl
 const holdN = V(-0.19, 0.95, -0.47);
 noor.act([{ t: 0, pose: 'sit', p: { seat: 0.46, lean: 0.18 }, talk: 0.2 }]);
-noor.hand('R', [{ t: 0, at: holdN, pole: [0.7, -0.6, -0.3] }, { t: 3.05, at: null, blend: 0.5 }]);
-noor.hand('L', [{ t: 0, at: V(-0.58, top + 0.06, -0.3), pole: [-0.7, -0.6, -0.2] }]);
+const fwdN = () => holdN.clone().sub(noor.root.position).setY(0).normalize();
+// the tomato sits in her open palm, fingers cupping its side, while she turns it to the light
+const aimN = () => ({ fingers: fwdN().add(V(0, 0.25, 0)), palm: V(0.15, 1, 0.1) });
+noor.hand('R', [{ t: 0, at: holdN, pole: [0.7, -0.6, -0.3], shape: 'ball', aim: aimN }, { t: 2.2, at: holdN.clone().add(V(0.09, 0.05, -0.03)), blend: 0.5, pole: [0.7, -0.6, -0.3], shape: 'ball', aim: aimN },
+  { t: 3.05, at: null, blend: 0.5, shape: 'relaxed' }]);   // holds it out to Asha
+noor.hand('L', [{ t: 0, at: V(-0.58, top + 0.035, -0.3), pole: [-0.7, -0.6, -0.2], shape: 'relaxed', aim: () => ({ fingers: fwdN(), palm: V(0, -1, 0) }) }]);
 noor.look([{ t: 0, at: hero }, { t: 2.35, at: () => asha.head.getWorldPosition(V()).add(V(0, 0.12, 0)), blend: 0.35 }, { t: 3.4, at: hero, blend: 0.4 }, { t: 4.2, at: () => asha.head.getWorldPosition(V()).add(V(0, 0.12, 0)), blend: 0.4 }]);
 noor.face([{ t: 0, smile: 0.0, brow: 0.25 }, { t: 0.7, smile: -0.35, brow: -0.1, tilt: 0.6, blend: 0.3 }, { t: 2.6, smile: 0.0, brow: 0.45, tilt: 0, blend: 0.3 }, { t: 4.5, smile: 0.55, brow: 0.2, blend: 0.5 }]);
 
 // Asha: reaches in, takes it, looks it over, delivers the line, lifts it to the window light
 const lift = V(0.08, 1.45, -0.66);
 asha.act([{ t: 0, pose: 'stand' }, { t: 3.2, pose: 'relaxed', blend: 0.8 }]);
-asha.hand('R', [{ t: 0, at: null }, { t: 2.45, at: () => hero.getWorldPosition(V()).add(V(0.0, 0.0, 0.03)), blend: 0.45, pole: [0.6, -0.7, -0.2] },
-  { t: 3.0, at: V(0.12, 1.2, -0.62), blend: 0.55, pole: [0.6, -0.7, -0.3] }, { t: 4.45, at: lift, blend: 0.5, pole: [0.8, -0.5, -0.2] }]);
+const toNoor = () => noor.root.position.clone().sub(asha.root.position).setY(0).normalize();
+// takes it from above (fingers over the shoulders of the tomato), lifts it; after the cut she presents it on her palm
+const heroInNoorHand = () => { const f = noor.handFrame('R'); return f.pos.clone().add(V(0, 0.004, 0.034).applyQuaternion(f.quat)); };   // (not hero's position: that is set after the hands)
+asha.hand('R', [{ t: 0, at: null }, { t: 2.45, at: () => heroInNoorHand().add(V(0, 0.062, 0)), blend: 0.45, pole: [0.6, -0.7, -0.2], shape: 'ball', aim: () => ({ fingers: toNoor().add(V(0, -0.45, 0)), palm: V(0, -1, 0) }) },
+  { t: 3.0, at: V(0.12, 1.24, -0.62), blend: 0.55, pole: [0.6, -0.7, -0.3], shape: 'ball', aim: () => ({ fingers: toNoor().add(V(0, -0.45, 0)), palm: V(0, -1, 0) }) },
+  { t: 4.4, at: lift, blend: 0.01, pole: [0.8, -0.5, -0.2], shape: 'ball', aim: () => ({ fingers: asha.dirToWorld([-1, 0.25, 0.45]), palm: asha.dirToWorld([0.1, 1, -0.15]) }) }]);   // palm up, fingers across her (not between the lens and the fruit)
 asha.look([{ t: 0, at: () => noor.head.getWorldPosition(V()) }, { t: 2.0, at: hero, blend: 0.3 }, { t: 3.55, at: () => noor.head.getWorldPosition(V()).add(V(0, 0.1, 0)), blend: 0.35 }, { t: 4.75, at: hero, blend: 0.35 }]);
 asha.face([{ t: 0, smile: 0.1, brow: 0.0 }, { t: 2.6, smile: 0.25, brow: 0.2, blend: 0.3 }, { t: 3.9, smile: 0.45, brow: 0.35, tilt: 0.3, blend: 0.4 }, { t: 4.9, smile: 0.35, brow: 0.1, tilt: 0, blend: 0.5 }]);
 
-// the tomato follows whichever hand holds it (hand-off at 2.95 s)
+// the tomato rides in whichever hand holds it: on Noor's palm, then (hand-off at 2.95 s, measured once so nothing
+// jumps) in Asha's grip, then after the cut on Asha's palm, turning slowly in the window light
+const onPalm = (spin) => new THREE.Matrix4().compose(V(0, 0.004, 0.034), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, spin, 0, 'XYZ')), V(1, 1, 1));
+const frameM = (p, s) => { const f = p.handFrame(s); return new THREE.Matrix4().compose(f.pos, f.quat, V(1, 1, 1)); };
+app.evaluate(2.95); const handoff = frameM(asha, 'R').invert().multiply(frameM(noor, 'R').multiply(onPalm(2.2)));
 app.after(t => {
-  const holder = t < 2.95 ? noor : asha; const gp = holder.arms.R.grip.getWorldPosition(V());
-  hero.position.copy(gp).add(V(0, 0.01, 0)); hero.rotation.set(0.15 + (t > 2.95 ? -0.25 : 0), 2.2 + (t > 4.45 ? 0.5 * K.smooth((t - 4.45) / 1.5) : 0), 0.1);
+  const m = t < 2.95 ? frameM(noor, 'R').multiply(onPalm(2.2 + 0.25 * K.smooth(t / 2.4))) : t < 4.4 ? frameM(asha, 'R').multiply(handoff) : frameM(asha, 'R').multiply(onPalm(1.6 + 0.5 * K.smooth((t - 4.4) / 1.6)));
+  m.decompose(hero.position, hero.quaternion, V()); hero.updateMatrixWorld(true);
 });
 
 // camera: A) close two-plane shot on tomato + Noor's skeptical face (rack focus); B) two-shot as Asha takes it;
 // C) push into the tomato against the window glow until it fills the frame (match cut to the sunrise).
-const tomatoPos = () => hero.getWorldPosition(V());
+const tomatoPos = () => hero.getWorldPosition(V()), tomatoTop = () => hero.getWorldPosition(V()).add(V(0, 0.022, 0));
 app.rig = new K.Rig([
   { t: 0.0, pos: [0.08, 1.02, 0.3], look: [-0.28, 1.05, -0.7], fov: 27, focus: hero, aperture: 0.012 },
   { t: 0.9, pos: [0.07, 1.025, 0.25], look: [-0.29, 1.06, -0.7], fov: 26, focus: hero, aperture: 0.012 },
@@ -70,7 +83,7 @@ app.rig = new K.Rig([
   { t: 2.4001, cut: true, pos: [0.25, 1.38, 1.15], look: [-0.06, 1.28, -0.75], fov: 32, focus: () => asha.head.getWorldPosition(V()), aperture: 0.004 },
   { t: 4.4, pos: [0.22, 1.38, 0.98], look: [-0.06, 1.3, -0.75], fov: 30, focus: () => asha.head.getWorldPosition(V()), aperture: 0.004 },
   { t: 4.4001, cut: true, pos: [-0.36, 1.51, 0.14], look: [0.08, 1.5, -0.66], fov: 22, focus: tomatoPos, aperture: 0.016 },
-  { t: 6.0, pos: [-0.02, 1.458, -0.47], look: [0.08, 1.45, -0.66], fov: 10, focus: tomatoPos, aperture: 0.03, ease: K.easeIn },
+  { t: 6.0, pos: () => tomatoTop().add(V(-0.1, 0.012, 0.19)), look: tomatoTop, fov: 10, focus: tomatoTop, aperture: 0.03, ease: K.easeIn },
 ], { handheld: 0.5 });
 app.ready();
 </script></body></html>

@@ -214,10 +214,13 @@ export function strandBrows(h, K, o = {}) {
       const th = (o.thick || 0.0034) * (u < 0 ? 1.1 : 1 - 0.55 * Math.max(0, u) / 0.026);                          // thicker at the inner end, tapering out
       if (Math.abs((y - e.y) / sz - arch) > th) continue; tris.push(a, b, c); }
     const s = sampler(h, tris);
-    for (let i = 0; i < (o.count || 380); i++) { const { p, n, root } = s(r); const u = (p.x - e.x) * out / sz;
-      const dir = V(out * (0.55 + 0.45 * Math.min(1, (u + 0.017) / 0.02)), u < -0.008 ? 0.75 : 0.18, 0.15).normalize();
-      const pts = grow(p, n, M, { len: (o.len || 0.006) * (0.7 + r() * 0.5), segs: 4, dir: () => dir, lift: 0.03, hug: 0.97, shell0: -1, shell1: 0 }, r);
-      const c = col.clone().offsetHSL(0, 0, (r() - 0.5) * 0.08); strands.push({ pts, w0: o.w || 0.00014, c, root }); }
+    // a soft shadow of the brow on the skin under the hairs, so the brow reads as a shape and not as hatching
+    if (h.body.geometry.attributes.hairMask) { const a = h.body.geometry.attributes.hairMask, inB = new Set(tris);
+      for (let i = 0; i < K.bmap.length; i++) if (inB.has(K.bmap[i])) a.setX(i, Math.max(a.getX(i), o.shadow ?? 0.28)); a.needsUpdate = true; }
+    for (let i = 0; i < Math.round((o.count || 380) * 1.6); i++) { const { p, n, root } = s(r); const u = (p.x - e.x) * out / sz;
+      const dir = V(out * (0.55 + 0.45 * Math.min(1, (u + 0.017) / 0.02)), (u < -0.008 ? 0.75 : 0.18) + (r() - 0.5) * 0.25, 0.15).normalize();
+      const pts = grow(p, n, M, { len: (o.len || 0.006) * (0.55 + r() * 0.6), segs: 4, dir: () => dir, lift: 0.02, hug: 0.98, shell0: -1, shell1: 0 }, r);
+      const c = col.clone().offsetHSL(0, (r() - 0.5) * 0.1, (r() - 0.35) * 0.14); strands.push({ pts, w0: (o.w || 0.00014) * 0.62, c, root }); }
   }
   return buildRibbons(h, M, strands, o);
 }
