@@ -2,11 +2,11 @@
 // Leaf clusters are painted procedurally (gradient, mottling, midribs, darker margins) with a matching normal map
 // derived from a painted height field. Crown cards carry "volume" normals (pointing out of the crown) and
 // depth-based occlusion in their vertex colours, which is what makes a cloud of cards read as a leafy mass.
-import { THREE, V, clamp, lerp, prng, merged, M4, normalTex } from './core.js';
+import { THREE, V, clamp, lerp, prng, merged, M4, normalTex, translucent } from './core.js';
 const TAU = Math.PI * 2;
 
 // ------------------------------------------------------------------ painted leaf clusters (+ normal maps)
-function heightToNormal(hd, w, h, strength) {
+export function heightToNormal(hd, w, h, strength) {
   const out = new ImageData(w, h), d = out.data, H = (x, y) => hd[((clamp(y, 0, h - 1)) * w + clamp(x, 0, w - 1)) * 4] / 255;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const dx = (H(x + 1, y - 1) + 2 * H(x + 1, y) + H(x + 1, y + 1) - H(x - 1, y - 1) - 2 * H(x - 1, y) - H(x - 1, y + 1)) * strength;
@@ -56,7 +56,7 @@ export function foliageMat(kind = 'cluster', o = {}) {
   const { map, normalMap } = leafAtlas(kind);
   const m = new THREE.MeshStandardMaterial({ map, normalMap, normalScale: new THREE.Vector2(0.7, 0.7), alphaTest: 0.5, side: THREE.DoubleSide, vertexColors: true, roughness: o.roughness ?? 0.72, color: o.color || '#ffffff' });
   m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace(/\n\s*normal \*= faceDirection;/g, '\n')); };
-  m.customProgramCacheKey = () => 'foliage'; return m;
+  m.customProgramCacheKey = () => 'foliage'; return translucent(m, '#d8f08a', 0.55);
 }
 
 // ------------------------------------------------------------------ crowns of cards

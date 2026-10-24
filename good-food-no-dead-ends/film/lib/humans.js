@@ -111,22 +111,32 @@ function lumSampler(t) {
   for (let i = 0; i < S * S; i++) L[i] = d[i * 4 + 3] > 128 ? 0.2126 * lin(d[i * 4]) + 0.7152 * lin(d[i * 4 + 1]) + 0.0722 * lin(d[i * 4 + 2]) : -1;
   return (t.userData.lum = (u, v) => L[clamp(Math.floor((t.flipY ? 1 - v : v) * S), 0, S - 1) * S + clamp(Math.floor(u * S), 0, S - 1)]);
 }
-// eyes: MakeHuman's iris is blue-green. Recolour it once per iris colour at full resolution (so distant, mip-mapped eyes
-// keep their colour), keeping the fibre detail, limbal ring and pupil; the sclera is warmed slightly off pure white
+// eyes: MakeHuman's iris is blue with a green collarette. Recolour the whole iris disc once per iris colour at full
+// resolution (so distant, mip-mapped eyes keep their colour), by position rather than hue so no blue or green survives:
+// the fibre detail comes from the original luminance, with a dark limbal ring at the rim and a lighter collarette
+// round the pupil. The sclera is warmed off pure white and darkens towards the lids.
 const eyeMaps = {};
 function eyeMap(K, color) {
   if (eyeMaps[color]) return eyeMaps[color];
   const t = K.tex['eyes:diffuse'], img = t.image, w = img.width, h = img.height; const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true });
-  g.drawImage(img, 0, 0); const id = g.getImageData(0, 0, w, h), d = id.data; const c = new THREE.Color(color); const ir = [c.r, c.g, c.b].map(x => Math.round(Math.pow(x, 1 / 2.2) * 255));
+  g.drawImage(img, 0, 0); const id = g.getImageData(0, 0, w, h), d = id.data; const c = new THREE.Color(color); const ir = [c.r, c.g, c.b].map(x => Math.pow(x, 1 / 2.2) * 255);
   const blue = (i) => { const r = d[i], gg = d[i + 1], b = d[i + 2], mx = Math.max(r, gg, b); return mx ? (b - r) / mx : 0; };
   let sum = 0, n = 0; const cen = [[0, 0, 0], [0, 0, 0]];   // iris mean brightness, and the iris centre of each eyeball (the two sit either side of the diagonal)
   for (let i = 0; i < d.length; i += 4) if (blue(i) > 0.12) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; const x = (i / 4) % w, y = Math.floor(i / 4 / w), e = cen[x * h > y * w ? 0 : 1]; e[0] += x; e[1] += y; e[2]++; }
   const mean = n ? sum / n : 120, C = cen.map(e => [e[0] / Math.max(1, e[2]), e[1] / Math.max(1, e[2])]), Rb = 0.27 * w;
-  for (let i = 0; i < d.length; i += 4) { const bl = blue(i), lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2], wgt = clamp((bl - 0.02) / 0.1, 0, 1);
-    if (wgt > 0) { const k = clamp(lum / mean, 0, 1.6); for (let j = 0; j < 3; j++) d[i + j] = lerp(d[i + j], clamp(ir[j] * k, 0, 255), wgt); }
-    else { const x = (i / 4) % w, y = Math.floor(i / 4 / w), c = C[x * h > y * w ? 0 : 1], dist = Math.hypot(x - c[0], y - c[1]) / Rb;
-      const shade = 0.88 * (1 - 0.4 * clamp((dist - 0.4) / 0.6, 0, 1));   // the sclera is never paper-white, and darker towards the lids
-      d[i] *= shade; d[i + 1] *= shade * 0.97; d[i + 2] *= shade * 0.93; } }
+  const Ri = 0.1175 * w, Rp = 0.034 * w;   // iris and pupil radii (texels) of MakeHuman's eye texture
+  for (let i = 0; i < d.length; i += 4) { const x = (i / 4) % w, y = Math.floor(i / 4 / w), cc = C[x * h > y * w ? 0 : 1], r = Math.hypot(x - cc[0], y - cc[1]);
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    const inIris = 1 - clamp((r - Ri + 1.5) / 3, 0, 1);
+    if (inIris > 0 && r > Rp - 1) {
+      const u = (r - Rp) / (Ri - Rp);                                       // 0 at the pupil, 1 at the rim
+      const ring = 1 - 0.55 * clamp((u - 0.82) / 0.18, 0, 1);              // limbal ring
+      const coll = 1 + 0.22 * Math.exp(-((u - 0.18) ** 2) / 0.008);         // collarette
+      const k = Math.pow(clamp(lum / mean, 0.25, 1.8), 0.85) * ring * coll;
+      for (let j = 0; j < 3; j++) d[i + j] = lerp(d[i + j], clamp(ir[j] * k, 0, 255), inIris);
+    } else if (r >= Ri - 1.5) {
+      const dist = r / Rb, shade = 0.86 * (1 - 0.42 * clamp((dist - 0.4) / 0.6, 0, 1));   // the sclera is never paper-white, and darker towards the lids
+      d[i] *= shade; d[i + 1] *= shade * 0.965; d[i + 2] *= shade * 0.92; } }
   g.putImageData(id, 0, 0); const o = new THREE.CanvasTexture(cv); o.colorSpace = THREE.SRGBColorSpace; o.anisotropy = 8; o.flipY = t.flipY; return (eyeMaps[color] = o);
 }
 // (shader variant kept for reference) MakeHuman's iris is blue; re-tint the saturated (iris) texels, keep the sclera
@@ -235,14 +245,25 @@ export function buildHuman(cfg) {
     const m = skinned(g, mat, key); if (o.shadow === false) m.castShadow = false; if (o.order) m.renderOrder = o.order; return m;
   };
   const T = (k, s = 'diffuse') => K.tex[k + ':' + s] || null;
-  // eyes: eyeball (re-tinted iris) under a clear cornea that only adds reflections, which is what makes eyes look wet
-  proxy('eyes', [new THREE.MeshStandardMaterial({ map: eyeMap(K, cfg.iris || '#4a2c17'), roughness: 0.35 }),
-    new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.04, specularIntensity: 0.8, envMapIntensity: 0.035, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })],
+  // eyes: a nearly matte eyeball (re-tinted iris) under a clear cornea that adds only sharp reflections. A glossy
+  // eyeball spreads the room's light over the whole iris as a milky veil; the cornea's mirror reflection instead shows
+  // as distinct catchlights over a dark iris, which is what makes eyes look wet and alive.
+  proxy('eyes', [new THREE.MeshPhysicalMaterial({ map: eyeMap(K, cfg.iris || '#4a2c17'), roughness: 0.55, specularIntensity: 0.25, envMapIntensity: 0.25 }),
+    new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.03, specularIntensity: 1.0, envMapIntensity: 0.55, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })],
     { shadow: false, group: (c, uv) => (uv.x > 0.85 && uv.y < 0.15 ? 1 : 0) });
-  const strand = (key, color, o = {}) => recolor(new THREE.MeshPhysicalMaterial({ map: T(key), alphaTest: o.alphaTest ?? 0.12, alphaToCoverage: true, side: THREE.DoubleSide, roughness: o.roughness ?? 0.72,
+  const strand = (key, color, o = {}) => recolor(new THREE.MeshPhysicalMaterial({ map: T(key), alphaTest: o.alphaTest ?? 0.12, alphaToCoverage: !o.blend, transparent: !!o.blend, depthWrite: !o.blend,
+    side: THREE.DoubleSide, roughness: o.roughness ?? 0.72, vertexColors: !!o.vertexAlpha,
     sheen: o.sheen ?? 0.25, sheenRoughness: 0.5, sheenColor: new THREE.Color(color || '#553322').offsetHSL(0, -0.1, 0.12), specularIntensity: o.spec ?? 0.35, color: '#ffffff',
     normalMap: o.strands ? normalTex('knit', 6) : null, normalScale: new THREE.Vector2(0.5, 0.5) }), color, o.recolor ?? 1, o.gain ?? 2.4);
-  proxy('eyelashes', strand('eyelashes', cfg.lashColor || '#120d0b', { alphaTest: 0.35, sheen: 0 }), { shadow: false });
+  // lashes: alpha-blended (fine tapering hairs instead of alpha-tested clumps); the texture's lower lashes are as dense as
+  // the upper ones, which reads as heavy mascara, so they are faded to a soft hint
+  { const lm = proxy('eyelashes', strand('eyelashes', cfg.lashColor || '#1a1310', { blend: true, alphaTest: 0.03, sheen: 0, vertexAlpha: true }), { shadow: false });
+    const lp = lm.geometry.attributes.position, li = lm.geometry.index.array, eyeY = (rest.get('eye.L').h.y + rest.get('eye.R').h.y) / 2, col = new Float32Array(lp.count * 4);
+    const par = Int32Array.from({ length: lp.count }, (_, i) => i), find = (a) => { while (par[a] !== a) a = par[a] = par[par[a]]; return a; };
+    for (let f = 0; f < li.length; f += 3) { const a = find(li[f]); par[find(li[f + 1])] = a; par[find(li[f + 2])] = a; }
+    const sy = new Map(); for (let i = 0; i < lp.count; i++) { const r = find(i), e = sy.get(r) || [0, 0]; e[0] += lp.getY(i); e[1]++; sy.set(r, e); }   // each lash strip: below the eye centre = lower lashes
+    for (let i = 0; i < lp.count; i++) { const e = sy.get(find(i)), lower = e[0] / e[1] < eyeY; col.set([1, 1, 1, lower ? 0.32 : 0.92], i * 4); }
+    lm.geometry.setAttribute('color', new THREE.BufferAttribute(col, 4)); lm.renderOrder = 1; }
   if (cfg.brows !== false) proxy(cfg.brows || 'brow_f', strand(cfg.brows || 'brow_f', cfg.browColor || cfg.hairColor || '#1c1410', { alphaTest: 0.08, sheen: 0.1, gain: 2.0 }), { shadow: false });
   // mouth: teeth and tongue are only ever seen in the mouth's shadow, so they are toned down, and a dark oral cavity
   // (an ellipsoid that stretches down with the jaw) stops the open mouth showing through the head

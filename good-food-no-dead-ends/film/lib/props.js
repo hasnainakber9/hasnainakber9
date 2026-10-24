@@ -1,5 +1,5 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
-import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU } from './core.js';
+import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU, translucent } from './core.js';
 import { compoundLeaf, beanLeaf, scrap } from './foliage.js';
 const TAU = Math.PI * 2;
 
@@ -36,7 +36,8 @@ export function leafTex(kind) {
   });
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; leafTexCache[kind] = t; return t;
 }
-export function leafMat(kind, o = {}) {
+export function leafMat(kind, o = {}) { return translucent(leafMat0(kind, o), kind === 'flower' ? '#fff0c0' : '#d8f08a', kind === 'flower' ? 0.35 : 0.6); }
+function leafMat0(kind, o = {}) {
   if (kind === 'tomato' || kind === 'broad') { const L = kind === 'tomato' ? compoundLeaf() : beanLeaf(); return new THREE.MeshStandardMaterial({ map: L.map, normalMap: L.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), alphaTest: 0.5, side: THREE.DoubleSide, roughness: o.roughness ?? 0.6, vertexColors: true, color: o.color || '#ffffff' }); }
   return new THREE.MeshStandardMaterial({ map: leafTex(kind), alphaTest: 0.45, side: THREE.DoubleSide, roughness: o.roughness ?? 0.62, vertexColors: true, color: o.color || '#ffffff' }); }
 // a bent card: base at origin, growing along +y; curl bends tip toward +z

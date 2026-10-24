@@ -609,6 +609,25 @@ function buildCastHuman(name, spec, seed) {
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qc = new THREE.Quaternion(), va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3(), ma = new THREE.Matrix4();
 const DOWN = new THREE.Vector3(0, -1, 0), FWD = new THREE.Vector3(0, 0, 1);
 function setWorldQuat(bone, q) { bone.parent.updateWorldMatrix(true, false); bone.parent.getWorldQuaternion(qa); bone.quaternion.copy(qa.invert().multiply(q)); bone.updateMatrixWorld(true); }
+// hand frame from a finger direction and a palm normal (world): Y along the fingers, Z out of the palm, X = Y x Z
+function frameQ(fingers, palm) { const Y = fingers.clone().normalize(), Z = palm.clone().sub(Y.clone().multiplyScalar(palm.dot(Y))).normalize(), X = new THREE.Vector3().crossVectors(Y, Z);
+  return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)); }
+// hand shapes: curl (rad) of joints 1..3 for thumb, index, middle, ring, little; opp = thumb swung across the palm; spread = fingers fanned
+export const HAND = {
+  relaxed: { f: [[0.12, 0.18, 0.12], [0.18, 0.3, 0.2], [0.22, 0.36, 0.22], [0.28, 0.42, 0.26], [0.34, 0.48, 0.3]], opp: 0.15 },
+  flat:    { f: [[0.02, 0.04, 0.02], [0.04, 0.05, 0.03], [0.04, 0.05, 0.03], [0.05, 0.06, 0.04], [0.06, 0.07, 0.04]], opp: 0.0 },
+  spread:  { f: [[0.05, 0.08, 0.05], [0.06, 0.08, 0.05], [0.08, 0.1, 0.06], [0.1, 0.12, 0.08], [0.12, 0.14, 0.08]], opp: -0.1, spread: 0.18 },
+  hold:    { f: [[0.3, 0.4, 0.3], [0.7, 0.8, 0.5], [0.75, 0.85, 0.55], [0.8, 0.9, 0.55], [0.85, 0.95, 0.6]], opp: 0.45 },
+  ball:    { f: [[0.25, 0.3, 0.25], [0.45, 0.5, 0.35], [0.5, 0.55, 0.38], [0.55, 0.6, 0.4], [0.6, 0.65, 0.42]], opp: 0.55, spread: 0.08 },
+  power:   { f: [[0.5, 0.6, 0.45], [1.15, 1.25, 0.8], [1.2, 1.3, 0.85], [1.25, 1.3, 0.85], [1.3, 1.35, 0.85]], opp: 0.75 },
+  knife:   { f: [[0.45, 0.5, 0.35], [0.35, 0.45, 0.3], [1.2, 1.3, 0.85], [1.25, 1.3, 0.85], [1.3, 1.35, 0.85]], opp: 0.65 },
+  pinch:   { f: [[0.35, 0.45, 0.35], [0.55, 0.75, 0.45], [0.7, 0.85, 0.5], [0.95, 1.05, 0.6], [1.05, 1.15, 0.65]], opp: 0.85 },
+  fork:    { f: [[0.4, 0.45, 0.3], [0.45, 0.6, 0.35], [0.85, 0.95, 0.55], [1.1, 1.2, 0.7], [1.2, 1.3, 0.75]], opp: 0.7 },
+  claw:    { f: [[0.55, 0.6, 0.45], [0.55, 1.15, 0.85], [0.55, 1.15, 0.85], [0.6, 1.15, 0.85], [0.65, 1.15, 0.85]], opp: 0.7 },
+  point:   { f: [[0.5, 0.55, 0.4], [0.04, 0.05, 0.03], [1.3, 1.35, 0.9], [1.35, 1.35, 0.9], [1.4, 1.4, 0.9]], opp: 0.7 },
+  fist:    { f: [[0.6, 0.7, 0.5], [1.4, 1.4, 0.95], [1.4, 1.4, 0.95], [1.4, 1.4, 0.95], [1.4, 1.4, 0.95]], opp: 0.8 },
+};
+const shapeOf = (k) => (k && (typeof k.shape === 'object' ? k.shape : HAND[k.shape])) || (k && k.at ? HAND.hold : HAND.relaxed);
 
 export class HumanPuppet extends Puppet {
   constructor(name, spec) {
@@ -662,7 +681,10 @@ export class HumanPuppet extends Puppet {
       const palmN = new THREE.Vector3().crossVectors(handDir, sd).multiplyScalar(m === 'L' ? -1 : 1).normalize(); this['palmN' + s] = palmN;
       this['fingers' + s] = [];
       for (let f = 1; f <= 5; f++) for (let k = 1; k <= 3; k++) { const n = `finger${f}-${k}.${m}`; if (!h.bone(n)) continue; const d = J(n, 't').sub(J(n)).normalize();
-        this['fingers' + s].push({ b: h.bone(n), axis: new THREE.Vector3().crossVectors(d, palmN).normalize(), f, k }); }
+        this['fingers' + s].push({ b: h.bone(n), axis: new THREE.Vector3().crossVectors(d, palmN).normalize(), f, k, fan: f - 3 }); }
+      // the hand frame at rest (body space = every bone's rest-local space): Y along the fingers, Z out of the palm
+      const Bq = frameQ(handDir, palmN), off = J('finger3-1.' + m).sub(wr).multiplyScalar(0.7).add(palmN.clone().multiplyScalar(0.018));
+      this.HF = this.HF || {}; this.HF[s] = { B: Bq, Binv: Bq.clone().invert(), off, fore: J('lowerarm01.' + m).distanceTo(wr), foreAx: wr.clone().sub(J('lowerarm01.' + m)).normalize(), handDir, palmN };
     }
     // pelvis rigidly attached to the driver hips (lifted to the straight-leg stance)
     const hipsRest = new THREE.Matrix4().compose(V(0, this.hipY, 0), new THREE.Quaternion(), V(1, 1, 1));
@@ -687,11 +709,12 @@ export class HumanPuppet extends Puppet {
     for (const n of ['upperleg01.L', 'upperleg01.R', 'lowerleg01.L', 'lowerleg01.R', 'foot.L', 'foot.R', 'upperarm01.L', 'upperarm01.R', 'lowerarm01.L', 'lowerarm01.R', 'wrist.L', 'wrist.R']) {
       const k = this.K[n]; k.g.getWorldQuaternion(qb); setWorldQuat(B(n), qb.multiply(k.k));
     }
-    // arms reaching for something: exact two-bone IK on the real skeleton
-    for (const s of ['L', 'R']) { const r = this.ikReq[s]; if (r && r.w > 0.001) this.bodyIK(s, r.t, r.p, r.w); }
-    // hands: curl when holding
-    for (const s of ['L', 'R']) { const r = this.ikReq[s]; const grip = r ? 0.25 + 0.5 * r.w : 0.22;
-      for (const F of this['fingers' + s]) { const a = F.f === 1 ? [0.25, 0.35, 0.3][F.k - 1] : [0.85, 0.95, 0.55][F.k - 1]; F.b.quaternion.setFromAxisAngle(F.axis, a * grip); } }
+    // arms reaching for something: exact two-bone IK on the real skeleton. With an aim (hand keys' `aim`), the wrist is
+    // placed so the turned hand puts its palm centre on the target; without one the palm sits on the forearm line.
+    for (const s of ['L', 'R']) { const r = this.ikReq[s], hk = Puppet.seg(this.k['hand' + s], t), aim = this.aimAt(hk, t); const L2b = B('lowerarm02.' + this.MS[s]); if (L2b) L2b.quaternion.identity();
+      if (r && r.w > 0.001) { if (aim) this.armIK(s, r.t, r.p, r.w, aim); else this.bodyIK(s, r.t, r.p, r.w); }
+      else if (aim) { h.group.updateMatrixWorld(true); this.orientHand(s, aim.q.clone().multiply(this.HF[s].Binv), aim.w); }
+      this.applyShape(s, hk, r); }
     h.group.updateMatrixWorld(true);
     // eyes on the gaze target
     if (this.gazeTarget) for (const s of ['L', 'R']) { const e = B('eye.' + s); e.parent.updateWorldMatrix(true, false); const ep = e.getWorldPosition(va); const d = vb.copy(this.gazeTarget).sub(ep).normalize();
@@ -707,10 +730,58 @@ export class HumanPuppet extends Puppet {
         'mouth-corner-puller': Math.max(0, sm) * 0.85, 'mouth-depression': Math.max(0, -sm) * 0.7, 'mouth-open': open * 0.5,
         'mouth-pursing': talking ? Math.max(0, v1 - 0.55) * 1.2 * e : 0, 'mouth-retraction': talking ? Math.max(0, v2 - 0.5) * 0.8 * e : 0, 'mouth-compression': talking ? Math.max(0, 0.25 - open) * 0.6 : 0 }); }
     // props held by the driver grips follow the real palms
-    for (const s of ['L', 'R']) { const A = this.arms[s], m = this.MS[s]; const w = B('wrist.' + m); const pm = w.matrixWorld.clone();
-      const off = this.h.joint('finger3-1.' + m).sub(this.h.joint('wrist.' + m)).multiplyScalar(0.7).add(this['palmN' + s].clone().multiplyScalar(0.018));
-      const pw = off.applyMatrix4(new THREE.Matrix4().extractRotation(pm)).add(va.setFromMatrixPosition(pm));
-      A.grip.parent.updateWorldMatrix(true, false); A.grip.position.copy(A.grip.parent.worldToLocal(pw)); A.grip.updateMatrixWorld(true); }
+    for (const s of ['L', 'R']) { const A = this.arms[s], f = this.handFrame(s);
+      A.grip.parent.updateWorldMatrix(true, false); A.grip.position.copy(A.grip.parent.worldToLocal(f.pos)); A.grip.updateMatrixWorld(true); }
+    // attached props ride in the hand frame
+    for (const a of this.held || []) { if (t < a.from || t > a.until) continue; const f = this.handFrame(a.s);
+      a.obj.position.copy(f.pos).add(a.pos.clone().applyQuaternion(f.quat)); a.obj.quaternion.copy(f.quat).multiply(a.q); a.obj.updateMatrixWorld(true); }
+  }
+  // palm centre and hand frame (Y along the fingers, Z out of the palm) in world space
+  handFrame(s) { const H = this.HF[s], Wr = this.h.bone('wrist.' + this.MS[s]); Wr.updateWorldMatrix(true, false); const q = Wr.getWorldQuaternion(new THREE.Quaternion());
+    return { pos: H.off.clone().applyQuaternion(q).add(Wr.getWorldPosition(new THREE.Vector3())), quat: q.clone().multiply(H.B) }; }
+  // keep a prop in this hand: pos (m) and rot (Euler, rad) in the hand frame, optionally only between from..until
+  attach(s, obj, o = {}) { (this.held = this.held || []).push({ s, obj, pos: V(...(o.pos || [0, 0, 0])), q: new THREE.Quaternion().setFromEuler(new THREE.Euler(...(o.rot || [0, 0, 0]))), from: o.from ?? -1e9, until: o.until ?? 1e9 }); return obj; }
+  // the blended aim of the current hand keys: { q: wanted hand frame (world), w }
+  aimAt(hk, t) {
+    if (!hk) return null; const qf = (k) => { if (!k || !k.aim) return null; const a = typeof k.aim === 'function' ? k.aim(t, this) : k.aim; if (!a) return null; return a.isQuaternion ? a.clone() : frameQ(a.fingers, a.palm); };
+    const qa = hk.prev ? qf(hk.prev) : null, qb = qf(hk.cur); if (!qa && !qb) return null; const u = hk.prev ? hk.u : 1;
+    if (qa && qb) return { q: qa.slerp(qb, u), w: 1 }; if (qb) return { q: qb, w: hk.prev ? u : 1 }; return { q: qa, w: 1 - u };
+  }
+  // two-bone IK to a palm target with the hand turned to an aim
+  armIK(s, T, pole, w, aim) {
+    const h = this.h, m = this.MS[s], H = this.HF[s], U = h.bone('upperarm01.' + m), Lw = h.bone('lowerarm01.' + m), Wr = h.bone('wrist.' + m);
+    h.group.updateMatrixWorld(true);
+    const qHand = Wr.getWorldQuaternion(new THREE.Quaternion()).slerp(aim.q.clone().multiply(H.Binv), aim.w);
+    const Wt = T.clone().sub(H.off.clone().applyQuaternion(qHand));                       // wrist joint target
+    const S = U.getWorldPosition(new THREE.Vector3()), E0 = Lw.getWorldPosition(new THREE.Vector3());
+    const L1 = this.arms[s].up, L2 = H.fore; const Dv = Wt.clone().sub(S); const d = clamp(Dv.length(), Math.abs(L1 - L2) + 1e-3, (L1 + L2) * 0.999); const dir = Dv.normalize();
+    const a = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+    let k = new THREE.Vector3().crossVectors(dir, pole); if (k.lengthSq() < 1e-6) k.crossVectors(dir, FWD); k.normalize();
+    const E = S.clone().add(dir.clone().applyAxisAngle(k, a).multiplyScalar(L1));
+    const aimBone = (bone, from, tip, to) => { const cur = bone.getWorldQuaternion(new THREE.Quaternion()); const q = new THREE.Quaternion().setFromUnitVectors(tip.clone().sub(from).normalize(), to.clone().sub(from).normalize()).multiply(cur); setWorldQuat(bone, cur.slerp(q, w)); };
+    aimBone(U, S, E0, E); h.group.updateMatrixWorld(true);
+    aimBone(Lw, Lw.getWorldPosition(new THREE.Vector3()), Wr.getWorldPosition(new THREE.Vector3()), Wt); h.group.updateMatrixWorld(true);
+    this.orientHand(s, qHand, w);
+  }
+  // turn the hand to a wrist world rotation; half the twist about the forearm goes into the forearm twist bone
+  orientHand(s, qWrist, w = 1) {
+    const h = this.h, m = this.MS[s], H = this.HF[s], L2b = h.bone('lowerarm02.' + m), Wr = h.bone('wrist.' + m);
+    const want = Wr.getWorldQuaternion(new THREE.Quaternion()).slerp(qWrist, w);
+    if (L2b) { const pq = L2b.getWorldQuaternion(new THREE.Quaternion()), rel = pq.invert().multiply(want), ax = H.foreAx, dt = rel.x * ax.x + rel.y * ax.y + rel.z * ax.z;
+      const tw = new THREE.Quaternion(ax.x * dt, ax.y * dt, ax.z * dt, rel.w).normalize(); L2b.quaternion.multiply(new THREE.Quaternion().slerp(tw, 0.5)); L2b.updateMatrixWorld(true); }
+    setWorldQuat(Wr, want);
+  }
+  // finger pose from the hand keys' shapes (blended between keys); reaching without a shape = hold, idle = relaxed
+  applyShape(s, hk, r) {
+    let A = null, Bs, u = 1;
+    if (hk) { Bs = shapeOf(hk.cur); if (hk.prev) { A = shapeOf(hk.prev); u = hk.u; } if (!hk.cur.shape && !hk.cur.at && r && r.w > 0.001) Bs = HAND.hold; }
+    else Bs = r && r.w > 0.001 ? HAND.hold : HAND.relaxed;
+    const H = this.HF[s], sg = this.MS[s] === 'L' ? 1 : -1, mix = (key, d = 0) => lerp(A ? (A[key] ?? d) : (Bs[key] ?? d), Bs[key] ?? d, u);
+    const opp = mix('opp'), spr = mix('spread');
+    for (const F of this['fingers' + s]) { const ang = lerp(A ? A.f[F.f - 1][F.k - 1] : Bs.f[F.f - 1][F.k - 1], Bs.f[F.f - 1][F.k - 1], u);
+      F.b.quaternion.setFromAxisAngle(F.axis, ang);
+      if (F.k === 1 && F.f > 1 && spr) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.palmN, -spr * F.fan * sg));
+      if (F.k === 1 && F.f === 1 && opp) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.handDir, -opp * sg)); }   // swings the thumb in front of the palm
   }
   // analytic two-bone IK on the body's own arm (shoulder from the posed spine), elbow toward the pole
   bodyIK(s, T, pole, w) {

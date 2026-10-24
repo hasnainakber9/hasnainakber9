@@ -87,7 +87,7 @@ export async function farm(app, o = {}) {
   seed(3);
   const S = app.scene;
   const sunDir = o.sunDir || V(0.75, 0.2, 0.62);
-  skyDome(app, { top: o.top || '#5e86b8', mid: o.mid || '#a9bdd2', horizon: o.horizon || '#f0b27a', ground: '#7a6a50', sunColor: o.sunColor || '#ffb070', sunDir, glow: o.glow ?? 1.0, fogColor: o.fog || '#e7c49f', fogNear: 30, fogFar: 230, sunIntensity: o.sunDisc ?? 5, sunSize: o.sunSize ?? 0.99965 });
+  skyDome(app, { top: o.top || '#5e86b8', mid: o.mid || '#a9bdd2', horizon: o.horizon || '#f0b27a', ground: '#7a6a50', sunColor: o.sunColor || '#ffb070', sunDir, glow: o.glow ?? 1.0, fogColor: o.fog || '#e7c49f', fogNear: 30, fogFar: 230, sunIntensity: o.sunDisc ?? 5, sunSize: o.sunSize ?? 0.99965, env: o.env ?? true });
   const sunAz = Math.atan2(sunDir.x, -sunDir.z);
   await clouds(app, { count: 14, yaw: o.cloudYaw ?? (sunAz + Math.PI), spread: 2.0, opacity: 0.6, color: o.cloudColor || '#ffe2c4', minY: 20, maxY: 70, avoid: sunAz });
   if (o.stormBank) await clouds(app, { count: 7, yaw: o.stormYaw ?? -0.9, spread: 0.35, opacity: 0.95, color: '#6f6a78', minY: 8, maxY: 22, scale: 1.4 });
@@ -103,7 +103,9 @@ export async function farm(app, o = {}) {
   // grass verges beyond the beds
   const grassM = mat('#6f8a3e', { map: grain('leafy', { repeat: 60, scale: 6 }), roughness: 0.95 });
   for (const sx of [-1, 1]) { const gv = mesh(new THREE.PlaneGeometry(200, 300), grassM, { cast: false }); gv.rotation.x = -Math.PI / 2; gv.position.set(sx * (14.5 + 100), 0.01, -100); S.add(gv); }
-  const farGround = mesh(new THREE.PlaneGeometry(800, 400), mat('#7d8a48', { roughness: 1 }), { cast: false }); farGround.rotation.x = -Math.PI / 2; farGround.position.set(0, -0.02, -300); S.add(farGround);
+  // ground to the horizon in every direction (the opening of s02 looks south, past the end of the beds)
+  const farGround = mesh(new THREE.PlaneGeometry(1600, 1600), mat('#7d8a48', { roughness: 1, map: grain('leafy', { repeat: 400, scale: 6 }) }), { cast: false }); farGround.rotation.x = -Math.PI / 2; farGround.position.set(0, -0.03, -100); S.add(farGround);
+  const southGrass = mesh(new THREE.PlaneGeometry(29, 60), grassM, { cast: false }); southGrass.rotation.x = -Math.PI / 2; southGrass.position.set(0, -0.005, 42); S.add(southGrass);
   // crops (instanced; detailed near camera, simpler far away)
   const tp = [0, 1, 2].map(v => P.tomatoPlantGeos(v, { height: 0.95, leaves: 14, fruit: 5 })); const tpFar = P.tomatoPlantGeos(9, { height: 0.95, leaves: 7, fruit: 3 });
   const leafM = P.leafMat('tomato'), solidM = vmat({ roughness: 0.8 }), fruitM = P.tomatoMat();
@@ -127,6 +129,7 @@ export async function farm(app, o = {}) {
   const fl = [], gl = []; for (let z = 6; z > -80; z -= 0.35) for (const sx of [-1, 1]) { fl.push({ x: sx * (13.4 + R(-0.6, 0.6)), z: z + R(-0.15, 0.15), ry: R(0, TAU), s: R(0.8, 1.3) }); gl.push({ x: sx * (13.6 + R(-0.9, 0.9)), z: z + R(-0.2, 0.2), ry: R(0, TAU), s: R(0.8, 1.4) }); }
   instanced(S, flowers, fm, fl, { cast: false }); instanced(S, grass, gm, gl, { cast: false });
   const TG = F.treeGeos({ height: 8, seed: 3 }); const tl = []; for (let i = 0; i < 40; i++) tl.push({ x: R(-140, 140), z: R(-230, -110), ry: R(0, TAU), s: R(0.7, 1.6) }); for (let i = 0; i < 12; i++) tl.push({ x: R(-60, -22), z: R(-90, -5), ry: R(0, TAU), s: R(0.8, 1.3) }); for (let i = 0; i < 8; i++) tl.push({ x: R(24, 70), z: R(-90, 0), ry: R(0, TAU), s: R(0.8, 1.3) });
+  for (let i = 0; i < 30; i++) tl.push({ x: R(-220, 220), z: R(140, 280), ry: R(0, TAU), s: R(0.8, 1.5) });   // distant tree lines to the south
   instanced(S, TG.trunk, vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) }), tl); instanced(S, TG.crown, F.foliageMat('cluster'), tl);
   // drip lines along each tomato bed
   for (let b = -2; b <= 2; b++) { const dl = cyl(0.008, 0.008, 72, MAT.rubber(), 6); dl.rotation.x = Math.PI / 2; dl.position.set(b * bedPitch + 0.14, 0.13, -32); S.add(dl); }

@@ -32,11 +32,12 @@ export function headModel(h, K) {
     if (a > 1.0 && a < 1.45) y -= 0.033 * Math.sin((a - 1.0) / 0.45 * Math.PI);            // sideburn in front of the ear
     y = lerp(y, 0.016, smoothstep(1.3, 1.5, a));                                           // just over the ear
     y = lerp(y, -0.072, smoothstep(1.55, 2.15, a));                                        // down behind the ear to the nape
+    y += (noise2(a * 9 + 1.7, 3.1) - 0.5) * 0.007 + (noise2(a * 31 + 4.2, 7.7) - 0.5) * 0.004;   // an irregular edge, not a ruled line
     return eyes.y + y * sz; };
   const scalp = [], inner = [];
   for (let f = 0; f < K.bidx.length; f += 3) { const a = K.bmap[K.bidx[f]], b = K.bmap[K.bidx[f + 1]], c = K.bmap[K.bidx[f + 2]]; if (!(onHead(a) && onHead(b) && onHead(c))) continue;
     const x = (h.P[a * 3] + h.P[b * 3] + h.P[c * 3]) / 3, y = (h.P[a * 3 + 1] + h.P[b * 3 + 1] + h.P[c * 3 + 1]) / 3, z = (h.P[a * 3 + 2] + h.P[b * 3 + 2] + h.P[c * 3 + 2]) / 3;
-    if (y > hairline(x, z)) scalp.push(a, b, c); if (y > hairline(x, z) + 0.014 * sz) inner.push(a, b, c); }
+    if (y > hairline(x, z)) scalp.push(a, b, c); if (y > hairline(x, z) + 0.032 * sz) inner.push(a, b, c); }   // the matte under-layer stops well inside, under full-density hair (its polygon edge must not show)
   return { hb, C, R, grid, eyes, scalp, inner, sz, hairline, onHead, top: hi.y, chin: h.joint('jaw', 't').y };
 }
 function cell(d) { const r = d.length() || 1; const a = Math.atan2(d.x, d.z), pl = Math.acos(clamp(d.y / r, -1, 1)); return [Math.min(GA - 1, Math.floor((a + Math.PI) / TAU * GA)), Math.min(GP - 1, Math.floor(pl / Math.PI * GP))]; }
@@ -81,8 +82,10 @@ export function strandHair(h, K, style, o = {}) {
   const base = new THREE.Color(o.color || '#1a1411'), tipC = new THREE.Color(o.tip || o.color || '#1a1411').offsetHSL(0, 0, 0.06);
   const col = (k) => { const c = base.clone().lerp(tipC, k); c.offsetHSL(0, 0, (r() - 0.5) * 0.05); return c; };
   const back = V(M.C.x, M.C.y + M.R.y * 0.15, M.C.z - M.R.z * 1.05);
-  const ok = () => true;
-  const add = (pts, w0, c, streak) => strands.push({ pts, w0, c, streak });
+  // a soft hairline: within ~1.2 cm of the edge strands thin out and get finer, so skin shows through gradually
+  const edge = (p) => smoothstep(-0.002 * M.sz, 0.02 * M.sz, p.y - M.hairline(p.x, p.z));
+  const ok = (p) => r() < 0.3 + 0.7 * edge(p);
+  const add = (pts, w0, c, streak) => strands.push({ pts, w0: w0 * (0.5 + 0.5 * edge(pts[0])), c, streak });
   if (style === 'bun' || style === 'ponytail') {
     const tie = style === 'bun' ? V(M.C.x, M.C.y + M.R.y * 0.38, M.C.z - M.R.z * 1.02) : V(M.C.x, M.C.y + M.R.y * 0.12, M.C.z - M.R.z * 1.04);
     for (let i = 0; i < (o.count || 9000); i++) {
@@ -123,7 +126,7 @@ export function strandHair(h, K, style, o = {}) {
   if (style === 'puff') {
     const B = V(M.C.x, M.top - 0.004 * M.sz, M.C.z - M.R.z * 0.42);          // the band, high on the crown
     for (let i = 0; i < (o.count || 11000); i++) {                         // drawn-up hair: hugs the skull, faint coil texture
-      const { p, n } = scalp(r); const dist = p.distanceTo(B);
+      const { p, n } = scalp(r); if (!ok(p)) continue; const dist = p.distanceTo(B);
       const pts = grow(p, n, M, { len: dist * 1.05, segs: 14, dir: (q) => B.clone().sub(q).normalize(), lift: 0, hug: 0.92, attract: B, attractK: 0.22, curl: 0.0009, curlF: 900, shell0: 0.022, shell1: 0.03 }, r);
       add(pts, 0.00038, col(r() * 0.3));
     }
@@ -165,14 +168,17 @@ function buildRibbons(h, M, strands, o) {
   const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), colr = new Float32Array(nv * 3), idx = new Uint32Array(ni);
   const streakC = new THREE.Color(o.streakColor || '#7d746c');
   let v = 0, f = 0; const t = V(), side = V(), nn = V(), radial = V();
+  const rr = prng(o.seed ? o.seed + 77 : 77);
   for (const s of strands) {
     const n = s.pts.length; const c = s.streak ? streakC : s.c;
+    // where each strand reaches full width varies (a fixed point would line up into a hard edge parallel to the hairline)
+    s.ramp = s.pts.length > 8 ? 0.06 + rr() * 0.3 : 0.2;
     for (let k = 0; k < n; k++) {
       const p = s.pts[k]; t.subVectors(s.pts[Math.min(n - 1, k + 1)], s.pts[Math.max(0, k - 1)]).normalize();
       radial.subVectors(p, M.C).normalize(); side.crossVectors(t, radial); if (side.lengthSq() < 1e-8) side.set(1, 0, 0); side.normalize(); nn.crossVectors(side, t).normalize();
-      const w = s.w0 * Math.min(1, 0.35 + (k / (n - 1)) * 5) * (1 - 0.7 * (k / (n - 1))); const tipFade = k / (n - 1);   // fine at the root, full, then tapering
+      const w = s.w0 * Math.min(1, 0.35 + (k / (n - 1)) / s.ramp) * (1 - 0.7 * (k / (n - 1))); const tipFade = k / (n - 1);   // fine at the root, full, then tapering
       for (const sg of [-1, 1]) { pos[v * 3] = p.x + side.x * w * sg; pos[v * 3 + 1] = p.y + side.y * w * sg; pos[v * 3 + 2] = p.z + side.z * w * sg; nor[v * 3] = nn.x; nor[v * 3 + 1] = nn.y; nor[v * 3 + 2] = nn.z;
-        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const sh = 0.55 + 0.45 * Math.min(1, tipFade * 2.5);   // darker towards the root (self-shadowing)
+        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const sh = 0.62 + 0.38 * Math.min(1, tipFade / (s.ramp * 1.6));   // darker towards the root (self-shadowing)
         colr[v * 3] = c.r * sh; colr[v * 3 + 1] = c.g * sh; colr[v * 3 + 2] = c.b * sh; v++; }
       if (k < n - 1) { const a = v - 2; idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], f); f += 6; }
     }
@@ -188,7 +194,7 @@ function buildRibbons(h, M, strands, o) {
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(nv * 4).map((_, i) => (i % 4 === 0 ? M.hb : 0)), 4));
   g.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(nv * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4)); g.setIndex(new THREE.BufferAttribute(idx, 1));
   const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: o.roughness ?? 0.6, metalness: 0, side: THREE.DoubleSide,
-    sheen: 0.3, sheenRoughness: 0.35, sheenColor: new THREE.Color(o.color || '#1a1411').offsetHSL(0, -0.05, 0.25), specularIntensity: 0.3 });
+    sheen: o.sheen ?? 0.16, sheenRoughness: 0.45, sheenColor: new THREE.Color(o.color || '#1a1411').offsetHSL(0, -0.05, 0.13), specularIntensity: 0.26 });
   const mesh = new THREE.SkinnedMesh(g, m); mesh.name = 'hair-strands'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   h.group.add(mesh); h.meshes.push(mesh);
   return { mesh, count: strands.length, tris: ni / 3 };
@@ -220,7 +226,7 @@ export function strandBrows(h, K, o = {}) {
 export function scalpTint(h, K, color, o = {}) {
   const M = h._head || (h._head = headModel(h, K)); const a = h.body.geometry.attributes.hairMask; const soft = (o.soft || 0.007) * M.sz, amt = o.amount ?? 0.88;
   for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i]; if (!M.onHead(v)) continue; const y = h.P[v * 3 + 1], hl = M.hairline(h.P[v * 3], h.P[v * 3 + 2]);
-    a.setX(i, amt * smoothstep(hl - soft * 0.4, hl + soft, y)); }
+    a.setX(i, amt * smoothstep(hl - soft * 0.4, hl + soft + 0.022 * M.sz, y)); }   // ramps up over the thinning hairline band
   a.needsUpdate = true; h.body.material.userData.hairRoot.value.set(color).multiplyScalar(o.mul ?? 0.7);
 }
 

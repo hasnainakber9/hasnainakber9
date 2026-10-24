@@ -155,6 +155,16 @@ export function merged(parts) {
   });
   return BGU.mergeGeometries(geos, false);
 }
+// leaves let light through: sun behind a leaf (or behind a crown of cards) adds a transmitted, yellow-green diffuse,
+// so backlit foliage glows at the edges instead of reading as black cut-outs
+export function translucent(m, tint = '#d8f08a', amount = 0.6) {
+  const prev = m.onBeforeCompile, key = m.customProgramCacheKey ? m.customProgramCacheKey() : ''; const c = new THREE.Color(tint).multiplyScalar(amount);
+  m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); sh.uniforms.leafTrans = { value: c };
+    sh.fragmentShader = 'uniform vec3 leafTrans;\n' + sh.fragmentShader.replace('#include <lights_physical_pars_fragment>', THREE.ShaderChunk.lights_physical_pars_fragment.replace(
+      'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
+      'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );\n\treflectedLight.directDiffuse += directLight.color * saturate( -dot( geometryNormal, directLight.direction ) ) * leafTrans * BRDF_Lambert( material.diffuseColor );')); };
+  m.customProgramCacheKey = () => key + '|leafTrans'; return m;
+}
 export function vmat(o = {}) { return new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.8, metalness: 0 }, o)); }
 export function instanced(scene, geo, material, list, o = {}) {
   const im = new THREE.InstancedMesh(geo, material, list.length); const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
@@ -248,7 +258,7 @@ export class App {
       this.ao.updateGtaoMaterial({ radius: o.aoRadius ?? 0.35, distanceExponent: 1, thickness: 1, scale: 1, samples: 12, distanceFallOff: 1, screenSpaceRadius: false });
       this.ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 }); this.composer.addPass(this.ao); }
     if (dof) { this.dof = new (sceneDepth ? SceneDepthBokehPass : BokehPass)(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008) }); this.composer.addPass(this.dof); }
-    if (o.bloom !== false) { this.bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), o.bloomStrength ?? 0.16, o.bloomRadius ?? 0.55, o.bloomThreshold ?? 0.88); this.composer.addPass(this.bloom); }
+    if (o.bloom !== false && !QP.has('nobloom')) { this.bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), o.bloomStrength ?? 0.16, o.bloomRadius ?? 0.55, o.bloomThreshold ?? 0.88); this.composer.addPass(this.bloom); }
     this.composer.addPass(new OutputPass());
     if (!msaa) this.composer.addPass(new SMAAPass(W, H));
     this.grade = new ShaderPass(GradeShader); this.grade.uniforms.res.value.set(W, H);
@@ -343,6 +353,11 @@ export function skyDome(app, o = {}) {
         gl_FragColor = vec4(c, 1.0); }`
   });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(500, 48, 24), m); dome.frustumCulled = false; dome.renderOrder = -10; app.scene.add(dome);
+  // o.env: light the scene with this sky (prefiltered) instead of a photographed HDRI, so the fill and the reflections
+  // match the sky in frame (a blue-sky HDRI under a sunset turned shadowed wood purple and put magenta rims on tomatoes)
+  if (o.env) { const es = new THREE.Scene(), em = m.clone(); em.depthTest = false; es.add(new THREE.Mesh(new THREE.SphereGeometry(50, 64, 32), em));
+    const pm = new THREE.PMREMGenerator(app.renderer); app.scene.environment = pm.fromScene(es, 0.015, 0.1, 100).texture; pm.dispose();
+    if (typeof o.env === 'number') app.scene.environmentIntensity = o.env; app.scene.environmentRotation = new THREE.Euler(); }
   if (o.fog !== false) app.scene.fog = new THREE.Fog(new THREE.Color(o.fogColor || o.horizon || '#e7d8c3'), o.fogNear ?? 40, o.fogFar ?? 260);
   return dome;
 }
