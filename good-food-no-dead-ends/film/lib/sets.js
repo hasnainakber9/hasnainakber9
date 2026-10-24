@@ -24,7 +24,7 @@ export async function kitchen(app, o = {}) {
   const ceil = box(9.2, 0.15, 7.0, mat('#efe6d6', { roughness: 0.95 }), { cast: false }); ceil.position.set(0, H + 0.07, 0.3); g.add(ceil);
   for (let i = -3; i <= 3; i++) g.add(at(box(0.16, 0.2, 7.0, MAT.wood('#7a5a3a', 2)), i * 1.3, H - 0.08, 0.3));
   // view outside: afternoon garden / dusk street
-  P.backdrop(app, evening ? 'dusk' : 'garden', { pos: [0, 2.2, -14], w: 40, h: 18, brightness: evening ? 0.9 : 1.9, top: '#a9c6e6', horizon: '#fbe3c0', tree: '#7a9a55', ground: '#8aa060', trees: false });
+  P.backdrop(app, evening ? 'dusk' : 'garden', { pos: [0, 2.2, -14], w: 40, h: 18, brightness: evening ? 0.8 : 1.9, top: '#a9c6e6', horizon: '#fbe3c0', tree: '#7a9a55', ground: '#8aa060', trees: false });
   // the garden outside: a lawn, shrubs under the windows and trees behind (real geometry, so it has depth and parallax)
   { const lawn = mesh(new THREE.PlaneGeometry(40, 11), mat(evening ? '#2c3a2a' : '#6f8c47', { map: grain('leafy', { repeat: 40, scale: 6 }), roughness: 0.95 }), { cast: false }); lawn.rotation.x = -Math.PI / 2; lawn.position.set(0, -0.01, -8.8); g.add(lawn);
     const tint = evening ? '#6a7a8a' : '#ffffff';

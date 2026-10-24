@@ -263,9 +263,40 @@ const GradeShader = {
 // BokehPass draws the whole scene a second time with a depth material on every frame. This variant reads the depth
 // buffer the scene pass has just written instead: one render fewer (about a fifth of a frame in the software renderer),
 // and the depth also follows cut-out leaves and back-facing strands, which the depth material cannot see.
+// It also gathers differently. BokehShader blurs every pixel by its own circle of confusion, so a blurred wall pulls in
+// the colours of the sharp figure in front of it (a glowing outline round everyone in focus). Here each sample on a
+// spiral counts only if its own circle of confusion reaches the pixel (sharp foreground stays put; blurred foreground
+// still spreads over what is behind it), and a sample behind the pixel may not blur over it more than the pixel itself
+// is blurred (no background bleeding over sharp edges). Same lens model and uniforms as BokehShader.
 // Needs the pass straight after the RenderPass, on composer buffers that carry depth textures.
+const GatherDofShader = {
+  defines: { NS: 160, RAD_SCALE: 1.6 },
+  uniforms: { tColor: { value: null }, tDepth: { value: null }, focus: { value: 1 }, aspect: { value: 1 }, aperture: { value: 0.025 }, maxblur: { value: 0.01 }, nearClip: { value: 1 }, farClip: { value: 1000 }, res: { value: new THREE.Vector2(1920, 1080) } },
+  vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `#include <common>
+    #include <packing>
+    varying vec2 vUv; uniform sampler2D tColor, tDepth; uniform float focus, aperture, maxblur, nearClip, farClip; uniform vec2 res;
+    float dist(vec2 uv) { return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, nearClip, farClip); }
+    float coc(float z) { return min(abs(focus - z) * aperture, maxblur) * res.x; }   // radius in pixels
+    void main() {
+      float zc = dist(vUv), cc = coc(zc); vec3 sum = texture2D(tColor, vUv).rgb; float tot = 1.0, r = RAD_SCALE, ang = 0.0, maxR = maxblur * res.x;
+      for (int i = 0; i < NS; i++) {
+        if (r > maxR) break;
+        vec2 uv = vUv + vec2(cos(ang), sin(ang)) * r / res; vec3 sc = texture2D(tColor, uv).rgb; float zs = dist(uv), cs = coc(zs);
+        if (zs > zc) cs = min(cs, cc * 2.0);
+        float m = smoothstep(r - 0.5, r + 0.5, cs);
+        sum += mix(sum / tot, sc, m); tot += 1.0; ang += 2.39996323; r += RAD_SCALE / r;
+      }
+      gl_FragColor = vec4(sum / tot, 1.0);
+    }`,
+};
 class SceneDepthBokehPass extends BokehPass {
-  constructor(scene, camera, params) { super(scene, camera, params); this.materialBokeh.defines.DEPTH_PACKING = 0; }
+  constructor(scene, camera, params) { super(scene, camera, params);
+    const W = params.width || 1920, maxR = (params.maxblur ?? 0.01) * W, rs = 1.6;
+    this.uniforms = THREE.UniformsUtils.clone(GatherDofShader.uniforms); for (const k of ['focus', 'aperture', 'maxblur']) if (params[k] !== undefined) this.uniforms[k].value = params[k];
+    this.uniforms.res.value.set(W, params.height || 1080);
+    this.materialBokeh = new THREE.ShaderMaterial({ defines: { NS: Math.ceil(maxR * maxR / (2 * rs)) + 8, RAD_SCALE: rs.toFixed(2) }, uniforms: this.uniforms, vertexShader: GatherDofShader.vertexShader, fragmentShader: GatherDofShader.fragmentShader });
+    this.fsQuad.material = this.materialBokeh; }
   render(renderer, writeBuffer, readBuffer) {
     const u = this.uniforms; u.tColor.value = readBuffer.texture; u.tDepth.value = readBuffer.depthTexture;
     u.nearClip.value = this.camera.near; u.farClip.value = this.camera.far;
@@ -301,7 +332,7 @@ export class App {
     if (o.ao) { this.ao = new GTAOPass(this.scene, this.camera, W, H); this.ao.output = GTAOPass.OUTPUT.Default; this.ao.blendIntensity = o.ao === true ? 0.9 : o.ao;
       this.ao.updateGtaoMaterial({ radius: o.aoRadius ?? 0.35, distanceExponent: 1, thickness: 1, scale: 1, samples: 12, distanceFallOff: 1, screenSpaceRadius: false });
       this.ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 }); this.composer.addPass(this.ao); }
-    if (dof) { this.dof = new (sceneDepth ? SceneDepthBokehPass : BokehPass)(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008) }); this.composer.addPass(this.dof); }
+    if (dof) { this.dof = new (sceneDepth ? SceneDepthBokehPass : BokehPass)(this.scene, this.camera, { focus: 3.0, aperture: o.dof.aperture ?? 0.004, maxblur: (o.dof.maxblur ?? 0.008), width: W, height: H }); this.composer.addPass(this.dof); }
     if (o.bloom !== false && !QP.has('nobloom')) { this.bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), o.bloomStrength ?? 0.16, o.bloomRadius ?? 0.55, o.bloomThreshold ?? 0.88); this.composer.addPass(this.bloom); }
     this.composer.addPass(new OutputPass());
     if (!msaa) this.composer.addPass(new SMAAPass(W, H));

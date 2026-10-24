@@ -87,12 +87,12 @@ function seamlessNormals(g) {
 
 // ------------------------------------------------------------------ materials
 // skin: wrapped, red-shifted diffuse past the terminator (cheap subsurface look); specular stays physical
-function skinPatch(m, wrap = 0.36, tint = [0.95, 0.52, 0.42]) {
+function skinPatch(m, wrap = 0.36, tint = [0.92, 0.6, 0.5]) {   // (light scattered under the skin comes back reddened, but not orange)
   m.userData.hairRoot = { value: new THREE.Color('#000000') };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.hairRoot = m.userData.hairRoot;
     sh.vertexShader = 'attribute float hairMask;\nattribute float cavity;\nvarying float vHairMask;\nvarying float vCavity;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vHairMask = hairMask; vCavity = cavity;');
-    sh.fragmentShader = 'uniform vec3 hairRoot;\nvarying float vHairMask;\nvarying float vCavity;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix( diffuseColor.rgb, hairRoot, vHairMask ) * mix( 1.0, 0.35, vCavity );' + (typeof location !== 'undefined' && location.search.includes('cavdbg') ? '\n diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.0, 1.0, 0.0 ), vCavity );' : ''))
+    sh.fragmentShader = 'uniform vec3 hairRoot;\nvarying float vHairMask;\nvarying float vCavity;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix( vec3( dot( diffuseColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) ) ), diffuseColor.rgb, 0.9 );   // the photographed albedo is a touch oversaturated under warm light\n diffuseColor.rgb = mix( diffuseColor.rgb, hairRoot, vHairMask ) * mix( 1.0, 0.35, vCavity );' + (typeof location !== 'undefined' && location.search.includes('cavdbg') ? '\n diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.0, 1.0, 0.0 ), vCavity );' : ''))
       .replace('#include <opaque_fragment>', 'outgoingLight *= mix( 1.0, 0.22, vCavity );\n#include <opaque_fragment>');   // the inside of the mouth is in shadow: diffuse, sheen and reflections alike
     const chunk = THREE.ShaderChunk.lights_physical_pars_fragment.replace('reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
       `float sssW = saturate( ( dot( geometryNormal, directLight.direction ) + ${wrap.toFixed(3)} ) / ${(1 + wrap).toFixed(3)} );

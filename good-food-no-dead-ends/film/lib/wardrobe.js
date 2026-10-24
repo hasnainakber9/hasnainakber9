@@ -744,14 +744,15 @@ function hideUnder(h, covered) {
 // ------------------------------------------------------------------ a panel resting on the front of the body (bibs): a height field
 // over x,y that sits outside the front-most skin or clothing, tented and smoothed so it lies flat across hollows.
 // o: bottom, top, halfW(y), clear, slope, mat, name
-function frontPanel(h, K, o) {
+// the front of the body and the clothes on it as a height field z(x, y) over a band of heights, tented and relaxed so it
+// lies across hollows (never inside them); src(x, y) gives a base vertex near each point. o: bottom, top, reach, clear, slope
+function frontField(h, K, o) {
   const F = frame(h), P = h.P, LC = limbClass(K), hb = K.meta.bones.findIndex(b => b.name === 'head'); const D = 0.005;
   const x0 = F.midX - 0.3, nx = Math.ceil(0.6 / D) + 1, y0 = o.bottom - 0.03, ny = Math.ceil((o.top - o.bottom + 0.06) / D) + 1;
   const zf = new Float32Array(nx * ny).fill(-1e9), src = new Int32Array(nx * ny).fill(-1);
   const put = (x, y, z, v) => { const i = Math.round((x - x0) / D), j = Math.round((y - y0) / D); if (i < 0 || j < 0 || i >= nx || j >= ny || z < F.midZ) return; const k = j * nx + i; if (z > zf[k]) { zf[k] = z; if (v >= 0) src[k] = v; } };
   for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i], b = K.swI[v * 4]; if (b === hb || LC[b]) continue; put(P[v * 3], P[v * 3 + 1], P[v * 3 + 2], v); }
-  const reach = Math.max(o.halfW(o.bottom), o.halfW(o.top)) + 0.03;
-  for (const c of h.clothes || []) { if (/^shoes/.test(c.key)) continue; const p = c.pos; for (let i = 0; i < p.length; i += 3) if (Math.abs(p[i] - F.midX) < reach) put(p[i], p[i + 1], p[i + 2], -1); }
+  for (const c of h.clothes || []) { if (/^shoes/.test(c.key)) continue; const p = c.pos; for (let i = 0; i < p.length; i += 3) if (Math.abs(p[i] - F.midX) < o.reach) put(p[i], p[i + 1], p[i + 2], -1); }
   for (let pass = 0; pass < 40; pass++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const k = j * nx + i; if (zf[k] > -1e8) continue;   // fill holes from neighbours
     let m = -1e9, sv = -1; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue; const kk = jj * nx + ii; if (zf[kk] > m) { m = zf[kk]; sv = src[kk]; } } if (m > -1e8) { zf[k] = m; src[k] = sv; } }
   const lo = Float32Array.from(zf, z => z + o.clear), zz = lo.slice();
@@ -760,6 +761,10 @@ function frontPanel(h, K, o) {
   const zAt = (x, y) => { const fx = (x - x0) / D, fy = (y - y0) / D, i = clamp(Math.floor(fx), 0, nx - 2), j = clamp(Math.floor(fy), 0, ny - 2), u = fx - i, w = fy - j;
     return lerp(lerp(zz[j * nx + i], zz[j * nx + i + 1], u), lerp(zz[(j + 1) * nx + i], zz[(j + 1) * nx + i + 1], u), w); };
   const srcAt = (x, y) => { const i0 = Math.round((x - x0) / D), j0 = Math.round((y - y0) / D); for (let r = 0; r < 20; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { const i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= nx || j >= ny) continue; if (src[j * nx + i] >= 0) return src[j * nx + i]; } return 0; };
+  return { zAt, srcAt };
+}
+function frontPanel(h, K, o) {
+  const F = frame(h), { zAt, srcAt } = frontField(h, K, { bottom: o.bottom, top: o.top, reach: Math.max(o.halfW(o.bottom), o.halfW(o.top)) + 0.03, clear: o.clear, slope: o.slope });
   const NU = 28, NV = Math.max(10, Math.round((o.top - o.bottom) / 0.012)), pos = [], uv = [], ws = [], idx = [];
   for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const y = lerp(o.bottom, o.top, j / NV), x = F.midX + (i / NU * 2 - 1) * o.halfW(y); pos.push(x, y, zAt(x, y)); uv.push(x, y); ws.push(baseSkin(K, srcAt(x, y))); }
   for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + NU + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
@@ -795,37 +800,64 @@ function tube(h, K, curve, r, mat, bone, o = {}) {
   g.setAttribute('gpos', g.attributes.position.clone()); setSkin(g, g.attributes.position.count, () => [[bi, 1]]); return skinnedMesh(h, g, mat, 'strap');
 }
 
-// ------------------------------------------------------------------ scarf: a chunky knitted loop worn doubled, resting where the body widens
+// ------------------------------------------------------------------ scarf: a knitted length draped round the back of the neck, both ends hanging down the front
+// Round the neck it lies on the collar and shoulders folded lengthways (a soft roll stands at the neck edge); at the
+// collarbones the two ends come out from under it and fall over the chest side by side, one longer than the other,
+// opening out to the full width, fluted a little, edges curling, finished with a fringe. Knit ribs run along the length.
 export function scarf(h, K, color) {
-  const F = frame(h), P = h.P, nk = F.neck; const mat = fabric(color, { normal: 'knit', tile: 0.03, ns: 0.9, roughness: 1, sheen: 1, sheenRoughness: 0.9, spec: 0.25 });
-  // radial extent of skin + clothes round the neck axis, per angle and height
-  const NA = 72, y0 = F.chest - 0.12, DY = 0.004; const G = extentGrid(h, K, nk, y0, nk.y + 0.05, NA, DY, 0.24); const extAt = G.at;
-  // a ring of radius r(a) dropped over the head comes to rest where the body is first that wide
-  const rest = (r, t) => { const ys = new Float32Array(NA); for (let k = 0; k < NA; k++) { let y = nk.y + 0.03; while (y > y0 + DY && extAt(k, y) < r[k] - t) y -= DY; ys[k] = y + t * 0.7; }
-    for (let s = 0; s < 14; s++) { const c = ys.slice(); for (let k = 0; k < NA; k++) ys[k] = (c[(k + NA - 2) % NA] + 2 * c[(k + NA - 1) % NA] + 3 * c[k] + 2 * c[(k + 1) % NA] + c[(k + 2) % NA]) / 9; } return ys; };
-  const neckR = new Float32Array(NA); for (let k = 0; k < NA; k++) neckR[k] = extAt(k, nk.y + 0.02);
-  { const c = neckR.slice(); for (let k = 0; k < NA; k++) neckR[k] = (c[(k + NA - 2) % NA] + c[(k + NA - 1) % NA] + c[k] + c[(k + 1) % NA] + c[(k + 2) % NA]) / 5; }
-  const ang = (k) => (k + 0.5) / NA * TAU - Math.PI;
-  const r1 = neckR.map(r => r + 0.018), y1s = rest(r1, 0.012);
-  const r2 = Float32Array.from(r1, (r, k) => r + 0.02 + 0.01 * Math.pow(Math.max(0, Math.cos(ang(k))), 2)), y2s = rest(r2, 0.012).map((y, k) => Math.max(y, y1s[k] - 0.055));
-  const sb = K.meta.bones.findIndex(b => b.name === 'spine01'), nb = K.meta.bones.findIndex(b => b.name === 'neck01');
-  const parts = [];
-  for (const [rr, ys, wd, tk, seed, wn, lay] of [[r1, y1s, 0.062, 0.017, 1, 0.45, 0.25], [r2, y2s, 0.07, 0.015, 2, 0.1, 0.85]]) {   // wide knitted bands: the inner one stands like a cowl, the outer one lies over the shoulders
-    const path = []; for (let k = 0; k < NA; k++) { const a = ang(k); path.push(V(nk.x + Math.sin(a) * rr[k], ys[k], nk.z + Math.cos(a) * rr[k])); }
-    const curve = new THREE.CatmullRomCurve3(path, true, 'centripetal'); const NS = 260, PR = 24; const pos = [], uv = [], idx = [];
-    const L = curve.getLength();
-    for (let i = 0; i <= NS; i++) { const u = i / NS, c = curve.getPointAt(u % 1), T = curve.getTangentAt(u % 1); const O0 = V(c.x - nk.x, 0, c.z - nk.z).normalize(); const B0 = T.clone().cross(O0).normalize(); if (B0.y < 0) B0.negate(); const O = O0.clone().multiplyScalar(Math.cos(lay)).addScaledVector(B0, Math.sin(lay)), B = B0.clone().multiplyScalar(Math.cos(lay)).addScaledVector(O0, -Math.sin(lay));
-      const n1 = noise2(u * 9 + seed * 5, seed), n2 = noise2(u * 17, seed * 3 + 1); const tw = (n1 - 0.5) * 0.5;
-      const w = wd * (0.9 + 0.2 * n2), t = tk * (0.9 + 0.2 * n1);
-      const row = 1 + 0.035 * Math.cos(u * L / 0.011 * TAU);                                         // knitted rows along the length
-      for (let j = 0; j <= PR; j++) { const th = j / PR * TAU, rib = row * (1 + 0.05 * Math.cos(th * 6)); let x = Math.cos(th) * t * 0.5 * rib, y = Math.sin(th) * w * 0.5 * rib; const ct = Math.cos(tw), st = Math.sin(tw); const xr = x * ct - y * st * 0.25, yr = x * st * 0.25 + y * ct;
-        const p = c.clone().addScaledVector(O, xr + t * 0.5).addScaledVector(B, yr); pos.push(p.x, p.y, p.z); uv.push(u * L / 1, th / TAU * (Math.PI * (w + t) * 0.5)); } }
-    for (let i = 0; i < NS; i++) for (let j = 0; j < PR; j++) { const a = i * (PR + 1) + j, b = a + PR + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-    // the seam where the ring closes gets averaged normals
-    const nrm = g.attributes.normal; for (let j = 0; j <= PR; j++) { const a = j, b = NS * (PR + 1) + j; const m = V(nrm.getX(a) + nrm.getX(b), nrm.getY(a) + nrm.getY(b), nrm.getZ(a) + nrm.getZ(b)).normalize(); nrm.setXYZ(a, m.x, m.y, m.z); nrm.setXYZ(b, m.x, m.y, m.z); }
-    g.setAttribute('gpos', g.attributes.position.clone()); setSkin(g, pos.length / 3, () => [[sb, 1 - wn], [nb, wn]]);
-    parts.push(skinnedMesh(h, g, mat, 'scarf'));
+  const F = frame(h), nk = F.neck, sc = F.hip.y / 0.84, LC = limbClass(K), hb = K.meta.bones.findIndex(b => b.name === 'head');
+  const mat = clothMat(color, { normal: 'knit', tile: 0.009, ns: 0.75, roughness: 0.96, sheen: 0.9, sheenRoughness: 0.75, spec: 0.18,
+    bump: `hgt += 0.00013 * abs(sin(vUv0.y * 3.14159 / 0.0028 + 0.6 * sin(vUv0.x * 40.0)));` });   // rib columns along the length (uv.y runs across the width, in metres)
+  const sb = K.meta.bones.findIndex(b => b.name === 'spine01'), s2 = K.meta.bones.findIndex(b => b.name === 'spine02'), nb = K.meta.bones.findIndex(b => b.name === 'neck01');
+  const parts = [], add = (pos, uv, idx, wf, name) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals(); g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => wf(pos[i * 3 + 1])); parts.push(skinnedMesh(h, g, mat, name)); return g; };
+  // round the neck it lies on what is there: at each angle round the neck it follows the outline of the body (and the
+  // collar) in that half-plane, outwards and down from the base of the neck, for the band's width along it
+  const NA = 96, y0 = F.chest - 0.12, DY = 0.003, G = extentGrid(h, K, nk, y0, nk.y + 0.06, NA, DY, 0.26), ang = (k) => (k + 0.5) / NA * TAU - Math.PI;
+  const NU = 10, wNeck = 0.08 * sc, TH = 0.0045, rollR = 0.01 * sc, Y = new Float32Array(NA * (NU + 1)), R = new Float32Array(NA * (NU + 1));
+  for (let k = 0; k < NA; k++) { const prof = []; let rmax = 0, acc = 0, prev = null;
+    for (let y = nk.y + 0.045; y > y0; y -= DY) { rmax = Math.max(rmax, G.at(k, y) + 0.011); const p = [rmax, y]; if (prev) acc += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prof.push([acc, p[0], p[1]]); prev = p; if (acc > wNeck * 1.3) break; }
+    const wk = wNeck * (0.9 + 0.2 * noise2(ang(k) * 1.9, 3.3));
+    for (let u = 0, j = 0; u <= NU; u++) { const s = wk * u / NU; while (j < prof.length - 2 && prof[j + 1][0] < s) j++; const A = prof[j], B = prof[Math.min(j + 1, prof.length - 1)], t = B[0] > A[0] ? clamp((s - A[0]) / (B[0] - A[0]), 0, 1) : 0;
+      R[k * (NU + 1) + u] = lerp(A[1], B[1], t); Y[k * (NU + 1) + u] = lerp(A[2], B[2], t); } }
+  for (let it = 0; it < 6; it++) for (const [A, keepOut] of [[R, true], [Y, false]]) { const c = A.slice(); for (let k = 0; k < NA; k++) for (let u = 0; u <= NU; u++) { const i = k * (NU + 1) + u, m = (c[((k + 1) % NA) * (NU + 1) + u] + c[((k + NA - 1) % NA) * (NU + 1) + u] + 2 * c[i]) / 4; A[i] = keepOut ? Math.max(c[i], m) : m; } }   // (smoothing never takes it inside)
+  const at = (A, a, u) => { const f = ((a + Math.PI) / TAU * NA - 0.5 + 2 * NA) % NA, k = Math.floor(f), w = f - k, k1 = (k + 1) % NA; return lerp(A[k * (NU + 1) + u], A[k1 * (NU + 1) + u], w); };
+  const polar = (a, r, y) => V(nk.x + Math.sin(a) * r, y, nk.z + Math.cos(a) * r);
+  // round the neck: from the left collarbone (a0) round the back to the right one (a1); a soft roll stands at the neck edge
+  const a0 = 0.85, a1 = TAU - 0.85, NS = 72;
+  { const pos = [], uv = [], idx = []; let NC = 0;
+    for (let i = 0; i <= NS; i++) { const a = lerp(a0, a1, i / NS), top = [], under = [];
+      for (let u = 0; u <= NU; u++) { const lift = 0.004 + 0.004 * Math.sin(Math.PI * u / NU) * (0.6 + 0.4 * noise2(a * 3 + u, 1.1)); top.push(polar(a, at(R, a, u), at(Y, a, u) + lift)); under.push(polar(a, at(R, a, u), at(Y, a, u) + lift - TH)); }
+      const p0 = top[0], out = V(Math.sin(a), 0, Math.cos(a)), sec = [];
+      for (let k = 6; k >= 1; k--) { const th = Math.PI * k / 6; sec.push(p0.clone().add(V(0, rollR * (1 - Math.cos(th)), 0)).addScaledVector(out, -rollR * 0.45 * Math.sin(th))); }   // the roll, from underneath up and over
+      sec.push(...top, ...under.reverse());
+      NC = sec.length; let acc = 0; sec.forEach((p, k) => { if (k) acc += p.distanceTo(sec[k - 1]); pos.push(p.x, p.y, p.z); uv.push(a * 0.08, acc); }); }
+    for (let i = 0; i < NS; i++) for (let j = 0; j < NC - 1; j++) { const a = i * NC + j, b = a + 1, c = a + NC, d = c + 1; idx.push(a, c, b, b, c, d); }
+    add(pos, uv, idx, (yy) => { const w = 0.35 * smoothstep(nk.y - 0.04, nk.y + 0.01, yy); return [[sb, 1 - w], [nb, w]]; }, 'scarf'); }
+  const neckAt = (a) => at(R, a, 0) - 0.006;
+  // the ends: out from under the band at the collarbones, down over the chest
+  const FF = frontField(h, K, { bottom: F.chest - 0.4 * sc, top: nk.y + 0.04, reach: 0.24, clear: 0.006, slope: 0.3 });
+  for (const [side, len, seed] of [[1, 0.42 * sc, 1], [-1, 0.5 * sc, 2]]) {
+    const ae = side > 0 ? a0 + 0.1 : a1 - 0.1, top = polar(ae, neckAt(ae) + 0.03, at(Y, ae, 3) - 0.01), W = 0.11 * sc;
+    const NL = 46, NW = 14, front = [], back = [];
+    for (let i = 0; i <= NL; i++) { const s = i / NL * len, open = smoothstep(0, 0.12 * sc, s), w = lerp(0.07, W, open), cx = top.x + side * (0.03 * open + 0.02 * s) + 0.008 * Math.sin(s * 6 + seed), cy = top.y - s;
+      for (let j = 0; j <= NW; j++) { const t = j / NW * 2 - 1, x = cx + t * w / 2, y = cy;
+        const flute = 0.006 * open * Math.sin(Math.PI * t * (1.1 + 0.5 * noise2(s * 3, seed)) + seed * 1.7 + s * 5.5) * (0.6 + 0.4 * noise2(s * 4 + t, seed + 2)), curl = 0.004 * Math.pow(Math.abs(t), 6) * open;
+        const z = FF.zAt(x, y) + 0.004 + flute + curl; front.push([x, y, z, s, t * w / 2]); back.push([x, y, z - TH, s, t * w / 2]); } }
+    const pos = [], uv = [], idx = [], id = (layer, i, j) => layer * (NL + 1) * (NW + 1) + i * (NW + 1) + j;
+    for (const L of [front, back]) for (const [x, y, z, s, t] of L) { pos.push(x, y, z); uv.push(s, t); }
+    for (let i = 0; i < NL; i++) for (let j = 0; j < NW; j++) { const a = id(0, i, j), b = id(0, i + 1, j), c = id(0, i, j + 1), d2 = id(0, i + 1, j + 1); idx.push(a, b, c, c, b, d2);
+      const a1 = id(1, i, j), b1 = id(1, i + 1, j), c1 = id(1, i, j + 1), d1 = id(1, i + 1, j + 1); idx.push(a1, c1, b1, c1, d1, b1); }
+    for (let i = 0; i < NL; i++) for (const j of [0, NW]) { const a = id(0, i, j), b = id(0, i + 1, j), a1 = id(1, i, j), b1 = id(1, i + 1, j); if (j) idx.push(a, a1, b, b, a1, b1); else idx.push(a, b, a1, b, b1, a1); }   // long edges
+    for (let j = 0; j < NW; j++) { const a = id(0, NL, j), b = id(0, NL, j + 1), a1 = id(1, NL, j), b1 = id(1, NL, j + 1); idx.push(a, a1, b, b, a1, b1); }   // the bottom edge
+    const wEnd = (yy) => { const w = 0.65 * smoothstep(top.y - 0.06, top.y - 0.32, yy); return [[sb, 1 - w], [s2, w]]; };
+    add(pos, uv, idx, wEnd, 'scarf-end');
+    const fp = [], fu = [], fi = [];   // fringe: short twisted tassels along the bottom edge
+    for (let j = 0; j <= NW * 2; j++) { const k = Math.round(j / 2), base = front[NL * (NW + 1) + k], bx = base[0], by = base[1], bz = base[2] - TH / 2;
+      const L = (0.045 + 0.015 * noise2(j * 0.9, seed)) * sc, sw = (noise2(j * 1.7, seed + 4) - 0.5) * 0.02, base0 = fp.length / 3;
+      for (let q = 0; q <= 5; q++) { const u = q / 5, cx = bx + sw * u * u, cy = by - L * u, cz = bz + 0.004 * u; for (let m = 0; m < 6; m++) { const th = m / 6 * TAU + u * 3, r = 0.0022 * (1 - 0.35 * u); fp.push(cx + Math.cos(th) * r, cy, cz + Math.sin(th) * r); fu.push(u * L, m / 6 * 0.014); } }
+      for (let q = 0; q < 5; q++) for (let m = 0; m < 6; m++) { const a = base0 + q * 6 + m, b = base0 + q * 6 + (m + 1) % 6, c = a + 6, d2 = base0 + (q + 1) * 6 + (m + 1) % 6; fi.push(a, c, b, b, c, d2); } }
+    add(fp, fu, fi, wEnd, 'scarf-fringe');
   }
   return parts;
 }

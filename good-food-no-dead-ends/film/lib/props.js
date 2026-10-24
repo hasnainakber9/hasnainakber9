@@ -236,8 +236,35 @@ export function windowFrame(o = {}) {
 }
 
 // ------------------------------------------------------------------ backdrop painter (views through windows / distant city)
+// a dusk view: graded sky with thin clouds lit from below, the glow where the sun went down, far tree lines and roofs as
+// silhouettes, a few lit windows and street lamps. Shapes come from noise rather than blocks, so under the lens blur it
+// reads as a real place. Eye level (the horizon) sits at o.eyeLevel of the height.
+function paintDusk(g, w, h, o) {
+  const hz = Math.round(h * (o.eyeLevel ?? 0.56)), sky = g.createLinearGradient(0, 0, 0, hz);
+  [[0, '#111931'], [0.35, '#232f58'], [0.62, '#474c77'], [0.8, '#866779'], [0.92, '#c1816b'], [1, '#e0a06c']].forEach(([t, c]) => sky.addColorStop(t, c));
+  g.fillStyle = sky; g.fillRect(0, 0, w, hz + 2);
+  const gx = w * 0.7, glow = g.createRadialGradient(gx, hz, 0, gx, hz, w * 0.45); glow.addColorStop(0, 'rgba(255,186,118,0.5)'); glow.addColorStop(0.4, 'rgba(236,136,98,0.16)'); glow.addColorStop(1, 'rgba(236,136,98,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, w, hz);
+  const img = g.getImageData(0, 0, w, hz), d = img.data;   // thin clouds: slate up high, warm underneath near the horizon
+  for (let y = 0; y < hz; y++) { const v = y / hz; for (let x = 0; x < w; x++) { const n = fbm(x / w * 9, y / hz * 3.2 + 7, 5), c = clamp((n - 0.52) * 3.2, 0, 1) * (0.35 + 0.65 * smooth(v * 1.4)) * (1 - smooth((v - 0.93) / 0.07));
+      if (c <= 0) continue; const i = (y * w + x) * 4, lit = smooth((v - 0.45) / 0.5); d[i] = lerp(d[i], lerp(70, 245, lit), c * 0.55); d[i + 1] = lerp(d[i + 1], lerp(72, 150, lit), c * 0.55); d[i + 2] = lerp(d[i + 2], lerp(102, 122, lit), c * 0.55); } }
+  g.putImageData(img, 0, 0);
+  const treeline = (base, amp, freq, sy, color) => { g.fillStyle = color; g.beginPath(); g.moveTo(0, h);
+    for (let x = 0; x <= w; x += 2) g.lineTo(x, base - amp * (0.7 * fbm(x / w * freq, sy, 5) + 0.6 * Math.pow(noise2(x / w * freq * 4.2, sy + 3), 2)));
+    g.lineTo(w, h); g.closePath(); g.fill(); };
+  treeline(hz - 3, h * 0.05, 6, 11, '#2a2f46');                                                     // farthest, in the haze
+  for (let i = 0; i < 7; i++) { const x = rnd() * w, bw = 60 + rnd() * 110, bh = 26 + rnd() * 34, roof = bh * (0.5 + rnd() * 0.4), y0 = hz + 4;   // roofs between them
+    g.fillStyle = '#1e2131'; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y0 - bh); g.lineTo(x + bw / 2, y0 - bh - roof); g.lineTo(x + bw, y0 - bh); g.lineTo(x + bw, y0); g.closePath(); g.fill();
+    for (let k = 0, nk = 1 + Math.floor(rnd() * 3); k < nk; k++) { const ww = 7 + rnd() * 6, wh = 9 + rnd() * 6, wx = x + 10 + rnd() * (bw - 20 - ww), wy = y0 - bh + 6 + rnd() * Math.max(1, bh - 14 - wh), cx = wx + ww / 2, cy = wy + wh / 2;
+      const gl = g.createRadialGradient(cx, cy, 0, cx, cy, 26); gl.addColorStop(0, 'rgba(255,190,110,0.32)'); gl.addColorStop(1, 'rgba(255,190,110,0)'); g.fillStyle = gl; g.fillRect(cx - 26, cy - 26, 52, 52);
+      g.fillStyle = pick(['#ffcf88', '#ffbd6c', '#ffe0a4', '#f3b169']); g.fillRect(wx, wy, ww, wh); g.fillStyle = 'rgba(40,28,26,0.4)'; g.fillRect(wx + ww * 0.46, wy, 1.2, wh); g.fillRect(wx, wy + wh * 0.45, ww, 1.2); } }
+  treeline(hz + 8, h * 0.085, 4, 23, '#151926');                                                    // nearer trees in front of the houses
+  for (let i = 0; i < 4; i++) { const x = (0.08 + i * 0.25 + rnd() * 0.1) * w, y = hz - 4 - rnd() * 10, gl = g.createRadialGradient(x, y, 0, x, y, 30);   // street lamps
+    gl.addColorStop(0, 'rgba(255,216,152,0.95)'); gl.addColorStop(0.12, 'rgba(255,192,122,0.45)'); gl.addColorStop(1, 'rgba(255,170,100,0)'); g.fillStyle = gl; g.fillRect(x - 30, y - 30, 60, 60); }
+  const gr = g.createLinearGradient(0, hz, 0, h); gr.addColorStop(0, '#141722'); gr.addColorStop(1, '#0c0e13'); g.fillStyle = gr; g.fillRect(0, hz + 10, w, h);
+}
 export function backdropTex(kind, o = {}) {
-  return canvasTex(1024, 512, (g, w, h) => {
+  return canvasTex(kind === 'dusk' ? 2048 : 1024, kind === 'dusk' ? 1024 : 512, (g, w, h) => {
     const sky = g.createLinearGradient(0, 0, 0, h * 0.7); sky.addColorStop(0, o.top || '#8fb3d8'); sky.addColorStop(1, o.horizon || '#f1dcc0'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
     if (kind === 'garden' || kind === 'street') {
       for (let i = 0; i < 18; i++) { const x = rnd() * w, y = h * (0.08 + rnd() * 0.3), rr = 30 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
@@ -245,7 +272,7 @@ export function backdropTex(kind, o = {}) {
       if (kind === 'street') for (let i = 0; i < 9; i++) { const x = i * 120 + rnd() * 40, bw = 90 + rnd() * 60, bh = 140 + rnd() * 160; g.fillStyle = pick(['#d9b48c', '#c97a5a', '#e2d2b4', '#a9b8b0', '#d6a77a']); g.fillRect(x, h * 0.62 - bh, bw, bh); g.fillStyle = 'rgba(40,50,60,0.55)'; for (let yy = h * 0.62 - bh + 14; yy < h * 0.6 - 20; yy += 34) for (let xx = x + 10; xx < x + bw - 14; xx += 26) g.fillRect(xx, yy, 14, 20); }
       g.fillStyle = o.ground || '#6d8a4a'; g.fillRect(0, h * 0.62, w, h);
     }
-    if (kind === 'dusk') { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2b3a66'); gr.addColorStop(0.55, '#c97a5a'); gr.addColorStop(0.7, '#f0b070'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#2a2a33'; for (let i = 0; i < 14; i++) { const x = i * 80 + rnd() * 30, bw = 60 + rnd() * 50, bh = 80 + rnd() * 180; g.fillRect(x, h * 0.72 - bh, bw, bh + h); g.fillStyle = 'rgba(255,200,120,0.85)'; for (let yy = h * 0.72 - bh + 10; yy < h * 0.7; yy += 22) for (let xx = x + 8; xx < x + bw - 8; xx += 16) if (rnd() < 0.35) g.fillRect(xx, yy, 8, 12); g.fillStyle = '#2a2a33'; } }
+    if (kind === 'dusk') paintDusk(g, w, h, o);
     if (kind === 'city') { for (let layer = 0; layer < 2; layer++) for (let i = 0; i < 22; i++) { const x = i * 50 + rnd() * 30 - 20, bw = 40 + rnd() * 70, bh = (layer ? 120 : 200) + rnd() * 160; g.fillStyle = layer ? pick(['#cdb8a0', '#d9c6ad', '#b9a48c', '#c9b49a']) : pick(['#b8b4ac', '#a9aca8', '#c4bdb0']); g.globalAlpha = layer ? 1 : 0.6; g.fillRect(x, h * 0.72 - bh, bw, bh + 200); g.globalAlpha = 1; g.fillStyle = 'rgba(60,70,80,0.35)'; for (let yy = h * 0.72 - bh + 10; yy < h * 0.7; yy += 20) for (let xx = x + 6; xx < x + bw - 8; xx += 14) g.fillRect(xx, yy, 7, 11); } }
   });
 }
