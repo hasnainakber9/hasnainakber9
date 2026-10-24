@@ -8,7 +8,9 @@ import * as P from '../lib/props.js';
 import * as F from '../lib/foliage.js';
 import { kitchen } from '../lib/sets.js';
 import { SEATS, setTable, seatCast, eating, chatter, plateOf } from '../lib/table.js';
-import { puppet } from '../lib/people.js';
+import { puppet, frameQ } from '../lib/people.js';
+import { heroTomato, heroHalves, heroPoint } from '../lib/hero.js';
+import { chefKnife, knifeGrip } from '../lib/cutlery.js';
 const { THREE, V } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'planks', 'tiles', 'soil']);
 const app = new K.App({ duration: 10.0, fov: 30, exposure: 1.05, dof: { aperture: 0.005, maxblur: 0.012 }, bloomStrength: 0.3, bloomThreshold: 0.78, warmth: 1.06, sat: 1.04, vignette: 0.36 });
@@ -23,18 +25,33 @@ const { NOOR: noor, ASHA: asha } = cast;
 const ctr = K1.counter;
 const boardW = ctr.localToWorld(V(-0.3, 0.93, 0.08));
 const board = P.ware.board(0.44, 0.3); board.position.copy(boardW); board.rotation.y = Math.PI / 2; app.add(board);
-const fleshTex = K.canvasTex(256, 256, (g, w, h) => { const gr = g.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, '#f2a07a'); gr.addColorStop(0.55, '#e0482a'); gr.addColorStop(0.9, '#c8301c'); gr.addColorStop(1, '#a8241a'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { const a = i / 5 * 6.283; g.fillStyle = 'rgba(245,190,120,0.9)'; g.beginPath(); g.ellipse(128 + Math.cos(a) * 62, 128 + Math.sin(a) * 62, 30, 20, a, 0, 6.283); g.fill(); g.fillStyle = 'rgba(250,230,170,0.95)'; for (let k = 0; k < 7; k++) { g.beginPath(); g.ellipse(128 + Math.cos(a) * (50 + k % 3 * 8), 128 + Math.sin(a) * (50 + k % 3 * 8) + (k - 3) * 4, 4, 2.5, a, 0, 6.283); g.fill(); } } g.strokeStyle = 'rgba(255,220,180,0.5)'; g.lineWidth = 4; for (let i = 0; i < 5; i++) { const a = (i + 0.5) / 5 * 6.283; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 + Math.cos(a) * 110, 128 + Math.sin(a) * 110); g.stroke(); } }, { clamp: true });
-const half = () => { const g = new THREE.Group(); const r = 0.05; const dg = new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); const cols = new Float32Array(dg.attributes.position.count * 3); for (let i = 0; i < cols.length; i += 3) { cols[i] = 0.81; cols[i + 1] = 0.2; cols[i + 2] = 0.12; } dg.setAttribute('color', new THREE.BufferAttribute(cols, 3)); const dome = new THREE.Mesh(dg, P.tomatoMat()); dome.scale.y = 0.86; g.add(dome); const TF = F.tomatoFlesh(); const face = new THREE.Mesh(new THREE.CircleGeometry(r * 0.985, 48), new THREE.MeshPhysicalMaterial({ map: TF.map, normalMap: TF.normalMap, normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.3, clearcoat: 1.0, clearcoatRoughness: 0.08 })); face.rotation.x = -Math.PI / 2; face.position.y = 0.0005; g.add(face); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); return g; };
-const whole = P.tomato({ r: 0.05, ugly: true, seed: 4, color: '#cf3a1f', shoulder: '#e08a2a' }); whole.position.copy(boardW).add(V(0, 0.065, 0)); app.add(whole);
-const hA = half(), hB = half(); app.add(hA, hB);
-const knife = P.ware.knife(); app.add(knife);
-const cook = puppet('COOK'); cook.place(3.42, -0.75, Math.PI / 2); app.cast(cook); cook.speak(lines);
-cook.act([{ t: 0, pose: 'stand', talk: 0 }, { t: 2.2, pose: 'stand', blend: 0.4 }]);
-cook.hand('L', [{ t: 0, at: () => boardW.clone().add(V(0.0, 0.08, 0.08)), pole: [-0.6, -0.7, -0.3] }, { t: 1.5, at: null, blend: 0.4 }]);
-cook.hand('R', [{ t: 0, at: (t) => boardW.clone().add(V(0.0, 0.12 + Math.max(0, Math.sin(t * 7)) * 0.06 * (t < 0.95 ? 1 : 0), -0.06)), pole: [0.6, -0.7, -0.3] }, { t: 1.2, at: () => boardW.clone().add(V(0.02, 0.1, -0.12)), blend: 0.3 }, { t: 1.6, at: null, blend: 0.4 }]);
-cook.look([{ t: 0, at: () => whole.getWorldPosition(V()) }]);
+// the knife in her right fist (driver 'L'), her left hand a claw on the fruit; the blade goes down through the stem
+// line with a slicing stroke, the halves fall open on the board, cut faces up
+const cook = puppet('COOK'); cook.place(3.56, -0.75, Math.PI / 2); app.cast(cook); cook.speak(lines);
+const boardTop = boardW.y + 0.011, heroBottom = heroPoint(Math.PI, 0).y, heroTop = heroPoint(0.32, 0).y;
+const tomatoC = boardW.clone().add(V(0.0, 0.011 - heroBottom, 0.0));
+const whole = heroTomato(); whole.position.copy(tomatoC); app.add(whole);
+const [hA, hB] = heroHalves({ ph: 0 }); app.add(hA, hB);   // cut plane = the cook's forward (x) and up; A on +z, B on -z
+const knife = chefKnife(); app.add(knife); const KG = knifeGrip('L'); cook.attach('L', knife, { pos: KG.pos, q: KG.q });
+const qKnife = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(V(0, 0, 1).cross(V(1, -0.02, 0).normalize()), V(0, 0, 1), V(1, -0.02, 0).normalize()));   // blade level: the edge meets the board
+const qHandK = qKnife.clone().multiply(KG.q.clone().invert()), edgeMid = V(-0.044, 0, 0.1);
+const cutDepth = (t) => 1 - K.smooth((t - 0.22) / 0.66);                       // 1 = above the fruit, 0 = blade on the board
+const knifePalm = (t) => { const e = tomatoC.clone().add(V(0.012 * Math.sin(t * 13) * (t > 0.2 && t < 0.9 ? 1 : 0), heroTop + 0.03 - tomatoC.y + boardTop - boardTop, 0)); e.y = K.lerp(boardTop + 0.001, tomatoC.y + heroTop + 0.03, cutDepth(t));
+  const origin = e.sub(edgeMid.clone().applyQuaternion(qKnife)); return origin.sub(V(...KG.pos).applyQuaternion(qHandK)); };
+cook.act([{ t: 0, pose: 'stand', talk: 0, mod: { spX: 0.22 } }, { t: 2.2, pose: 'stand', blend: 0.4 }]);
+cook.hand('L', [{ t: 0, at: knifePalm, aim: () => qHandK, shape: 'knife', pole: [0.7, -0.6, -0.4] },
+  { t: 1.05, at: () => knifePalm(1.0).add(V(-0.06, 0.12, 0.05)), aim: () => qHandK, shape: 'knife', blend: 0.5, pole: [0.7, -0.6, -0.4] }]);
+const clawAt = () => tomatoC.clone().add(V(0.005, heroTop + 0.042, -0.03));
+cook.hand('R', [{ t: 0, at: clawAt, aim: () => frameQ(V(0.75, -0.55, 0.15), V(0.05, -1, 0.1)), shape: 'claw', pole: [-0.7, -0.6, -0.4] },
+  { t: 0.86, at: () => boardW.clone().add(V(-0.06, 0.13, -0.16)), aim: () => frameQ(V(0.8, -0.3, 0.2), V(0, -1, 0)), shape: 'relaxed', blend: 0.4, pole: [-0.7, -0.6, -0.4] }]);
+cook.look([{ t: 0, at: () => tomatoC.clone() }]);
 cook.face([{ t: 0, smile: 0.45, brow: 0.1 }]);
-app.after(t => { const cut = t > 0.95; whole.visible = !cut; hA.visible = hB.visible = cut; const sp = K.smooth((t - 0.95) / 0.4) * 0.035; hA.position.copy(boardW).add(V(0, 0.011 + 0.043, 0.012 + sp)); hB.position.copy(boardW).add(V(0, 0.011 + 0.043, -0.012 - sp)); hA.rotation.set(0.12 * K.smooth((t - 0.95) / 0.3), 0.4, 0); hB.rotation.set(-0.12 * K.smooth((t - 0.95) / 0.3), 2.2, 0); const g = cook.arms.R.grip.getWorldPosition(V()); knife.position.copy(g); knife.rotation.set(0, Math.PI, 0); knife.rotateX(0.4); });
+// halves: from the cut they part and roll back onto their skins, faces up (rest on the board's surface)
+const bbox = new THREE.Box3();
+app.after(t => { const cut = t > 0.88; whole.visible = !cut; hA.visible = hB.visible = cut;
+  const k = K.smooth((t - 0.88) / 0.45);
+  for (const [h, sg] of [[hA, 1], [hB, -1]]) { h.position.copy(tomatoC).add(V(0, 0, sg * (0.002 + 0.03 * k))); h.rotation.set(sg * k * 1.25, 0, 0); h.updateMatrixWorld(true);
+    bbox.setFromObject(h.children[0]); h.position.y += boardTop - bbox.min.y; h.updateMatrixWorld(true); } });
 K.steam(app, { at: boardW.clone().add(V(0.12, 0.35, -0.5)), count: 10, height: 0.6, size: 0.18, opacity: 0.16 });
 
 // at the table: everyone eating and talking; Noor's question; Asha's answer (with a count on her fingers)
@@ -52,8 +69,8 @@ asha.face([{ t: 0, smile: 0.35, brow: 0.1 }, { t: 4.4, smile: 0.5, brow: 0.35, t
 // camera: A macro tomato cut at the counter → B two-shot across the table → C Asha → D dolly along the table: the people
 const nF = () => noor.head.getWorldPosition(V()).add(V(0, 0.09, 0)), aF = () => asha.head.getWorldPosition(V()).add(V(0, 0.09, 0));
 app.rig = new K.Rig([
-  { t: 0.0, pos: () => boardW.clone().add(V(-0.2, 0.26, 0.5)), look: () => boardW.clone().add(V(0, 0.05, 0)), fov: 24, focus: () => boardW.clone().add(V(0, 0.05, 0)), aperture: 0.02 },
-  { t: 2.0, pos: () => boardW.clone().add(V(-0.16, 0.22, 0.4)), look: () => boardW.clone().add(V(0, 0.04, 0)), fov: 22, focus: () => boardW.clone().add(V(0, 0.04, 0)), aperture: 0.02 },
+  { t: 0.0, pos: () => boardW.clone().add(V(0.4, 0.25, 0.14)), look: () => boardW.clone().add(V(0, 0.045, 0)), fov: 24, focus: () => boardW.clone().add(V(0, 0.045, 0)), aperture: 0.02 },
+  { t: 2.0, pos: () => boardW.clone().add(V(0.33, 0.22, 0.11)), look: () => boardW.clone().add(V(0, 0.035, 0)), fov: 22, focus: () => boardW.clone().add(V(0, 0.035, 0)), aperture: 0.02 },
   { t: 2.0001, cut: true, pos: [0.0, 1.12, 1.25], look: [0.0, 1.02, -0.6], fov: 31, focus: nF, aperture: 0.005 },
   { t: 4.4, pos: [0.0, 1.12, 1.1], look: [0.0, 1.03, -0.6], fov: 30, focus: nF, aperture: 0.005 },
   { t: 4.4001, cut: true, pos: () => aF().add(V(-0.4, -0.1, 1.0)), look: () => aF().add(V(-0.02, -0.08, 0)), fov: 27, focus: aF, aperture: 0.007 },

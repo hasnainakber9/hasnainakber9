@@ -1,5 +1,5 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
-import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU, translucent } from './core.js';
+import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU, translucent, woodMat } from './core.js';
 import { compoundLeaf, beanLeaf, scrap } from './foliage.js';
 const TAU = Math.PI * 2;
 
@@ -187,7 +187,7 @@ export const ware = {
   cup: (r = 0.04, c = '#d9cbb3') => lathe([[0, 0], [r * 0.8, 0], [r, r * 0.4], [r * 1.05, r * 2.2], [r * 0.96, r * 2.2], [r * 0.88, r * 0.3], [0, r * 0.3]], clayMat(c, { normal: 'clay', ns: 0.15, roughness: 0.45, clearcoat: 0.5 })),
   glass: (r = 0.035) => lathe([[0, 0], [r * 0.9, 0], [r, r * 0.2], [r * 1.12, r * 2.8], [r * 1.08, r * 2.8], [r * 0.92, r * 0.25], [0, r * 0.25]], MAT.glass({ opacity: 0.25 })),
   pot: (r = 0.2, h = 0.22) => { const g = new THREE.Group(); g.add(lathe([[0, 0], [r * 0.95, 0], [r, 0.02], [r, h], [r * 1.04, h + 0.01], [r * 0.97, h], [r * 0.95, 0.03], [0, 0.03]], MAT.brushed())); for (const s of [-1, 1]) g.add(at(rot(box(0.07, 0.022, 0.03, MAT.darkMetal()), 0, 0, 0), s * (r + 0.03), h - 0.03, 0)); return g; },
-  board: (w = 0.42, d = 0.28) => box(w, 0.022, d, MAT.wood('#c9a272', 0.6), { r: 0.008 }),
+  board: (w = 0.42, d = 0.28) => box(w, 0.022, d, woodMat('#d7ad7c', { kind: 'edge', maps: { scratches: 7, rough: 0.58, seed: 5 }, clearcoat: 0, ns: 0.8 }), { r: 0.008, seg: 4 }),
   knife: () => { const g = new THREE.Group(); g.add(at(box(0.024, 0.003, 0.15, MAT.steel()), 0, 0, 0.075)); g.add(at(box(0.022, 0.016, 0.1, mat('#2a2622', { roughness: 0.5 }), { r: 0.006 }), 0, 0, -0.05)); return g; },
   fork: () => { const g = new THREE.Group(); g.add(at(box(0.012, 0.004, 0.12, MAT.steel()), 0, 0, -0.04)); for (let i = 0; i < 3; i++) g.add(at(box(0.003, 0.003, 0.045, MAT.steel()), (i - 1) * 0.008, 0, 0.045)); return g; },
   spoon: () => { const g = new THREE.Group(); g.add(at(box(0.01, 0.004, 0.11, MAT.steel()), 0, 0, -0.04)); const b = mesh(new THREE.SphereGeometry(0.018, 12, 8), MAT.steel()); b.scale.set(1, 0.3, 1.4); b.position.z = 0.03; g.add(b); return g; },

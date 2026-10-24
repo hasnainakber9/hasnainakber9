@@ -80,6 +80,7 @@ const basis = (x, y, z) => new THREE.Quaternion().setFromRotationMatrix(new THRE
 // the tines facing away from the palm, handle end resting in the thumb web
 export function forkGrip(s) { const ts = thumbSign(s), sn = 0.5 * ts, cs = 0.866;
   return { pos: [ts * 0.02, 0.028, 0.011], q: basis(V(cs, -sn, 0), V(0, 0, -1), V(sn, cs, 0)) }; }
-// knife held to cut: handle across the palm inside the fist, blade out past the thumb side, edge towards the fingers
-export function knifeGrip(s) { const ts = thumbSign(s);
-  return { pos: [ts * 0.06, 0.011, 0.021], q: basis(V(0, -1, 0), V(0, 0, -ts), V(ts, 0, 0)) }; }
+// knife held to cut: handle in the fist, running from the heel of the hand out between thumb and index finger
+// (about 30 deg off the fingers' line), spine on the thumb side, edge towards the curled fingers
+export function knifeGrip(s) { const ts = thumbSign(s), Z = V(0.6 * ts, 1, 0).normalize(), Y = V(0, 0, -ts), X = new THREE.Vector3().crossVectors(Y, Z);
+  return { pos: [0.031 * ts, 0.066, 0.02], q: basis(X, Y, Z) }; }

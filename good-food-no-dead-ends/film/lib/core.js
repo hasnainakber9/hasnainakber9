@@ -116,6 +116,50 @@ export function clayMat(color, o = {}) {      // tactile, hand-made surface used
   if (o.map) m.map = o.map; if (o.side) m.side = o.side; if (o.vertexColors) m.vertexColors = true;
   return m;
 }
+// ------------------------------------------------------------------ wood
+// Procedural wood at physical scale: one texture spans WOOD_SPAN metres (u along the grain, v across). Flat-sawn
+// planks show stretched growth rings; 'edge' is edge-grain strips (butcher block). Albedo is a light tint the material
+// colour multiplies; the height (rings worn soft, pores sunk) gives the normal map; pores and latewood read rougher.
+export const WOOD_SPAN = [0.9, 0.3];
+const woodCache = {};
+export function woodMaps(kind = 'plank', o = {}) {
+  const key = kind + JSON.stringify(o); if (woodCache[key]) return woodCache[key];
+  const W = o.w || 1536, H = o.h || 512, Lu = WOOD_SPAN[0], Lv = WOOD_SPAN[1], seed = o.seed || 3;
+  const col = new Uint8ClampedArray(W * H * 4), hgt = new Float32Array(W * H), rou = new Uint8ClampedArray(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const u = x / W * Lu, v = y / H * Lv;
+    let ring, strip = 0;
+    if (kind === 'edge') { const sw = 0.025, si = Math.floor(v / sw); strip = (hash2(si, seed) - 0.5) * 0.16; ring = v * 160 + (fbm(u * 2 + si * 7.3, si * 3.1, 3) - 0.5) * 1.2 + si * 0.37; }
+    else ring = v * 34 + (fbm(u * 1.6 + seed, v * 4.2, 4) - 0.5) * 7 + 0.9 * Math.sin(u * 3.3 + v * 9 + seed);
+    const f = ring - Math.floor(ring), late = smooth((f - 0.6) / 0.28) * (1 - smooth((f - 0.93) / 0.07));
+    const pore = Math.max(0, noise2(u * 9 + seed, v * 420) - 0.78) * 4.5 * 0.7 + Math.max(0, noise2(u * 23 + 5, v * 900 + seed) - 0.86) * 7 * 0.3;
+    const tone = 0.9 + (fbm(u * 0.9 + 11, v * 5 + seed, 3) - 0.5) * 0.22 + strip + (noise2(u * 40, v * 160) - 0.5) * 0.05;
+    const L = clamp(tone * (1 - late * 0.32) * (1 - Math.min(1, pore) * 0.22), 0, 1.2), i = (y * W + x) * 4;
+    col[i] = clamp(L * 238, 0, 255); col[i + 1] = clamp(L * 232, 0, 255); col[i + 2] = clamp(L * 222, 0, 255); col[i + 3] = 255;
+    hgt[y * W + x] = -late * 0.35 - Math.min(1, pore) * 0.6 + (noise2(u * 60, v * 200) - 0.5) * 0.1;
+    rou[i] = 0; rou[i + 1] = clamp(255 * ((o.rough ?? 0.5) + Math.min(1, pore) * 0.18 + late * 0.06), 0, 255); rou[i + 2] = 0; rou[i + 3] = 255; }
+  if (o.scratches) { const r = prng(o.scratches); for (let k = 0; k < 900; k++) { const cx = (0.15 + 0.7 * r()) * W, cy = (0.1 + 0.8 * r()) * H, a = (r() - 0.5) * 0.7 + (r() < 0.5 ? 0 : Math.PI / 2), len = 8 + r() * 60, dep = 0.3 + r() * 0.6;
+    for (let s2 = 0; s2 < len; s2++) { const x = Math.round(cx + Math.cos(a) * s2), y = Math.round(cy + Math.sin(a) * s2); if (x < 0 || y < 0 || x >= W || y >= H) continue; const i = y * W + x; hgt[i] -= dep; col[i * 4] = Math.min(255, col[i * 4] + 14); col[i * 4 + 1] = Math.min(255, col[i * 4 + 1] + 12); col[i * 4 + 2] = Math.min(255, col[i * 4 + 2] + 10); rou[i * 4 + 1] = Math.min(255, rou[i * 4 + 1] + 50); } } }
+  const mk = (data, linear) => { const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').putImageData(new ImageData(data, W, H), 0, 0); const t = new THREE.CanvasTexture(c); t.colorSpace = linear ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+  const nrm = new Uint8ClampedArray(W * H * 4), Hh = (x, y) => hgt[((y + H) % H) * W + ((x + W) % W)], st = o.relief ?? 1.6;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const dx = (Hh(x + 1, y) - Hh(x - 1, y)) * st, dy = (Hh(x, y + 1) - Hh(x, y - 1)) * st, l = Math.hypot(dx, dy, 1), i = (y * W + x) * 4;
+    nrm[i] = (-dx / l * 0.5 + 0.5) * 255; nrm[i + 1] = (dy / l * 0.5 + 0.5) * 255; nrm[i + 2] = (1 / l * 0.5 + 0.5) * 255; nrm[i + 3] = 255; }
+  return (woodCache[key] = { map: mk(col, false), normalMap: mk(nrm, true), roughnessMap: mk(rou, true) });
+}
+export function woodMat(color = '#b0865a', o = {}) {
+  const M = woodMaps(o.kind || 'plank', o.maps || {});
+  const m = new THREE.MeshPhysicalMaterial({ color, map: M.map, normalMap: M.normalMap, normalScale: new THREE.Vector2(o.ns ?? 0.6, o.ns ?? 0.6), roughnessMap: M.roughnessMap, roughness: o.roughness ?? 1.0,
+    clearcoat: o.clearcoat ?? 0.12, clearcoatRoughness: 0.4, sheen: 0.15, sheenRoughness: 0.6, sheenColor: new THREE.Color(color).offsetHSL(0, -0.1, 0.15) });
+  m.userData.physUV = true; return m;
+}
+// physical UVs for wood: u runs along the box's longest axis (the grain), at WOOD_SPAN metres per texture tile
+export function physUV(geo) {
+  geo.computeBoundingBox(); const s = geo.boundingBox.getSize(new THREE.Vector3()); const long = s.x >= s.y && s.x >= s.z ? 'x' : s.y >= s.z ? 'y' : 'z';
+  const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv; const off = (hash2(s.x * 31, s.z * 17) * 7) % 1;
+  for (let i = 0; i < p.count; i++) { const P = [p.getX(i), p.getY(i), p.getZ(i)], N = [Math.abs(n.getX(i)), Math.abs(n.getY(i)), Math.abs(n.getZ(i))]; const ax = { x: 0, y: 1, z: 2 }[long];
+    const face = N[0] >= N[1] && N[0] >= N[2] ? 0 : N[1] >= N[2] ? 1 : 2; const other = [0, 1, 2].find(k => k !== ax && k !== face) ?? (ax === 0 ? 1 : 0);
+    uv.setXY(i, P[ax] / WOOD_SPAN[0] + off, (face === ax ? P[(ax + 1) % 3] : P[other]) / WOOD_SPAN[1] + off * 3.7); }
+  uv.needsUpdate = true; return geo;
+}
 export const MAT = {
   steel: () => mat('#cfd3d8', { roughness: 0.28, metalness: 1.0, map: grain('steel', { repeat: 2 }) }),
   brushed: () => mat('#c4c8cd', { roughness: 0.42, metalness: 0.95, map: grain('steel', { repeat: 3 }) }),
@@ -123,7 +167,7 @@ export const MAT = {
   rubber: () => mat('#1c1c1e', { roughness: 0.92 }),
   plastic: (c) => mat(c, { roughness: 0.48 }),
   glass: (o = {}) => new THREE.MeshPhysicalMaterial({ color: o.color || '#eef6fa', roughness: o.roughness ?? 0.06, metalness: 0, transparent: true, opacity: o.opacity ?? 0.18, side: THREE.DoubleSide, depthWrite: false, envMapIntensity: 1.4 }),
-  wood: (c = '#b0865a', rep = 1) => mat(c, { map: grain('wood', { repeat: rep }), normalMap: normalTex('woodgrain', rep), normalScale: new THREE.Vector2(0.35, 0.35), roughness: 0.62 }),
+  wood: (c = '#b0865a', rep = 1) => woodMat(c),
   plaster: (c = '#e3d5bd', rep = 2) => mat(c, { map: grain('plaster', { repeat: rep }), normalMap: normalTex('plaster', rep), normalScale: new THREE.Vector2(0.4, 0.4), roughness: 0.92 }),
   emissive: (c, i = 1) => new THREE.MeshStandardMaterial({ color: '#000', emissive: c, emissiveIntensity: i }),
 };
@@ -133,8 +177,8 @@ export function at(o, x, y, z) { o.position.set(x, y, z); return o; }
 export function rot(o, x = 0, y = 0, z = 0) { o.rotation.set(x, y, z); return o; }
 export function shadow(o, cast = true, recv = true) { o.traverse(m => { if (m.isMesh) { m.castShadow = cast; m.receiveShadow = recv; } }); return o; }
 export function mesh(geo, material, o = {}) { const m = new THREE.Mesh(geo, material); m.castShadow = o.cast !== false; m.receiveShadow = o.recv !== false; return m; }
-export function box(w, h, d, material, o = {}) { return mesh(o.r ? new RoundedBoxGeometry(w, h, d, o.seg || 2, o.r) : new THREE.BoxGeometry(w, h, d), material, o); }
-export function cyl(rt, rb, h, material, seg = 24, o = {}) { return mesh(new THREE.CylinderGeometry(rt, rb, h, seg, 1, !!o.open), material, o); }
+export function box(w, h, d, material, o = {}) { const g = o.r ? new RoundedBoxGeometry(w, h, d, o.seg || 2, o.r) : new THREE.BoxGeometry(w, h, d); if (material && material.userData && material.userData.physUV) physUV(g); return mesh(g, material, o); }
+export function cyl(rt, rb, h, material, seg = 24, o = {}) { const g = new THREE.CylinderGeometry(rt, rb, h, seg, 1, !!o.open); if (material && material.userData && material.userData.physUV) physUV(g); return mesh(g, material, o); }
 export function sphere(r, material, o = {}) { const m = mesh(new THREE.SphereGeometry(r, o.w || 24, o.h || 16), material, o); if (o.s) m.scale.set(...o.s); return m; }
 // merge many (geometry, matrix, colour) parts into one vertex-coloured geometry
 const tmpM = new THREE.Matrix4();

@@ -686,10 +686,35 @@ export class HumanPuppet extends Puppet {
       const Bq = frameQ(handDir, palmN), off = J('finger3-1.' + m).sub(wr).multiplyScalar(0.7).add(palmN.clone().multiplyScalar(0.018));
       this.HF = this.HF || {}; this.HF[s] = { B: Bq, Binv: Bq.clone().invert(), off, fore: J('lowerarm01.' + m).distanceTo(wr), foreAx: wr.clone().sub(J('lowerarm01.' + m)).normalize(), handDir, palmN };
     }
+    this.buildNails();
     // pelvis rigidly attached to the driver hips (lifted to the straight-leg stance)
     const hipsRest = new THREE.Matrix4().compose(V(0, this.hipY, 0), new THREE.Quaternion(), V(1, 1, 1));
     const rootRest = h.bone('root').matrix.clone(); rootRest.elements[13] += this.lift;
     this.pelvisOff = hipsRest.invert().multiply(rootRest);
+  }
+  // fingernails: small curved glossy plates on the back of each distal phalanx (the skin texture has none there)
+  buildNails() {
+    const h = this.h, J = (n, e) => h.joint(n, e), sc = h.height / 1.7, names = h.K.meta.bones.map(b => b.name); const parts = [];
+    for (const s of ['L', 'R']) { const m = this.MS[s], back = this['palmN' + s].clone().negate();
+      for (let f = 1; f <= 5; f++) { const n = `finger${f}-3.${m}`; if (!h.bone(n)) continue; const a = J(n), b = J(n, 't'), ax = b.clone().sub(a), len = ax.length(); ax.normalize();
+        const bk = back.clone().sub(ax.clone().multiplyScalar(back.dot(ax))).normalize(), side = new THREE.Vector3().crossVectors(ax, bk);
+        const w = (f === 1 ? 0.0125 : f === 5 ? 0.0085 : 0.0105) * sc, L = Math.min(len * 0.62, (f === 1 ? 0.013 : 0.011) * sc), th = (f === 1 ? 0.0062 : 0.0054) * sc;
+        const g = new THREE.PlaneGeometry(w, L, 6, 4); const P = g.attributes.position;
+        const col = new Float32Array(P.count * 3), base = new THREE.Color(this.spec.skin || '#b07650').lerp(new THREE.Color('#e9b4a6'), 0.42), edge = base.clone().lerp(new THREE.Color('#f2e2d6'), 0.4);
+        for (let i = 0; i < P.count; i++) { let x = P.getX(i); const y = P.getY(i), fy = (y + L / 2) / L; x *= 0.55 + 0.45 * Math.sqrt(clamp(fy / 0.35, 0, 1));   // rounded at the cuticle
+          const u = x / (w / 2); P.setX(i, x); P.setZ(i, -0.55 * w * (1 - Math.cos(u * 0.9)) - 0.0004 * Math.abs(y / (L / 2)) ** 2);   // curved across the finger
+          const c = base.clone().lerp(edge, Math.max(0, (fy - 0.82) / 0.18)); col.set([c.r, c.g, c.b], i * 3); }
+        g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        // sit on the skin: the furthest body vertex towards the back of the finger near the nail centre
+        const c0 = a.clone().add(ax.clone().multiplyScalar(len * 0.62)), bp = h.body.geometry.attributes.position, q = V(); let top = th * 0.6;
+        for (let i = 0; i < bp.count; i++) { q.fromBufferAttribute(bp, i).sub(c0); const al = q.dot(ax); if (Math.abs(al) > L * 0.5) continue; const up = q.dot(bk), lat = q.dot(side); if (Math.abs(lat) > w * 0.5 || up < 0 || up > 0.012 * sc) continue; top = Math.max(top, up); }
+        const c = c0.add(bk.clone().multiplyScalar(top + 0.0003));
+        g.applyMatrix4(new THREE.Matrix4().makeBasis(side, ax, bk).setPosition(c)); g.computeVertexNormals();
+        const bi = names.indexOf(n), cnt = g.attributes.position.count;
+        g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).map((_, i) => (i % 4 === 0 ? bi : 0)), 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(cnt * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4));
+        g.deleteAttribute('uv'); parts.push(g); } }
+    const mesh = new THREE.SkinnedMesh(BGU.mergeGeometries(parts), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.12, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    mesh.name = 'nails'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = true; h.group.add(mesh); h.meshes.push(mesh);
   }
   ik(side, targetW, poleW, w = 1) { this.ikReq[side] = { t: targetW.clone(), p: poleW.clone(), w }; super.ik(side, targetW, poleW, w); }
   solve(t) { this.ikReq.L = this.ikReq.R = null; super.solve(t); this.cavity.visible = this.teeth.visible = false; this.retarget(t); }   // the clay mouth parts stay hidden
