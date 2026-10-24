@@ -40,7 +40,7 @@ Each technology does one ordinary job and people stay in charge of it. Nothing i
 - **Look.** Image-based lighting from CC0 HDRIs, soft shadows, ambient occlusion, depth of field and focus pulls, bloom, a light film grade and grain.
 - **Voices.** Kokoro text-to-speech, run locally, one voice per character with small pitch and speed changes. The voices are synthetic.
 - **Music and sound.** The score, room tones, ambience and foley were synthesised in Python for this film. The music is a D–Bm–G–A loop at 96 BPM that lands on D at the title. Dialogue is compressed on its own bus, and music ducks under speech.
-- **Unity project.** The finished shots are exported to a Unity 6 project as animated glTF scenes with the film's exact camera paths, lights and edit data. An editor script rebuilds the master Timeline, and the Recorder renders it. This project could not be opened or tested here because no Unity editor was available.
+- **Unity project.** The finished shots are exported to a Unity 6 project as animated glTF scenes with the film's exact camera paths, lights and edit data. An editor script rebuilds the master Timeline, and the Recorder renders it. No Unity editor was available here, so the project has never been opened or compiled; its C# passes a syntax check only.
 
 ## Limits worth knowing
 

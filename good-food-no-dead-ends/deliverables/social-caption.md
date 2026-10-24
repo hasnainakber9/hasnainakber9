@@ -19,7 +19,7 @@
 
 ## Alt text
 
-> Animated short. A girl calls a tomato ugly; her mother says "It's a tomato, not a job interview." The film follows the tomato's world: a sunrise farm with a soil sensor, a rooftop greenhouse, a fermentation lab, a food hub rerouting surplus, a street market, a shared dinner and a compost heap. The girl tastes it: "Okay. Not ugly." Title: Good food. No dead ends.
+> Animated short. A girl calls a tomato ugly; Asha, a farmer, says "It's a tomato, not a job interview." The film follows the tomato's world: a sunrise farm with a soil sensor, a rooftop greenhouse, a fermentation lab, a food hub rerouting surplus, a street market, a shared dinner and a compost heap. The girl tastes it: "Okay. Not ugly." Title: Good food. No dead ends.
 
 ## AI disclosure
 

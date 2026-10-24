@@ -1,5 +1,7 @@
-# renders are rebuilt with film/render_scenes.sh; the finished films live in deliverables/
+# renders are rebuilt with film/render_scenes.sh (or film/render_resume.sh) and film/assemble.py; the finished
+# MP4s are delivered as files, too large for the repository
 film/renders/
+deliverables/*.mp4
 film/__pycache__/
 # regenerable audio: python3 film/audio/build_dialogue.py --skip-tts && python3 film/audio/build_mix.py
 film/audio/mix/

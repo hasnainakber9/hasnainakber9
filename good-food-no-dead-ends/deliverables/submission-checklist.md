@@ -5,7 +5,8 @@ Nothing has been posted or submitted. Every step below that publishes something 
 ## 1. Before posting
 
 - [ ] Open the official page and confirm the deadline and rules: https://www.existentialhope.com/existential-hope-meme-prize
-  - The brief lists **1 November 2026, 11:59 PM local time**. This could not be re-checked during production because the page was blocked from the production environment.
+  - The production environment's network policy blocks that site, so it was checked indirectly on 24 October 2026 through web search of listings that carry the organiser's details (Foresight Institute). They agree with the brief: post publicly on any social platform, optionally tagged #xhopememeprize, then register the post through the official form; keep it public through judging; no paid promotion; your own work; AI tools allowed; multiple entries allowed if each is registered; no entry fee; $10,000 for the winner, finalists featured on the website.
+  - The brief and most listings give the deadline as **1 November 2026** (the brief says 11:59 PM local time). One listing says **31 October 2026**, so register by 31 October to be safe.
 - [ ] Watch `GoodFood_NoDeadEnds_master_16x9.mp4` once more from start to finish with sound on.
 - [ ] Watch `GoodFood_NoDeadEnds_captioned_16x9.mp4` muted on a phone and check that every caption is readable.
 - [ ] Decide which file to post (see section 2).
@@ -52,7 +53,7 @@ Nothing has been posted or submitted. Every step below that publishes something 
 - [x] The title card was made in post, not by a generative model; there is no generated text, fake logo or brand in any frame.
 - [x] Captions match the spoken lines exactly; the SRT is timed from the dialogue track.
 - [x] Master checked with `probe_qa.py`: {{QA_LINE}}
-- [x] Backed up separately: the master files are in `deliverables/`, the Unity project in `unity/` and the source scenes in `film/`, all committed to the repository.
+- [x] Source committed to the repository: scenes and audio in `film/`, the Unity project in `unity/`, captions, thumbnails and documents in `deliverables/`. The MP4s (about 250 MB together) are delivered as files and kept out of git; `film/render_scenes.sh` and `film/assemble.py` rebuild them.
 
 ## Costs
 
