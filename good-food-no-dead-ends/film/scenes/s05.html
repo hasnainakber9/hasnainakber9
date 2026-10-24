@@ -5,7 +5,8 @@
 // COLLEAGUE: "Protein... from microbes?"  MAYA: "Yogurt is microbes."  COLLEAGUE: "Fair."
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
-import { puppet } from '../lib/people.js';
+import { puppet, frameQ } from '../lib/people.js';
+import { heldFork } from '../lib/table.js';
 const { THREE, V } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'tiles', 'diamond']);
 K.seed(55);
@@ -56,25 +57,29 @@ const maya = puppet('MAYA'); maya.place(0.42, -0.58, -0.12); app.cast(maya); may
 const col = puppet('COLLEAGUE'); col.place(-0.5, -0.62, 0.32); app.cast(col); col.speak(lines);
 const vial = new THREE.Group(); vial.add(K.cyl(0.012, 0.012, 0.12, K.MAT.glass({ opacity: 0.4 }), 12)); const vf = K.cyl(0.0105, 0.0105, 0.07, K.mat('#f3ead2', { roughness: 0.45, emissive: '#3a3226', emissiveIntensity: 0.3 }), 12); vf.position.y = -0.02; vial.add(vf); vial.add(K.at(K.cyl(0.013, 0.013, 0.02, K.mat('#2f6aa0'), 12), 0, 0.065, 0)); S.add(vial);
 const tcup = P.ware.cup(0.036, '#f6f4ee'); S.add(tcup); const tsur = K.cyl(0.034, 0.034, 0.004, K.mat('#f3eee2', { roughness: 0.35 }), 14); S.add(tsur);
-const spoon = P.ware.spoon(); spoon.scale.setScalar(0.9); S.add(spoon);
-// Maya: holds a vial up to the light, studies it; glances over her glasses for the punchline
+// Maya: pinches a vial at its middle and holds it up to the light, turning it; glances over her glasses for the punchline
+const vialAim = (t) => ({ fingers: maya.dirToWorld([-0.85, 0.1 + 0.08 * Math.sin(t * 1.6), 0.45]), palm: maya.dirToWorld([0.15, 0.05, -1]) });
 maya.act([{ t: 0, pose: 'stand', talk: 0.3 }]);
-maya.hand('R', [{ t: 0, at: () => maya.root.localToWorld(V(0.12, 1.42, 0.32)), pole: [0.7, -0.6, -0.4] }, { t: 5.6, at: () => maya.root.localToWorld(V(0.18, 1.2, 0.34)), blend: 0.7, pole: [0.7, -0.6, -0.4] }]);
-maya.hand('L', [{ t: 0, at: () => maya.root.localToWorld(V(-0.12, 0.98, 0.36)), pole: [-0.7, -0.6, -0.3] }]);
+maya.hand('R', [{ t: 0, at: () => maya.root.localToWorld(V(0.1, 1.42, 0.32)), pole: [0.7, -0.6, -0.4], shape: 'pinch', aim: vialAim }, { t: 5.6, at: () => maya.root.localToWorld(V(0.16, 1.2, 0.34)), blend: 0.7, pole: [0.7, -0.6, -0.4], shape: 'pinch', aim: vialAim }]);
+maya.hand('L', [{ t: 0, at: () => maya.root.localToWorld(V(-0.13, 0.97, 0.34)), pole: [-0.7, -0.6, -0.3], shape: 'relaxed', aim: () => ({ fingers: maya.dirToWorld([0.25, -0.75, 0.55]), palm: maya.dirToWorld([0.8, 0, 0.2]) }) }]);
+maya.attach('R', vial, { pos: [0, 0.064, 0.024], q: new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), Math.PI / 2) });
 maya.look([{ t: 0, at: () => vial.getWorldPosition(V()) }, { t: 4.1, at: () => col.head.getWorldPosition(V()), blend: 0.3, w: 0.8 }, { t: 5.5, at: () => vial.getWorldPosition(V()), blend: 0.4 }]);
 maya.face([{ t: 0, smile: 0.1, brow: 0.1, squint: 0.25 }, { t: 3.9, smile: 0.0, brow: 0.45, tilt: 0.5, squint: 0 }, { t: 5.4, smile: 0.25, brow: 0.1, tilt: 0 }, { t: 6.9, smile: 0.55, brow: 0.2 }]);
-// colleague: tastes, chews, skeptical; considers; "Fair."; another spoonful
-const mouth = () => col.head.getWorldPosition(V()).add(col.dirToWorld([0, 0, 1]).multiplyScalar(0.16)).add(V(0, 0.04, 0));
+// colleague: cup in one hand, spoon in the other; tastes, chews, skeptical; considers; "Fair."; another spoonful
+const { palmFor } = heldFork(app, col, 'R', 'spoon');
+const cupAim = () => ({ fingers: col.dirToWorld([0.55, 0.1, 0.8]), palm: col.dirToWorld([0.9, 0.3, -0.2]) });
+const cupTop = () => tcup.getWorldPosition(V()).add(V(0, 0.07, 0));
+const qCup = () => frameQ(col.dirToWorld([0.25, -0.85, 0.45]), col.dirToWorld([-0.6, -0.25, 0.75])), qMouthC = () => frameQ(col.dirToWorld([-0.3, 0.85, -0.55]), col.dirToWorld([-0.75, -0.25, 0.45]));
+const lipsC = (d) => col.mouthWorld().add(col.offsetToWorld([0, -0.003, d]));
 col.act([{ t: 0, pose: 'stand', talk: 0.2 }, { t: 5.8, pose: 'shrug', blend: 0.35 }, { t: 6.7, pose: 'stand', blend: 0.4 }]);
-col.hand('L', [{ t: 0, at: () => col.root.localToWorld(V(-0.05, 1.12, 0.3)), pole: [-0.7, -0.6, -0.3] }, { t: 5.8, at: null, blend: 0.35 }, { t: 6.7, at: () => col.root.localToWorld(V(-0.05, 1.12, 0.3)), blend: 0.4 }]);
-col.hand('R', [{ t: 0, at: mouth, pole: [0.7, -0.6, -0.4] }, { t: 0.9, at: () => col.root.localToWorld(V(0.02, 1.18, 0.33)), blend: 0.45 }, { t: 5.8, at: null, blend: 0.35 }, { t: 6.85, at: () => col.root.localToWorld(V(0.02, 1.18, 0.33)), blend: 0.3 }, { t: 7.3, at: mouth, blend: 0.4 }]);
-col.look([{ t: 0, at: () => tcup.getWorldPosition(V()) }, { t: 1.4, at: () => maya.head.getWorldPosition(V()), blend: 0.4, w: 0.85 }, { t: 5.3, at: V(-1.5, 1.9, 2.5), blend: 0.5 }, { t: 6.2, at: () => maya.head.getWorldPosition(V()), blend: 0.3 }, { t: 6.9, at: () => tcup.getWorldPosition(V()), blend: 0.4 }]);
-col.face([{ t: 0, smile: 0.05, chew: 1, brow: 0.0 }, { t: 1.3, smile: -0.2, chew: 0.4, brow: 0.5, tilt: 0.6 }, { t: 3.7, smile: -0.1, chew: 0, brow: 0.2, tilt: 0.3 }, { t: 5.3, smile: 0.1, brow: 0.6, tilt: 0, squint: 0.2 }, { t: 6.4, smile: 0.4, brow: 0.3, squint: 0 }, { t: 7.4, chew: 1, smile: 0.35 }]);
-app.after(t => {
-  vial.position.copy(maya.arms.R.grip.getWorldPosition(V())); vial.rotation.set(0.15, 0, 0.25 + Math.sin(t * 1.6) * 0.15);
-  const gl = col.arms.L.grip.getWorldPosition(V()); tcup.position.copy(gl).add(col.offsetToWorld([0.02, -0.055, 0.05])); tsur.position.copy(tcup.position).add(V(0, 0.068, 0));
-  const gr = col.arms.R.grip.getWorldPosition(V()); spoon.position.copy(gr); spoon.lookAt(gr.clone().add(col.dirToWorld([0, 0.3, 1]))); spoon.rotateX(-0.2);
-});
+col.hand('L', [{ t: 0, at: () => col.root.localToWorld(V(-0.05, 1.1, 0.3)), pole: [-0.7, -0.6, -0.3], shape: 'hold', aim: cupAim }, { t: 5.8, at: null, blend: 0.35, shape: 'hold' }, { t: 6.7, at: () => col.root.localToWorld(V(-0.05, 1.1, 0.3)), blend: 0.4, shape: 'hold', aim: cupAim }]);
+col.hand('R', [{ t: 0, at: () => palmFor(lipsC(0.006), qMouthC()), aim: qMouthC, shape: 'fork', pole: [0.8, -0.7, -0.2] },
+  { t: 0.5, at: () => palmFor(cupTop(), qCup()), aim: qCup, shape: 'fork', blend: 0.6, pole: [0.8, -0.6, -0.3] }, { t: 5.8, at: null, blend: 0.35, shape: 'fork' },
+  { t: 6.85, at: () => palmFor(cupTop(), qCup()), aim: qCup, shape: 'fork', blend: 0.3, pole: [0.8, -0.6, -0.3] }, { t: 7.3, at: () => palmFor(lipsC(0.006), qMouthC()), aim: qMouthC, shape: 'fork', blend: 0.45, pole: [0.8, -0.7, -0.2] }]);
+col.look([{ t: 0, at: () => tcup.getWorldPosition(V()) }, { t: 1.4, at: () => maya.head.getWorldPosition(V()), blend: 0.4, w: 0.85 }, { t: 5.3, at: () => col.mouthWorld().add(col.offsetToWorld([-0.6, 0.12, 1.2])), blend: 0.5 }, { t: 6.2, at: () => maya.head.getWorldPosition(V()), blend: 0.3 }, { t: 6.9, at: () => tcup.getWorldPosition(V()), blend: 0.4 }]);
+col.face([{ t: 0, smile: 0.05, chew: 1, brow: 0.0 }, { t: 1.3, smile: -0.2, chew: 0.4, brow: 0.5, tilt: 0.6 }, { t: 3.7, smile: -0.1, chew: 0, brow: 0.2, tilt: 0.3 }, { t: 5.3, smile: 0.1, brow: 0.6, tilt: 0, squint: 0.2 }, { t: 6.4, smile: 0.4, brow: 0.3, squint: 0 }, { t: 7.15, jaw: 0.35, smile: 0.2, blend: 0.2 }, { t: 7.55, chew: 1, jaw: 0, smile: 0.35, blend: 0.15 }]);
+// the cup stays upright in his hand
+app.after(t => { const f = col.handFrame('L'); tcup.position.copy(f.pos).add(V(0, 0.012, 0.052).applyQuaternion(f.quat)).add(V(0, -0.045, 0)); const fd = V(0, 1, 0).applyQuaternion(f.quat); tcup.rotation.set(0, Math.atan2(fd.x, fd.z), 0); tsur.position.copy(tcup.position).add(V(0, 0.068, 0)); });
 
 // camera
 const mayaF = () => maya.head.getWorldPosition(V()).add(V(0, 0.09, 0)), colF = () => col.head.getWorldPosition(V()).add(V(0, 0.09, 0));

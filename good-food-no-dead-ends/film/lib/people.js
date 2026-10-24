@@ -3,7 +3,7 @@
 import { THREE, V, clamp, lerp, smooth, prng, M4, clayMat, canvasTex, noise2, BGU, RoundedBoxGeometry } from './core.js';
 import { loadKit, buildHuman } from './humans.js';
 import { strandHair, scalpLayer, scalpTint, strandBrows } from './hair.js';
-import { vest, labCoat, apron, scarf, cap, headwrap } from './wardrobe.js';
+import { vest, labCoat, apron, scarf, cap, headwrap, dressed, setArm } from './wardrobe.js';
 const KIT = await loadKit();                       // MakeHuman (CC0) assets for the realistic cast
 const CLAY = typeof location !== 'undefined' && new URLSearchParams(location.search).has('clay');   // ?clay renders the original puppets
 
@@ -601,7 +601,7 @@ function buildCastHuman(name, spec, seed) {
   if (H.beard) strandHair(h, KIT, H.beard.style, Object.assign({ seed: seed % 991 + 1 }, H.beard, { count: Math.round((H.beard.count || 7000) * q) }));
   strandBrows(h, KIT, Object.assign({ seed: seed % 983 + 2 }, H.brows || {}, { count: Math.round(((H.brows || {}).count || 380) * q) }));
   const W = (typeof location !== 'undefined' && new URLSearchParams(location.search).has('nowear')) ? {} : Object.fromEntries(Object.entries(H.wear || {}).filter(([k]) => { const only = typeof location !== 'undefined' && new URLSearchParams(location.search).get('wear'); return !only || only === k; }));
-  if (W.puffer) vest(h, KIT, 'puffer', W.puffer); if (W.hivis) vest(h, KIT, 'hivis', W.hivis); if (W.labcoat) labCoat(h, KIT, W.labcoat); if (W.apron) apron(h, KIT, W.apron);
+  if (W.puffer) vest(h, KIT, 'puffer', W.puffer); if (W.hivis) vest(h, KIT, 'hivis', W.hivis); if (W.labcoat) dressed(h, KIT, (hp) => labCoat(hp, KIT, W.labcoat)); if (W.apron) apron(h, KIT, W.apron);
   if (W.scarf) scarf(h, KIT, W.scarf); if (W.cap) cap(h, KIT, W.cap, 'cap'); if (W.flatcap) cap(h, KIT, W.flatcap, 'flatcap'); if (W.headwrap) headwrap(h, KIT, W.headwrap);
   return h;
 }
@@ -732,7 +732,8 @@ export class HumanPuppet extends Puppet {
     setWorldQuat(B('head'), this.hd.getWorldQuaternion(qb));
     // limbs: driver world rotation x rest correction
     for (const n of ['upperleg01.L', 'upperleg01.R', 'lowerleg01.L', 'lowerleg01.R', 'foot.L', 'foot.R', 'upperarm01.L', 'upperarm01.R', 'lowerarm01.L', 'lowerarm01.R', 'wrist.L', 'wrist.R']) {
-      const k = this.K[n]; k.g.getWorldQuaternion(qb); setWorldQuat(B(n), qb.multiply(k.k));
+      const k = this.K[n]; k.g.getWorldQuaternion(qb); qb.multiply(k.k);
+      if (n.startsWith('upperarm01')) setArm(h, n.slice(-1), qb); else setWorldQuat(B(n), qb);   // (the shoulder girdle takes a share of the arm's swing)
     }
     // arms reaching for something: exact two-bone IK on the real skeleton. With an aim (hand keys' `aim`), the wrist is
     // placed so the turned hand puts its palm centre on the target; without one the palm sits on the forearm line.

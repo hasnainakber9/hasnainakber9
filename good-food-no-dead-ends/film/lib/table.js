@@ -2,7 +2,7 @@
 import { THREE, V, R, seed, mesh, smooth, lerp, keyed } from './core.js';
 import * as P from './props.js';
 import { puppet, frameQ } from './people.js';
-import { fork as makeFork, forkGrip } from './cutlery.js';
+import { fork as makeFork, spoon as makeSpoon, forkGrip } from './cutlery.js';
 import { mealSpread } from './sets.js';
 
 // far side faces +z (towards the main camera), near side faces -z; the two ends face inward
@@ -35,9 +35,9 @@ export function seatCast(app, lines, who = Object.keys(SEATS), o = {}) {
 }
 
 // a fork held properly in the hand ('R' driver side), and where the palm has to be for its tines to reach a point
-export function heldFork(app, p, side = 'R') {
-  const F = makeFork(); app.scene.add(F); const G = forkGrip(side); p.attach(side, F, { pos: G.pos, q: G.q });
-  const tip = V(0, 0.016, 0.112), grip = V(...G.pos);
+export function heldFork(app, p, side = 'R', kind = 'fork') {
+  const F = kind === 'spoon' ? makeSpoon() : makeFork(); app.scene.add(F); const G = forkGrip(side); p.attach(side, F, { pos: G.pos, q: G.q });
+  const tip = kind === 'spoon' ? V(0, -0.002, 0.06) : V(0, 0.016, 0.112), grip = V(...G.pos);
   const palmFor = (P, q) => P.clone().sub(grip.clone().add(tip.clone().applyQuaternion(G.q)).applyQuaternion(q));
   return { fork: F, tip, palmFor };
 }

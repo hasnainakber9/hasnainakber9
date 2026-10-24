@@ -44,6 +44,17 @@ export function fork() {
   const o = new THREE.Group(); o.add(m); o.userData.tip = V(0, 0.016, 0.12); return o;
 }
 
+// teaspoon, 14 cm: handle end at z = -0.055, bowl tip at z = +0.085, bowl dished towards +y
+export function spoon() {
+  const s = new THREE.Shape(); s.moveTo(0, -0.055); s.absarc(0, -0.05, 0.005, -Math.PI / 2, 0, false);
+  for (let k = 0; k <= 16; k++) { const z = lerp(-0.05, 0.035, k / 16); s.lineTo(lerp(0.005, 0.0032, smooth((z + 0.05) / 0.06)) + 0.0025 * smooth((z - 0.02) / 0.015), z); }
+  s.absellipse(0, 0.06, 0.0175, 0.027, -Math.PI / 2 + 0.35, Math.PI * 1.5 - 0.35, false);
+  for (let k = 16; k >= 0; k--) { const z = lerp(-0.05, 0.035, k / 16); s.lineTo(-(lerp(0.005, 0.0032, smooth((z + 0.05) / 0.06)) + 0.0025 * smooth((z - 0.02) / 0.015)), z); }
+  s.absarc(0, -0.05, 0.005, Math.PI, Math.PI * 1.5, false);
+  const g = slab(s, 0.0018, 0.0004, 32); const p = g.attributes.position;   // dish the bowl, bend the handle up a little
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); let y = p.getY(i); if (z > 0.033) { const u = x / 0.0175, v = (z - 0.06) / 0.027; y -= 0.0075 * Math.max(0, 1 - u * u - v * v); } y += 0.008 * smooth((-z - 0.0) / 0.05); p.setY(i, y); }
+  g.computeVertexNormals(); const m = new THREE.Mesh(g, steel()); m.castShadow = true; m.name = 'spoon'; const o = new THREE.Group(); o.add(m); o.userData.tip = V(0, -0.002, 0.06); return o;
+}
 // chef's knife: 20 cm blade (curved belly, spine at +x), black handle with three rivets; edge towards -x
 let _handleMat = null;
 export function chefKnife() {
