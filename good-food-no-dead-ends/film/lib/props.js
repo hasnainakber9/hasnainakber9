@@ -1,5 +1,5 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
-import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, RoundedBoxGeometry, BGU, translucent, woodMat } from './core.js';
+import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, prng, RoundedBoxGeometry, BGU, translucent, woodMat } from './core.js';
 import { compoundLeaf, beanLeaf, scrap } from './foliage.js';
 const TAU = Math.PI * 2;
 
@@ -146,7 +146,11 @@ export function tomatoPlantGeos(variant = 0, o = {}) {
   const rr = (a, b) => a + noise2(variant * 7.3 + a * 13, b * 3.1) * (b - a);
   const h = o.height || 0.95; const leaves = [], solid = [], fruit = [];
   solid.push({ geo: new THREE.BoxGeometry(0.018, h + 0.25, 0.018), m: M4(0.03, (h + 0.25) / 2 - 0.1, 0.0), color: '#8a6a44' });
-  solid.push({ geo: new THREE.CylinderGeometry(0.008, 0.012, h, 5), m: M4(0, h / 2, 0, 0.03, 0, 0.04), color: '#4f6e2c' });
+  // the main stem zigzags from leaf node to leaf node and tapers (a straight thick cylinder reads as a drinking straw)
+  { const nodes = Math.max(4, Math.round(h / 0.11)), pts = []; for (let i = 0; i <= nodes; i++) { const y = h * i / nodes, side = i % 2 ? 1 : -1; pts.push(V(side * 0.007 * (i > 0 ? 1 : 0) + 0.003 * Math.sin(i * 1.7 + variant), y, side * 0.004 * Math.cos(i * 2.3 + variant))); }
+    const stem = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), nodes * 6, 0.0065, 8, false), sp = stem.attributes.position;
+    for (let i = 0; i < sp.count; i++) { const k = 1 - 0.45 * sp.getY(i) / h, c = V(0, sp.getY(i), 0); const cl = new THREE.Vector3().fromBufferAttribute(sp, i); const curve = pts[Math.min(nodes, Math.round(sp.getY(i) / h * nodes))]; cl.x = curve.x + (cl.x - curve.x) * k; cl.z = curve.z + (cl.z - curve.z) * k; sp.setXYZ(i, cl.x, cl.y, cl.z); }
+    stem.computeVertexNormals(); solid.push({ geo: stem, m: M4(0, 0, 0, 0.03, 0, 0.04), color: '#456528' }); }
   const n = o.leaves || 13;
   for (let i = 0; i < n; i++) {
     const a = i * 2.39996 + variant, y = 0.12 + (i / n) * (h - 0.12), s = 0.26 * (1 - (i / n) * 0.35) * (0.85 + (i % 3) * 0.1);
@@ -423,6 +427,35 @@ export function caddy(o = {}) { // kitchen organics caddy: an OPEN bin (separate
   g.add(fill);
   const lid = new THREE.Group(); lid.position.set(0, H + 0.01, -D / 2); const l = mesh(new RoundedBoxGeometry(W + 0.012, 0.022, D + 0.012, 2, 0.008), mat(o.lid || '#7a9a3a', { roughness: 0.4 })); l.position.z = D / 2; lid.add(l); g.add(lid); g.userData.lid = lid; g.userData.H = H;
   return g;
+}
+// compost as a tiling texture (about 0.6 m across): dark crumbly humus with lighter crumbs and woody bits, and in fresh
+// compost pale straw stalks lying every which way. straw: 0 (mature) .. 1 (fresh)
+const compostCache = {};
+export function compostTex(straw = 0, seed = 7) {
+  const key = straw.toFixed(2) + ':' + seed; if (compostCache[key]) return compostCache[key];
+  const t = canvasTex(1024, 1024, (g, w, h) => {
+    const img = g.getImageData(0, 0, w, h), d = img.data, P = 1024;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {   // tileable fbm: sample on a torus
+      const a = x / P * TAU, b = y / P * TAU, n = fbm(Math.cos(a) * 1.6 + 7 + seed, Math.sin(a) * 1.6 + Math.cos(b) * 1.6, 5) * 0.6 + fbm(Math.sin(b) * 1.6 + 3, Math.cos(a) * 3 + seed, 4) * 0.4;
+      const k = 0.55 + 0.9 * (n - 0.5), i = (y * w + x) * 4; d[i] = 62 * k; d[i + 1] = 44 * k; d[i + 2] = 30 * k; d[i + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    const rr = prng(seed * 31 + Math.round(straw * 100)), wrap = (f) => { for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) { g.save(); g.translate(ox, oy); f(); g.restore(); } };
+    for (let i = 0; i < 9000; i++) { const x = rr() * w, y = rr() * h, r = 1 + rr() * 3.5, l = rr();   // crumbs, lit from above
+      g.fillStyle = l < 0.5 ? `rgba(18,12,8,${0.35 + rr() * 0.4})` : `rgba(${120 + rr() * 50},${90 + rr() * 30},${60 + rr() * 25},${0.25 + rr() * 0.35})`; g.beginPath(); g.ellipse(x, y, r * (0.7 + rr() * 0.6), r, rr() * 3, 0, TAU); g.fill(); }
+    for (let i = 0; i < 260; i++) { const x = rr() * w, y = rr() * h, a = rr() * TAU, L = 6 + rr() * 22, col = `rgba(${90 + rr() * 40},${60 + rr() * 30},${35 + rr() * 20},0.8)`, lw = 1.5 + rr() * 2.5;   // woody bits
+      wrap(() => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }); }
+    for (let i = 0, n = Math.round(1400 * straw); i < n; i++) { const x = rr() * w, y = rr() * h, a = rr() * TAU, L = 30 + rr() * 110, bend = (rr() - 0.5) * 0.6, c = rr(), al = 0.55 + rr() * 0.4, lw = 1.5 + rr() * 2.5;   // straw stalks
+      wrap(() => { g.strokeStyle = `rgba(${170 + c * 60},${140 + c * 50},${80 + c * 40},${al})`; g.lineWidth = lw; g.beginPath(); g.moveTo(x, y);
+        g.quadraticCurveTo(x + Math.cos(a + bend) * L * 0.5, y + Math.sin(a + bend) * L * 0.5, x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke();
+        g.strokeStyle = 'rgba(30,20,10,0.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + 1.5, y + 1.5); g.lineTo(x + Math.cos(a) * L + 1.5, y + Math.sin(a) * L + 1.5); g.stroke(); }); }
+  });
+  return (compostCache[key] = t);
+}
+// a lumpy crumb of soil or compost (smooth shading, irregular): radius r
+export function crumbGeo(r = 0.01, seed = 1) {
+  const g = new THREE.IcosahedronGeometry(r, 2), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const v = V().fromBufferAttribute(p, i), n = v.clone().normalize(); const k = 1 + 0.35 * (noise2(n.x * 2.3 + seed, n.y * 2.3 + n.z * 1.7) - 0.5) * 2 + 0.12 * (noise2(n.x * 7 + seed, n.z * 7) - 0.5); v.multiplyScalar(k); v.y *= 0.75; p.setXYZ(i, v.x, v.y, v.z); }
+  g.computeVertexNormals(); return g;
 }
 export function windrowGeo(L = 12, W = 2.6, H = 1.4, seed = 1) {
   const g = new THREE.PlaneGeometry(L, W * 1.6, 120, 24); const p = g.attributes.position;
