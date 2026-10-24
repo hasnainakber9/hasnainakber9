@@ -29,6 +29,9 @@ function DBGCAM(app) {
   else if (q.has('dbghand') || q.has('hand')) { const [name, s, d = 0.45, az = 0.5, el = 0.35] = (q.get('dbghand') || q.get('hand')).split(':'); const p = app.puppets.find(x => x.name === name); if (!p || !p.handFrame) return;
     const f = p.handFrame(s), dir = V(Math.sin(+az) * Math.cos(+el), Math.sin(+el), Math.cos(+az) * Math.cos(+el)).applyQuaternion(p.root.getWorldQuaternion(new THREE.Quaternion()));
     look = f.pos; pos = f.pos.clone().addScaledVector(dir, +d); }
+  else if (q.has('joint')) { const [name, bn, d = 0.6, az = 0.4, el = 0.15, fv = 30] = q.get('joint').split(':'); const p = app.puppets.find(x => x.name === name); const b = p && p.h && p.h.bone(bn); if (!b) return;
+    const dir = V(Math.sin(+az) * Math.cos(+el), Math.sin(+el), Math.cos(+az) * Math.cos(+el)).applyQuaternion(p.root.getWorldQuaternion(new THREE.Quaternion()));
+    look = b.getWorldPosition(V()); pos = look.clone().addScaledVector(dir, +d); fov = +fv; }
   else return;
   c.position.copy(pos); c.up.set(0, 1, 0); c.lookAt(look); c.fov = fov; c.updateProjectionMatrix(); if (app.dof) app.dof.uniforms.aperture.value = 0;
 }
@@ -222,6 +225,16 @@ export function translucent(m, tint = '#d8f08a', amount = 0.6) {
       'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
       'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );\n\treflectedLight.directDiffuse += directLight.color * saturate( -dot( geometryNormal, directLight.direction ) ) * leafTrans * BRDF_Lambert( material.diffuseColor );')); };
   m.customProgramCacheKey = () => key + '|leafTrans'; return m;
+}
+// two-sided cloth lit from its outer side on both faces: where an inner layer pokes through (a collar's stand through
+// its fall, a placket, a pocket) its back face would otherwise take the flipped normal, face away from the light and
+// show as a black triangle. Back faces are only dimmed a little (the inside of a cuff or a neckline).
+export function frontLit(m, dim = 0.85) {
+  const prev = m.onBeforeCompile, key = m.customProgramCacheKey ? m.customProgramCacheKey() : '';
+  m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;'))
+      .replace('#include <map_fragment>', `#include <map_fragment>\n diffuseColor.rgb *= gl_FrontFacing ? 1.0 : ${dim.toFixed(3)};`); };
+  m.customProgramCacheKey = () => key + '|frontLit' + dim; return m;
 }
 export function vmat(o = {}) { return new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.8, metalness: 0 }, o)); }
 export function instanced(scene, geo, material, list, o = {}) {
@@ -481,8 +494,37 @@ export function fillLights(app, o = {}) {
   if (o.rim) { const r = new THREE.DirectionalLight(o.rimColor || '#ffe0b8', o.rim); r.position.copy((o.rimDir || V(-0.5, 0.6, -1)).normalize().multiplyScalar(40)); app.scene.add(r); }
   return hemi;
 }
+// a plank floor at physical scale: 14 cm boards in 1.2 m lengths with staggered joints, each board its own cut of the
+// log (ring pattern and tone), hairline gaps and softened edges between them. One tile spans FLOOR_SPAN metres.
+export const FLOOR_SPAN = [2.4, 1.68];
+export function plankFloorMaps(o = {}) {
+  const key = 'floor' + JSON.stringify(o); if (woodCache[key]) return woodCache[key];
+  const W = o.w || 2048, H = Math.round(W * FLOOR_SPAN[1] / FLOOR_SPAN[0]), pw = 0.14, PL = 1.2;
+  const col = new Uint8ClampedArray(W * H * 4), hgt = new Float32Array(W * H), rou = new Uint8ClampedArray(W * H * 4);
+  for (let y = 0; y < H; y++) { const Y = y / H * FLOOR_SPAN[1], row = Math.floor(Y / pw), vy = Y - row * pw, off = hash2(row, 7.7) * PL;
+    for (let x = 0; x < W; x++) { const X = x / W * FLOOR_SPAN[0], xx = ((X - off) % FLOOR_SPAN[0] + FLOOR_SPAN[0]) % FLOOR_SPAN[0], seg = Math.floor(xx / PL), ux = xx - seg * PL;
+      const sd = hash2(row * 3.1 + seg, 13.3), u = ux + sd * 5, v = vy + sd * 0.7;
+      const ring = v * 58 + (fbm(u * 1.4 + sd * 20, v * 4.2, 4) - 0.5) * 5 + 0.6 * Math.sin(u * 3.3 + v * 9 + sd * 40), f = ring - Math.floor(ring);
+      const late = (smooth((f - 0.6) / 0.28) * (1 - smooth((f - 0.93) / 0.07))) * 0.4;   // oak under an oiled finish: the figure is quiet
+      const pore = Math.max(0, noise2(u * 9 + sd * 30, v * 420) - 0.78) * 2.2 + Math.max(0, noise2(u * 23 + 5, v * 900 + sd * 9) - 0.86) * 1.4;
+      const edge = Math.min(vy, pw - vy, ux, PL - ux), gap = 1 - smooth((edge - 0.0004) / 0.0011), bevel = 1 - smooth(edge / 0.0035);
+      const tone = (0.8 + hash2(row * 3.1 + seg, 2.9) * 0.32) * (1 + (fbm(u * 0.9 + 11, v * 5 + sd * 3, 3) - 0.5) * 0.2) * (1 + (noise2(X * 1.7, Y * 1.7) - 0.5) * 0.1);   // boards differ; a little wear across the room
+      const L = clamp(tone * (1 - late * 0.3) * (1 - Math.min(1, pore) * 0.2) * (1 - gap * 0.65) * (1 - bevel * 0.12), 0, 1.2), i = (y * W + x) * 4;
+      col[i] = clamp(L * 238, 0, 255); col[i + 1] = clamp(L * 230, 0, 255); col[i + 2] = clamp(L * 218, 0, 255); col[i + 3] = 255;
+      hgt[y * W + x] = -late * 0.3 - Math.min(1, pore) * 0.5 - bevel * 1.2 - gap * 1.5;
+      rou[i] = 0; rou[i + 1] = clamp(255 * ((o.rough ?? 0.55) + Math.min(1, pore) * 0.15 + gap * 0.3 + (noise2(X * 3, Y * 3) - 0.5) * 0.12), 0, 255); rou[i + 2] = 0; rou[i + 3] = 255; } }
+  const mk = (data, linear) => { const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').putImageData(new ImageData(data, W, H), 0, 0); const t = new THREE.CanvasTexture(c); t.colorSpace = linear ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 16; return t; };
+  const nrm = new Uint8ClampedArray(W * H * 4), Hh = (x, y) => hgt[((y + H) % H) * W + ((x + W) % W)], st = o.relief ?? 1.4;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const dx = (Hh(x + 1, y) - Hh(x - 1, y)) * st, dy = (Hh(x, y + 1) - Hh(x, y - 1)) * st, l = Math.hypot(dx, dy, 1), i = (y * W + x) * 4;
+    nrm[i] = (-dx / l * 0.5 + 0.5) * 255; nrm[i + 1] = (dy / l * 0.5 + 0.5) * 255; nrm[i + 2] = (1 / l * 0.5 + 0.5) * 255; nrm[i + 3] = 255; }
+  return (woodCache[key] = { map: mk(col, false), normalMap: mk(nrm, true), roughnessMap: mk(rou, true) });
+}
 export function groundPlane(app, o = {}) {
   const size = o.size || 400; const g = new THREE.PlaneGeometry(size, size, 1, 1);
+  if (o.kind === 'planks') { const M = plankFloorMaps(o.maps || {}); for (const t of Object.values(M)) t.repeat.set(size / FLOOR_SPAN[0], size / FLOOR_SPAN[1]);
+    const m = new THREE.MeshPhysicalMaterial({ color: o.color || '#9c7650', map: M.map, normalMap: M.normalMap, normalScale: new THREE.Vector2(o.ns ?? 0.7, o.ns ?? 0.7), roughnessMap: M.roughnessMap, roughness: 1.0,
+      clearcoat: o.clearcoat ?? 0.25, clearcoatRoughness: 0.35, sheen: 0.1, sheenRoughness: 0.6, sheenColor: new THREE.Color(o.color || '#9c7650').offsetHSL(0, -0.1, 0.15) });
+    const p = mesh(g, m, { cast: false }); p.rotation.x = -Math.PI / 2; p.position.y = o.y || 0; app.scene.add(p); return p; }
   const rep = o.repeat || size / 6;
   const m = mat(o.color || '#6a5a40', { map: grain(o.kind || 'soil', { repeat: rep, scale: o.scale || 6 }), roughness: 0.96 });
   if (o.normal) { m.normalMap = normalTex(o.normal, rep); m.normalScale = new THREE.Vector2(o.ns ?? 0.8, o.ns ?? 0.8); }

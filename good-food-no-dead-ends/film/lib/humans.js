@@ -3,7 +3,7 @@
 // A body is shaped once per character from macro targets (ethnicity, sex, age, muscle, weight, height), skinned to
 // MakeHuman's 163-bone skeleton, dressed with fitted proxies (eyes, brows, lashes, teeth, hair, clothes) and given
 // facial expression morphs. people.js drives the bones from its puppet rig, so scenes keep their authoring API.
-import { THREE, V, clamp, lerp, loadNormals, normalTex, canvasTex, noise2, prng } from './core.js';
+import { THREE, V, clamp, lerp, loadNormals, normalTex, canvasTex, noise2, prng, frontLit } from './core.js';
 
 const ROOT = new URL('../assets/mh/', import.meta.url);
 const get = (n) => fetch(new URL(n, ROOT)).then(r => { if (!r.ok) throw new Error('mh asset ' + n + ': ' + r.status); return r; });
@@ -87,7 +87,7 @@ function seamlessNormals(g) {
 
 // ------------------------------------------------------------------ materials
 // skin: wrapped, red-shifted diffuse past the terminator (cheap subsurface look); specular stays physical
-function skinPatch(m, wrap = 0.36, tint = [0.92, 0.6, 0.5]) {   // (light scattered under the skin comes back reddened, but not orange)
+function skinPatch(m, wrap = 0.34, tint = [0.88, 0.64, 0.55]) {   // (light scattered under the skin comes back reddened, but not orange; under a low sun a stronger shift turns dark skin crimson)
   m.userData.hairRoot = { value: new THREE.Color('#000000') };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.hairRoot = m.userData.hairRoot;
@@ -241,9 +241,14 @@ export function buildHuman(cfg) {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
     if (Array.isArray(mat) && o.group) {   // split triangles between materials, e.g. cornea vs eyeball, shirt vs trousers
+      // the group test also gets the height range of the connected piece the triangle belongs to (a sleeve, the trousers),
+      // so whole pieces can be assigned: a split by height alone cuts zigzags through a tucked-in hem
+      const par = Int32Array.from({ length: n }, (_, i) => i), find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+      for (let f = 0; f < ib.length; f += 3) { const a = find(ib[f]); for (let k = 1; k < 3; k++) { const b = find(ib[f + k]); if (a !== b) par[b] = a; } }
+      const piece = new Map(); for (let i = 0; i < n; i++) { const r = find(i), y = pos[i * 3 + 1]; const e = piece.get(r) || piece.set(r, { minY: Infinity, maxY: -Infinity }).get(r); e.minY = Math.min(e.minY, y); e.maxY = Math.max(e.maxY, y); }
       const buckets = mat.map(() => []); const c = V(), cu = new THREE.Vector2();
       for (let f = 0; f < ib.length; f += 3) { c.set(0, 0, 0); cu.set(0, 0); for (let k = 0; k < 3; k++) { const j = ib[f + k]; c.x += pos[j * 3] / 3; c.y += pos[j * 3 + 1] / 3; c.z += pos[j * 3 + 2] / 3; cu.x += uv[j * 2] / 3; cu.y += uv[j * 2 + 1] / 3; }
-        buckets[clamp(o.group(c, cu), 0, mat.length - 1)].push(ib[f], ib[f + 1], ib[f + 2]); }
+        buckets[clamp(o.group(c, cu, piece.get(find(ib[f]))), 0, mat.length - 1)].push(ib[f], ib[f + 1], ib[f + 2]); }
       ib = new Uint32Array(buckets.flat()); let s0 = 0; buckets.forEach((b, i) => { if (b.length) g.addGroup(s0, b.length, i); s0 += b.length; });
     }
     g.setIndex(new THREE.BufferAttribute(ib, 1)); seamlessNormals(g);
@@ -301,18 +306,39 @@ export function buildHuman(cfg) {
   }
   if (cfg.hair) proxy(cfg.hair, strand(cfg.hair, cfg.hairColor, { recolor: cfg.hairRecolor ?? 1, gain: cfg.hairGain ?? 2.4 }), { inflate: cfg.hairInflate || 1 });
   // clothes: one material, or `top`/`bottom` parts split at the waist (MakeHuman suits are shirt + trousers in one mesh)
+  const CD = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('clothdbg') : null;   // look-dev: front / back / noshadow
   const cloth = (c, part) => { const o = Object.assign({}, c, part || {});
     const m = new THREE.MeshPhysicalMaterial({ map: o.plain ? weave() : (o.map === false ? null : T(c.key)), normalMap: T(c.key, 'normal'), normalScale: new THREE.Vector2(o.ns ?? 0.8, o.ns ?? 0.8),
       color: o.plain ? (o.color || '#888888') : (o.tint || '#ffffff'), roughness: o.roughness ?? 0.82, sheen: o.sheen ?? 0.45, sheenRoughness: 0.7, sheenColor: new THREE.Color(o.color || '#888888').offsetHSL(0, 0, 0.15), side: THREE.DoubleSide });
     if (o.color && !o.plain) { recolor(m, o.color, o.recolor ?? 1, o.bright ?? 1); m.userData.autoGain = true; }
-    return m; };
+    if (CD === 'front') m.side = THREE.FrontSide; if (CD === 'back') m.side = THREE.BackSide;
+    return frontLit(m); };
   const waist = lerp(rest.get('spine05').h.y, rest.get('spine04').h.y, 0.35);
   const clothes = [];   // fitted rest positions of each garment, so outer layers (wardrobe.js) can be fitted over them
   for (const c of cfg.clothes || []) {
-    const m = (c.top || c.bottom) ? proxy(c.key, [cloth(c, c.top), cloth(c, c.bottom)], { morph: false, inflate: c.inflate, group: c.bottomUV ? (p, uv) => (uv.x >= c.bottomUV[0] && uv.y >= c.bottomUV[1] && uv.x <= c.bottomUV[2] && uv.y <= c.bottomUV[3] && p.y < waist + 0.04 ? 1 : 0) : (p) => (p.y > (c.waist ?? waist) ? 0 : 1) })
+    // top / bottom by piece: the trousers are the pieces reaching down the legs, everything else (body, sleeves, collar) is the top
+    const m = (c.top || c.bottom) ? proxy(c.key, [cloth(c, c.top), cloth(c, c.bottom)], { morph: false, inflate: c.inflate, group: (p, uv, pc) => (pc.minY < waist - 0.25 ? 1 : 0) })
       : proxy(c.key, cloth(c), { morph: false, inflate: c.inflate });
-    clothes.push({ key: c.key, pos: m.geometry.attributes.position.array, bone: m.geometry.attributes.skinIndex.array, idx: m.geometry.index.array });
+    if (CD === 'noshadow') m.receiveShadow = false;
+    clothes.push({ key: c.key, pos: m.geometry.attributes.position.array, bone: m.geometry.attributes.skinIndex.array, idx: m.geometry.index.array, mesh: m });
   }
+  // skin the clothes cover but their delete lists keep (inside cuffs, collars and hems) is drawn in a few millimetres
+  // under the cloth, so a bent wrist or a turned neck doesn't push it through the sleeve. A skin vertex counts as
+  // covered when an inner (not edge) cloth vertex lies just outside it, nearly straight above along the cloth's normal.
+  { const cl = clothes.filter(c => !/^shoes/.test(c.key)).map(c => c.mesh), cell = 0.02, grid = new Map(), ck = (x, y, z) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`;
+    for (const m of cl) { const g = m.geometry, p = g.attributes.position, nn = g.attributes.normal, ix = g.index.array, cnt = new Map(), edge = new Uint8Array(p.count), pk = (i) => `${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`;
+      const keyOf = Array.from({ length: p.count }, (_, i) => pk(i));   // welded by position: uv seams are not edges
+      for (let f = 0; f < ix.length; f += 3) for (let k = 0; k < 3; k++) { const a = keyOf[ix[f + k]], b = keyOf[ix[f + (k + 1) % 3]], e = a < b ? a + '|' + b : b + '|' + a; cnt.set(e, (cnt.get(e) || 0) + 1); }
+      const edgeKeys = new Set(); for (const [e, c] of cnt) if (c === 1) { const [a, b] = e.split('|'); edgeKeys.add(a); edgeKeys.add(b); }
+      for (let i = 0; i < p.count; i++) { if (edgeKeys.has(keyOf[i])) continue; const k = ck(p.getX(i), p.getY(i), p.getZ(i)); (grid.get(k) || grid.set(k, []).get(k)).push([p.getX(i), p.getY(i), p.getZ(i), nn.getX(i), nn.getY(i), nn.getZ(i)]); } }
+    const bpos = bg.attributes.position, bnor = bg.attributes.normal; let moved = 0;
+    for (let i = 0; i < bpos.count; i++) { const x = bpos.getX(i), y = bpos.getY(i), z = bpos.getZ(i), gx = Math.floor(x / cell), gy = Math.floor(y / cell), gz = Math.floor(z / cell); let best = null, bd = 0.025 * 0.025;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const L = grid.get(`${gx + dx},${gy + dy},${gz + dz}`); if (L) for (const c of L) { const d2 = (c[0] - x) ** 2 + (c[1] - y) ** 2 + (c[2] - z) ** 2; if (d2 < bd) { bd = d2; best = c; } } }
+      if (!best) continue; const ox = best[0] - x, oy = best[1] - y, oz = best[2] - z, gap = ox * best[3] + oy * best[4] + oz * best[5], lat = Math.hypot(ox - gap * best[3], oy - gap * best[4], oz - gap * best[5]);
+      if (gap < -0.003 || gap > 0.016 || lat > 0.011) continue;
+      const push = 0.0045 * (1 - clamp((gap - 0.007) / 0.009, 0, 1)) * (1 - clamp((lat - 0.005) / 0.006, 0, 1)); if (push <= 0) continue;
+      bpos.setXYZ(i, x - bnor.getX(i) * push, y - bnor.getY(i) * push, z - bnor.getZ(i) * push); moved++; }
+    if (moved) { bpos.needsUpdate = true; seamlessNormals(bg); } }
   if (cfg.glasses) proxy('glasses', new THREE.MeshPhysicalMaterial({ map: T('glasses'), alphaTest: 0.2, transparent: true, opacity: 0.95, roughness: 0.2, metalness: 0.3, side: THREE.DoubleSide, depthWrite: false }), { morph: false, shadow: false, order: 2 });
 
   const unitIndex = Object.fromEntries(units.map((u, i) => [u, i]));

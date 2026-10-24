@@ -181,24 +181,51 @@ export function tomatoFlesh(o = {}) {
 }
 
 // ------------------------------------------------------------------ kitchen scraps for the organics caddy: onion skins, tomato ends, carrot tops, peel curls
+// carrot fronds: a finely divided leaf drawn as threads (a rachis, pinnae, pinnules), on a transparent card
+let _frond = null;
+function frondTex() {
+  if (_frond) return _frond;
+  const S = 256, r = prng(53), cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d'); g.lineCap = 'round';
+  const seg = (x, y, a, len, w, depth) => { const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len; g.strokeStyle = `rgb(${58 + r() * 22},${100 + r() * 32},${36 + r() * 16})`; g.lineWidth = w; g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
+    if (depth > 0) for (let k = 1; k <= 4; k++) { const f = k / 5, px = x + (x2 - x) * f, py = y + (y2 - y) * f; for (const sd of [-1, 1]) seg(px, py, a + sd * (0.65 + r() * 0.35), len * (0.44 - f * 0.2), Math.max(0.9, w * 0.62), depth - 1); } };
+  seg(S / 2, S - 4, -Math.PI / 2, S * 0.88, 3.2, 2);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return (_frond = t);
+}
+// onion skin: veins running pole to pole over golden brown, lighter where thin, the edge torn ragged (alpha)
+let _onion = null;
+function onionSkinTex() {
+  if (_onion) return _onion;
+  const S = 256, r = prng(61), cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, S); gr.addColorStop(0, '#b97a3a'); gr.addColorStop(0.5, '#dcae6c'); gr.addColorStop(1, '#c48a48'); g.fillStyle = gr; g.fillRect(0, 0, S, S);
+  for (let k = 0; k < 70; k++) { let x = r() * S; g.strokeStyle = r() < 0.6 ? `rgba(120,70,30,${0.25 + r() * 0.35})` : `rgba(245,215,160,${0.25 + r() * 0.3})`; g.lineWidth = 0.8 + r() * 1.6; g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= S; y += 16) { x += (r() - 0.5) * 3; g.lineTo(x, y); } g.stroke(); }
+  for (let k = 0; k < 30; k++) { const x = r() * S, y = r() * S, rad = 8 + r() * 24, gg = g.createRadialGradient(x, y, 0, x, y, rad); gg.addColorStop(0, 'rgba(250,225,175,0.35)'); gg.addColorStop(1, 'rgba(250,225,175,0)'); g.fillStyle = gg; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+  // torn edge: clear a ragged band round the border
+  g.globalCompositeOperation = 'destination-in'; g.beginPath(); for (let i = 0; i <= 96; i++) { const a = i / 96 * Math.PI * 2, rr = S * (0.44 + 0.05 * Math.sin(a * 7 + 1) + 0.03 * (r() - 0.5)); const x = S / 2 + Math.cos(a) * rr * 1.08, y = S / 2 + Math.sin(a) * rr * 1.08; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); g.fillStyle = '#fff'; g.fill(); g.globalCompositeOperation = 'source-over';
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return (_onion = t);
+}
 export function scrap(kind, seed = 1) {
   const r = prng(seed), g = new THREE.Group(); const add = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
-  if (kind === 'onion') {   // a curled papery shell, darker and drier at the edges
-    const geo = new THREE.SphereGeometry(0.028 + r() * 0.01, 18, 10, 0, 1.6 + r() * 1.2, 0.35, 1.3 + r() * 0.5); const p = geo.attributes.position, col = [];
-    for (let i = 0; i < p.count; i++) { const k = 1 + (r() - 0.5) * 0.06; p.setXYZ(i, p.getX(i) * k, p.getY(i) * 0.75 * k, p.getZ(i) * k); const e = 0.75 + 0.25 * r(); col.push(0.78 * e, 0.5 * e, 0.24 * e); }
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();
-    add(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, side: THREE.DoubleSide, color: '#ffffff' }));
+  if (kind === 'onion') {   // a curled papery shell: veined, translucent, torn at the edge, crinkled
+    const geo = new THREE.SphereGeometry(0.028 + r() * 0.01, 22, 14, 0, 1.6 + r() * 1.2, 0.3, 1.4 + r() * 0.5); const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const k = 1 + (r() - 0.5) * 0.05 + 0.03 * Math.sin(p.getY(i) * 400 + i * 0.7); p.setXYZ(i, p.getX(i) * k, p.getY(i) * 0.75 * k, p.getZ(i) * k); }
+    geo.computeVertexNormals();
+    add(geo, translucent(new THREE.MeshStandardMaterial({ map: onionSkinTex(), alphaTest: 0.5, roughness: 0.62, side: THREE.DoubleSide }), '#f0c070', 0.6));
   } else if (kind === 'tomato') {   // a cut end: a skin cap with the flesh showing
     const R = 0.022 + r() * 0.008, cap = new THREE.SphereGeometry(R, 20, 10, 0, TAU, 0, Math.PI * 0.32); const n = cap.attributes.position.count; cap.setAttribute('color', new THREE.Float32BufferAttribute(new Array(n).fill(0).flatMap(() => [0.78, 0.17, 0.1]), 3));
     add(cap, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.5, clearcoatRoughness: 0.15 }));
     const TF = tomatoFlesh(); const face = add(new THREE.CircleGeometry(R * Math.sin(Math.PI * 0.32), 28), new THREE.MeshPhysicalMaterial({ map: TF.map, normalMap: TF.normalMap, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1 }));
     face.rotation.x = Math.PI / 2; face.position.y = R * Math.cos(Math.PI * 0.32) - 0.0005;
-  } else if (kind === 'carrot') {   // the stub of a carrot with its stalks and feathery leaves
-    add(new THREE.CylinderGeometry(0.011, 0.015, 0.03, 14), new THREE.MeshStandardMaterial({ color: '#d9661c', roughness: 0.55 })).position.y = 0.015;
-    const leaf = leafAtlas('herb'), lm = new THREE.MeshStandardMaterial({ map: leaf.map, normalMap: leaf.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.65 }), sm = new THREE.MeshStandardMaterial({ color: '#5f8a34', roughness: 0.6 });
-    for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + r() * 0.5, L = 0.07 + r() * 0.05, tilt = 0.6 + r() * 0.5; const dir = V(Math.sin(tilt) * Math.cos(a), Math.cos(tilt), Math.sin(tilt) * Math.sin(a));
-      const st = add(new THREE.CylinderGeometry(0.0015, 0.0025, L, 5), sm); st.position.copy(V(0, 0.03, 0).addScaledVector(dir, L / 2)); st.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
-      const lf = add(new THREE.PlaneGeometry(0.05, 0.06), lm); lf.position.copy(V(0, 0.03, 0).addScaledVector(dir, L)); lf.quaternion.setFromUnitVectors(V(0, 0, 1), V(dir.x, 0.6, dir.z).normalize()); lf.rotateZ(r() * TAU); }
+  } else if (kind === 'carrot') {   // the cut crown of a carrot: a tuft of thin stalks leaning one way, arching and wilting, fronds along their upper part
+    add(new THREE.CylinderGeometry(0.011, 0.014, 0.024, 16), new THREE.MeshStandardMaterial({ color: '#d9661c', roughness: 0.55 })).position.y = 0.012;
+    const cut = add(new THREE.CircleGeometry(0.0138, 18), new THREE.MeshStandardMaterial({ color: '#efa25e', roughness: 0.7 })); cut.rotation.x = Math.PI / 2; cut.position.y = -0.0002;   // the cut face, lighter core
+    const fm = translucent(new THREE.MeshStandardMaterial({ map: frondTex(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.6 }), '#c8e07a', 0.5), sm = new THREE.MeshStandardMaterial({ color: '#6a9438', roughness: 0.55 });
+    const lean = V((r() - 0.5) * 0.7, 1, (r() - 0.5) * 0.7).normalize(), up = V(0, 1, 0);
+    for (let k = 0; k < 8; k++) { const a = r() * TAU, dir = lean.clone().applyAxisAngle(V(Math.cos(a), 0, Math.sin(a)), 0.12 + r() * 0.3), L = 0.08 + r() * 0.06, droop = 0.3 + r() * 0.7;
+      const p0 = V(0, 0.024, 0), p1 = p0.clone().addScaledVector(dir, L * 0.55), p2 = p1.clone().addScaledVector(dir, L * 0.45).add(V(0, -droop * L * 0.5, 0)), curve = new THREE.QuadraticBezierCurve3(p0, p1, p2);
+      add(new THREE.TubeGeometry(curve, 10, 0.001, 5, false), sm);
+      for (let j = 0; j < 4; j++) { const u = 0.38 + j * 0.18, P = curve.getPoint(u), T = curve.getTangent(u), side = new THREE.Vector3().crossVectors(T, up).normalize(); if (side.lengthSq() < 0.5) side.set(1, 0, 0);
+        const Y = T.clone().multiplyScalar(0.55).addScaledVector(side, (j % 2 ? 1 : -1) * 0.85).normalize(), Z = up.clone().sub(Y.clone().multiplyScalar(up.dot(Y))).normalize(), X = new THREE.Vector3().crossVectors(Y, Z);
+        const pg = new THREE.PlaneGeometry(0.026, 0.036); pg.translate(0, 0.017, 0); const f = add(pg, fm); f.position.copy(P); f.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)); f.rotateY((r() - 0.5) * 0.8); } }
   } else {   // a curl of peel
     const col = kind === 'potato' ? '#b58a5a' : '#d97a2a', pts = []; const turns = 1.2 + r(), L = 0.08 + r() * 0.05;
     for (let i = 0; i <= 30; i++) { const t = i / 30; pts.push(V(Math.cos(t * turns * TAU) * 0.018, t * 0.012, Math.sin(t * turns * TAU) * 0.018 + t * L * 0.3)); }

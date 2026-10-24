@@ -4,7 +4,7 @@
 // may not pass back inside, which bridges hollows the way fabric under tension does. Vests and coats come from the torso
 // and arm skin, coat skirts and aprons from MakeHuman's skirt helper; the collar, caps and headwrap are shaped on
 // the fitted neck and head. Edges get a real thickness, and fabric detail is in metres (UVs are physical).
-import { THREE, V, clamp, lerp, noise2, normalTex } from './core.js';
+import { THREE, V, clamp, lerp, noise2, normalTex, frontLit } from './core.js';
 import { headModel } from './hair.js';
 
 const TAU = Math.PI * 2;
@@ -452,7 +452,7 @@ function fabric(color, o = {}) {
       sh.vertexShader = 'attribute vec3 gpos;\nvarying vec3 vGpos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGpos = gpos;');
       sh.fragmentShader = 'varying vec3 vGpos;\n' + Object.keys(U).map(k => `uniform float ${k};`).join('\n') + '\n' + sh.fragmentShader.replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n' + o.pattern); };
     const key = 'fab:' + o.pattern.length + ':' + Object.keys(U).join(','); m.customProgramCacheKey = () => key; }
-  return m;
+  return frontLit(m);
 }
 const BAND = (c, w, x) => `(1.0 - smoothstep(${w} - 0.0012, ${w} + 0.0012, abs(${x} - ${c})))`;
 // cloth with a pattern (GLSL run once roughness is set: it may darken diffuseColor) and a bump (GLSL that adds to `hgt`, a
@@ -471,7 +471,7 @@ function clothMat(color, o = {}) {
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ float hgt = 0.0;\n' + (o.bump || '') +
         '\n vec3 sp = -vViewPosition, sx = dFdx(sp), sy = dFdy(sp), R1 = cross(sy, normal), R2 = cross(normal, sx); float det = dot(sx, R1) * faceDirection;\n vec3 grad = sign(det) * (dFdx(hgt) * R1 + dFdy(hgt) * R2); normal = normalize(abs(det) * normal - grad); }'); };
   const key = 'cloth:' + (o.bump || '').length + ':' + (o.pattern || '').length + ':' + Object.keys(U).join(','); m.customProgramCacheKey = () => key;
-  return m;
+  return frontLit(m);
 }
 
 // a garment's neck opening: a ring round the base of the neck (the top of the shoulders is level with it, so only points

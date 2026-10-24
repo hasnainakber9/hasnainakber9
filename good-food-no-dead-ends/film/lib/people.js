@@ -554,16 +554,16 @@ function walkPose(dist, P, carrying) {
 const HUMANS = {
   ASHA: { eth: { african: 0.85, caucasian: 0.15 }, sex: 0, age: 44, muscle: 0.62, weight: 0.5, skin: 'middleage_african_female', iris: '#5a3a22',
     hair: { style: 'bun', color: '#1b1512', tip: '#2a211b' }, brows: { color: '#241a14' },
-    clothes: [{ key: 'shirt_m01', top: { color: '#55633a' }, bottom: { color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
+    clothes: [{ key: 'shirt_m01', top: { color: '#55633a' }, bottom: { plain: true, color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
   NOOR: { eth: { african: 0.75, asian: 0.1, caucasian: 0.15 }, sex: 0, age: 11, muscle: 0.45, weight: 0.45, skin: 'young_african_female', iris: '#4e321e',
     hair: { style: 'puff', color: '#16100c', tip: '#2b1d14' }, brows: { color: '#1f1610', thick: 0.003, count: 300 },
-    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#e8b52e' }, bottom: { color: '#3d5f94', recolor: 0.35 } }, { key: 'shoes06', color: '#e9e5dc', recolor: 0.8 }] },
+    clothes: [{ key: 'suit_f01', top: { plain: true, color: '#e8b52e' }, bottom: { color: '#3d5f94', recolor: 0.35 } }, { key: 'shoes06', color: '#e9e5dc', recolor: 0.8 }] },
   LUIS: { eth: { caucasian: 0.55, african: 0.2, asian: 0.25 }, sex: 1, age: 36, muscle: 0.6, weight: 0.55, skin: 'young_caucasian_male', skinTint: '#d2ab8c', iris: '#4d3320',
     hair: { style: 'short', color: '#251b14', tip: '#3a2a1e' }, beard: { style: 'beard', color: '#231912', count: 17000, len: 0.009, w: 0.00022 }, brows: { color: '#2e2219', thick: 0.0042, count: 480, w: 0.00017 }, wear: { puffer: '#26364f' },
     clothes: [{ key: 'shirt_m01', top: { color: '#8eaacb' }, bottom: { color: '#2d2f36' } }, { key: 'shoes01' }] },
   MAYA: { eth: { caucasian: 0.75, asian: 0.25 }, sex: 0, age: 34, muscle: 0.42, weight: 0.45, skin: 'young_caucasian_female', iris: '#56693a', glasses: true,
     hair: { style: 'ponytail', color: '#5a321c', tip: '#7a4a2c' }, brows: { color: '#4a2a18', thick: 0.0032 }, wear: { labcoat: '#f2f2ec' },
-    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#7b5ea8' }, bottom: { color: '#39414f' } }, { key: 'shoes02', color: '#d9d6cf' }] },
+    clothes: [{ key: 'suit_f01', top: { plain: true, color: '#7b5ea8' }, bottom: { color: '#39414f' } }, { key: 'shoes02', color: '#d9d6cf' }] },
   COLLEAGUE: { eth: { african: 0.9, caucasian: 0.1 }, sex: 1, age: 32, muscle: 0.55, weight: 0.5, skin: 'young_african_male', iris: '#2a1a10',
     hair: { style: 'cropped', color: '#0f0c0b', tip: '#1a1411' }, brows: { color: '#120e0c', thick: 0.004 }, wear: { labcoat: '#f2f2ec' },
     clothes: [{ key: 'suit_m06', top: { plain: true, color: '#4f7f68' }, bottom: { color: '#2a2f3a' } }, { key: 'shoes03' }] },
@@ -575,7 +575,7 @@ const HUMANS = {
     clothes: [{ key: 'suit_m03', top: { color: '#7e3f2c' }, bottom: { color: '#3b3b3b' } }, { key: 'shoes04' }] },
   COOK: { eth: { asian: 0.5, african: 0.3, caucasian: 0.2 }, sex: 0, age: 52, muscle: 0.5, weight: 0.6, skin: 'middleage_asian_female', skinTint: '#caa184', iris: '#2a1a10',
     hair: { style: 'capped', color: '#1b1b1b', tip: '#2b2b2b' }, brows: { color: '#1b1b1b', thick: 0.0032 }, wear: { apron: '#efe6d2', headwrap: '#b8322a' },
-    clothes: [{ key: 'suit_f01', bottomUV: [0, 0, 0.78, 0.57], top: { plain: true, color: '#5b3e7b' }, bottom: { color: '#2f2f2f' } }, { key: 'shoes03' }] },
+    clothes: [{ key: 'suit_f01', top: { plain: true, color: '#5b3e7b' }, bottom: { color: '#2f2f2f' } }, { key: 'shoes03' }] },
 };
 // background people: a realistic description derived from the clay extra's random spec
 function extraHuman(spec, seed) {
@@ -593,9 +593,9 @@ function extraHuman(spec, seed) {
   return { eth, sex, age, muscle: 0.35 + r() * 0.4, weight: 0.3 + r() * 0.45, skin, iris: '#3a2616', extra: true, wear,
     hair: { style, color: spec.hair, tip: new THREE.Color(spec.hair).offsetHSL(0, 0, 0.06).getStyle(), count: 3500 }, beard: spec.beard ? { style: 'beard', color: spec.beard === 'grey' ? '#b9b3aa' : spec.hair, count: 3000 } : null,
     brows: { color: new THREE.Color(spec.hair).multiplyScalar(0.8).getStyle(), count: 220 },
-    clothes: [{ key: suit, ...(suit === 'suit_f01' ? { bottomUV: [0, 0, 0.78, 0.57] } : {}), top, bottom: { color: spec.pants } }, { key: ['shoes01', 'shoes03', 'shoes04', 'shoes06'][Math.floor(r() * 4)] }] };
+    clothes: [{ key: suit, top, bottom: { color: spec.pants } }, { key: ['shoes01', 'shoes03', 'shoes04', 'shoes06'][Math.floor(r() * 4)] }] };
 }
-function buildCastHuman(name, spec, seed) {
+function buildCastHuman(name, spec, seed, o = {}) {
   const H = HUMANS[name] || extraHuman(spec, seed);
   const h = buildHuman(Object.assign({ height: spec.height }, H, { brows: false, hair: null }));   // strand hair and brows are added below
   const hair = H.hair || {}; const q = (H.extra ? 0.45 : 1) * (typeof location !== 'undefined' && new URLSearchParams(location.search).has('hairq') ? +new URLSearchParams(location.search).get('hairq') : 1);
@@ -603,7 +603,8 @@ function buildCastHuman(name, spec, seed) {
   strandHair(h, KIT, hair.style || 'short', Object.assign({ seed: seed % 997 }, hair, { count: Math.round((hair.count || ({ bun: 9000, ponytail: 9000, puff: 11000, short: 12000, cropped: 12000, capped: 9000 }[hair.style] || 9000)) * q) }));
   if (H.beard) strandHair(h, KIT, H.beard.style, Object.assign({ seed: seed % 991 + 1 }, H.beard, { count: Math.round((H.beard.count || 7000) * q) }));
   strandBrows(h, KIT, Object.assign({ seed: seed % 983 + 2 }, H.brows || {}, { count: Math.round(((H.brows || {}).count || 380) * q) }));
-  const W = (typeof location !== 'undefined' && new URLSearchParams(location.search).has('nowear')) ? {} : Object.fromEntries(Object.entries(H.wear || {}).filter(([k]) => { const only = typeof location !== 'undefined' && new URLSearchParams(location.search).get('wear'); return !only || only === k; }));
+  // o.off: outer layers left off in this scene (aprons come off for the meal: seated, a hanging apron would cut through the lap)
+  const W = (typeof location !== 'undefined' && new URLSearchParams(location.search).has('nowear')) ? {} : Object.fromEntries(Object.entries(H.wear || {}).filter(([k]) => { const only = typeof location !== 'undefined' && new URLSearchParams(location.search).get('wear'); return (!only || only === k) && !(o.off || []).includes(k); }));
   if (W.puffer) vest(h, KIT, 'puffer', W.puffer); if (W.hivis) vest(h, KIT, 'hivis', W.hivis); if (W.labcoat) dressed(h, KIT, (hp) => labCoat(hp, KIT, W.labcoat)); if (W.apron) apron(h, KIT, W.apron);
   if (W.cap) cap(h, KIT, W.cap, 'cap'); if (W.flatcap) cap(h, KIT, W.flatcap, 'flatcap'); if (W.headwrap) headwrap(h, KIT, W.headwrap);
   return h;
@@ -633,10 +634,10 @@ export const HAND = {
 const shapeOf = (k) => (k && (typeof k.shape === 'object' ? k.shape : HAND[k.shape])) || (k && k.at ? HAND.hold : HAND.relaxed);
 
 export class HumanPuppet extends Puppet {
-  constructor(name, spec) {
+  constructor(name, spec, opts = {}) {
     super(name, spec);
     this.root.traverse(o => { if (o.isMesh) o.visible = false; });           // the clay rig becomes an invisible driver
-    const h = this.h = buildCastHuman(name, this.spec, this.seed);
+    const h = this.h = buildCastHuman(name, this.spec, this.seed, opts);
     this.root.add(h.group); this.ikReq = { L: null, R: null };
     this.fit();
   }
@@ -701,26 +702,34 @@ export class HumanPuppet extends Puppet {
   // fingernails: small curved glossy plates on the back of each distal phalanx (the skin texture has none there)
   buildNails() {
     const h = this.h, J = (n, e) => h.joint(n, e), sc = h.height / 1.7, names = h.K.meta.bones.map(b => b.name); const parts = [];
+    // the skin's own colour round each fingertip, from the body's texture (linear, with the material's tint)
+    const sm = h.body.material, st = sm.map, S = 256, cv = document.createElement('canvas'); cv.width = cv.height = S; const cg = cv.getContext('2d', { willReadFrequently: true }); cg.drawImage(st.image, 0, 0, S, S);
+    const tx = cg.getImageData(0, 0, S, S).data, buv = h.body.geometry.attributes.uv, bpos = h.body.geometry.attributes.position;
+    const skinAt = (i, acc) => { const x = clamp(Math.floor(buv.getX(i) * S), 0, S - 1), y = clamp(Math.floor((st.flipY ? 1 - buv.getY(i) : buv.getY(i)) * S), 0, S - 1), k = (y * S + x) * 4;
+      acc.add(new THREE.Color().setRGB(tx[k] / 255, tx[k + 1] / 255, tx[k + 2] / 255, THREE.SRGBColorSpace).multiply(sm.color)); };
     for (const s of ['L', 'R']) { const m = this.MS[s], back = this['palmN' + s].clone().negate();
       for (let f = 1; f <= 5; f++) { const n = `finger${f}-3.${m}`; if (!h.bone(n)) continue; const a = J(n), b = J(n, 't'), ax = b.clone().sub(a), len = ax.length(); ax.normalize();
         const bk = back.clone().sub(ax.clone().multiplyScalar(back.dot(ax))).normalize(), side = new THREE.Vector3().crossVectors(ax, bk);
         const w = (f === 1 ? 0.0115 : f === 5 ? 0.0078 : 0.0096) * sc, L = Math.min(len * 0.58, (f === 1 ? 0.012 : 0.0102) * sc), th = (f === 1 ? 0.0062 : 0.0054) * sc;
         const g = new THREE.PlaneGeometry(w, L, 6, 4); const P = g.attributes.position;
+        // sit on the skin: the furthest body vertex towards the back of the finger near the nail centre
+        const c0 = a.clone().add(ax.clone().multiplyScalar(len * 0.62)), q = V(); let top = th * 0.6; const sk = new THREE.Color(0, 0, 0); let ns = 0;
+        for (let i = 0; i < bpos.count; i++) { q.fromBufferAttribute(bpos, i).sub(c0); const al = q.dot(ax); if (Math.abs(al) > L * 0.5) continue; const up = q.dot(bk), lat = q.dot(side); if (Math.abs(lat) > w * 0.5 || up < 0 || up > 0.012 * sc) continue; top = Math.max(top, up); skinAt(i, sk); ns++; }
+        if (ns) sk.multiplyScalar(1 / ns); else sk.set(this.spec.skin || '#b07650');
         // the nail bed shows through the plate: the skin's own colour, a little pinker and lighter, with a paler free edge
-        const col = new Float32Array(P.count * 3), base = new THREE.Color(this.spec.skin || '#b07650').lerp(new THREE.Color('#d9a093'), 0.3), edge = base.clone().lerp(new THREE.Color('#e8d2c4'), 0.28);
+        // (on dark skin the bed stays a muted brown-pink: a light pink plate reads as a sticker)
+        const col = new Float32Array(P.count * 3), base = sk.clone().lerp(new THREE.Color('#c98f86'), 0.2).multiplyScalar(1.15), edge = base.clone().lerp(new THREE.Color('#d8c3b4'), 0.3);
         for (let i = 0; i < P.count; i++) { let x = P.getX(i); const y = P.getY(i), fy = (y + L / 2) / L; x *= 0.55 + 0.45 * Math.sqrt(clamp(fy / 0.35, 0, 1));   // rounded at the cuticle
           const u = x / (w / 2); P.setX(i, x); P.setZ(i, -0.55 * w * (1 - Math.cos(u * 0.9)) - 0.0004 * Math.abs(y / (L / 2)) ** 2);   // curved across the finger
-          const c = base.clone().lerp(edge, Math.max(0, (fy - 0.82) / 0.18)); col.set([c.r, c.g, c.b], i * 3); }
+          const c = base.clone().lerp(edge, Math.max(0, (fy - 0.85) / 0.15)).lerp(sk, 0.5 * (1 - Math.min(1, fy / 0.18)) + 0.35 * Math.max(0, Math.abs(u) - 0.6) / 0.4); col.set([c.r, c.g, c.b], i * 3); }   // fading into the skin at the cuticle and the sides
         g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        // sit on the skin: the furthest body vertex towards the back of the finger near the nail centre
-        const c0 = a.clone().add(ax.clone().multiplyScalar(len * 0.62)), bp = h.body.geometry.attributes.position, q = V(); let top = th * 0.6;
-        for (let i = 0; i < bp.count; i++) { q.fromBufferAttribute(bp, i).sub(c0); const al = q.dot(ax); if (Math.abs(al) > L * 0.5) continue; const up = q.dot(bk), lat = q.dot(side); if (Math.abs(lat) > w * 0.5 || up < 0 || up > 0.012 * sc) continue; top = Math.max(top, up); }
         const c = c0.add(bk.clone().multiplyScalar(top + 0.0003));
         g.applyMatrix4(new THREE.Matrix4().makeBasis(side, ax, bk).setPosition(c)); g.computeVertexNormals();
         const bi = names.indexOf(n), cnt = g.attributes.position.count;
         g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).map((_, i) => (i % 4 === 0 ? bi : 0)), 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(cnt * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4));
         g.deleteAttribute('uv'); parts.push(g); } }
-    const mesh = new THREE.SkinnedMesh(BGU.mergeGeometries(parts), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.12, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    // a soft sheen, not a mirror: on dark skin a fully lacquered plate reflects the whole sky and turns white
+    const mesh = new THREE.SkinnedMesh(BGU.mergeGeometries(parts), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.42, specularIntensity: 0.6, clearcoat: 0.3, clearcoatRoughness: 0.22, envMapIntensity: 0.45, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
     mesh.name = 'nails'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = true; h.group.add(mesh); h.meshes.push(mesh);
   }
   ik(side, targetW, poleW, w = 1) { this.ikReq[side] = { t: targetW.clone(), p: poleW.clone(), w }; super.ik(side, targetW, poleW, w); }
@@ -835,4 +844,4 @@ export class HumanPuppet extends Puppet {
   }
 }
 
-export function puppet(name, spec) { return CLAY ? new Puppet(name, spec || CAST[name]) : new HumanPuppet(name, spec || CAST[name]); }
+export function puppet(name, spec, o = {}) { return CLAY ? new Puppet(name, spec || CAST[name]) : new HumanPuppet(name, spec || CAST[name], o); }

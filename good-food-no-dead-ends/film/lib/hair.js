@@ -117,6 +117,7 @@ export function strandHair(h, K, style, o = {}) {
     const whorl = V(M.C.x + M.R.x * 0.1, M.top, M.C.z - M.R.z * 0.35); const L = style === 'cropped' ? 0.008 : style === 'capped' ? 0.02 : (o.len || 0.035);
     for (let i = 0; i < (o.count || 12000); i++) {
       const { p, n } = scalp(r); if (!ok(p)) continue;
+      if (style === 'capped') { const d = p.clone().sub(M.C); if (Math.acos(clamp((d.y * 0.9856 - d.z * 0.1692) / d.length(), -1, 1)) < 1.3) continue; }   // hidden under the cap
       const away = p.clone().sub(whorl); away.y = Math.min(away.y, 0) - 0.02; const front = (p.z - M.C.z) / M.R.z > 0.2;
       const dir = (q) => { const d = away.clone(); if (front) d.add(V(0.35, 0, 0.15)); return d.normalize(); };
       const pts = grow(p, n, M, { len: L * (0.7 + r() * 0.5), segs: style === 'cropped' ? 3 : 7, dir, lift: style === 'cropped' ? 0.35 : 0.1, hug: style === 'cropped' ? 0.5 : 0.8, release: 0.4, gravity: 0.08, shell0: 0.012, shell1: style === 'cropped' ? 0.02 : 0.035 }, r);
@@ -154,15 +155,18 @@ export function strandHair(h, K, style, o = {}) {
       tris.push(a, b, c); }
     // under a full beard the skin takes the hair's colour (the root colour: darker for a dark beard, grey for a white one),
     // so the strands read as a dense mass instead of single hairs glinting against bare skin
-    const bc = new THREE.Color(o.color || '#2a1d14'), lum = bc.r * 0.3 + bc.g * 0.59 + bc.b * 0.11, dark = lum < 0.3 ? 1 : 0.75;
+    // (a grey beard needs the grey underneath even more: single white hairs over dark skin read as sugar sprinkles)
+    const bc = new THREE.Color(o.color || '#2a1d14'), lum = bc.r * 0.3 + bc.g * 0.59 + bc.b * 0.11, dark = lum < 0.3 ? 1 : 1.2;
     if (h.body.geometry.attributes.hairMask) {   // full strength inside, fading over two rings of neighbours
       const w = new Float32Array(K.N); for (const v of tris) w[v] = 1;
       for (let ring = 0; ring < 3; ring++) { const nx = w.slice(); for (let f = 0; f < K.bidx.length; f += 3) { const t = [K.bmap[K.bidx[f]], K.bmap[K.bidx[f + 1]], K.bmap[K.bidx[f + 2]]]; const m = Math.max(w[t[0]], w[t[1]], w[t[2]]) * 0.55; for (const v of t) if (nx[v] < m) nx[v] = m; } w.set(nx); }
-      const a = h.body.geometry.attributes.hairMask; for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i]; if (w[v] > 0) a.setX(i, Math.max(a.getX(i), (o.shadow ?? 0.7) * dark * w[v])); } a.needsUpdate = true; }
+      const a = h.body.geometry.attributes.hairMask; for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i]; if (w[v] > 0) a.setX(i, Math.max(a.getX(i), Math.min(0.92, (o.shadow ?? 0.7) * dark * w[v]))); } a.needsUpdate = true; }
     const s = sampler(h, tris); const L = style === 'stubble' ? 0.0025 : (o.len || 0.012);
     for (let i = 0; i < (o.count || 7000); i++) { const { p, n, root } = s(r); const pts = grow(p, n, M, { len: L * (0.6 + r() * 0.7), segs: style === 'stubble' ? 2 : 5, dir: () => V(0, -1, 0.25).normalize(), lift: 0.35, gravity: 0.05, curl: style === 'stubble' ? 0 : 0.0012, curlF: 500, shell0: -0.2, shell1: 0 }, r);
       strands.push({ pts, w0: o.w || 0.00026, c: col(r()), root }); }
-    return buildRibbons(h, M, strands, Object.assign({ roughness: 0.8, sheen: 0.06 }, o));   // (matte: a glossy beard sparkles)
+    // (matte: a glossy beard sparkles; a light beard casts no shadow on its own grey under-layer, which would
+    // otherwise go dark between the hairs and turn every strand into a white speck)
+    return buildRibbons(h, M, strands, Object.assign({ roughness: 0.8, sheen: 0.06, castShadow: lum < 0.3, dim: lum < 0.3 ? 1 : 0.82 }, o));
   }
   return buildRibbons(h, M, strands, o);
 }
@@ -182,7 +186,7 @@ function buildRibbons(h, M, strands, o) {
       radial.subVectors(p, M.C).normalize(); side.crossVectors(t, radial); if (side.lengthSq() < 1e-8) side.set(1, 0, 0); side.normalize(); nn.crossVectors(side, t).normalize();
       const w = s.w0 * Math.min(1, 0.35 + (k / (n - 1)) / s.ramp) * (1 - 0.7 * (k / (n - 1))); const tipFade = k / (n - 1);   // fine at the root, full, then tapering
       for (const sg of [-1, 1]) { pos[v * 3] = p.x + side.x * w * sg; pos[v * 3 + 1] = p.y + side.y * w * sg; pos[v * 3 + 2] = p.z + side.z * w * sg; nor[v * 3] = nn.x; nor[v * 3 + 1] = nn.y; nor[v * 3 + 2] = nn.z;
-        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const sh = 0.62 + 0.38 * Math.min(1, tipFade / (s.ramp * 1.6));   // darker towards the root (self-shadowing)
+        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const sh = (0.62 + 0.38 * Math.min(1, tipFade / (s.ramp * 1.6))) * (o.dim ?? 1);   // darker towards the root (self-shadowing)
         colr[v * 3] = c.r * sh; colr[v * 3 + 1] = c.g * sh; colr[v * 3 + 2] = c.b * sh; v++; }
       if (k < n - 1) { const a = v - 2; idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], f); f += 6; }
     }
@@ -199,7 +203,7 @@ function buildRibbons(h, M, strands, o) {
   g.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(nv * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4)); g.setIndex(new THREE.BufferAttribute(idx, 1));
   const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: o.roughness ?? 0.6, metalness: 0, side: THREE.DoubleSide,
     sheen: o.sheen ?? 0.16, sheenRoughness: 0.45, sheenColor: new THREE.Color(o.color || '#1a1411').offsetHSL(0, -0.05, 0.13), specularIntensity: 0.26 });
-  const mesh = new THREE.SkinnedMesh(g, m); mesh.name = 'hair-strands'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  const mesh = new THREE.SkinnedMesh(g, m); mesh.name = 'hair-strands'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.castShadow = o.castShadow ?? true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   h.group.add(mesh); h.meshes.push(mesh);
   return { mesh, count: strands.length, tris: ni / 3 };
 }
@@ -234,16 +238,20 @@ export function scalpTint(h, K, color, o = {}) {
   const M = h._head || (h._head = headModel(h, K)); const a = h.body.geometry.attributes.hairMask; const soft = (o.soft || 0.007) * M.sz, amt = o.amount ?? 0.88;
   for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i]; if (!M.onHead(v)) continue; const y = h.P[v * 3 + 1], hl = M.hairline(h.P[v * 3], h.P[v * 3 + 2]);
     a.setX(i, amt * smoothstep(hl - soft * 0.4, hl + soft + 0.022 * M.sz, y)); }   // ramps up over the thinning hairline band
-  a.needsUpdate = true; h.body.material.userData.hairRoot.value.set(color).multiplyScalar(o.mul ?? 0.7);
+  const c = new THREE.Color(color), lum = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;   // (grey hair: a lighter root colour, also under a grey beard)
+  a.needsUpdate = true; h.body.material.userData.hairRoot.value.copy(c).multiplyScalar(o.mul ?? (lum > 0.3 ? 0.88 : 0.7));
 }
 
 // matte under-layer on the scalp in the hair colour (hides skin between strands)
 export function scalpLayer(h, K, color, o = {}) {
   const M = h._head || (h._head = headModel(h, K)); const tris = M.inner; const nv = tris.length; const pos = new Float32Array(nv * 3), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4);
   const hb = K.meta.bones.findIndex(b => b.name === 'head');
-  for (let i = 0; i < nv; i++) { const j = tris[i]; pos[i * 3] = h.P[j * 3]; pos[i * 3 + 1] = h.P[j * 3 + 1]; pos[i * 3 + 2] = h.P[j * 3 + 2]; si[i * 4] = hb; sw[i * 4] = 1; }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); g.computeVertexNormals();
+  // its outline runs along whole triangles, so it fades in over the outer 3 cm (an opaque edge shows as stair-steps at the temples)
+  const rgba = new Float32Array(nv * 4);
+  for (let i = 0; i < nv; i++) { const j = tris[i]; pos[i * 3] = h.P[j * 3]; pos[i * 3 + 1] = h.P[j * 3 + 1]; pos[i * 3 + 2] = h.P[j * 3 + 2]; si[i * 4] = hb; sw[i * 4] = 1;
+    const d = (pos[i * 3 + 1] - M.hairline(pos[i * 3], pos[i * 3 + 2])) / M.sz - 0.03; rgba.set([1, 1, 1, smoothstep(0.0, 0.03, d)], i * 4); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); g.setAttribute('color', new THREE.BufferAttribute(rgba, 4)); g.computeVertexNormals();
   const c = new THREE.Color(color), lum = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;   // (grey or fair hair over a near-black layer shows dark blotches)
-  const m = new THREE.MeshLambertMaterial({ color: c.multiplyScalar(lerp(0.45, 0.85, smoothstep(0.08, 0.35, lum))), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const m = new THREE.MeshLambertMaterial({ color: c.multiplyScalar(lerp(0.45, 0.85, smoothstep(0.08, 0.35, lum))), vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   const mesh = new THREE.SkinnedMesh(g, m); mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.frustumCulled = false; mesh.receiveShadow = true; h.group.add(mesh); h.meshes.push(mesh); return mesh;
 }

@@ -54,12 +54,20 @@ app.on(t => { for (const [b, x, z, ph, sp] of bees) { const a = t * sp * 2 + ph;
 
 // macro hero truss for the final beat (close to camera, beside the access lane)
 const truss = new THREE.Group(); truss.position.set(0.3, 0.0, 1.1); truss.rotation.y = 1.2; app.add(truss);
-const stemPts = [[0, 0.62, 0], [0.03, 0.78, 0.02], [0.02, 0.92, 0.05], [-0.02, 1.02, 0.04]];
-truss.add(P.pipe(stemPts, 0.007, K.mat('#5a7a30', { roughness: 0.6 })));
-[[0.06, 0.8, 0.07, 0.034, '#c9301d'], [0.0, 0.76, 0.1, 0.031, '#d0461e'], [-0.05, 0.82, 0.05, 0.029, '#b8a43a']].forEach(([x, y, z, r, c], i) => { const tm = P.tomato({ r, color: c, shoulder: i === 2 ? '#9ab84a' : '#d9782a', seed: 11 + i }); tm.position.set(x, y, z); truss.add(tm); });
+// the vine (hairy, tapering), a truss leaving it at a node, and each fruit on its own stalk with the knuckle joint
+truss.add(P.hairyStem([[0, 0.5, -0.01], [0.022, 0.66, 0.008], [0.03, 0.78, 0.02], [0.022, 0.9, 0.045], [0.0, 0.97, 0.05], [-0.022, 1.03, 0.04]], 0.0072, 0.0052, { seed: 3 }));
+// (the truss leaves the vine at a node towards the camera and forks: one arm to each side, the middle fruit hanging from the fork)
+const N0 = V(0.023, 0.885, 0.042), J = V(0.018, 0.893, 0.07), armR = [J, V(0.033, 0.893, 0.074), V(0.052, 0.884, 0.072)], armL = [J, V(0.0, 0.894, 0.072), V(-0.028, 0.888, 0.063), V(-0.047, 0.877, 0.054)];
+truss.add(P.hairyStem([N0, N0.clone().lerp(J, 0.5).add(V(0, 0.004, 0)), J], 0.0036, 0.0031, { seed: 4 }));
+truss.add(P.hairyStem(armR, 0.0029, 0.0024, { seed: 5 })); truss.add(P.hairyStem(armL, 0.0029, 0.0024, { seed: 6 }));
+for (const [p, rad] of [[N0, 0.0068], [J, 0.0042]]) { const node = new THREE.Mesh(new THREE.SphereGeometry(rad, 12, 10), P.stemMat()); node.geometry.setAttribute('color', new THREE.Float32BufferAttribute(new Array(node.geometry.attributes.position.count).fill(0).flatMap(() => [0.08, 0.19, 0.03]), 3)); node.position.copy(p); truss.add(node); }   // the node where the truss leaves the vine, and the fork
+[[0.06, 0.815, 0.07, 0.034, '#c9301d', '#d9782a', armR[2]], [0.0, 0.79, 0.1, 0.031, '#d0461e', '#d9782a', J], [-0.05, 0.82, 0.05, 0.029, '#c9a43a', '#9ab84a', armL[3]]].forEach(([x, y, z, r, c, sh, j], i) => {
+  const tm = P.tomato({ r, color: c, shoulder: sh, shoulderAmt: i === 2 ? 0.6 : 0.35, seed: 11 + i, stalkLen: 0 }); tm.position.set(x, y, z); truss.add(tm);
+  const top = V(x, y + r * 0.82 + 0.001, z), knee = top.clone().lerp(j, 0.35).add(V(0, 0.006, 0));
+  truss.add(P.hairyStem([top, top.clone().add(V(0, 0.006, 0)), knee, j], 0.0021, 0.0018, { seed: 20 + i, knuckle: 2 })); });
 const CL = F.compoundLeaf(); const leafMat = new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 }); for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26, 2, 3), leafMat); l.geometry.translate(0, 0.13, 0); l.position.set(-0.02, 0.86 + i * 0.04, 0.03); l.rotation.set(-1.0 + i * 0.25, i * 1.7 + 0.4, 0.2); l.castShadow = true; truss.add(l); }
 const flowerTex = P.leafTex('flower'); const flower = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), new THREE.MeshStandardMaterial({ map: flowerTex, alphaTest: 0.4, side: THREE.DoubleSide })); flower.geometry.attributes.uv.array.set([0, 1, 0.5, 1, 0, 0.5, 0.5, 0.5]); flower.position.set(-0.03, 0.99, 0.07); flower.rotation.set(-0.5, 0, 0); truss.add(flower);
-const dew = new THREE.Mesh(new THREE.SphereGeometry(0.004, 12, 8), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.0, transmission: 0.9, thickness: 0.004, transparent: true, opacity: 0.6 })); dew.position.set(0.075, 0.82, 0.098); truss.add(dew);
+const dew = new THREE.Mesh(new THREE.SphereGeometry(0.004, 12, 8), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.0, transmission: 0.9, thickness: 0.004, transparent: true, opacity: 0.6 })); dew.position.set(0.075, 0.835, 0.098); truss.add(dew);
 const broad = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.28, 3, 3), new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55 })); broad.geometry.translate(0, 0.12, 0); broad.position.set(-0.07, 0.82, -0.05); broad.rotation.set(-0.35, 0.3, 0.15); broad.castShadow = true; truss.add(broad);
 const heroBee = bees[0][0]; app.on(t => { if (t > 4.9) { const u = K.smoother((t - 4.9) / 1.5); const fp = flower.getWorldPosition(V()); heroBee.position.set(fp.x + (1 - u) * 0.3, fp.y + 0.012 + (1 - u) * 0.12 + Math.sin(t * 9) * 0.004 * (1 - u), fp.z + (1 - u) * 0.25); heroBee.rotation.y = -2.2; } });
 

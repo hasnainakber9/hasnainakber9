@@ -55,12 +55,15 @@ K.bake(gh, { skip: (m) => m.material === glassM });
 // shade screen partly drawn under the roof
 const screen = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, 9), new THREE.MeshStandardMaterial({ color: '#f4f1ea', transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 0.9, depthWrite: false })); screen.rotation.x = Math.PI / 2; screen.position.set(0, GH - 0.15, Z0 + 4.5); screen.castShadow = true; gh.add(screen);
 // floor + aisle
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), K.mat('#b9b6ae', { roughness: 0.75, map: K.grain('plaster', { repeat: 6 }), normalMap: K.normalTex('plaster', 6), normalScale: new THREE.Vector2(0.4, 0.4) })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0.012, (Z0 + Z1) / 2); floor.receiveShadow = true; S.add(floor);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), K.mat('#b9b6ae', { roughness: 0.75, map: K.grain('plaster', { repeat: 6 }), normalMap: K.normalTex('plaster', 6), normalScale: new THREE.Vector2(0.15, 0.15) })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0.012, (Z0 + Z1) / 2); floor.receiveShadow = true; S.add(floor);
 const wet = new THREE.Mesh(new THREE.PlaneGeometry(1.6, Z1 - Z0), K.mat('#8f8c86', { roughness: 0.18, metalness: 0.0 })); wet.rotation.x = -Math.PI / 2; wet.position.set(0, 0.014, (Z0 + Z1) / 2); wet.receiveShadow = true; S.add(wet);
 
 // --- NFT growing tables: gutters of lettuce on both sides of the central aisle
 const tables = []; const lettuce = [0, 1, 2].map(v => P.lettuceGeo(v)); const lm = P.leafMat('lettuce', { color: '#a6cf82' }), lmr = P.leafMat('lettuceRed');   // deeper green: the overhead sun washes pale leaves out
-const lists = [[], [], [], []]; const gutterM = K.mat('#f2f2ee', { roughness: 0.4 }), standM = K.mat('#9aa0a4', { roughness: 0.4, metalness: 0.7 });
+// round the opening macro the heads are real leaves (ruffled, veined, translucent); further off the cards read the same
+const near = (x, z) => Math.abs(x - 1.3) < 3.2 && Math.abs(z + 1.4) < 2.6;
+const heads = [1, 2, 3].map(v => P.lettuceHeadGeo({ seed: v, leaves: 14, nu: 10, nv: 8 })), headRed = P.lettuceHeadGeo({ seed: 4, leaves: 14, nu: 10, nv: 8, red: true }), hm = P.lettuceMat({ tint: '#b9d996' });
+const lists = [[], [], [], [], [], [], [], []]; const gutterM = K.mat('#f2f2ee', { roughness: 0.4 }), standM = K.mat('#9aa0a4', { roughness: 0.4, metalness: 0.7 });
 for (let z = Z0 + 1.5; z < Z1 - 1.2; z += 1.75) for (const side of [-1, 1]) {
   const x0 = side * 1.05, x1 = side * 7.4, cx = (x0 + x1) / 2, len = Math.abs(x1 - x0);
   const tg = new THREE.Group(); tg.position.set(cx, 0, z); S.add(tg);
@@ -69,12 +72,12 @@ for (let z = Z0 + 1.5; z < Z1 - 1.2; z += 1.75) for (const side of [-1, 1]) {
   tg.add(K.at(K.box(len, 0.04, 0.04, standM), 0, 0.84, -0.55)); tg.add(K.at(K.box(len, 0.04, 0.04, standM), 0, 0.84, 0.55));
   const pipe = K.box(0.05, 0.05, 1.25, K.mat('#3f74b0', { roughness: 0.4 })); pipe.position.set(side < 0 ? len / 2 - 0.05 : -len / 2 + 0.05, 0.98, 0); tg.add(pipe);
   const stage = K.R(0.75, 1.15); const red = K.rnd() < 0.3;
-  for (let k = 0; k < 6; k++) for (let x = -len / 2 + 0.15; x < len / 2 - 0.1; x += 0.2) { const gx = cx + x, gz = z - 0.5 + k * 0.2; if (Math.abs(gx) < 1.6 && Math.abs(gz - 2.0) < 0.15 && k === 0) {} lists[red ? 3 : Math.floor(K.rnd() * 3)].push({ x: gx, y: 0.93, z: gz, ry: K.R(0, 6.28), s: stage * K.R(1.6, 2.0) }); }
+  for (let k = 0; k < 6; k++) for (let x = -len / 2 + 0.15; x < len / 2 - 0.1; x += 0.2) { const gx = cx + x, gz = z - 0.5 + k * 0.2; if (Math.abs(gx) < 1.6 && Math.abs(gz - 2.0) < 0.15 && k === 0) {} lists[(red ? 3 : Math.floor(K.rnd() * 3)) + (near(gx, gz) ? 4 : 0)].push({ x: gx, y: 0.93, z: gz, ry: K.R(0, 6.28), s: stage * K.R(1.6, 2.0) }); }
   tables.push(tg);
 }
-lists.forEach((l, i) => { if (l.length) K.instanced(S, i === 3 ? lettuce[0] : lettuce[i], i === 3 ? lmr : lm, l); });
+lists.forEach((l, i) => { if (l.length) K.instanced(S, i < 4 ? (i === 3 ? lettuce[0] : lettuce[i]) : (i === 7 ? headRed : heads[i - 4]), i < 4 ? (i === 3 ? lmr : lm) : hm, l); });
 for (const tg of tables) K.bake(tg);
-const heroL = new THREE.Mesh(lettuce[1], new THREE.MeshStandardMaterial({ map: P.leafTex('lettuce'), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.5, color: '#62a03e' })); heroL.position.set(1.32, 0.93, -1.42); heroL.scale.setScalar(2.1); heroL.castShadow = true; S.add(heroL);
+const heroL = new THREE.Mesh(P.lettuceHeadGeo({ seed: 9, leaves: 20, nu: 64, nv: 40 }), P.lettuceMat({ tint: '#a3cc82' })); heroL.position.set(1.32, 0.93, -1.42); heroL.scale.setScalar(1.5); heroL.castShadow = true; heroL.receiveShadow = true; S.add(heroL);   // (deeper tint: the sun washes a close leaf out)
 // overhead misting line + HAF fans
 for (const side of [-1, 1]) { const ml = K.cyl(0.012, 0.012, Z1 - Z0 - 1, K.mat('#2a2a2a'), 6); ml.rotation.x = Math.PI / 2; ml.position.set(side * 4.2, 3.2, (Z0 + Z1) / 2); S.add(ml); }
 const fans = []; for (const [x, z] of [[-4.2, -8], [4.2, -2], [-4.2, 4]]) { const f = new THREE.Group(); f.add(K.rot(K.cyl(0.35, 0.35, 0.18, K.mat('#9aa0a4', { roughness: 0.4, metalness: 0.6 }), 24, { open: true }), Math.PI / 2, 0, 0)); const blades = new THREE.Group(); for (let i = 0; i < 4; i++) { const b = K.box(0.28, 0.02, 0.07, K.mat('#555')); b.position.x = 0.14; const bg = new THREE.Group(); bg.rotation.z = i * Math.PI / 2; bg.add(b); blades.add(bg); } f.add(blades); f.position.set(x, 3.6, z); S.add(f); fans.push(blades); }

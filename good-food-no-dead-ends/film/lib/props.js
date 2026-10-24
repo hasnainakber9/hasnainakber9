@@ -1,6 +1,6 @@
 // GOOD FOOD. NO DEAD ENDS. — reusable prop & set library (all procedural, no third-party meshes).
 import { THREE, V, R, rnd, pick, lerp, clamp, smooth, M4, merged, vmat, mat, clayMat, MAT, grain, normalTex, canvasTex, mesh, box, cyl, at, rot, instanced, noise2, fbm, prng, RoundedBoxGeometry, BGU, translucent, woodMat } from './core.js';
-import { compoundLeaf, beanLeaf, scrap } from './foliage.js';
+import { compoundLeaf, beanLeaf, scrap, heightToNormal } from './foliage.js';
 const TAU = Math.PI * 2;
 
 // ------------------------------------------------------------------ leaf textures (alpha cards)
@@ -56,41 +56,111 @@ export function tomatoGeo(o = {}) {
     const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const a = Math.atan2(z, x), ry = y / r;
     let k = 1 + 0.055 * Math.cos(a * lobes) * (1 - ry * ry) - 0.1 * Math.pow(Math.max(0, ry), 5);
     if (o.ugly) { k += 0.11 * Math.cos(a * 2 + 0.7) * Math.max(0, ry) + 0.07 * Math.cos(a * 3 + 2.1) * (1 - Math.abs(ry)) + (rnd2(a, ry) - 0.5) * 0.08; }
-    const yy = y * (o.squash ?? 0.86) * (1 + (o.ugly ? 0.06 * Math.sin(a + 1.3) : 0));
+    let yy = y * (o.squash ?? 0.86) * (1 + (o.ugly ? 0.06 * Math.sin(a + 1.3) : 0));
+    if (ry > 0) yy -= r * 0.045 * (1 - smooth(Math.hypot(x * k, z * k) / (r * 0.42)));   // the stem end sits in a shallow dip
     p.setXYZ(i, x * k, yy, z * k);
-    const sh = smooth((ry - 0.45) / 0.55) * (o.shoulderAmt ?? 0.35); const c = base.clone().lerp(shoulder, sh); const v = 0.94 + rnd2(a * 2, ry * 3) * 0.1;
+    const sh = smooth((ry - 0.45) / 0.55) * (o.shoulderAmt ?? 0.35); const c = base.clone().lerp(shoulder, sh); const v = 0.98 + rnd2(a * 2, ry * 3) * 0.04;   // (blotchy vertex noise shows as bands: the skin map carries the mottling)
     cols[i * 3] = c.r * v; cols[i * 3 + 1] = c.g * v; cols[i * 3 + 2] = c.b * v;
   }
   g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals(); return g;
 }
 // tomato skin: thin waxy coat over flesh that scatters red light, so the shadow side glows warm instead of going grey
+// skin detail in the sphere's uv (u round the fruit, v up to the stem end): a light-grey base the vertex colours are lifted
+// over, so pale lenticel dots, faint streaks running out from the stem scar and soft mottling can show lighter than it;
+// the gloss is broken up a little (an even gloss reads as plastic)
+let _tomSkin = null;
+function tomatoSkinMaps() {
+  if (_tomSkin) return _tomSkin;
+  const W = 1024, H = 512, r = prng(41); const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  g.fillStyle = 'rgb(222,222,222)'; g.fillRect(0, 0, W, H);
+  for (let k = 0; k < 220; k++) { const x = r() * W, y = r() * H, rad = 30 + r() * 80, l = r() < 0.5 ? '236,230,222' : '210,212,212'; const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(${l},0.12)`); gr.addColorStop(1, `rgba(${l},0)`); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }   // (faint: strong patches read as banding)
+  for (let k = 0; k < 110; k++) { const x = r() * W, len = H * (0.06 + r() * 0.2); const gr = g.createLinearGradient(0, 0, 0, len); gr.addColorStop(0, 'rgba(255,248,205,0.55)'); gr.addColorStop(1, 'rgba(255,248,205,0)'); g.fillStyle = gr; g.fillRect(x, 0, 1 + r() * 2.5, len); }
+  for (let k = 0; k < 2600; k++) { g.fillStyle = `rgba(255,246,215,${0.25 + r() * 0.35})`; g.beginPath(); g.arc(r() * W, r() * H, 0.6 + r() * 0.9, 0, TAU); g.fill(); }
+  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.NoColorSpace; map.anisotropy = 8; map.wrapS = THREE.RepeatWrapping;
+  const c2 = document.createElement('canvas'); c2.width = 256; c2.height = 128; const g2 = c2.getContext('2d'); g2.fillStyle = 'rgb(0,74,0)'; g2.fillRect(0, 0, 256, 128);
+  for (let k = 0; k < 140; k++) { const x = r() * 256, y = r() * 128, rad = 4 + r() * 18, v = r() < 0.5 ? 50 : 105; const gr = g2.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(0,${v},0,0.6)`); gr.addColorStop(1, `rgba(0,${v},0,0)`); g2.fillStyle = gr; g2.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+  const rough = new THREE.CanvasTexture(c2); rough.colorSpace = THREE.NoColorSpace; rough.wrapS = THREE.RepeatWrapping;
+  return (_tomSkin = { map, rough });
+}
 let _tomatoMat = null;
 export function tomatoMat() {
   if (_tomatoMat) return _tomatoMat;
-  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.4, clearcoat: 0.42, clearcoatRoughness: 0.16, specularIntensity: 0.55, normalMap: normalTex('skin', 5), normalScale: new THREE.Vector2(0.14, 0.14), envMapIntensity: 0.38 });
+  const S = tomatoSkinMaps();
+  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: new THREE.Color(1.15, 1.15, 1.15), map: S.map, roughnessMap: S.rough, roughness: 1.0, clearcoat: 0.8, clearcoatRoughness: 0.07, specularIntensity: 0.28, normalMap: normalTex('skin', 5), normalScale: new THREE.Vector2(0.08, 0.08), envMapIntensity: 0.42 });
   m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <lights_physical_pars_fragment>', THREE.ShaderChunk.lights_physical_pars_fragment.replace('reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
     `float wrapW = saturate( ( dot( geometryNormal, directLight.direction ) + 0.5 ) / 1.5 );
      vec3 scatter = ( vec3( dotNL ) + vec3( 0.9, 0.28, 0.16 ) * max( wrapW - dotNL, 0.0 ) ) * directLight.color;
      reflectedLight.directDiffuse += scatter * BRDF_Lambert( material.diffuseColor );`)); };
   m.customProgramCacheKey = () => 'tomato-scatter'; return (_tomatoMat = m);
 }
-export function calyx(r = 0.04) {
-  const parts = []; const n = 6;
-  for (let i = 0; i < n; i++) { const a = i / n * TAU; const g = new THREE.CapsuleGeometry(r * 0.07, r * 0.42, 3, 6); parts.push({ geo: g, m: M4(Math.cos(a) * r * 0.25, r * 0.78, Math.sin(a) * r * 0.25, 0, -a, Math.PI / 2 - 0.35, 1, 1, 0.45).premultiply(new THREE.Matrix4().makeRotationY(0)), color: '#4e7a2a' }); }
-  parts.push({ geo: new THREE.CylinderGeometry(r * 0.06, r * 0.09, r * 0.35, 6), m: M4(0, r * 0.95, 0, 0.2, 0, 0.1), color: '#5a7a30' });
+// the calyx: five to seven narrow sepals lying over the shoulders from the stem scar, cupped along the midrib, tips
+// lifting and drying a little; and the stalk rising from it (o.stalkLen 0 leaves the stalk to the caller)
+export function calyx(r = 0.04, o = {}) {
+  const rr = prng(o.seed || 3), n = o.n || 6, top = r * (o.squash ?? 0.86), parts = [];
+  const surf = (d) => top * Math.sqrt(Math.max(0, 1 - (d / (r * 1.02)) ** 2)) - r * 0.045 * (1 - smooth(d / (r * 0.42)));
+  for (let i = 0; i < n; i++) {
+    const a = (i + (rr() - 0.5) * 0.45) / n * TAU, L = r * (0.6 + rr() * 0.32), w0 = r * (0.18 + rr() * 0.07), lift = r * (-0.12 + rr() * 0.5), segs = 9, ca = Math.cos(a), sa = Math.sin(a);
+    const pos = [], idx = [];
+    for (let k = 0; k <= segs; k++) { const s2 = k / segs, d = r * 0.04 + s2 * L, y = surf(d) + Math.max(r * 0.025, r * (0.03 + 0.03 * smooth((d / r - 0.35) / 0.4)) + s2 * s2 * lift);
+      const w = w0 * (s2 < 0.18 ? 0.55 + 2.5 * s2 : Math.pow(Math.max(0, (1 - s2) / 0.82), 0.8));
+      for (const sg of [-1, 0, 1]) pos.push(ca * d - sa * sg * w / 2, y + (sg === 0 ? w * 0.18 : 0), sa * d + ca * sg * w / 2); }
+    for (let k = 0; k < segs; k++) for (let j = 0; j < 2; j++) { const a0 = k * 3 + j, a1 = a0 + 1, b0 = a0 + 3, b1 = a1 + 3; idx.push(a0, b0, a1, a1, b0, b1); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    parts.push({ geo, color: new THREE.Color('#44702a').lerp(new THREE.Color('#7d8a3c'), rr() * 0.35).getStyle(), jitter: 0.1 }); }
+  const sl = o.stalkLen ?? r * 0.45; if (sl > 0) { const st = new THREE.CylinderGeometry(r * 0.05, r * 0.075, sl, 8); st.translate(0, sl / 2, 0); parts.push({ geo: st, m: M4(0, surf(0) + r * 0.02, 0, 0.12, 0, 0.08), color: '#557a30' });
+    const kn = new THREE.SphereGeometry(r * 0.07, 8, 6); parts.push({ geo: kn, m: M4(Math.sin(0.08) * sl * -0.6, surf(0) + r * 0.02 + sl * 0.6, Math.sin(0.12) * sl * 0.6), color: '#5c7d33' }); }
   return merged(parts);
+}
+// green stems and sepals are covered in fine hairs: a velvet sheen (pale at grazing angles) instead of a plastic gloss
+let _stemMat = null;
+export function stemMat() { return _stemMat || (_stemMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.6, sheen: 1.0, sheenColor: new THREE.Color('#cfe2a6'), sheenRoughness: 0.32, side: THREE.DoubleSide })); }
+// a hairy stem along points (world-scale metres), tapering r0 -> r1, a little uneven, with o.knuckle (index of a point)
+// thickened where a fruit stalk has its joint, and trichomes standing off it leaning towards the tip
+export function hairyStem(points, r0 = 0.006, r1 = r0 * 0.7, o = {}) {
+  const g = new THREE.Group(), rr = prng(o.seed || 5), pts = points.map(p => (p.isVector3 ? p.clone() : V(...p))), curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  const L = curve.getLength(), segs = Math.max(16, Math.round(L / 0.003)), radial = 12, tube = new THREE.TubeGeometry(curve, segs, 1, radial, false), p = tube.attributes.position;
+  const knU = o.knuckle != null ? (() => { let best = 0, bd = 1e9; for (let i = 0; i <= 100; i++) { const d = curve.getPointAt(i / 100).distanceTo(pts[o.knuckle]); if (d < bd) { bd = d; best = i / 100; } } return best; })() : -1;
+  const radAt = (u) => lerp(r0, r1, u) * (1 + 0.05 * Math.sin(u * L * 180 + (o.seed || 0)) + (knU >= 0 ? 0.45 * Math.exp(-((((u - knU) * L) / 0.0035) ** 2)) : 0));
+  const col = new Float32Array(p.count * 3), base = new THREE.Color(o.color || '#4f7a2c'), q = V();
+  for (let i = 0; i <= segs; i++) { const u = i / segs, P = curve.getPointAt(u), rad = radAt(u); for (let j = 0; j <= radial; j++) { const k = i * (radial + 1) + j; q.fromBufferAttribute(p, k).sub(P).multiplyScalar(rad).add(P); p.setXYZ(k, q.x, q.y, q.z);
+    const c = base.clone().multiplyScalar(0.85 + 0.25 * u + (rr() - 0.5) * 0.06); col.set([c.r, c.g, c.b], k * 3); } }
+  tube.setAttribute('color', new THREE.BufferAttribute(col, 3)); tube.computeVertexNormals();
+  const m = mesh(tube, stemMat()); g.add(m);
+  if (o.hairs !== false) { const n = Math.round(L * (o.density ?? 7000)), hg = new THREE.CylinderGeometry(0.00004, 0.00008, 1, 3); hg.translate(0, 0.5, 0);
+    const im = new THREE.InstancedMesh(hg, o.hairMat || (stemMat._hair || (stemMat._hair = new THREE.MeshStandardMaterial({ color: '#c9dba8', roughness: 0.55 }))), n), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), up = V(0, 1, 0);
+    for (let i = 0; i < n; i++) { const u = rr(), P = curve.getPointAt(u), T = curve.getTangentAt(u), a = rr() * TAU, N = new THREE.Vector3().crossVectors(T, Math.abs(T.y) < 0.9 ? up : V(1, 0, 0)).normalize(), B = new THREE.Vector3().crossVectors(T, N);
+      const out = N.multiplyScalar(Math.cos(a)).add(B.multiplyScalar(Math.sin(a))), dir = out.clone().multiplyScalar(0.8).add(T.clone().multiplyScalar(0.45 + rr() * 0.4)).normalize(), len = 0.0007 + rr() * 0.0015;
+      Q.setFromUnitVectors(up, dir); M.compose(P.clone().addScaledVector(out, radAt(u) * 0.92), Q, V(1, len, 1)); im.setMatrixAt(i, M); }
+    im.castShadow = false; im.receiveShadow = true; im.frustumCulled = false; g.add(im); }
+  g.userData.curve = curve; return g;
 }
 export function tomato(o = {}) {
   const g = new THREE.Group(); const r = o.r || 0.04;
   const body = mesh(tomatoGeo(o), o.material || tomatoMat()); g.add(body);
-  const c = mesh(calyx(r), vmat({ roughness: 0.6 })); c.position.y = -r * 0.04; g.add(c);
+  const c = mesh(calyx(r, { seed: o.seed, squash: o.squash, stalkLen: o.stalkLen }), stemMat()); g.add(c);
   if (o.ugly) { const scar = mesh(new THREE.TorusGeometry(r * 0.28, r * 0.035, 6, 20, Math.PI * 1.2), mat('#a8642a', { roughness: 0.8 })); scar.position.set(r * 0.32, r * 0.42, r * 0.55); scar.lookAt(scar.position.clone().multiplyScalar(3)); g.add(scar); }
   g.userData.r = r; return g;
 }
 export function produceGeo(kind, o = {}) {
   const parts = []; const c = o.color;
-  if (kind === 'pepper') { const g = new THREE.SphereGeometry(0.045, 18, 14); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x); const k = 1 + 0.1 * Math.cos(a * 4); p.setXYZ(i, x * k * (1 - 0.25 * Math.max(0, -y / 0.045)), y * 1.4, z * k * (1 - 0.25 * Math.max(0, -y / 0.045))); } g.computeVertexNormals(); parts.push({ geo: g, color: c || '#c62d1f' }, { geo: new THREE.CylinderGeometry(0.006, 0.009, 0.03, 6), m: M4(0, 0.07, 0, 0.2, 0, 0), color: '#4e7a2a' }); }
-  else if (kind === 'eggplant') { const g = new THREE.SphereGeometry(0.04, 18, 14); g.scale(1, 2.0, 1); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); const k = 0.75 + 0.35 * clamp((0.08 - y) / 0.16); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } g.computeVertexNormals(); parts.push({ geo: g, color: c || '#3c1f4a' }, { geo: new THREE.ConeGeometry(0.03, 0.035, 6), m: M4(0, 0.085, 0), color: '#4e6a2a' }); }
+  if (kind === 'pepper') {   // bell pepper: four lobes, bumps at the blossom end, shoulders sunk round a thick bent stem on a flared cap
+    const R0 = 0.042, g = new THREE.SphereGeometry(R0, 28, 20), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x), ry = y / R0, lobe = Math.cos(a * 4), d = Math.hypot(x, z) / R0;
+      const k = 1 + 0.085 * lobe * (1 - Math.max(0, ry) * 0.5) - 0.05 * Math.max(0, ry) ** 2; let yy = y * 1.1;
+      if (ry < -0.2) yy += (-0.01 * Math.max(0, lobe) + 0.006 * (1 - Math.abs(lobe))) * smooth((-ry - 0.2) / 0.8);
+      if (ry > 0) yy -= 0.011 * (1 - smooth(d / 0.42));
+      p.setXYZ(i, x * k, yy, z * k); }
+    g.computeVertexNormals(); const top = R0 * 1.1 - 0.011; parts.push({ geo: g, color: c || '#c62d1f' });
+    parts.push({ geo: new THREE.CylinderGeometry(0.0075, 0.012, 0.005, 10), m: M4(0, top + 0.0015, 0), color: '#4a6a2a' });
+    parts.push({ geo: new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(V(0, top, 0), V(0, top + 0.02, 0), V(0.009, top + 0.027, 0.004)), 6, 0.0042, 8, false), color: '#5b7a35' }); }
+  else if (kind === 'eggplant') {   // calyx: five pointed sepals draped over the shoulder, and a woody stem
+    const g = new THREE.SphereGeometry(0.04, 22, 16); g.scale(1, 2.0, 1); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); const k = 0.75 + 0.35 * clamp((0.08 - y) / 0.16); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } g.computeVertexNormals(); parts.push({ geo: g, color: c || '#3c1f4a' });
+    for (let i = 0; i < 5; i++) { const a0 = i / 5 * TAU + 0.3, pos = [], idx = [], segs = 7;
+      for (let k = 0; k <= segs; k++) { const s2 = k / segs, th = s2 * (0.95 + 0.25 * ((i * 7) % 3) / 2), yb = 0.08 - 0.04 * (1 - Math.cos(th)) * 2.0, rad = 0.04 * Math.sin(th) * (0.75 + 0.35 * clamp((0.08 - yb) / 0.16)) + 0.0015, w = 0.016 * (s2 < 0.15 ? 0.6 + 2.6 * s2 : Math.max(0, (1 - s2) / 0.85));
+        for (const sg of [-1, 1]) { const a = a0 + sg * w / Math.max(0.01, rad + 0.004); pos.push(Math.cos(a) * (rad + 0.0012), yb + 0.0012, Math.sin(a) * (rad + 0.0012)); } }
+      for (let k = 0; k < segs; k++) { const q = k * 2; idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); }
+      const sg2 = new THREE.BufferGeometry(); sg2.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); sg2.setIndex(idx); sg2.computeVertexNormals(); parts.push({ geo: sg2, color: '#3f5a2c' }); }
+    parts.push({ geo: new THREE.CylinderGeometry(0.0045, 0.0065, 0.032, 8), m: M4(0.002, 0.094, 0, 0, 0, -0.15), color: '#5d6b3a' }); }
   else if (kind === 'onion') { const g = new THREE.SphereGeometry(0.038, 16, 12); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 0.038; if (y > 0.4) { const k = 1 - (y - 0.4) * 0.9; p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); p.setY(i, p.getY(i) * 1.15); } } g.computeVertexNormals(); parts.push({ geo: g, color: c || '#b56a3a' }); }
   else if (kind === 'potato') { const g = new THREE.IcosahedronGeometry(0.035, 2); g.scale(1.3, 0.85, 1); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const k = 1 + (noise2(p.getX(i) * 60, p.getY(i) * 60 + p.getZ(i) * 30) - 0.5) * 0.18; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k); } g.computeVertexNormals(); parts.push({ geo: g, color: c || '#b89060' }); }
   else if (kind === 'lemon') { const g = new THREE.SphereGeometry(0.032, 16, 12); g.scale(1, 1.25, 1); parts.push({ geo: g, color: c || '#e9c93a' }); }
@@ -162,6 +232,54 @@ export function tomatoPlantGeos(variant = 0, o = {}) {
   plantCache[key] = out; return out;
 }
 function mergeKeepColor(parts) { const geos = parts.map(p => { const g = p.geo.index ? p.geo.toNonIndexed() : p.geo.clone(); if (p.m) g.applyMatrix4(p.m); for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(k)) g.deleteAttribute(k); return g; }); return BGU.mergeGeometries(geos, false); }
+// lettuce as a rosette of real leaves (not alpha cards): each leaf a sheet with a narrow pale rib at the base opening
+// into a round blade, cupped across, arching outwards (the outer leaves more), its margin ruffled in waves that grow
+// towards the edge. uv: x across the leaf, y base -> tip; vertex colours run from the pale heart to deeper green
+// margins, and lettuceMat's vein map adds the midrib and the branching veins.
+const lettuceCache = {};
+export function lettuceHeadGeo(o = {}) {
+  const key = JSON.stringify(o); if (lettuceCache[key]) return lettuceCache[key];
+  const r = prng((o.seed || 1) * 7 + 3), n = o.leaves || 18, NU = o.nu || 20, NV = o.nv || 14, size = o.size || 1, red = !!o.red;
+  const pos = [], uv = [], col = [], idx = [], heart = new THREE.Color(red ? '#d3dc98' : '#d6e69c'), mid = new THREE.Color(red ? '#97ad52' : '#93c058'), rim = new THREE.Color(red ? '#6e2626' : '#548c30');
+  for (let i = 0; i < n; i++) {
+    const ring = i / (n - 1), a = i * 2.39996 + (o.seed || 0) * 0.7;   // ring 0 = outermost
+    const tilt = lerp(1.2, 0.2, ring ** 0.8) + (r() - 0.5) * 0.15, L = size * lerp(0.13, 0.055, ring) * (0.9 + r() * 0.2), W = L * lerp(1.0, 0.85, ring);
+    // the margin is gathered into small waves (a centimetre or so); a coarse mesh gets longer ones, never under four steps a wave
+    const bend = lerp(0.9, 0.15, ring) + (r() - 0.5) * 0.2, cup = lerp(0.18, 0.55, ring), frA = size * lerp(0.006, 0.0026, ring), frK = TAU / Math.max(size * (0.011 + r() * 0.005), 4.5 * L / NU), ph = r() * 10;
+    const side = V(-Math.sin(a), 0, Math.cos(a)), spine = [], dirs = []; let p = V(Math.cos(a) * size * 0.006 * (1 - ring), size * 0.004 * ring, Math.sin(a) * size * 0.006 * (1 - ring));
+    for (let k = 0; k <= NU; k++) { const th = tilt + bend * (k / NU) ** 1.6, d = V(Math.sin(th) * Math.cos(a), Math.cos(th), Math.sin(th) * Math.sin(a)); spine.push(p.clone()); dirs.push(d); p.addScaledVector(d, L / NU); }
+    const v0 = pos.length / 3;
+    for (let k = 0; k <= NU; k++) { const u = k / NU, nrm = new THREE.Vector3().crossVectors(side, dirs[k]).normalize();
+      const hw = W * 0.5 * Math.sqrt(Math.max(0, 1 - ((u - 0.58) / 0.6) ** 2)) * (u < 0.22 ? lerp(0.22, 1, smooth(u / 0.22)) : 1);
+      for (let j = 0; j <= NV; j++) { const v = j / NV * 2 - 1, x = v * hw, e = Math.max(Math.abs(v), smooth((u - 0.8) / 0.2));
+        const fr = frA * smooth((e - 0.45) / 0.55) * Math.sin(frK * (u * L + Math.abs(x) * 0.6) + ph + v * 2.0) * (0.6 + 0.4 * Math.sin(u * 9 + ph));
+        const q = spine[k].clone().addScaledVector(side, x).addScaledVector(nrm, cup * x * x / Math.max(1e-4, W) + fr); pos.push(q.x, q.y, q.z); uv.push(v * 0.5 + 0.5, u);
+        const c = heart.clone().lerp(mid, smooth(u * 2.0) * (1 - ring * 0.35)).lerp(rim, smooth((e - 0.5) / 0.5) * lerp(0.95, 0.45, ring)); col.push(c.r, c.g, c.b); } }
+    for (let k = 0; k < NU; k++) for (let j = 0; j < NV; j++) { const A = v0 + k * (NV + 1) + j, B = A + NV + 1; idx.push(A, B, A + 1, A + 1, B, B + 1); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return (lettuceCache[key] = g);
+}
+// veins: a pale midrib wide at the base, paired secondary veins arcing out to the margin and a faint net, over a slightly
+// mottled blade (multiplies the vertex colours; canvas row 0 is the leaf tip)
+let _lettuceMat = {};
+export function lettuceMat(o = {}) {
+  const key = JSON.stringify(o); if (_lettuceMat[key]) return _lettuceMat[key];
+  const r = prng(77); const map = canvasTex(256, 512, (g, w, h) => { g.fillStyle = 'rgb(218,218,218)'; g.fillRect(0, 0, w, h);
+    for (let k = 0; k < 160; k++) { const x = r() * w, y = r() * h, rad = 6 + r() * 26, l = r() < 0.5 ? '235,238,225' : '196,200,196'; const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(${l},0.5)`); gr.addColorStop(1, `rgba(${l},0)`); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+    g.strokeStyle = 'rgba(255,255,240,0.2)'; g.lineWidth = 0.8; for (let k = 0; k < 260; k++) { let x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); for (let s2 = 0; s2 < 3; s2++) { x += (r() - 0.5) * 22; y += (r() - 0.5) * 22; g.lineTo(x, y); } g.stroke(); }
+    for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088; for (const sd of [-1, 1]) { g.strokeStyle = `rgba(255,255,236,${0.6 - k * 0.03})`; g.lineWidth = lerp(4, 1.2, k / 10); const y0 = (1 - u0) * h; g.beginPath(); g.moveTo(w / 2, y0); g.bezierCurveTo(w / 2 + sd * w * 0.16, y0 - h * 0.04, w / 2 + sd * w * 0.34, y0 - h * 0.1, w / 2 + sd * w * 0.5, y0 - h * 0.17); g.stroke(); } }
+    for (let y = 0; y < h; y++) { const u = 1 - y / h, wv = lerp(30, 2.5, u ** 0.6); g.fillStyle = 'rgba(255,255,242,0.9)'; g.fillRect(w / 2 - wv / 2, y, wv, 1); } }, { clamp: true });
+  // the blade between the veins is blistered (raised cells), the veins sunk into it
+  const hc = document.createElement('canvas'); hc.width = 256; hc.height = 512; const hg = hc.getContext('2d'); hg.fillStyle = '#808080'; hg.fillRect(0, 0, 256, 512);
+  for (let k = 0; k < 420; k++) { const x = r() * 256, y = r() * 512, rad = 7 + r() * 14, gr = hg.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); hg.fillStyle = gr; hg.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+  hg.strokeStyle = 'rgba(0,0,0,0.5)'; for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088, y0 = (1 - u0) * 512; for (const sd of [-1, 1]) { hg.lineWidth = lerp(5, 1.5, k / 10); hg.beginPath(); hg.moveTo(128, y0); hg.bezierCurveTo(128 + sd * 41, y0 - 20, 128 + sd * 87, y0 - 51, 128 + sd * 128, y0 - 87); hg.stroke(); } }
+  hg.fillStyle = 'rgba(0,0,0,0.5)'; hg.fillRect(122, 0, 12, 512);
+  const nc = document.createElement('canvas'); nc.width = 256; nc.height = 512; nc.getContext('2d').putImageData(heightToNormal(hg.getImageData(0, 0, 256, 512).data, 256, 512, 2.0), 0, 0);
+  const normalMap = new THREE.CanvasTexture(nc); normalMap.colorSpace = THREE.NoColorSpace; normalMap.wrapS = normalMap.wrapT = THREE.ClampToEdgeWrapping;
+  const m = translucent(new THREE.MeshPhysicalMaterial({ vertexColors: true, map, normalMap, normalScale: new THREE.Vector2(0.9, 0.9), color: new THREE.Color(o.tint || '#ffffff').multiplyScalar(1.12), roughness: 0.42, sheen: 0.2, sheenRoughness: 0.5, sheenColor: new THREE.Color('#e8f5c8'), side: THREE.DoubleSide }), '#c8e07a', 0.45);
+  return (_lettuceMat[key] = m);
+}
 export function lettuceGeo(variant = 0, red = false) {
   const leaves = []; const n = 14;
   for (let i = 0; i < n; i++) { const a = i * 2.39996 + variant, ring = i / n, s = 0.09 + (1 - ring) * 0.07; leaves.push({ geo: cardGeo(s * 1.1, s, -0.5, 0.0, 3), m: M4(Math.cos(a) * 0.012, 0.005 + ring * 0.03, Math.sin(a) * 0.012, -(0.25 + (1 - ring) * 1.05), -a + Math.PI / 2, 0), color: new THREE.Color('#ffffff').offsetHSL(0, 0, -ring * 0.06).getStyle() }); }

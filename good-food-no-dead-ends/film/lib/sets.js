@@ -11,7 +11,7 @@ export async function kitchen(app, o = {}) {
   seed(7);
   const evening = o.time === 'evening';
   const S = app.scene; const g = new THREE.Group(); S.add(g);
-  groundPlane(app, { kind: 'wood', color: '#9c7650', size: 16, repeat: 8, normal: 'planks', ns: 0.45, scale: 3 });
+  groundPlane(app, { kind: 'planks', color: '#a07a52', size: 16 });
   const wallM = MAT.plaster(evening ? '#e2cba8' : '#ecd5ae', 3);
   const H = 3.1, zb = -3.2;
   // back wall with two window openings (sill 0.95, top 2.45)

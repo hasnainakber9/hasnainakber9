@@ -27,7 +27,7 @@ export function setTable(app, K1, o = {}) {
 export function seatCast(app, lines, who = Object.keys(SEATS), o = {}) {
   const cast = {};
   for (const n of who) {
-    const s = SEATS[n]; const p = puppet(n); p.place(s.x, s.z, s.yaw); app.cast(p); p.speak(lines || []);
+    const s = SEATS[n]; const p = puppet(n, null, { off: o.off || ['apron'] }); p.place(s.x, s.z, s.yaw); app.cast(p); p.speak(lines || []);
     p.act([{ t: 0, pose: 'sit', p: { seat: 0.46, lean: 0.14 }, talk: 0.6 }]);
     cast[n] = p;
   }
