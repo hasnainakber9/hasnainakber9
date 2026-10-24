@@ -1,6 +1,6 @@
 # GOOD FOOD. NO DEAD ENDS. — production note
 
-**Entry for the Existential Hope Meme Prize.** {{RUNTIME}} s, of which 80 s is story and 4.5 s is the title card. 16:9, 1920×1080, 24 fps, H.264 with AAC stereo at 48 kHz, mixed to −14 LUFS.
+**Entry for the Existential Hope Meme Prize.** 84.5 s, of which 80 s is story and 4.5 s is the title card. 16:9, 1920×1080, 24 fps, H.264 with AAC stereo at 48 kHz, mixed to −14 LUFS.
 
 **The idea in one line:** the future of food is a loop, not a line. Grow well, move food to where it is needed, share safe surplus, and return unavoidable scraps to the soil.
 

@@ -21,16 +21,16 @@ TOTAL = _t
 # scene-relative times. A key held until the next one; a key marked "pan" ramps linearly from the previous key.
 # Chosen from the rough cut so the speaker (or the story object) stays in frame. s11 is rendered natively at 9:16.
 VCROP = {
-    "s01": [(0, 0.43), (2.4, 0.40), (3.0, 0.58, "pan"), (4.4, 0.47)],
-    "s02": [(0, 0.50), (1.1, 0.46), (2.4, 0.46), (2.9, 0.56, "pan"), (4.3, 0.50), (6.15, 0.47)],
+    "s01": [(0, 0.43), (2.4, 0.46), (2.6, 0.52, "pan"), (3.0, 0.52), (3.3, 0.58, "pan"), (4.4, 0.47)],
+    "s02": [(0, 0.50), (1.1, 0.46), (2.4, 0.46), (2.9, 0.56, "pan"), (4.3, 0.55), (6.15, 0.47)],
     "s03": [(0, 0.55), (2.7, 0.50), (5.0, 0.55)],
     "s04": [(0, 0.50), (2.1, 0.60), (4.1, 0.37)],
-    "s05": [(0, 0.42), (1.35, 0.27), (3.85, 0.60), (5.55, 0.48)],
+    "s05": [(0, 0.42), (1.35, 0.27), (3.85, 0.60), (4.5, 0.48, "pan"), (5.55, 0.48)],
     "s06": [(0, 0.50), (2.3, 0.48), (4.25, 0.50), (6.4, 0.20), (8.0, 0.20), (8.8, 0.45, "pan")],
     "s07": [(0, 0.45), (2.0, 0.52), (4.3, 0.48), (6.5, 0.75)],
     "s08": [(0, 0.52), (2.0, 0.32), (4.4, 0.47), (7.6, 0.45)],
     "s09a": [(0, 0.20), (0.3, 0.20), (1.1, 0.55, "pan"), (2.45, 0.50), (3.55, 0.45)],
-    "s09b": [(0, 0.55), (1.65, 0.42)],
+    "s09b": [(0, 0.55), (1.65, 0.54)],
     "s10": [(0, 0.48), (3.6, 0.50), (4.95, 0.55)],
     "s11": [(0, 0.5)],
 }
@@ -85,20 +85,23 @@ def write_ass(path, cs, W, H, vertical=False):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("tag"); ap.add_argument("--out", default=str(FILM.parent / "deliverables")); ap.add_argument("--fps", type=int, default=24)
-    ap.add_argument("--no-vertical", action="store_true"); a = ap.parse_args()
+    ap.add_argument("--no-vertical", action="store_true")
+    ap.add_argument("--only-vertical", action="store_true", help="rebuild only the 9:16 cut, reusing the joined 16:9 edit"); a = ap.parse_args()
     rdir = FILM / "renders" / a.tag; out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True); work = rdir / "assembly"; work.mkdir(exist_ok=True)
     clips = [rdir / f"{s}.mp4" for s in ORDER]
     missing = [c.name for c in clips if not c.exists()]
     if missing: sys.exit(f"missing clips: {missing}")
     # 1) normalise every clip to exact duration, 24 fps CFR, then concat (re-encode once, high quality intermediate)
-    norm = []
-    for s, c in zip(ORDER, clips):
-        o = work / f"{s}.mkv"
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(c), "-vf", f"fps={a.fps},tpad=stop_mode=clone:stop_duration=1,trim=duration={DUR[s]},setpts=PTS-STARTPTS,format=yuv420p",
-             "-c:v", "libx264", "-preset", "medium", "-crf", "12", "-an", str(o)])
-        norm.append(o)
-    lst = work / "list.txt"; lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in norm))
-    joined = work / "joined.mkv"; run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(joined)])
+    joined = work / "joined.mkv"
+    if not (a.only_vertical and joined.exists()):
+        norm = []
+        for s, c in zip(ORDER, clips):
+            o = work / f"{s}.mkv"
+            run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(c), "-vf", f"fps={a.fps},tpad=stop_mode=clone:stop_duration=1,trim=duration={DUR[s]},setpts=PTS-STARTPTS,format=yuv420p",
+                 "-c:v", "libx264", "-preset", "medium", "-crf", "12", "-an", str(o)])
+            norm.append(o)
+        lst = work / "list.txt"; lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in norm))
+        run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(joined)])
     mix = FILM / "audio" / "mix" / "final_mix.wav"
     W, H = map(int, run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(joined)]).stdout.strip().split(","))
     cs = cues(); srt = out / "GoodFood_NoDeadEnds.en.srt"; write_srt(srt, cs)
@@ -117,8 +120,10 @@ def main():
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-i", str(mix), "-map", "0:v", "-map", "1:a", *f, *v, "-pass", "2", "-passlogfile", log,
              *common_a, "-t", f"{TOTAL:.3f}", *meta, "-movflags", "+faststart", str(out_path)])
 
-    master = out / "GoodFood_NoDeadEnds_master_16x9.mp4"; encode(joined, master, None, "8M")
-    capt = out / "GoodFood_NoDeadEnds_captioned_16x9.mp4"; encode(joined, capt, f"subtitles={ass.as_posix()}", "8M")
+    master = out / "GoodFood_NoDeadEnds_master_16x9.mp4"; capt = out / "GoodFood_NoDeadEnds_captioned_16x9.mp4"
+    if not a.only_vertical:
+        encode(joined, master, None, "8M")
+        encode(joined, capt, f"subtitles={ass.as_posix()}", "8M")
     if not a.no_vertical:
         # 9:16: crop the 16:9 edit with the per-segment window, scale to 1080x1920; the title card comes from a
         # native 1080x1920 render of s11 (renders/<tag>/s11_vertical.mp4) because cropping would cut the words

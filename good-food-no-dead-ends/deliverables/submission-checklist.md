@@ -37,7 +37,7 @@ Nothing has been posted or submitted. Every step below that publishes something 
 
 ## 5. Rules this entry already meets
 
-- [x] Under two minutes ({{RUNTIME}} s including the title card).
+- [x] Under two minutes (84.5 s including the title card).
 - [x] Original work. Third-party assets are CC0, MIT, Apache-2.0 or OFL, as recorded in `asset-licence-log.md`.
 - [x] AI tools are allowed. Only the voices are AI-generated, and that is disclosed.
 - [x] No hateful, harmful or discriminatory content.
@@ -52,7 +52,7 @@ Nothing has been posted or submitted. Every step below that publishes something 
 - [x] The same eight characters keep their wardrobe, voice and screen direction across scenes.
 - [x] The title card was made in post, not by a generative model; there is no generated text, fake logo or brand in any frame.
 - [x] Captions match the spoken lines exactly; the SRT is timed from the dialogue track.
-- [x] Master checked with `probe_qa.py`: {{QA_LINE}}
+- [x] Checked with `probe_qa.py`: all three files are 84.5 s at 24 fps, H.264 (yuv420p) with AAC 48 kHz stereo, −14.0 LUFS integrated and −1.8 dBTP true peak: 1920×1080 at 88 MB (master, captioned) and 1080×1920 at 67 MB (vertical). No silences. Its only flags are on the title card and both are intended: the dark opening before the words fade in (80.0–81.3 s) and the near-still hold while the loop draws (from 81.6 s). The vertical crops were also checked segment by segment so every speaker stays in frame.
 - [x] Source committed to the repository: scenes and audio in `film/`, the Unity project in `unity/`, captions, thumbnails and documents in `deliverables/`. The MP4s (about 250 MB together) are delivered as files and kept out of git; `film/render_scenes.sh` and `film/assemble.py` rebuild them.
 
 ## Costs
