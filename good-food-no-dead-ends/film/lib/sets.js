@@ -1,6 +1,6 @@
 // GOOD FOOD. NO DEAD ENDS. — shared locations. The same builder runs in every shot that visits a place,
 // so geography, props and light direction stay continuous across cuts.
-import { THREE, V, R, rnd, seed, pick, mat, clayMat, MAT, grain, normalTex, mesh, box, cyl, at, rot, instanced, groundPlane, sunLight, fillLights, skyDome, clouds, motes, steam, noise2, fbm, smooth, clamp, M4, merged, vmat } from './core.js';
+import { THREE, V, R, rnd, seed, pick, mat, clayMat, MAT, grain, normalTex, mesh, box, cyl, at, rot, instanced, groundPlane, sunLight, fillLights, skyDome, clouds, motes, steam, noise2, fbm, smooth, clamp, M4, merged, vmat, prng } from './core.js';
 import * as P from './props.js';
 import * as F from './foliage.js';
 const TAU = Math.PI * 2;
@@ -87,7 +87,7 @@ export async function farm(app, o = {}) {
   seed(3);
   const S = app.scene;
   const sunDir = o.sunDir || V(0.75, 0.2, 0.62);
-  skyDome(app, { top: o.top || '#5e86b8', mid: o.mid || '#a9bdd2', horizon: o.horizon || '#f0b27a', ground: '#7a6a50', sunColor: o.sunColor || '#ffb070', sunDir, glow: o.glow ?? 1.0, fogColor: o.fog || '#e7c49f', fogNear: 30, fogFar: 230, sunIntensity: o.sunDisc ?? 5, sunSize: o.sunSize ?? 0.99965, env: o.env ?? true });
+  skyDome(app, { top: o.top || '#5e86b8', mid: o.mid || '#a9bdd2', horizon: o.horizon || '#f0b27a', ground: '#7a6a50', sunColor: o.sunColor || '#ffb070', sunDir, glow: o.glow ?? 1.0, fogColor: o.fog || '#e7c49f', fogNear: o.fogNear ?? 30, fogFar: o.fogFar ?? 230, sunIntensity: o.sunDisc ?? 5, sunSize: o.sunSize ?? 0.99965, env: o.env ?? true });
   const sunAz = Math.atan2(sunDir.x, -sunDir.z);
   await clouds(app, { count: 14, yaw: o.cloudYaw ?? (sunAz + Math.PI), spread: 2.0, opacity: 0.6, color: o.cloudColor || '#ffe2c4', minY: 20, maxY: 70, avoid: sunAz });
   if (o.stormBank) await clouds(app, { count: 7, yaw: o.stormYaw ?? -0.9, spread: 0.35, opacity: 0.95, color: '#6f6a78', minY: 8, maxY: 22, scale: 1.4 });
@@ -130,7 +130,15 @@ export async function farm(app, o = {}) {
   instanced(S, flowers, fm, fl, { cast: false }); instanced(S, grass, gm, gl, { cast: false });
   const TG = F.treeGeos({ height: 8, seed: 3 }); const tl = []; for (let i = 0; i < 40; i++) tl.push({ x: R(-140, 140), z: R(-230, -110), ry: R(0, TAU), s: R(0.7, 1.6) }); for (let i = 0; i < 12; i++) tl.push({ x: R(-60, -22), z: R(-90, -5), ry: R(0, TAU), s: R(0.8, 1.3) }); for (let i = 0; i < 8; i++) tl.push({ x: R(24, 70), z: R(-90, 0), ry: R(0, TAU), s: R(0.8, 1.3) });
   for (let i = 0; i < 30; i++) tl.push({ x: R(-220, 220), z: R(140, 280), ry: R(0, TAU), s: R(0.8, 1.5) });   // distant tree lines to the south
-  instanced(S, TG.trunk, vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) }), tl); instanced(S, TG.crown, F.foliageMat('cluster'), tl);
+  // a distant crown is a dense mass: little sunlight gets through it, so far trees stand dark against a low sun
+  // instead of glowing like the backlit leaves of a near one
+  // and far away, trees stand in copses and along hedge lines rather than one by one (lollipops on the skyline): the far
+  // ones are regrouped round a few centres (from their own stream, so the rest of the layout is unchanged)
+  { const rr = prng(3141), far = tl.filter(p => Math.hypot(p.x, p.z) >= 100); let k = 0;
+    while (k < far.length) { const n = Math.min(far.length - k, 4 + Math.floor(rr() * 4)), c = far[k], sp = 5 + rr() * 9, ax = rr() * TAU;
+      for (let i = 0; i < n; i++, k++) { const u = (rr() - 0.5) * 2; far[k].x = c.x + Math.cos(ax) * u * sp * 1.6 + (rr() - 0.5) * sp * 0.5; far[k].z = c.z + Math.sin(ax) * u * sp * 1.6 + (rr() - 0.5) * sp * 0.5; far[k].s = 0.9 + rr() * 0.8; } } }
+  const nearTrees = tl.filter(p => Math.hypot(p.x, p.z) < 100), farTrees = tl.filter(p => Math.hypot(p.x, p.z) >= 100), bark = vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) });
+  instanced(S, TG.trunk, bark, tl); instanced(S, TG.crown, F.foliageMat('cluster'), nearTrees); instanced(S, TG.crown, F.foliageMat('cluster', { translucency: 0.12, color: '#a8a8a8' }), farTrees);
   // drip lines along each tomato bed
   for (let b = -2; b <= 2; b++) { const dl = cyl(0.008, 0.008, 72, MAT.rubber(), 6); dl.rotation.x = Math.PI / 2; dl.position.set(b * bedPitch + 0.14, 0.13, -32); S.add(dl); }
   // barn with solar roof + small weather mast in the distance

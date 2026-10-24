@@ -263,17 +263,64 @@ function paintDusk(g, w, h, o) {
     gl.addColorStop(0, 'rgba(255,216,152,0.95)'); gl.addColorStop(0.12, 'rgba(255,192,122,0.45)'); gl.addColorStop(1, 'rgba(255,170,100,0)'); g.fillStyle = gl; g.fillRect(x - 30, y - 30, 60, 60); }
   const gr = g.createLinearGradient(0, hz, 0, h); gr.addColorStop(0, '#141722'); gr.addColorStop(1, '#0c0e13'); g.fillStyle = gr; g.fillRect(0, hz + 10, w, h);
 }
+// a daytime town seen across a yard or over a field: hazy sky with cumulus, a far skyline lost in the haze, a row of
+// four-to-seven storey buildings (cornices, framed windows reflecting the sky, shopfronts and awnings at street level,
+// roofs and chimneys), street trees, and the street. o.eyeLevel / o.street: horizon and street line (fractions of the
+// height); o.storey: storey height (px) of the near row, which sets how far away the town looks.
+function paintTown(g, w, h, o) {
+  const hz = Math.round(h * (o.eyeLevel ?? 0.62)), st = Math.round(h * (o.street ?? 0.7)), S = o.storey ?? 54;
+  const sky = g.createLinearGradient(0, 0, 0, hz); [[0, o.top || '#7ea7d6'], [0.55, '#a9c4e0'], [1, o.horizon || '#ece4d6']].forEach(([t, c]) => sky.addColorStop(t, c));
+  g.fillStyle = sky; g.fillRect(0, 0, w, hz + 2);
+  { const img = g.getImageData(0, 0, w, hz), d = img.data;   // cumulus: lit tops, blue-grey bases, flattening towards the horizon
+    for (let y = 0; y < hz; y++) { const v = y / hz, sq = 1 + 3 * v * v; for (let x = 0; x < w; x++) { const n = fbm(x / w * 7, y / hz * 2.2 * sq + 3, 5), c = clamp((n - 0.56) * 4.5, 0, 1) * (1 - smooth((v - 0.86) / 0.14));
+      if (c <= 0) continue; const shade = clamp((fbm(x / w * 7, (y + 6) / hz * 2.2 * sq + 3, 4) - n) * 6 + 0.5, 0, 1), i = (y * w + x) * 4;
+      const r = lerp(250, 176, shade), gg = lerp(250, 186, shade), b = lerp(252, 204, shade); d[i] = lerp(d[i], r, c * 0.9); d[i + 1] = lerp(d[i + 1], gg, c * 0.9); d[i + 2] = lerp(d[i + 2], b, c * 0.9); } }
+    g.putImageData(img, 0, 0); }
+  const haze = new THREE.Color(o.horizon || '#ece4d6'), mix = (c, k) => new THREE.Color(c).lerp(haze, k).getStyle();
+  // far skyline: flat shapes in the haze
+  for (let x = -20; x < w; ) { const bw = S * (0.6 + rnd() * 2.2), bh = S * (0.8 + rnd() * 3.2) * (rnd() < 0.12 ? 2.4 : 1); g.fillStyle = mix(pick(['#8f99a6', '#9aa0a4', '#a39a8e', '#8c98a0']), 0.62); g.fillRect(x, hz - bh, bw, bh + 4);
+    g.fillStyle = mix('#c8d2dc', 0.7); for (let yy = hz - bh + S * 0.3; yy < hz - 4; yy += S * 0.32) g.fillRect(x + 3, yy, bw - 6, Math.max(1, S * 0.05)); x += bw + rnd() * S * 0.4; }
+  // the near row
+  const walls = ['#e2c9a2', '#d8a77e', '#efe2c8', '#c98d6c', '#e6d3a6', '#c9b79a', '#d9b48c', '#e9d9bd', '#b9a088'];
+  for (let x = -rnd() * S; x < w; ) { const floors = 3 + Math.floor(rnd() * 4), bw = S * (2.2 + rnd() * 3.2), top = st - floors * S - S * 0.35, wall = pick(walls), far = 0.18 + rnd() * 0.1;
+    const wg = g.createLinearGradient(0, top, 0, st); wg.addColorStop(0, mix(new THREE.Color(wall).offsetHSL(0, 0, 0.04).getStyle(), far)); wg.addColorStop(1, mix(new THREE.Color(wall).offsetHSL(0, 0.02, -0.08).getStyle(), far)); g.fillStyle = wg; g.fillRect(x, top, bw, st - top);
+    const roofH = S * (0.35 + rnd() * 0.5), pitched = rnd() < 0.6; g.fillStyle = mix(pick(['#7a4a3a', '#5a5c62', '#8a5440', '#4e5258']), far);
+    if (pitched) { g.beginPath(); g.moveTo(x - 2, top); g.lineTo(x + bw * 0.12, top - roofH); g.lineTo(x + bw * 0.88, top - roofH); g.lineTo(x + bw + 2, top); g.fill(); }
+    else { g.fillRect(x, top - S * 0.12, bw, S * 0.12); }
+    for (let c = 0, nc = Math.floor(rnd() * 3); c < nc; c++) { g.fillStyle = mix('#6a4a3a', far); g.fillRect(x + bw * (0.2 + rnd() * 0.6), top - (pitched ? roofH : S * 0.12) - S * 0.25, S * 0.14, S * 0.35); }
+    g.fillStyle = mix('#f4ecdc', far); g.fillRect(x - 1, top - 1, bw + 2, S * 0.09); g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(x, top + S * 0.09, bw, S * 0.05);   // cornice and its shadow
+    const cols = Math.max(2, Math.floor(bw / (S * 0.72))), cw = bw / cols, ww = cw * 0.42, wh = S * 0.52;
+    for (let f = 0; f < floors; f++) { const yy = top + S * 0.28 + f * S;
+      for (let c = 0; c < cols; c++) { const xx = x + c * cw + (cw - ww) / 2;
+        g.fillStyle = mix('#f2ead8', far); g.fillRect(xx - S * 0.035, yy - S * 0.035, ww + S * 0.07, wh + S * 0.07);   // frame
+        const gl = g.createLinearGradient(0, yy, 0, yy + wh); gl.addColorStop(0, mix('#9fb8cf', far)); gl.addColorStop(0.5, mix('#5d6f80', far)); gl.addColorStop(1, mix('#36404a', far)); g.fillStyle = gl; g.fillRect(xx, yy, ww, wh);   // sky in the glass
+        if (rnd() < 0.35) { g.fillStyle = mix(pick(['#e9dcc0', '#d9c2a0', '#efe6d6']), far); g.fillRect(xx, yy, ww * 0.28, wh); g.fillRect(xx + ww * 0.72, yy, ww * 0.28, wh); }   // curtains
+        g.fillStyle = mix('#f2ead8', far); g.fillRect(xx + ww / 2 - 0.6, yy, 1.2, wh); g.fillRect(xx, yy + wh * 0.45, ww, 1.2);   // glazing bars
+        g.fillStyle = 'rgba(0,0,0,0.14)'; g.fillRect(xx - S * 0.05, yy + wh + S * 0.035, ww + S * 0.1, S * 0.04); } }   // sill shadow
+    const sh = st - S * 0.95; g.fillStyle = mix(pick(['#2f4a3a', '#5a2a2a', '#1f2f45', '#3a2f24']), far); g.fillRect(x + 2, sh, bw - 4, st - sh);   // shopfronts
+    for (let c = 0; c < cols; c++) { const xx = x + c * cw + cw * 0.12; const gl = g.createLinearGradient(0, sh, 0, st); gl.addColorStop(0, mix('#d9b98a', far)); gl.addColorStop(1, mix('#6a5040', far)); g.fillStyle = gl; g.fillRect(xx, sh + S * 0.12, cw * 0.76, S * 0.62); }
+    if (rnd() < 0.6) { const ac = pick(['#b8322a', '#2f6a5a', '#e2a12a', '#2f4a8a']); for (let k = 0; k < 10; k++) { g.fillStyle = mix(k % 2 ? ac : '#f2ead8', far); g.beginPath(); const ax = x + 4 + k * (bw - 8) / 10; g.moveTo(ax, sh); g.lineTo(ax + (bw - 8) / 10, sh); g.lineTo(ax + (bw - 8) / 10 + S * 0.04, sh + S * 0.3); g.lineTo(ax + S * 0.04, sh + S * 0.3); g.fill(); } }   // awning
+    if (rnd() < 0.5) { g.fillStyle = 'rgba(40,46,60,0.16)'; g.fillRect(x + bw * 0.62, top, bw * 0.38, st - top); }   // in the shade of its neighbour
+    x += bw + (rnd() < 0.2 ? S * (0.3 + rnd() * 1.2) : 0); }
+  // street trees: leafy canopies lit from the upper left
+  for (let i = 0, n = Math.round(w / (S * 3.4)); i < n; i++) { const cx = (i + 0.3 + rnd() * 0.5) * w / n, cy = st - S * (1.5 + rnd() * 0.9), R0 = S * (0.8 + rnd() * 0.5);
+    g.fillStyle = mix('#4a3a2a', 0.15); g.fillRect(cx - S * 0.05, cy, S * 0.1, st - cy);
+    for (let k = 0; k < 260; k++) { const a = rnd() * TAU, rr = Math.sqrt(rnd()) * R0, px = cx + Math.cos(a) * rr * 1.1, py = cy + Math.sin(a) * rr * 0.85, lit = clamp(0.5 - (px - cx) / R0 * 0.3 - (py - cy) / R0 * 0.45 + (rnd() - 0.5) * 0.4, 0, 1);
+      g.fillStyle = mix(new THREE.Color('#2f4a24').lerp(new THREE.Color('#8aa850'), lit).getStyle(), 0.12); g.beginPath(); g.arc(px, py, S * (0.07 + rnd() * 0.08), 0, TAU); g.fill(); } }
+  // pavement and road
+  g.fillStyle = mix('#b9b2a6', 0.08); g.fillRect(0, st, w, S * 0.25); g.fillStyle = '#8f8b86'; g.fillRect(0, st + S * 0.25, w, h - st);
+  g.fillStyle = 'rgba(255,255,255,0.5)'; for (let x = 0; x < w; x += S * 2.2) g.fillRect(x, st + S * 0.9, S * 1.1, Math.max(2, S * 0.05));
+}
 export function backdropTex(kind, o = {}) {
-  return canvasTex(kind === 'dusk' ? 2048 : 1024, kind === 'dusk' ? 1024 : 512, (g, w, h) => {
+  return canvasTex(kind === 'garden' ? 1024 : 2048, kind === 'garden' ? 512 : 1024, (g, w, h) => {
     const sky = g.createLinearGradient(0, 0, 0, h * 0.7); sky.addColorStop(0, o.top || '#8fb3d8'); sky.addColorStop(1, o.horizon || '#f1dcc0'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
-    if (kind === 'garden' || kind === 'street') {
+    if (kind === 'street' || kind === 'city') { paintTown(g, w, h, kind === 'city' ? { eyeLevel: 0.655, street: 0.668, storey: 16, ...o } : { eyeLevel: 0.62, street: 0.72, storey: 40, ...o }); return; }
+    if (kind === 'garden') {
       for (let i = 0; i < 18; i++) { const x = rnd() * w, y = h * (0.08 + rnd() * 0.3), rr = 30 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
       if (o.trees !== false) for (let layer = 0; layer < 3; layer++) for (let i = 0; i < 34; i++) { const x = rnd() * w, y = h * (0.5 + layer * 0.05 + rnd() * 0.12), r = (30 + rnd() * 70) * (1 - layer * 0.2); const c = new THREE.Color(o.tree || '#5f8a45').offsetHSL((rnd() - 0.5) * 0.04, 0, (rnd() - 0.5) * 0.18 - layer * 0.04 + 0.08 - layer * 0.02); g.fillStyle = c.getStyle(); g.globalAlpha = 0.85 + layer * 0.05; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.globalAlpha = 1; }
-      if (kind === 'street') for (let i = 0; i < 9; i++) { const x = i * 120 + rnd() * 40, bw = 90 + rnd() * 60, bh = 140 + rnd() * 160; g.fillStyle = pick(['#d9b48c', '#c97a5a', '#e2d2b4', '#a9b8b0', '#d6a77a']); g.fillRect(x, h * 0.62 - bh, bw, bh); g.fillStyle = 'rgba(40,50,60,0.55)'; for (let yy = h * 0.62 - bh + 14; yy < h * 0.6 - 20; yy += 34) for (let xx = x + 10; xx < x + bw - 14; xx += 26) g.fillRect(xx, yy, 14, 20); }
       g.fillStyle = o.ground || '#6d8a4a'; g.fillRect(0, h * 0.62, w, h);
     }
     if (kind === 'dusk') paintDusk(g, w, h, o);
-    if (kind === 'city') { for (let layer = 0; layer < 2; layer++) for (let i = 0; i < 22; i++) { const x = i * 50 + rnd() * 30 - 20, bw = 40 + rnd() * 70, bh = (layer ? 120 : 200) + rnd() * 160; g.fillStyle = layer ? pick(['#cdb8a0', '#d9c6ad', '#b9a48c', '#c9b49a']) : pick(['#b8b4ac', '#a9aca8', '#c4bdb0']); g.globalAlpha = layer ? 1 : 0.6; g.fillRect(x, h * 0.72 - bh, bw, bh + 200); g.globalAlpha = 1; g.fillStyle = 'rgba(60,70,80,0.35)'; for (let yy = h * 0.72 - bh + 10; yy < h * 0.7; yy += 20) for (let xx = x + 6; xx < x + bw - 8; xx += 14) g.fillRect(xx, yy, 7, 11); } }
   });
 }
 export function backdrop(app, kind, o = {}) { const m = new THREE.MeshBasicMaterial({ map: backdropTex(kind, o), fog: false, toneMapped: true }); m.color.setScalar(o.brightness ?? 1.0); const p = new THREE.Mesh(new THREE.PlaneGeometry(o.w || 30, o.h || 15), m); if (o.pos) p.position.set(...o.pos); if (o.ry) p.rotation.y = o.ry; app.scene.add(p); return p; }

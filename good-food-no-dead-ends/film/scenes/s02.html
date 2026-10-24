@@ -12,7 +12,7 @@ await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgr
 const app = new K.App({ duration: 8.5, fov: 30, exposure: 1.0, dof: { aperture: 0.004, maxblur: 0.01 }, bloomStrength: 0.3, bloomThreshold: 0.82, warmth: 1.0, sat: 0.96, vignette: 0.36 });
 await app.hdri('park', { intensity: 0.3, rotation: 2.2 });
 const sunDir = V(0.45, 0.2, 1.0);
-const F = await farm(app, { sunDir, top: '#5a82b6', mid: '#e3ad86', horizon: '#f58a45', sunColor: '#ff8a40', fog: '#eaa678', cloudColor: '#ffcaa0', glow: 0.7, sunDisc: 3.2, sunSize: 0.99955, cloudYaw: -0.4, hemiSky: '#d6c2ae', clear: (x, z) => (Math.abs(x - 1.5) < 0.1 && z > -1.75 && z < -0.25) || (Math.abs(x + 6.0) < 0.1 && z > -6.8 && z < -5.2) /* lane for Luis; no bean stake inside the opening lens */, stormBank: true, stormYaw: -0.9, sunI: 3.4, hemi: 0.45, near: V(0.75, 0, -1), focus: V(0.8, 0, -1.4), shadowSize: 9, mastPos: [9.5, -24] });
+const F = await farm(app, { sunDir, top: '#5a82b6', mid: '#e3ad86', horizon: '#f58a45', sunColor: '#ff8a40', fog: '#cf7440', fogFar: 330, cloudColor: '#ffcaa0', glow: 0.7, sunDisc: 3.2, sunSize: 0.99955, cloudYaw: -0.4, hemiSky: '#d6c2ae', clear: (x, z) => (Math.abs(x - 1.5) < 0.1 && z > -1.75 && z < -0.25) || (Math.abs(x + 6.0) < 0.1 && z > -6.8 && z < -5.2) /* lane for Luis; no bean stake inside the opening lens */, stormBank: true, stormYaw: -0.9, sunI: 3.4, hemi: 0.45, near: V(0.75, 0, -1), focus: V(0.8, 0, -1.4), shadowSize: 9, mastPos: [9.5, -24] });
 sensorStake(app, 0.42, -0.45).children[1].material.color.set('#cfd6cc');
 
 // cast

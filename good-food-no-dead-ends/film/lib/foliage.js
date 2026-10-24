@@ -56,7 +56,7 @@ export function foliageMat(kind = 'cluster', o = {}) {
   const { map, normalMap } = leafAtlas(kind);
   const m = new THREE.MeshStandardMaterial({ map, normalMap, normalScale: new THREE.Vector2(0.7, 0.7), alphaTest: 0.5, side: THREE.DoubleSide, vertexColors: true, roughness: o.roughness ?? 0.72, color: o.color || '#ffffff' });
   m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace(/\n\s*normal \*= faceDirection;/g, '\n')); };
-  m.customProgramCacheKey = () => 'foliage'; return translucent(m, '#d8f08a', 0.55);
+  m.customProgramCacheKey = () => 'foliage'; return translucent(m, '#d8f08a', o.translucency ?? 0.55);
 }
 
 // ------------------------------------------------------------------ crowns of cards
