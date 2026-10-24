@@ -18,6 +18,20 @@ export { THREE, RoundedBoxGeometry, BGU };
 // ------------------------------------------------------------------ seek protocol
 let _ready; const readyP = new Promise(r => (_ready = r));
 window.__seek = async (t) => { await readyP; if (window.__app) window.__app.renderAt(t); };
+window.__THREE = THREE;   // (for QA snippets run in the page)
+
+// QA only: ?dbghand=NAME:L|R[:dist[:azimuth[:elevation]]] frames a character's hand (azimuth from the way they face, rad);
+// ?dbgcam=x,y,z,lx,ly,lz[,fov] places the camera; window.__dbg = 'hand=...' or 'cam=...' does the same per frame.
+// Either turns depth of field off.
+function DBGCAM(app) {
+  const q = new URLSearchParams(window.__dbg || location.search), c = app.camera; let pos = null, look = null, fov = 30;
+  if (q.has('dbgcam') || q.has('cam')) { const v = (q.get('dbgcam') || q.get('cam')).split(',').map(Number); pos = V(v[0], v[1], v[2]); look = V(v[3], v[4], v[5]); fov = v[6] || 30; }
+  else if (q.has('dbghand') || q.has('hand')) { const [name, s, d = 0.45, az = 0.5, el = 0.35] = (q.get('dbghand') || q.get('hand')).split(':'); const p = app.puppets.find(x => x.name === name); if (!p || !p.handFrame) return;
+    const f = p.handFrame(s), dir = V(Math.sin(+az) * Math.cos(+el), Math.sin(+el), Math.cos(+az) * Math.cos(+el)).applyQuaternion(p.root.getWorldQuaternion(new THREE.Quaternion()));
+    look = f.pos; pos = f.pos.clone().addScaledVector(dir, +d); }
+  else return;
+  c.position.copy(pos); c.up.set(0, 1, 0); c.lookAt(look); c.fov = fov; c.updateProjectionMatrix(); if (app.dof) app.dof.uniforms.aperture.value = 0;
+}
 
 // ------------------------------------------------------------------ math helpers
 export const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -362,6 +376,7 @@ export class App {
       this.scene.updateMatrixWorld(true);
     }
     if (this.rig) this.rig.apply(this, t);
+    DBGCAM(this);
     if (this.fadeKeys) this.grade.uniforms.fade.value = keyed(this.fadeKeys, t, smooth);
     this.composer.render();
   }

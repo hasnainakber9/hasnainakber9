@@ -26,10 +26,11 @@ const facade = new THREE.Group(); S.add(facade);
 const facadeCache = {};
 function facadeTex(wall, shut) {
   const key = wall + shut; if (facadeCache[key]) return facadeCache[key];
+  const rand = K.prng([...key].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);   // seeded: a resumed render must paint the same texture
   const S = 512, cv = [0, 1, 2].map(() => { const c = document.createElement('canvas'); c.width = c.height = S; return c; }); const [g, hg, rg] = cv.map(c => c.getContext('2d'));
   const X = (u) => u * S, Y = (v) => v * S; const box = (ctx, x0, y0, x1, y1, col) => { ctx.fillStyle = col; ctx.fillRect(X(x0), Y(y0), X(x1 - x0), Y(y1 - y0)); };
   box(g, 0, 0, 1, 1, wall); box(hg, 0, 0, 1, 1, '#808080'); box(rg, 0, 0, 1, 1, '#e8e8e8');
-  for (let i = 0; i < 1400; i++) { const x = Math.random() * S, y = Math.random() * S, r = 2 + Math.random() * 12; g.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${0.02 + Math.random() * 0.03})`; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
+  for (let i = 0; i < 1400; i++) { const x = rand() * S, y = rand() * S, r = 2 + rand() * 12; g.fillStyle = `rgba(${rand() < 0.5 ? '0,0,0' : '255,255,255'},${0.02 + rand() * 0.03})`; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
   const wx0 = 0.32, wx1 = 0.68, wy0 = 0.13, wy1 = 0.72;
   if (shut) for (const [a, b] of [[wx0 - 0.17, wx0 - 0.015], [wx1 + 0.015, wx1 + 0.17]]) { box(g, a, wy0, b, wy1, shut); box(hg, a, wy0, b, wy1, '#9a9a9a'); box(rg, a, wy0, b, wy1, '#a0a0a0');
     for (let y = wy0 + 0.015; y < wy1 - 0.01; y += 0.022) { box(g, a + 0.01, y, b - 0.01, y + 0.008, 'rgba(0,0,0,0.25)'); box(hg, a + 0.01, y, b - 0.01, y + 0.008, '#707070'); } }
@@ -38,7 +39,7 @@ function facadeTex(wall, shut) {
   box(g, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#f4f0e6'); box(hg, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#a8a8a8'); box(rg, wx0 - 0.016, wy0 - 0.005, wx1 + 0.016, wy1 + 0.005, '#909090');   // frame
   const gl = g.createLinearGradient(0, Y(wy0), 0, Y(wy1)); gl.addColorStop(0, '#a9bccd'); gl.addColorStop(0.45, '#6f8296'); gl.addColorStop(1, '#2f3a46');
   g.fillStyle = gl; g.fillRect(X(wx0), Y(wy0), X(wx1 - wx0), Y(wy1 - wy0)); box(hg, wx0, wy0, wx1, wy1, '#303030'); box(rg, wx0, wy0, wx1, wy1, '#141414');   // glass, recessed and glossy
-  if (Math.random() < 0.6) { const cc = ['#e9dcc0', '#d9c2a0', '#c9b8a8', '#efe6d6'][Math.floor(Math.random() * 4)]; box(g, wx0 + 0.005, wy0 + 0.005, wx0 + 0.07, wy1 - 0.005, cc); box(g, wx1 - 0.07, wy0 + 0.005, wx1 - 0.005, wy1 - 0.005, cc); box(rg, wx0, wy0, wx0 + 0.07, wy1, '#d0d0d0'); box(rg, wx1 - 0.07, wy0, wx1, wy1, '#d0d0d0'); }   // curtains
+  if (rand() < 0.6) { const cc = ['#e9dcc0', '#d9c2a0', '#c9b8a8', '#efe6d6'][Math.floor(rand() * 4)]; box(g, wx0 + 0.005, wy0 + 0.005, wx0 + 0.07, wy1 - 0.005, cc); box(g, wx1 - 0.07, wy0 + 0.005, wx1 - 0.005, wy1 - 0.005, cc); box(rg, wx0, wy0, wx0 + 0.07, wy1, '#d0d0d0'); box(rg, wx1 - 0.07, wy0, wx1, wy1, '#d0d0d0'); }   // curtains
   g.fillStyle = 'rgba(255,255,255,0.18)'; g.beginPath(); g.moveTo(X(wx0), Y(wy0 + 0.25)); g.lineTo(X(wx0 + 0.18), Y(wy0)); g.lineTo(X(wx0 + 0.26), Y(wy0)); g.lineTo(X(wx0), Y(wy0 + 0.36)); g.fill();   // a streak of reflected sky
   for (const [x0, y0, x1, y1] of [[0.495, wy0, 0.505, wy1], [wx0, 0.425, wx1, 0.435]]) { box(g, x0, y0, x1, y1, '#f4f0e6'); box(hg, x0, y0, x1, y1, '#a0a0a0'); box(rg, x0, y0, x1, y1, '#909090'); }   // glazing bars
   box(g, 0, 0.965, 1, 1, 'rgba(0,0,0,0.06)'); box(hg, 0, 0.965, 1, 1, '#909090');                                                                     // string course
@@ -50,6 +51,47 @@ function facadeTex(wall, shut) {
   for (const t of [map, normalMap, roughnessMap]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
   return (facadeCache[key] = { map, normalMap, roughnessMap });
 }
+// shopfronts: painted fascia with the shop's name, a door, and a display window onto a lit interior (shelves of goods,
+// pendant lights, a counter), with the street and sky faintly reflected in the glass. The interior also glows (emissive),
+// so the glass reads as a window onto a lit room, not as a black slab, even in the shade of the street.
+const shopKinds = [['BAKERY', '#2f4a3a', 'bread'], ['GROCER', '#5a2a2a', 'fruit'], ['CAFÉ', '#1f2f45', 'cafe'], ['BOOKS', '#3a2f24', 'books'], ['DELI', '#2a3a3a', 'jars'], ['FLOWERS', '#3d4a2a', 'flowers']];
+let shopN = 0; const shopCache = {};
+function shopMat([name, paint, goods], side, aspect) {
+  const key = name + side + Math.round(aspect * 4); if (shopCache[key]) return shopCache[key];
+  const rand = K.prng([...key].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0), W = 1024, H = Math.round(1024 / Math.max(1.2, aspect));
+  const cv = [0, 1].map(() => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; }), [g, e] = cv.map(c => c.getContext('2d'));
+  const X = (u) => u * W, Y = (v) => v * H, rect = (ctx, u0, v0, u1, v1, col) => { ctx.fillStyle = col; ctx.fillRect(X(u0), Y(v0), X(u1 - u0), Y(v1 - v0)); };
+  rect(g, 0, 0, 1, 1, paint); rect(e, 0, 0, 1, 1, '#000');
+  // the interior, painted into both the colour map and the glow map
+  const interior = (ctx, u0, v0, u1, v1, k) => { ctx.save(); ctx.beginPath(); ctx.rect(X(u0), Y(v0), X(u1 - u0), Y(v1 - v0)); ctx.clip();
+    const bg = ctx.createLinearGradient(0, Y(v0), 0, Y(v1)); bg.addColorStop(0, `rgba(${Math.round(232 * k)},${Math.round(205 * k)},${Math.round(160 * k)},1)`); bg.addColorStop(1, `rgba(${Math.round(120 * k)},${Math.round(88 * k)},${Math.round(60 * k)},1)`);
+    ctx.fillStyle = bg; ctx.fillRect(X(u0), Y(v0), X(u1 - u0), Y(v1 - v0));
+    const shelves = 3; for (let i = 0; i < shelves; i++) { const sv = v0 + (v1 - v0) * (0.28 + i * 0.2);
+      ctx.fillStyle = `rgba(${Math.round(70 * k)},${Math.round(48 * k)},${Math.round(32 * k)},1)`; ctx.fillRect(X(u0), Y(sv), X(u1 - u0), Y(0.012));
+      for (let x = u0 + 0.01; x < u1 - 0.02; x += 0.012 + rand() * 0.02) { const hh = 0.03 + rand() * 0.05, ww = 0.008 + rand() * 0.016;
+        const pal = { bread: ['#c8863a', '#a8652a', '#e0b070', '#8a4a20'], fruit: ['#c83a2a', '#e8a030', '#7aa040', '#f0d040', '#5a8a30'], cafe: ['#f0ece4', '#8a5a3a', '#d8c8a8', '#5a3a2a'], books: ['#7a2a2a', '#2a4a6a', '#c8a050', '#3a5a3a', '#e8dcc0', '#4a3a5a'], jars: ['#c89040', '#a03a20', '#e8d8a0', '#6a8a3a'], flowers: ['#e04a6a', '#f0c030', '#e8e0f0', '#c03a3a', '#7a4ab0', '#5a9a40'] }[goods];
+        const c = new THREE.Color(pal[Math.floor(rand() * pal.length)]).multiplyScalar(k); ctx.fillStyle = c.getStyle();
+        if (goods === 'bread' || goods === 'fruit' || goods === 'flowers') { ctx.beginPath(); ctx.ellipse(X(x + ww), Y(sv - hh * 0.4), X(ww * 1.1), Y(hh * 0.45), 0, 0, 6.283); ctx.fill(); }
+        else ctx.fillRect(X(x), Y(sv - hh), X(ww), Y(hh)); } }
+    ctx.fillStyle = `rgba(${Math.round(60 * k)},${Math.round(40 * k)},${Math.round(28 * k)},1)`; ctx.fillRect(X(u0), Y(v1 - 0.16), X(u1 - u0), Y(0.16));   // the counter
+    if (rand() < 0.7) { const px = u0 + (u1 - u0) * (0.25 + rand() * 0.5); ctx.fillStyle = `rgba(${Math.round(40 * k)},${Math.round(34 * k)},${Math.round(32 * k)},0.9)`;   // someone inside
+      ctx.beginPath(); ctx.ellipse(X(px), Y(v1 - 0.36), X(0.02), Y(0.05), 0, 0, 6.283); ctx.fill(); ctx.fillRect(X(px - 0.03), Y(v1 - 0.31), X(0.06), Y(0.2)); }
+    for (let i = 0; i < 3; i++) { const lx = u0 + (u1 - u0) * (0.2 + i * 0.3), ly = v0 + 0.06; const gl = ctx.createRadialGradient(X(lx), Y(ly), 0, X(lx), Y(ly), X(0.08));   // pendant lights
+      gl.addColorStop(0, `rgba(255,236,190,${k})`); gl.addColorStop(0.15, `rgba(255,220,160,${0.7 * k})`); gl.addColorStop(1, 'rgba(255,210,150,0)'); ctx.fillStyle = gl; ctx.fillRect(X(lx - 0.08), Y(ly - 0.08), X(0.16), Y(0.16)); }
+    ctx.restore(); };
+  const wu0 = 0.28, wu1 = 0.95, wv0 = 0.24, wv1 = 0.82, du0 = 0.06, du1 = 0.22;
+  interior(g, wu0, wv0, wu1, wv1, 0.85); interior(e, wu0, wv0, wu1, wv1, 0.75); interior(g, du0 + 0.02, wv0 + 0.03, du1 - 0.02, 0.6, 0.6); interior(e, du0 + 0.02, wv0 + 0.03, du1 - 0.02, 0.6, 0.5);
+  // glazing bars, door, stall riser, fascia lettering and a little relief
+  for (const u of [wu0 + (wu1 - wu0) / 3, wu0 + (wu1 - wu0) * 2 / 3]) rect(g, u - 0.006, wv0, u + 0.006, wv1, paint);
+  rect(g, wu0 - 0.012, wv0 - 0.02, wu1 + 0.012, wv0, paint); rect(g, du0, 0.6, du1, 0.97, paint); rect(g, du0 + 0.02, 0.64, du1 - 0.02, 0.93, 'rgba(0,0,0,0.18)'); rect(g, du1 - 0.04, 0.62, du1 - 0.03, 0.66, '#c8b070');
+  rect(g, 0, 0, 1, 0.18, paint); rect(g, 0, 0.17, 1, 0.19, 'rgba(0,0,0,0.25)'); rect(g, wu0, wv1 + 0.02, wu1, 0.97, 'rgba(0,0,0,0.12)');
+  g.fillStyle = '#efe4c8'; g.font = `bold ${Math.round(Y(0.1))}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(name, X(0.5), Y(0.095));
+  // the street and the sky faintly in the glass
+  for (const [u0, v0, u1, v1] of [[wu0, wv0, wu1, wv1], [du0 + 0.02, wv0 + 0.03, du1 - 0.02, 0.6]]) { const rg = g.createLinearGradient(0, Y(v0), 0, Y(v1)); rg.addColorStop(0, 'rgba(200,220,240,0.35)'); rg.addColorStop(0.5, 'rgba(200,220,240,0.08)'); rg.addColorStop(1, 'rgba(200,220,240,0.02)');
+    g.fillStyle = rg; g.fillRect(X(u0), Y(v0), X(u1 - u0), Y(v1 - v0)); g.fillStyle = 'rgba(255,255,255,0.1)'; g.beginPath(); g.moveTo(X(u0 + 0.1), Y(v0)); g.lineTo(X(u0 + 0.2), Y(v0)); g.lineTo(X(u0 + 0.05), Y(v1)); g.lineTo(X(u0 - 0.05), Y(v1)); g.fill(); }
+  const [map, emi] = cv.map(c => { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; });   // (a box's +x and -x faces both read left to right from the street)
+  return (shopCache[key] = new THREE.MeshStandardMaterial({ map, emissiveMap: emi, emissive: '#ffffff', emissiveIntensity: 0.6, roughness: 0.3, metalness: 0 }));
+}
 for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w = K.R(5.5, 8.5), h = 3.2 * Math.round(K.R(9, 16) / 3.2); const T = facadeTex(K.pick(['#e2c49a', '#d9a27a', '#efe0c4', '#c9846a', '#e8d6a8', '#b9c4b0', '#f0c890']), K.pick([null, null, '#2f5a4a', '#4a5f72', '#7a4a3a']));
   const tx = [T.map, T.normalMap, T.roughnessMap].map(t => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(w / 3.2, h / 3.2); return c; });
   const m = new THREE.MeshStandardMaterial({ map: tx[0], normalMap: tx[1], normalScale: new THREE.Vector2(1.2, 1.2), roughnessMap: tx[2], roughness: 1, metalness: 0, envMapIntensity: 1.2 });
@@ -57,7 +99,7 @@ for (const side of [-1, 1]) for (let z = 14; z > -60; z -= K.R(6, 9)) { const w 
   const cor = K.box(0.7, 0.42, w + 0.12, K.mat('#efe6d4', { roughness: 0.75 })); cor.position.set(side * 6.55, h - 0.25, z - w / 2); facade.add(cor);                       // cornice
   const crs = K.box(0.25, 0.18, w, K.mat('#e6dccb', { roughness: 0.8 })); crs.position.set(side * 6.5, 3.35, z - w / 2); facade.add(crs);                                  // string course over the shops
   const shopC = K.pick(['#2f6b5a', '#8a3a2a', '#2f4a6a', '#6a4a2a']); const aw = K.box(1.0, 0.08, w * 0.8, K.mat(shopC, { roughness: 0.8 })); aw.position.set(side * 6.15, 3.1, z - w / 2); aw.rotation.z = -side * 0.35; facade.add(aw);
-  const sf = K.box(0.1, 2.6, w * 0.7, K.mat('#2a3036', { roughness: 0.2, metalness: 0.3 })); sf.position.set(side * 6.45, 1.4, z - w / 2); facade.add(sf);
+  const sf = K.box(0.1, 2.6, w * 0.7, shopMat(shopKinds[shopN++ % shopKinds.length], side, w * 0.7 / 2.6)); sf.position.set(side * 6.45, 1.4, z - w / 2); facade.add(sf);
   for (let k = 0; k < Math.floor(h / 3.2) - 1; k++) { const bal = K.box(0.6, 0.08, 1.4, K.mat('#e8e0d0', { roughness: 0.6 })); bal.position.set(side * 6.2, 4.5 + k * 3.2, z - w / 2 + K.R(-1, 1)); facade.add(bal); const plant = F.shrub({ size: 0.32, seed: k + 3 }); plant.position.copy(bal.position).add(V(0, 0.05, 0)); facade.add(plant); } }
 for (const side of [-1, 1]) { const kerb = K.box(0.3, 0.15, 80, K.mat('#9a948a', { roughness: 0.8 })); kerb.position.set(side * 6.0, 0.075, -20); facade.add(kerb); const pave = K.box(2.2, 0.14, 80, K.mat('#c9c2b6', { roughness: 0.85, map: K.grain('plaster', { repeat: 10 }) }), { cast: false }); pave.position.set(side * 7.3, 0.07, -20); facade.add(pave); }
 K.bake(facade);
@@ -106,27 +148,41 @@ crowd[0].hand('R', [{ t: 0, at: () => crowd[0].root.localToWorld(V(0.15, 0.95, -
 const lines = await K.dialogue('s07');
 const vendor = puppet('VENDOR'); vendor.place(-3.75, -2.25, Math.PI / 2); app.cast(vendor); vendor.speak(lines);
 const cook = puppet('COOK'); app.cast(cook); cook.speak(lines);
-cook.walk([{ t: 0, x: -0.6, z: 0.8, yaw: Math.PI }, { t: 1.9, x: -1.55, z: -1.8, yaw: -Math.PI / 2 - 0.25 }, { t: 2.3, x: -1.6, z: -1.95, yaw: -Math.PI / 2 }]);
-// a crate of imperfect tomatoes handed across the stall
-const heroCrate = P.crate({ fill: 'tomatoUgly', color: '#7a5a3a', w: 0.5, d: 0.34, h: 0.2, layers: 2, level: 0.7 }); S.add(heroCrate);
-// before the hand-off the crate rides on the vendor's hands (off-screen behind the close-up camera); at 5.9 s it is in the
-// cook's outstretched hands and she draws it in to a carry. Her hands follow the crate, so the crate must never be placed
-// at her hands (that loop lifted it overhead in the first cut).
-const reachAt = () => cook.root.localToWorld(V(0, 1.12, 0.6)), carryAt = () => cook.root.localToWorld(V(0, 0.96, 0.36));
-const crateAt = (t) => { if (t <= 5.9) { const a = vendor.arms.L.grip.getWorldPosition(V()), b = vendor.arms.R.grip.getWorldPosition(V()); return a.lerp(b, 0.5); } return reachAt().lerp(carryAt(), K.smooth(K.clamp((t - 5.9) / 0.6))); };
-const crateYaw = (t) => { const from = vendor.root.rotation.y + Math.PI / 2; let to = cook.root.rotation.y + Math.PI / 2; to += Math.round((from - to) / Math.PI) * Math.PI;   // the crate is symmetric: take the nearest equivalent turn
-  return t <= 5.9 ? from : K.lerp(from, to, K.smooth(K.clamp((t - 5.9) / 0.6))); };
+cook.walk([{ t: 0, x: -0.6, z: 0.8, yaw: Math.PI }, { t: 1.9, x: -1.55, z: -1.8, yaw: -Math.PI / 2 - 0.25 }, { t: 2.3, x: -1.6, z: -1.95, yaw: -Math.PI / 2 },
+  { t: 4.35, x: -1.6, z: -1.95, yaw: -Math.PI / 2 }, { t: 4.95, x: -2.32, z: -2.02, yaw: -Math.PI / 2 }]);   // she steps up to the counter
+// a crate of imperfect tomatoes waits at the front of the counter (the display crates fill the middle of it); the vendor
+// gestures to it, the cook steps up and lifts it by its handles. The crate leads and the hands follow it.
+const heroCrate = P.crate({ fill: 'tomatoUgly', color: '#7a5a3a', w: 0.5, d: 0.32, h: 0.2, layers: 2, level: 0.7 }); S.add(heroCrate);
+const CW = 0.5, CD = 0.32, CH = 0.2, TOP = 0.84;   // crate size, counter height
+const C1 = V(-2.72, TOP, -2.02), carryAt = () => cook.root.localToWorld(V(0, 0.95, 0.37));
+const crateYaw0 = Math.PI / 2;   // long sides face the vendor and the cook, the handled ends their left and right
+const lift = (t) => K.smooth(K.clamp((t - 5.55) / 0.75));
+app.on(t => { const u = lift(t);
+  if (u <= 0) heroCrate.position.copy(C1);
+  else { const up = C1.clone().lerp(carryAt(), u); up.y += 0.06 * Math.sin(Math.PI * u); heroCrate.position.copy(up); }   // (up off the counter first, then in)
+  let to = cook.root.rotation.y; to += Math.round((crateYaw0 - to) / Math.PI) * Math.PI; heroCrate.rotation.y = K.lerp(crateYaw0, to, u); heroCrate.updateMatrixWorld(true); });   // ends to her sides
+const cq = () => heroCrate.getWorldQuaternion(new THREE.Quaternion()), cw = (x, y, z) => heroCrate.localToWorld(V(x, y, z)), cd = (x, y, z) => V(x, y, z).normalize().applyQuaternion(cq());
+// which handled end (crate +x or -x) is on a given side of a person, once, with the crate at rest
+heroCrate.position.copy(C1); heroCrate.rotation.y = crateYaw0; heroCrate.updateMatrixWorld(true);
+const endFor = (p, s) => { p.root.updateMatrixWorld(true); const side = p.root.localToWorld(V(s === 'L' ? -1 : 1, 1, 0)), a = cw(1, 0, 0), b = cw(-1, 0, 0); return side.distanceTo(a) < side.distanceTo(b) ? 1 : -1; };
+// vendor: hands resting on his side of the counter; on his line he opens a hand towards the crate, palm up
+const vw = (x, y, z) => vendor.root.localToWorld(V(x, y, z)), vd = (x, y, z) => V(x, y, z).normalize().applyQuaternion(vendor.root.getWorldQuaternion(new THREE.Quaternion()));
+// (a hand target is the palm centre, which sits 1.8 cm off the palm along its normal)
+const onCounter = (s) => ({ at: () => vw(s === 'L' ? -0.2 : 0.2, TOP - 0.012, 0.15), aim: () => ({ fingers: vd(s === 'L' ? 0.15 : -0.15, -0.12, 1), palm: vd(0, -1, 0) }), shape: 'relaxed' });
+const offer = { at: () => vw(-0.12, 1.1, 0.36), aim: () => { const d = heroCrate.getWorldPosition(V()).add(V(0, 0.1, 0)).sub(vw(-0.12, 1.1, 0.36)).normalize(); return { fingers: d, palm: V(0, 1, 0) }; }, shape: 'spread' };
 vendor.act([{ t: 0, pose: 'stand' }]);
-vendor.hand('L', [{ t: 0, at: () => vendor.root.localToWorld(V(-0.22, 0.96, 0.62)), pole: [-0.6, -0.6, -0.4] }, { t: 1.8, at: () => vendor.root.localToWorld(V(-0.22, 1.05, 0.72)), blend: 0.6 }, { t: 6.2, at: null, blend: 0.4 }]);
-vendor.hand('R', [{ t: 0, at: () => vendor.root.localToWorld(V(0.22, 0.96, 0.62)), pole: [0.6, -0.6, -0.4] }, { t: 1.8, at: () => vendor.root.localToWorld(V(0.22, 1.05, 0.72)), blend: 0.6 }, { t: 6.2, at: null, blend: 0.4 }]);
+vendor.hand('L', [{ t: 0, ...onCounter('L'), pole: [-0.6, -0.7, -0.2] }, { t: 2.15, ...offer, blend: 0.5, pole: [-0.7, -0.6, -0.1] }, { t: 3.75, ...onCounter('L'), blend: 0.65 }]);
+vendor.hand('R', [{ t: 0, ...onCounter('R'), pole: [0.6, -0.7, -0.2] }]);
 vendor.look([{ t: 0, at: () => heroCrate.getWorldPosition(V()) }, { t: 1.8, at: () => cook.head.getWorldPosition(V()), blend: 0.4 }]);
 vendor.face([{ t: 0, smile: 0.2, brow: 0.1 }, { t: 2.2, smile: 0.1, brow: 0.4, tilt: 0.4 }, { t: 5.2, smile: 0.6, brow: 0.3, tilt: 0 }]);
-cook.act([{ t: 0, pose: 'stand' }, { t: 6.0, pose: 'carry', p: { h: 1.0 }, blend: 0.5 }]);
-cook.hand('L', [{ t: 0, at: null }, { t: 5.4, at: () => heroCrate.localToWorld(V(-0.24, 0.16, 0)), blend: 0.45, pole: [-0.7, -0.6, -0.3] }]);
-cook.hand('R', [{ t: 0, at: null }, { t: 5.4, at: () => heroCrate.localToWorld(V(0.24, 0.16, 0)), blend: 0.45, pole: [0.7, -0.6, -0.3] }]);
-cook.look([{ t: 0, at: () => veg.localToWorld(V(0, 1.0, 0.2)) }, { t: 2.0, at: () => heroCrate.getWorldPosition(V()), blend: 0.4 }, { t: 3.9, at: () => vendor.head.getWorldPosition(V()), blend: 0.4 }, { t: 6.4, at: () => heroCrate.getWorldPosition(V()), blend: 0.5 }]);
+// cook: reaches for the handles, fingers hooked under the handle bars from outside (palms up), lifts and draws it in
+const handle = (sx) => ({ at: () => cw(sx * (CW / 2 + 0.045), CH - 0.07, 0), aim: () => ({ fingers: cd(-sx, 0.3, 0), palm: cd(-sx * 0.3, 1, 0) }), shape: 'hold' });
+cook.act([{ t: 0, pose: 'stand' }, { t: 4.9, pose: 'bend', p: { amount: 0.32 }, blend: 0.5 }, { t: 5.75, pose: 'stand', blend: 0.6 }]);
+cook.root.position.set(-2.32, 0, -2.02); cook.root.rotation.y = -Math.PI / 2;   // (where she takes it; the walk keys move her from frame one)
+for (const s of ['L', 'R']) { const sx = endFor(cook, s);
+  cook.hand(s, [{ t: 0, at: null }, { t: 4.95, ...handle(sx), blend: 0.55, pole: [s === 'L' ? -0.7 : 0.7, -0.6, -0.3] }]); }
+cook.look([{ t: 0, at: () => veg.localToWorld(V(0, 1.0, 0.2)) }, { t: 2.0, at: () => heroCrate.getWorldPosition(V()), blend: 0.4 }, { t: 3.9, at: () => vendor.head.getWorldPosition(V()), blend: 0.4 }, { t: 5.0, at: () => heroCrate.getWorldPosition(V()), blend: 0.4 }, { t: 6.4, at: () => vendor.head.getWorldPosition(V()), blend: 0.6 }]);
 cook.face([{ t: 0, smile: 0.35, brow: 0.2 }, { t: 3.7, smile: 0.6, brow: 0.35 }, { t: 6.3, smile: 0.7, brow: 0.2 }]);
-app.after(t => { const p = crateAt(t); heroCrate.position.copy(p).add(V(0, t <= 5.9 ? -0.12 : 0, 0)); heroCrate.rotation.y = crateYaw(t); });
 
 // camera
 const vF = () => vendor.head.getWorldPosition(V()).add(V(0, 0.09, 0)), cF = () => cook.head.getWorldPosition(V()).add(V(0, 0.09, 0));
@@ -135,8 +191,8 @@ app.rig = new K.Rig([
   { t: 2.0, pos: [1.2, 2.2, 5.6], look: [-1.4, 1.35, -2.6], fov: 37, focus: cF, aperture: 0.002 },
   { t: 2.0001, cut: true, pos: () => vF().add(V(1.6, -0.15, 0.85)), look: () => vF().add(V(0.15, -0.3, 0)), fov: 30, focus: vF, aperture: 0.005 },
   { t: 4.3, pos: () => vF().add(V(1.55, -0.15, 0.78)), look: () => vF().add(V(0.15, -0.3, 0)), fov: 29, focus: vF, aperture: 0.005 },
-  { t: 4.3001, cut: true, pos: () => cF().add(V(-1.25, -0.12, -0.75)), look: () => cF().add(V(-0.1, -0.2, 0)), fov: 30, focus: cF, aperture: 0.005 },
-  { t: 6.5, pos: () => cF().add(V(-1.2, -0.12, -0.7)), look: () => cF().add(V(-0.1, -0.22, 0)), fov: 29, focus: cF, aperture: 0.005 },
+  { t: 4.3001, cut: true, pos: [-3.3, 1.42, -2.95], look: () => cF().add(V(-0.12, -0.28, 0)), fov: 32, focus: cF, aperture: 0.005 },
+  { t: 6.5, pos: [-3.28, 1.4, -2.9], look: () => cF().add(V(-0.12, -0.3, 0)), fov: 31, focus: cF, aperture: 0.005 },
   { t: 6.5001, cut: true, pos: () => cF().lerp(vF(), 0.5).add(V(0.4, -0.2, 2.6)), look: () => cF().lerp(vF(), 0.5).add(V(0, -0.4, 0)), fov: 36, focus: cF, aperture: 0.003 },
   { t: 8.5, pos: () => cF().lerp(vF(), 0.5).add(V(0.5, -0.1, 3.0)), look: () => cF().lerp(vF(), 0.5).add(V(0, -0.35, 0)), fov: 37, focus: cF, aperture: 0.003 },
 ], { handheld: 0.6 });

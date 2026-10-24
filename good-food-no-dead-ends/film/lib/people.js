@@ -678,10 +678,13 @@ export class HumanPuppet extends Puppet {
       this.K['foot.' + m] = { g: Lg.ankle, k: restQ(Lg.ankle).invert() };
       // finger curl axes (rest frame = bone frame): fingers bend towards the palm
       const wr = J('wrist.' + m), handDir = J('finger3-1.' + m).sub(wr).normalize(), sd = J('finger2-1.' + m).sub(J('finger5-1.' + m)).normalize();
-      const palmN = new THREE.Vector3().crossVectors(handDir, sd).multiplyScalar(m === 'L' ? -1 : 1).normalize(); this['palmN' + s] = palmN;
+      const palmN = new THREE.Vector3().crossVectors(handDir, sd).multiplyScalar(m === 'L' ? 1 : -1).normalize(); this['palmN' + s] = palmN;   // (checked: with Y along the fingers and Z = palmN, the thumb lies on +X of a right hand)
       this['fingers' + s] = [];
+      // fingers flex towards the palm; the thumb flexes across it, towards the little finger (and a little out of it)
+      const across = new THREE.Vector3().crossVectors(handDir, palmN), thumbSide = Math.sign(J('finger1-3.' + m).sub(wr).dot(across)) || 1;
+      const thumbFlex = across.clone().multiplyScalar(-thumbSide).addScaledVector(palmN, 0.45).normalize();
       for (let f = 1; f <= 5; f++) for (let k = 1; k <= 3; k++) { const n = `finger${f}-${k}.${m}`; if (!h.bone(n)) continue; const d = J(n, 't').sub(J(n)).normalize();
-        this['fingers' + s].push({ b: h.bone(n), axis: new THREE.Vector3().crossVectors(d, palmN).normalize(), f, k, fan: f - 3 }); }
+        this['fingers' + s].push({ b: h.bone(n), axis: new THREE.Vector3().crossVectors(d, f === 1 ? thumbFlex : palmN).normalize(), f, k, fan: f - 3 }); }
       // the hand frame at rest (body space = every bone's rest-local space): Y along the fingers, Z out of the palm
       const Bq = frameQ(handDir, palmN), off = J('finger3-1.' + m).sub(wr).multiplyScalar(0.7).add(palmN.clone().multiplyScalar(0.018));
       this.HF = this.HF || {}; this.HF[s] = { B: Bq, Binv: Bq.clone().invert(), off, fore: J('lowerarm01.' + m).distanceTo(wr), foreAx: wr.clone().sub(J('lowerarm01.' + m)).normalize(), handDir, palmN };
@@ -808,8 +811,8 @@ export class HumanPuppet extends Puppet {
     const opp = mix('opp'), spr = mix('spread');
     for (const F of this['fingers' + s]) { const ang = lerp(A ? A.f[F.f - 1][F.k - 1] : Bs.f[F.f - 1][F.k - 1], Bs.f[F.f - 1][F.k - 1], u);
       F.b.quaternion.setFromAxisAngle(F.axis, ang);
-      if (F.k === 1 && F.f > 1 && spr) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.palmN, -spr * F.fan * sg));
-      if (F.k === 1 && F.f === 1 && opp) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.handDir, -opp * sg)); }   // swings the thumb in front of the palm
+      if (F.k === 1 && F.f > 1 && spr) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.palmN, spr * F.fan * sg));
+      if (F.k === 1 && F.f === 1 && opp) F.b.quaternion.premultiply(qc.setFromAxisAngle(H.handDir, opp * sg)); }   // swings the thumb in front of the palm
   }
   // analytic two-bone IK on the body's own arm (shoulder from the posed spine), elbow toward the pole
   bodyIK(s, T, pole, w) {
