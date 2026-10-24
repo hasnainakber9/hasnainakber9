@@ -44,7 +44,10 @@ export function heldFork(app, p, side = 'R', kind = 'fork') {
 // periodic fork-to-mouth with per-person phase: the hand turns the tines down to the plate, then up to the lips
 export function eating(app, p, top, o = {}) {
   const plate = plateOf(p.name, top); const rate = o.rate || 0.9, ph = o.phase || 0; const { fork, palmFor } = heldFork(app, p, 'R');
-  const w = (t) => { if (o.from != null && t < o.from) return 0; if (o.until != null && t > o.until) return 0; const c = Math.sin(t * rate * Math.PI + ph); return smooth(Math.max(0, c) * 1.6); };
+  // a bite every 2/rate s: the fork rises over a quarter of the cycle, rests at the mouth, comes back down and waits on the
+  // plate; the eating fades in after o.from and out after o.until rather than switching
+  const w = (t) => { const win = (o.from != null ? smooth((t - o.from) / 0.3) : 1) * (o.until != null ? 1 - smooth((t - o.until) / 0.4) : 1); if (win <= 0) return 0;
+    const f = ((t * rate / 2 + ph / (2 * Math.PI)) % 1 + 1) % 1, lift = f < 0.25 ? smooth(f / 0.25) : f < 0.4 ? 1 : f < 0.65 ? 1 - smooth((f - 0.4) / 0.25) : 0; return lift * win; };
   const qPlate = () => frameQ(p.dirToWorld([-0.15, -0.6, 1]), p.dirToWorld([-0.5, -0.8, 0.1])), qMouth = () => frameQ(p.dirToWorld([-0.4, 0.3, -1]), p.dirToWorld([-0.5, -0.8, 0.2]));
   const q = (t) => qPlate().slerp(qMouth(), w(t));
   const point = (t) => plate.clone().add(V(0.06, 0.035, 0)).lerp(p.mouthWorld().add(p.offsetToWorld([0, -0.004, 0.03])), w(t));
@@ -57,6 +60,6 @@ export function eating(app, p, top, o = {}) {
 // laughing / chatting body language (pure functions of t)
 export function chatter(p, o = {}) {
   const t0 = o.from ?? 0, t1 = o.until ?? 999, k = o.laugh ?? 0;
-  p.act([{ t: 0, pose: 'sit', p: { seat: 0.46, lean: 0.14 }, talk: 0.8, mod: (t) => { const on = t > t0 && t < t1 ? 1 : 0; return { spX: 0.14 + on * k * (0.04 + Math.sin(t * 8.5 + (o.phase || 0)) * 0.035), spY: Math.sin(t * 0.7 + (o.phase || 0)) * 0.12, nkX: -on * k * 0.12 }; } }]);
+  p.act([{ t: 0, pose: 'sit', p: { seat: 0.46, lean: 0.14 }, talk: 0.8, mod: (t) => { const on = smooth((t - t0) / 0.3) * (1 - smooth((t - t1) / 0.4)); return { spX: 0.14 + on * k * (0.04 + Math.sin(t * 8.5 + (o.phase || 0)) * 0.035), spY: Math.sin(t * 0.7 + (o.phase || 0)) * 0.12, nkX: -on * k * 0.12 }; } }]);
   p.face([{ t: 0, smile: o.smile ?? 0.4, brow: 0.2 }, { t: t0, smile: k ? 0.95 : 0.5, jaw: k ? 0.35 : 0, brow: 0.35, squint: k ? 0.5 : 0.1, blend: 0.3 }, { t: t1, smile: 0.5, jaw: 0, squint: 0.1, blend: 0.4 }]);
 }

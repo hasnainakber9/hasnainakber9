@@ -364,6 +364,9 @@ export class Puppet {
     return 0;
   }
   speaking(t, pad = 0.15) { return this.lines.some(l => t >= l.start - pad && t <= l.end + pad); }
+  // how much this character is in 'talking mode' (gestures, nods, mouth shapes): ramps up over a quarter second before a
+  // line and down after it, so nothing switches on or off between two frames
+  talkAmt(t, pad = 0.15) { let a = 0; for (const l of this.lines) a = Math.max(a, smooth((t - (l.start - pad - 0.25)) / 0.25) * (1 - smooth((t - (l.end + pad)) / 0.3))); return a; }
   rootAt(t) {
     const w = this.k.walk; if (!w.length) return { x: this.root.position.x, z: this.root.position.z, yaw: this.root.rotation.y, moving: 0, dist: 0 };
     if (t <= w[0].t) return { x: w[0].x, z: w[0].z, yaw: w[0].yaw ?? 0, moving: 0, dist: 0 };
@@ -392,8 +395,8 @@ export class Puppet {
     // idle life: breathing, weight shift, speech gestures
     const ph = this.phase, br = Math.sin(t * 1.45 + ph);
     P.spX += br * 0.012 + (this.spec.stoop || 0); P.hx += Math.sin(t * 0.37 + ph) * 0.006 * this.s;
-    const sp = this.speech(t), talking = this.speaking(t);
-    if (talking && P.talk) { const e = sp; const g1 = Math.sin(t * 2.6 + ph) * 0.5 + 0.5; P.eR += (0.35 + 0.35 * e) * P.talk * (1 - (P.ikR ? 1 : 0)); P.aRx -= (0.18 + 0.15 * g1) * P.talk * (1 - (P.ikR ? 1 : 0)); P.wRx -= 0.2 * e * P.talk; P.spY += Math.sin(t * 1.3 + ph) * 0.03 * P.talk; }
+    const sp = this.speech(t), ta = this.talkAmt(t);
+    if (ta > 0 && P.talk) { const e = sp, g1 = Math.sin(t * 2.6 + ph) * 0.5 + 0.5, k = P.talk * ta, free = 1 - (P.ikR ? clamp(P.ikR.w) : 0); P.eR += (0.35 + 0.35 * e) * k * free; P.aRx -= (0.18 + 0.15 * g1) * k * free; P.wRx -= 0.2 * e * k; P.spY += Math.sin(t * 1.3 + ph) * 0.03 * k; }
     this.P = P;
     const { s } = this;
     this.hips.position.set(P.hx, this.hipY - P.drop * s + P.hy, 0); this.hips.rotation.set(P.hpX, P.hpY, P.hpZ);
@@ -436,10 +439,10 @@ export class Puppet {
     const share = (a, w, eye) => Math.sign(a) * Math.max(Math.abs(a * w), Math.abs(a) - eye);
     let yaw = share(angB[0], wB, 0.3), pitch = share(angB[1], wB, 0.2);
     if (angA) { const u = lk.u; yaw = lerp(share(angA[0], wA, 0.3), yaw, u); pitch = lerp(share(angA[1], wA, 0.2), pitch, u); }
-    const talking = this.speaking(t), e = this.speech(t), ph = this.phase;
-    const nod = talking ? (Math.sin(t * 4.7 + ph) * 0.025 + e * 0.035) : 0;
+    const talking = this.speaking(t), ta = this.talkAmt(t), e = this.speech(t), ph = this.phase;
+    const nod = ta * (Math.sin(t * 4.7 + ph) * 0.025 + e * 0.035);
     const drift = (noise2(t * 0.35, this.seed % 97) - 0.5) * 0.06;
-    this.hd.rotation.set(clamp(pitch, -0.55, 0.5) + nod + drift * 0.4, clamp(yaw, -1.15, 1.15) + drift, Math.sin(t * 0.5 + ph) * 0.025 + (talking ? Math.sin(t * 1.7 + ph) * 0.02 : 0));
+    this.hd.rotation.set(clamp(pitch, -0.55, 0.5) + nod + drift * 0.4, clamp(yaw, -1.15, 1.15) + drift, Math.sin(t * 0.5 + ph) * 0.025 + ta * Math.sin(t * 1.7 + ph) * 0.02);
     this.hd.updateMatrixWorld(true);
     // eyes aim at the exact (blended) target, with tiny saccades
     const tgt = this.gazeTarget = tA ? tA.clone().lerp(tB, lk.u) : tB;
@@ -453,19 +456,19 @@ export class Puppet {
     const lidOpen = this.child ? -0.5 : -0.42, lidClosed = 0.62;
     const upper = lerp(lidOpen + F.squint * 0.25, lidClosed, bl);
     const lower = 0.55 - F.squint * 0.2 - F.smile * 0.12;
-    const browUp = F.brow * 0.045 + (talking ? e * 0.02 : 0);
+    const browUp = F.brow * 0.045 + ta * e * 0.02;
     for (const ey of this.eyes) {
       ey.lidUp.rotation.set(upper, 0, 0); ey.lidLo.rotation.set(lower, 0, 0);
       ey.brow.position.y = ey.baseBrowY + browUp * this.D.headR * this.s * 2.2 + (ey.sg * F.tilt) * 0.02 * this.s;
       ey.brow.rotation.z = -ey.sg * F.brow * 0.12 + ey.sg * F.tilt * -0.1;
     }
     // mouth: loudness-driven opening + chewing + smile curvature
-    let open = 0; if (talking) open = clamp(Math.pow(e * 1.35, 0.75)) * 0.95;
-    if (F.chew > 0 && !talking) open = Math.max(open, F.chew * (0.25 + 0.25 * Math.sin(t * 9.0)) );
-    if (F.chew > 0 && talking) open = open * 0.75 + F.chew * 0.12 * (1 + Math.sin(t * 9));
+    // (chewing while talking: the words ride on a smaller chew; mixed by the talk amount so neither switches abruptly)
+    const say = ta * clamp(Math.pow(e * 1.35, 0.75)) * 0.95, chewOnly = F.chew * (0.25 + 0.25 * Math.sin(t * 9.0)), chewTalk = say * 0.75 + F.chew * 0.12 * (1 + Math.sin(t * 9));
+    let open = F.chew > 0 ? lerp(Math.max(say, chewOnly), chewTalk, ta) : say;
     open = Math.max(open, F.jaw);
     const sm = clamp(F.smile, -1, 1);
-    this.faceState = { F, bl, open, sm, e, talking, t };
+    this.faceState = { F, bl, open, sm, e, talking, ta, t };
     this.mouthLine.scale.set(1 + sm * 0.08 - open * 0.15, 0.12 + Math.abs(sm) * 0.55, 1); this.mouthLine.rotation.z = sm < 0 ? Math.PI : 0; this.mouthLine.position.y = sm < 0 ? -0.06 * this.D.headR * this.s : 0;
     this.cavity.scale.y = (0.012 + open * 0.13) * this.D.headR * this.s; this.cavity.scale.x = (0.15 - open * 0.03 + sm * 0.03) * this.D.headR * this.s;
     this.cavity.position.y = -open * 0.05 * this.D.headR * this.s; this.cavity.visible = open > 0.02;
@@ -763,14 +766,14 @@ export class HumanPuppet extends Puppet {
       B('head').getWorldQuaternion(qb); const dl = d.applyQuaternion(qc.copy(qb).invert()); const yw = clamp(Math.atan2(dl.x, dl.z), -0.36, 0.36), pt = clamp(-Math.atan2(dl.y, Math.hypot(dl.x, dl.z)), -0.22, 0.24);
       this.eyePitch = pt; qc.setFromEuler(new THREE.Euler(pt, yw, 0, 'YXZ')); setWorldQuat(e, qb.multiply(qc)); }
     // face
-    const fs = this.faceState; if (fs) { const { F, bl, open, sm, e, talking } = fs; const tt = fs.t;
-      const v1 = talking ? noise2(tt * 7.3, this.seed % 53) : 0.5, v2 = talking ? noise2(tt * 6.1 + 9, this.seed % 41) : 0.5;
+    const fs = this.faceState; if (fs) { const { F, bl, open, sm, e, ta } = fs; const tt = fs.t;
+      const v1 = lerp(0.5, noise2(tt * 7.3, this.seed % 53), ta), v2 = lerp(0.5, noise2(tt * 6.1 + 9, this.seed % 41), ta);
       const lidUp = Math.max(0, -(this.eyePitch || 0)) * 2.2 * (1 - bl), lidDown = Math.max(0, this.eyePitch || 0) * 1.4;
       h.setFace({ 'eye-left-opened-up': lidUp, 'eye-right-opened-up': lidUp, 'eye-left-closure': Math.min(1, bl + lidDown), 'eye-right-closure': Math.min(1, bl + lidDown), 'eye-left-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22, 'eye-right-slit': F.squint * 0.6 + Math.max(0, sm) * 0.22,
-        'eyebrows-left-up': Math.max(0, F.brow) * 0.8 + Math.max(0, F.tilt) * 0.4 + (talking ? e * 0.15 : 0), 'eyebrows-right-up': Math.max(0, F.brow) * 0.8 + (talking ? e * 0.15 : 0),
+        'eyebrows-left-up': Math.max(0, F.brow) * 0.8 + Math.max(0, F.tilt) * 0.4 + ta * e * 0.15, 'eyebrows-right-up': Math.max(0, F.brow) * 0.8 + ta * e * 0.15,
         'eyebrows-left-down': Math.max(0, -F.brow) * 0.7, 'eyebrows-right-down': Math.max(0, -F.brow) * 0.7 + Math.max(0, F.tilt) * 0.3,
         'mouth-corner-puller': Math.max(0, sm) * 0.85, 'mouth-depression': Math.max(0, -sm) * 0.7, 'mouth-open': open * 0.34,
-        'mouth-pursing': talking ? Math.max(0, v1 - 0.55) * 1.2 * e : 0, 'mouth-retraction': talking ? Math.max(0, v2 - 0.5) * 0.8 * e : 0, 'mouth-compression': talking ? Math.max(0, 0.25 - open) * 0.6 : 0 }); }
+        'mouth-pursing': ta * Math.max(0, v1 - 0.55) * 1.2 * e, 'mouth-retraction': ta * Math.max(0, v2 - 0.5) * 0.8 * e, 'mouth-compression': ta * Math.max(0, 0.25 - open) * 0.6 }); }
     // props held by the driver grips follow the real palms
     for (const s of ['L', 'R']) { const A = this.arms[s], f = this.handFrame(s);
       A.grip.parent.updateWorldMatrix(true, false); A.grip.position.copy(A.grip.parent.worldToLocal(f.pos)); A.grip.updateMatrixWorld(true); }

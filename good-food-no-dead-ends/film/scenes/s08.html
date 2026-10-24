@@ -36,7 +36,7 @@ const knife = chefKnife(); app.add(knife); const KG = knifeGrip('L'); cook.attac
 const qKnife = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(V(0, 0, 1).cross(V(1, -0.02, 0).normalize()), V(0, 0, 1), V(1, -0.02, 0).normalize()));   // blade level: the edge meets the board
 const qHandK = qKnife.clone().multiply(KG.q.clone().invert()), edgeMid = V(-0.044, 0, 0.1);
 const cutDepth = (t) => 1 - K.smooth((t - 0.22) / 0.66);                       // 1 = above the fruit, 0 = blade on the board
-const knifePalm = (t) => { const e = tomatoC.clone().add(V(0.012 * Math.sin(t * 13) * (t > 0.2 && t < 0.9 ? 1 : 0), heroTop + 0.03 - tomatoC.y + boardTop - boardTop, 0)); e.y = K.lerp(boardTop + 0.001, tomatoC.y + heroTop + 0.03, cutDepth(t));
+const knifePalm = (t) => { const e = tomatoC.clone().add(V(0.012 * Math.sin(t * 13) * K.smooth((t - 0.2) / 0.1) * (1 - K.smooth((t - 0.8) / 0.1)), heroTop + 0.03 - tomatoC.y + boardTop - boardTop, 0)); e.y = K.lerp(boardTop + 0.001, tomatoC.y + heroTop + 0.03, cutDepth(t));
   const origin = e.sub(edgeMid.clone().applyQuaternion(qKnife)); return origin.sub(V(...KG.pos).applyQuaternion(qHandK)); };
 cook.act([{ t: 0, pose: 'stand', talk: 0, mod: { spX: 0.22 } }, { t: 2.2, pose: 'stand', blend: 0.4 }]);
 cook.hand('L', [{ t: 0, at: knifePalm, aim: () => qHandK, shape: 'knife', pole: [0.7, -0.6, -0.4] },

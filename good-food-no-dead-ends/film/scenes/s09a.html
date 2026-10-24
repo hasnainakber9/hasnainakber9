@@ -9,7 +9,6 @@ import * as P from '../lib/props.js';
 import * as F from '../lib/foliage.js';
 import { kitchen } from '../lib/sets.js';
 import { puppet } from '../lib/people.js';
-import { knifeGrip } from '../lib/cutlery.js';
 const { THREE, V } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'planks', 'tiles', 'soil']);
 K.seed(91);
@@ -31,11 +30,17 @@ const board = P.ware.board(0.4, 0.28); board.position.set(BX, top, -1.12); board
 const scraps = new THREE.Group(); S.add(scraps);
 const sg = [P.produceGeo('onion', { color: '#c98a4a' }), P.tomatoGeo({ r: 0.022, ugly: true, seg: 10, color: '#a83a22', seed: 5 }), P.produceGeo('carrot')];
 const KINDS = ['onion', 'tomato', 'carrot', 'peel', 'onion', 'potato'];
-for (let i = 0; i < 16; i++) { const m = F.scrap(KINDS[i % KINDS.length], 300 + i); m.position.set(K.R(-0.12, 0.12), 0.012, K.R(-0.09, 0.09)); m.rotation.set(K.R(-0.4, 0.4), K.R(0, 6), K.R(-0.4, 0.4)); scraps.add(m); }
+// two lanes the scraper will clear (one per stroke, side by side) and, behind where the strokes start, the scraps left for later
+const LANES = [-0.045, 0.06];
+for (let i = 0; i < 16; i++) { const m = F.scrap(KINDS[i % KINDS.length], 300 + i), k = Math.floor(i / 5);
+  if (k < 2) m.position.set(LANES[k] + K.R(-0.04, 0.04), 0.012, K.R(-0.08, 0.05)); else m.position.set(K.R(-0.1, 0.1), 0.012, K.R(-0.19, -0.14));
+  m.rotation.set(K.R(-0.4, 0.4), K.R(0, 6), K.R(-0.4, 0.4)); scraps.add(m); }
 const caddy = P.caddy({ color: '#3f5a38', lid: '#4c6e3e' }); caddy.position.set(BX - 0.04, top, -0.66); caddy.rotation.y = -Math.PI / 2; S.add(caddy);
 const falling = []; for (let i = 0; i < 5; i++) { const m = F.scrap(KINDS[i % KINDS.length], 400 + i); S.add(m); falling.push([m, 3.55 + i * 0.09, K.R(-0.05, 0.05), K.R(-0.04, 0.04), K.R(0, 6)]); }
 app.on(t => { const c = caddy.getWorldPosition(V()); for (const [m, t0, dx, dz, r] of falling) { const u = K.clamp((t - t0) / 0.35); m.visible = t > t0 - 0.05; m.position.set(c.x + dx, c.y + 0.36 - 0.21 * u * u, c.z + 0.06 - 0.06 * u + dz); m.rotation.set(r + u * 2, r, u * 3); } });
-const spat = new THREE.Group(); spat.add(K.at(K.box(0.07, 0.004, 0.09, K.MAT.steel()), 0, 0, 0.045)); spat.add(K.at(K.box(0.022, 0.016, 0.11, K.mat('#2a2622'), { r: 0.006 }), 0, 0, -0.05)); S.add(spat);
+// a bench scraper: a steel blade 12 x 7.2 cm with a wooden grip along its top edge
+const spat = new THREE.Group(); spat.add(K.at(K.box(0.12, 0.072, 0.0016, K.MAT.steel()), 0, 0.036, 0));
+{ const grip = K.cyl(0.0115, 0.0115, 0.124, K.mat('#5a3d28', { roughness: 0.55 }), 16); grip.rotation.z = Math.PI / 2; grip.position.y = 0.08; spat.add(grip); } S.add(spat);
 // cast
 const lines = await K.dialogue('s09');
 const noor = puppet('NOOR'); noor.place(2.88, -1.02, -Math.PI / 2); app.cast(noor); noor.speak(lines);
@@ -45,13 +50,27 @@ const cook = puppet('COOK'); cook.place(2.94, -2.0, -Math.PI / 2 + 0.25); app.ca
 const lidHinge = caddy.userData.lid;
 noor.act([{ t: 0, pose: 'stand', talk: 0.3 }]);
 const scrapeT = (t) => { const u = (t % 1.2) / 1.2; return u; };
-// the scraper is held like a knife, blade down on the board, and drawn along it in strokes; the other hand steadies the board
+// the scraper is held like a knife, blade down on the board, and drawn along it in strokes towards the caddy end, then
+// lifted and carried back through the air (one continuous motion: no jump back to the start); the other hand steadies the board
 const nd = (x, y, z) => noor.dirToWorld([x, y, z]);
-noor.hand('R', [{ t: 0, at: (t) => { const u = scrapeT(t); const a = V(BX + 0.03, top + 0.07, -1.24), b = V(BX + 0.03, top + 0.085, -1.0); return a.lerp(b, K.smooth(Math.min(1, u * 1.3))); }, pole: [0.6, -0.7, -0.3],
-    shape: 'knife', aim: () => ({ fingers: nd(-0.35, -0.55, 1), palm: nd(-0.9, -0.2, 0.1) }) },
-  { t: 2.2, at: () => noor.root.localToWorld(V(0.15, 0.8, 0.22)), blend: 0.5, shape: 'knife', aim: () => ({ fingers: nd(-0.2, -0.3, 1), palm: nd(-0.9, 0.1, 0) }) }]);
-noor.hand('L', [{ t: 0, at: () => V(BX + 0.06, top + 0.012, -1.0), pole: [-0.6, -0.7, -0.3], shape: 'relaxed', aim: () => ({ fingers: nd(0.25, -0.15, 1), palm: nd(0, -1, 0) }) }, { t: 2.2, at: null, blend: 0.5 }]);
-noor.attach('R', spat, knifeGrip('R'));   // (a bench scraper is held like a knife: same axes, length along +z)
+// the scraper leads (upright, edge on the board, leaning back a little, pushed edge-first towards the caddy end) and the
+// hand holds its grip from above, fingers along it; after the last stroke it stays in her hand as she lowers it
+const STROKE = 0.62, T_END = 1.2 + STROKE * 1.2, BOARD_TOP = top + 0.011, zA = -1.235, zB = -1.045;
+const scrPose = (t) => { const u = scrapeT(Math.min(t, T_END - 1e-4));
+  if (u < STROKE) return { z: K.lerp(zA, zB, K.smooth(u / STROKE)), lift: 0 };
+  const s = K.smooth((u - STROKE) / (1 - STROKE)); return { z: K.lerp(zB, zA, s), lift: 0.06 * Math.sin(Math.PI * s) }; };
+let spatHeld = null, gripEnd = null;   // the scraper in the hand's frame, and where the hand is, at the end of the last stroke
+const handM = () => { const f = noor.handFrame('R'); return new THREE.Matrix4().compose(f.pos, f.quat, V(1, 1, 1)); };
+app.on(t => { if (spatHeld && t >= T_END) { handM().multiply(spatHeld).decompose(spat.position, spat.quaternion, V()); return; }
+  const p = scrPose(t), n = Math.min(1, Math.floor(Math.min(t, T_END - 1e-4) / 1.2)), u = scrapeT(Math.min(t, T_END - 1e-4));
+  const laneX = u < STROKE ? LANES[n] : K.lerp(LANES[n], LANES[1 - n] ?? LANES[n], K.smooth((u - STROKE) / (1 - STROKE)) * (n === 0 ? 1 : 0));   // (moves over to the next lane on the way back)
+  spat.position.set(BX + laneX, BOARD_TOP + 0.0008 + p.lift, p.z); spat.rotation.set(-0.22, 0, 0); });
+app.after(t => { if (spatHeld && t >= T_END) { handM().multiply(spatHeld).decompose(spat.position, spat.quaternion, V()); spat.updateMatrixWorld(true); } });
+const gripAt = () => spat.localToWorld(V(0.012, 0.08, 0.0));
+noor.hand('R', [{ t: 0, at: (t) => t >= T_END ? null : gripAt(), pole: [0.6, -0.7, -0.3], shape: 'hold', aim: () => ({ fingers: V(-1, -0.35, 0.1).normalize(), palm: V(0.1, -1, 0.55).normalize() }) },
+  { t: T_END, at: () => gripEnd, blend: 0.0001, pole: [0.6, -0.7, -0.3], shape: 'hold', aim: () => ({ fingers: V(-1, -0.35, 0.1).normalize(), palm: V(0.1, -1, 0.55).normalize() }) },
+  { t: 2.2, at: () => noor.root.localToWorld(V(0.15, 0.8, 0.22)), blend: 0.5, shape: 'hold', aim: () => ({ fingers: nd(-0.2, -0.5, 1), palm: nd(-0.9, 0.1, 0) }) }]);
+noor.hand('L', [{ t: 0, at: () => V(BX + 0.105, BOARD_TOP + 0.012, -0.955), pole: [-0.6, -0.7, -0.3], shape: 'relaxed', aim: () => ({ fingers: nd(0.15, -0.15, 1), palm: V(0, -1, 0) }) }, { t: 2.2, at: null, blend: 0.5 }]);
 noor.look([{ t: 0, at: () => caddy.getWorldPosition(V()).add(V(0, 0.15, 0)) }, { t: 1.0, at: () => asha.head.getWorldPosition(V()), blend: 0.4 }, { t: 3.6, at: () => caddy.getWorldPosition(V()).add(V(0, 0.15, 0)), blend: 0.4 }]);
 noor.face([{ t: 0, smile: 0.2, brow: 0.3 }, { t: 1.1, smile: 0.25, brow: 0.6 }, { t: 3.9, smile: 0.55, brow: 0.3 }]);
 asha.act([{ t: 0, pose: 'stand', talk: 0.3 }]);
@@ -65,10 +84,21 @@ cook.hand('R', [{ t: 0, at: (t) => tubs[4].localToWorld(V(0.06, 0.075 + Math.max
 cook.hand('L', [{ t: 0, at: () => tubs[4].localToWorld(V(-0.03, 0.02, -0.105)), pole: [-0.7, -0.6, -0.3], shape: 'hold', aim: () => ({ fingers: cd(0.2, -0.1, 1), palm: cd(1, 0, 0) }) }]);
 cook.look([{ t: 0, at: () => tubs[4].getWorldPosition(V()) }, { t: 2.6, at: () => noor.head.getWorldPosition(V()), blend: 0.5 }]);
 cook.face([{ t: 0, smile: 0.35 }]);
-app.on(t => { lidHinge.rotation.x = -1.6 * (1 - K.smooth((t - 4.12) / 0.42)); const u = scrapeT(t); const n = Math.floor(t / 1.2); scraps.position.set(BX, top, -1.12); scraps.children.forEach((m, i) => { m.visible = i >= Math.min(16, (t < 2.2 ? n * 5 + (u > 0.7 ? 3 : 0) : 10)); }); });
+// each stroke pushes five scraps ahead of the blade into a pile at the caddy end of the board (nothing vanishes)
+const scrap0 = scraps.children.map(m => m.position.clone());
+app.on(t => { lidHinge.rotation.x = -1.6 * (1 - K.smooth((t - 4.12) / 0.42)); scraps.position.set(BX, top, -1.12);
+  const n = Math.floor(t / 1.2), u = scrapeT(t), blade = (n < 2 && u < STROKE) ? scrPose(t).z + 1.12 : zB + 1.12;   // (the blade, in the scraps' frame)
+  // a scrap in the blade's lane moves with the blade once the blade reaches it, gathering towards the lane's middle,
+  // and ends in a small pile just ahead of where the stroke stops
+  const bEnd = zB + 1.12;
+  scraps.children.forEach((m, i) => { const k = Math.floor(i / 5), j = i % 5, p0 = scrap0[i]; if (k > 1) return;
+    const ahead = 0.016 + (j % 3) * 0.009, bz = n > k ? bEnd : n === k ? blade : -1;   // (where the blade is, for this scrap's lane)
+    const z = Math.max(p0.z, bz + ahead), f = K.clamp((z - p0.z) / Math.max(0.01, bEnd + ahead - p0.z));
+    m.position.set(K.lerp(p0.x, LANES[k] + (j - 2) * 0.017, K.smooth(f)), p0.y + 0.006 * (j % 2) * f, z); }); });
 
 // camera: A across the island (both streams in one frame) → B Asha (closes the lid on "soil"), scraps falling into the caddy (match cut)
 const nF = () => noor.head.getWorldPosition(V()).add(V(0, 0.09, 0)), aF = () => asha.head.getWorldPosition(V()).add(V(0, 0.09, 0));
+app.evaluate(T_END - 1e-3); gripEnd = gripAt(); spatHeld = handM().invert().multiply(spat.matrixWorld.clone());   // the scraper stays in her hand from here
 app.rig = new K.Rig([
   { t: 0.0, pos: [0.95, 1.38, -1.15], look: [2.7, 1.08, -1.25], fov: 40, focus: nF, aperture: 0.003 },
   { t: 2.45, pos: [1.15, 1.36, -1.05], look: [2.7, 1.08, -1.2], fov: 37, focus: nF, aperture: 0.003 },
