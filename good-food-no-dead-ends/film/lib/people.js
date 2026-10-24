@@ -554,7 +554,7 @@ function walkPose(dist, P, carrying) {
 const HUMANS = {
   ASHA: { eth: { african: 0.85, caucasian: 0.15 }, sex: 0, age: 44, muscle: 0.62, weight: 0.5, skin: 'middleage_african_female', iris: '#5a3a22',
     hair: { style: 'bun', color: '#1b1512', tip: '#2a211b' }, brows: { color: '#241a14' },
-    clothes: [{ key: 'shirt_m01', top: { color: '#55633a' }, bottom: { plain: true, color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
+    clothes: [{ key: 'shirt_m01', top: { plain: true, color: '#4f5c35' }, bottom: { plain: true, color: '#4a443b' } }, { key: 'shoes04', color: '#4b3526', recolor: 0.6 }] },
   NOOR: { eth: { african: 0.75, asian: 0.1, caucasian: 0.15 }, sex: 0, age: 11, muscle: 0.45, weight: 0.45, skin: 'young_african_female', iris: '#4e321e',
     hair: { style: 'puff', color: '#16100c', tip: '#2b1d14' }, brows: { color: '#1f1610', thick: 0.003, count: 300 },
     clothes: [{ key: 'suit_f01', top: { plain: true, color: '#e8b52e' }, bottom: { color: '#3d5f94', recolor: 0.35 } }, { key: 'shoes06', color: '#e9e5dc', recolor: 0.8 }] },
@@ -571,10 +571,10 @@ const HUMANS = {
     hair: { style: 'capped', color: '#6a4428', tip: '#7a5434' }, brows: { color: '#5a3a22', thick: 0.0038 }, wear: { hivis: '#d2ea3c', cap: '#2f4a63' },
     clothes: [{ key: 'suit_m06', top: { plain: true, color: '#5d6a77' }, bottom: { color: '#34373c' } }, { key: 'shoes03' }] },
   VENDOR: { eth: { african: 0.9, caucasian: 0.1 }, sex: 1, age: 62, muscle: 0.5, weight: 0.62, skin: 'old_african_male', iris: '#24160e',
-    hair: { style: 'capped', color: '#a29d96', tip: '#c4bfb8' }, beard: { style: 'beard', color: '#b9b3aa', count: 16000, len: 0.015, w: 0.00021 }, brows: { color: '#8f8a84', thick: 0.0042 }, wear: { apron: '#d8ceb6', flatcap: '#5a4a3a' },
+    hair: { style: 'capped', color: '#a29d96', tip: '#c4bfb8' }, beard: { style: 'beard', color: '#b4aea5', count: 34000, len: 0.013, w: 0.00016 }, brows: { color: '#8f8a84', thick: 0.0042 }, wear: { apron: '#d8ceb6', flatcap: '#5a4a3a' },
     clothes: [{ key: 'suit_m03', top: { color: '#7e3f2c' }, bottom: { color: '#3b3b3b' } }, { key: 'shoes04' }] },
   COOK: { eth: { asian: 0.5, african: 0.3, caucasian: 0.2 }, sex: 0, age: 52, muscle: 0.5, weight: 0.6, skin: 'middleage_asian_female', skinTint: '#caa184', iris: '#2a1a10',
-    hair: { style: 'capped', color: '#1b1b1b', tip: '#2b2b2b' }, brows: { color: '#1b1b1b', thick: 0.0032 }, wear: { apron: '#efe6d2', headwrap: '#b8322a' },
+    hair: { style: 'capped', color: '#1b1b1b', tip: '#2b2b2b' }, brows: { color: '#1b1b1b', thick: 0.0032 }, wear: { apron: '#e0d6c1', headwrap: '#b8322a' },
     clothes: [{ key: 'suit_f01', top: { plain: true, color: '#5b3e7b' }, bottom: { color: '#2f2f2f' } }, { key: 'shoes03' }] },
 };
 // background people: a realistic description derived from the clay extra's random spec

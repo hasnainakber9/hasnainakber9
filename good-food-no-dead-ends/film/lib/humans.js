@@ -335,8 +335,8 @@ export function buildHuman(cfg) {
     for (let i = 0; i < bpos.count; i++) { const x = bpos.getX(i), y = bpos.getY(i), z = bpos.getZ(i), gx = Math.floor(x / cell), gy = Math.floor(y / cell), gz = Math.floor(z / cell); let best = null, bd = 0.025 * 0.025;
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const L = grid.get(`${gx + dx},${gy + dy},${gz + dz}`); if (L) for (const c of L) { const d2 = (c[0] - x) ** 2 + (c[1] - y) ** 2 + (c[2] - z) ** 2; if (d2 < bd) { bd = d2; best = c; } } }
       if (!best) continue; const ox = best[0] - x, oy = best[1] - y, oz = best[2] - z, gap = ox * best[3] + oy * best[4] + oz * best[5], lat = Math.hypot(ox - gap * best[3], oy - gap * best[4], oz - gap * best[5]);
-      if (gap < -0.003 || gap > 0.016 || lat > 0.011) continue;
-      const push = 0.0045 * (1 - clamp((gap - 0.007) / 0.009, 0, 1)) * (1 - clamp((lat - 0.005) / 0.006, 0, 1)); if (push <= 0) continue;
+      if (gap < -0.012 || gap > 0.016 || lat > 0.011) continue;   // (gap < 0: the skin already pokes through at rest)
+      const push = Math.min(0.016, Math.max(0, 0.006 - gap)) * (1 - clamp((lat - 0.005) / 0.006, 0, 1)); if (push <= 0) continue;   // 6 mm under the cloth: room for the pose to move it
       bpos.setXYZ(i, x - bnor.getX(i) * push, y - bnor.getY(i) * push, z - bnor.getZ(i) * push); moved++; }
     if (moved) { bpos.needsUpdate = true; seamlessNormals(bg); } }
   if (cfg.glasses) proxy('glasses', new THREE.MeshPhysicalMaterial({ map: T('glasses'), alphaTest: 0.2, transparent: true, opacity: 0.95, roughness: 0.2, metalness: 0.3, side: THREE.DoubleSide, depthWrite: false }), { morph: false, shadow: false, order: 2 });

@@ -166,14 +166,18 @@ export function strandHair(h, K, style, o = {}) {
       strands.push({ pts, w0: o.w || 0.00026, c: col(r()), root }); }
     // (matte: a glossy beard sparkles; a light beard casts no shadow on its own grey under-layer, which would
     // otherwise go dark between the hairs and turn every strand into a white speck)
-    return buildRibbons(h, M, strands, Object.assign({ roughness: 0.8, sheen: 0.06, castShadow: lum < 0.3, dim: lum < 0.3 ? 1 : 0.82 }, o));
+    return buildRibbons(h, M, strands, Object.assign({ roughness: 0.8, sheen: 0.06, castShadow: lum < 0.3, dim: lum < 0.3 ? 1 : 0.8, rootShade: lum < 0.3 ? 0.62 : 0.86 }, o));   // (dark roots under light tips read as specks)
   }
   return buildRibbons(h, M, strands, o);
 }
 
+// Level of detail: the strands are shuffled, so any leading run of them is an even thinning of the whole head; where a
+// strand would be under about half a pixel wide, fewer strands are drawn, each widened to keep the coverage (the same
+// look, a fraction of the triangles: a wide shot of eight people otherwise draws 2.5 million hair triangles).
 function buildRibbons(h, M, strands, o) {
-  let nv = 0, ni = 0; for (const s of strands) { nv += s.pts.length * 2; ni += (s.pts.length - 1) * 6; }
-  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), colr = new Float32Array(nv * 3), idx = new Uint32Array(ni);
+  const rs = prng(o.seed ? o.seed + 91 : 91); for (let i = strands.length - 1; i > 0; i--) { const j = Math.floor(rs() * (i + 1)); [strands[i], strands[j]] = [strands[j], strands[i]]; }
+  let nv = 0, ni = 0; const cum = new Uint32Array(strands.length + 1); strands.forEach((s, i) => { nv += s.pts.length * 2; ni += (s.pts.length - 1) * 6; cum[i + 1] = ni; });
+  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), colr = new Float32Array(nv * 3), idx = new Uint32Array(ni), ofs = new Float32Array(nv * 3);
   const streakC = new THREE.Color(o.streakColor || '#7d746c');
   let v = 0, f = 0; const t = V(), side = V(), nn = V(), radial = V();
   const rr = prng(o.seed ? o.seed + 77 : 77);
@@ -186,12 +190,13 @@ function buildRibbons(h, M, strands, o) {
       radial.subVectors(p, M.C).normalize(); side.crossVectors(t, radial); if (side.lengthSq() < 1e-8) side.set(1, 0, 0); side.normalize(); nn.crossVectors(side, t).normalize();
       const w = s.w0 * Math.min(1, 0.35 + (k / (n - 1)) / s.ramp) * (1 - 0.7 * (k / (n - 1))); const tipFade = k / (n - 1);   // fine at the root, full, then tapering
       for (const sg of [-1, 1]) { pos[v * 3] = p.x + side.x * w * sg; pos[v * 3 + 1] = p.y + side.y * w * sg; pos[v * 3 + 2] = p.z + side.z * w * sg; nor[v * 3] = nn.x; nor[v * 3 + 1] = nn.y; nor[v * 3 + 2] = nn.z;
-        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const sh = (0.62 + 0.38 * Math.min(1, tipFade / (s.ramp * 1.6))) * (o.dim ?? 1);   // darker towards the root (self-shadowing)
+        ofs[v * 3] = side.x * w * sg; ofs[v * 3 + 1] = side.y * w * sg; ofs[v * 3 + 2] = side.z * w * sg;
+        uv[v * 2] = k / (n - 1); uv[v * 2 + 1] = sg < 0 ? 0 : 1; const r0 = o.rootShade ?? 0.62, sh = (r0 + (1 - r0) * Math.min(1, tipFade / (s.ramp * 1.6))) * (o.dim ?? 1);   // darker towards the root (self-shadowing)
         colr[v * 3] = c.r * sh; colr[v * 3 + 1] = c.g * sh; colr[v * 3 + 2] = c.b * sh; v++; }
       if (k < n - 1) { const a = v - 2; idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], f); f += 6; }
     }
   }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.BufferAttribute(colr, 3));
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.BufferAttribute(colr, 3)); g.setAttribute('ofs', new THREE.BufferAttribute(ofs, 3));
   if (strands.some(s => s.root) && h.UD) {
     g.morphAttributes.position = h.UD.map(D => { const a = new Float32Array(nv * 3); let q = 0;
       for (const s of strands) { const n2 = s.pts.length * 2; if (s.root) { const [i0, i1, i2, w0, w1, w2] = s.root; const dx = w0 * D[i0 * 3] + w1 * D[i1 * 3] + w2 * D[i2 * 3], dy = w0 * D[i0 * 3 + 1] + w1 * D[i1 * 3 + 1] + w2 * D[i2 * 3 + 1], dz = w0 * D[i0 * 3 + 2] + w1 * D[i1 * 3 + 2] + w2 * D[i2 * 3 + 2];
@@ -203,7 +208,13 @@ function buildRibbons(h, M, strands, o) {
   g.setAttribute('skinWeight', new THREE.BufferAttribute(new Float32Array(nv * 4).map((_, i) => (i % 4 === 0 ? 1 : 0)), 4)); g.setIndex(new THREE.BufferAttribute(idx, 1));
   const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: o.roughness ?? 0.6, metalness: 0, side: THREE.DoubleSide,
     sheen: o.sheen ?? 0.16, sheenRoughness: 0.45, sheenColor: new THREE.Color(o.color || '#1a1411').offsetHSL(0, -0.05, 0.13), specularIntensity: 0.26 });
+  const widen = { value: 1 }; m.onBeforeCompile = (sh) => { sh.uniforms.hairWiden = widen;
+    sh.vertexShader = 'attribute vec3 ofs;\nuniform float hairWiden;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n transformed += ofs * ( hairWiden - 1.0 );'); };
+  m.customProgramCacheKey = () => 'hair-lod';
   const mesh = new THREE.SkinnedMesh(g, m); mesh.name = 'hair-strands'; mesh.bind(h.skeleton, new THREE.Matrix4()); mesh.castShadow = o.castShadow ?? true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  const wRef = strands.reduce((a, s) => a + s.w0, 0) / Math.max(1, strands.length) * 2, head = h.skeleton.bones[M.hb], hp = V(), n = strands.length;
+  mesh.userData.lod = (cam, H) => { const d = Math.max(0.05, head.getWorldPosition(hp).distanceTo(cam.position)), pxPerM = H / (2 * d * Math.tan(cam.fov * Math.PI / 360));
+    const f = clamp(wRef * pxPerM / (o.lodPx ?? 0.5), o.lodMin ?? 0.08, 1); g.setDrawRange(0, cum[Math.max(1, Math.round(f * n))]); widen.value = 1 / f; };
   h.group.add(mesh); h.meshes.push(mesh);
   return { mesh, count: strands.length, tris: ni / 3 };
 }

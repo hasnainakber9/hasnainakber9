@@ -58,7 +58,7 @@ const toNoor = () => noor.root.position.clone().sub(asha.root.position).setY(0).
 const heroInNoorHand = () => { const f = noor.handFrame('R'); return f.pos.clone().add(V(0, 0.004, 0.034).applyQuaternion(f.quat)); };   // (not hero's position: that is set after the hands)
 asha.hand('R', [{ t: 0, at: null }, { t: 2.45, at: () => heroInNoorHand().add(V(0, 0.062, 0)), blend: 0.45, pole: [0.6, -0.7, -0.2], shape: 'ball', aim: () => ({ fingers: toNoor().add(V(0, -0.45, 0)), palm: V(0, -1, 0) }) },
   { t: 3.0, at: V(0.12, 1.24, -0.62), blend: 0.55, pole: [0.6, -0.7, -0.3], shape: 'ball', aim: () => ({ fingers: toNoor().add(V(0, -0.45, 0)), palm: V(0, -1, 0) }) },
-  { t: 4.4, at: lift, blend: 0.01, pole: [0.8, -0.5, -0.2], shape: 'ball', aim: () => ({ fingers: asha.dirToWorld([-1, 0.25, 0.45]), palm: asha.dirToWorld([0.1, 1, -0.15]) }) }]);   // palm up, fingers across her (not between the lens and the fruit)
+  { t: 4.388, at: lift, blend: 0.01, pole: [0.8, -0.5, -0.2], shape: 'ball', aim: () => ({ fingers: asha.dirToWorld([-1, 0.25, 0.45]), palm: asha.dirToWorld([0.1, 1, -0.15]) }) }]);   // palm up, fingers across her (not between the lens and the fruit)
 asha.look([{ t: 0, at: () => noor.head.getWorldPosition(V()) }, { t: 2.0, at: hero, blend: 0.3 }, { t: 3.55, at: () => noor.head.getWorldPosition(V()).add(V(0, 0.1, 0)), blend: 0.35 }, { t: 4.75, at: hero, blend: 0.35 }]);
 asha.face([{ t: 0, smile: 0.1, brow: 0.0 }, { t: 2.6, smile: 0.25, brow: 0.2, blend: 0.3 }, { t: 3.9, smile: 0.45, brow: 0.35, tilt: 0.3, blend: 0.4 }, { t: 4.9, smile: 0.35, brow: 0.1, tilt: 0, blend: 0.5 }]);
 

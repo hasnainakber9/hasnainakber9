@@ -30,7 +30,7 @@ const crateA = P.crate({ fill: 'tomato', color: '#2f8a57', layers: 1 }); crateA.
 const crateB = P.crate({ fill: 'tomato', color: '#2f6aa0', layers: 1 }); crateB.position.set(0.7, 0.08, -7.3); app.add(crateB);
 
 // quality check: a worker lifts a tomato into the light, turns it, sets it in the crate
-const qc = puppet('QC', extraSpec(24, { build: 'm', hairStyle: 'short', top: '#7a8c5e', outer: 'apron', outerColor: '#d9cfb8', beard: true })); qc.place(0.62, -4.75, 0.5); app.cast(qc);
+const qc = puppet('QC', extraSpec(24, { build: 'm', hairStyle: 'short', top: '#7a8c5e', outer: 'apron', outerColor: '#c8bca3', beard: true })); qc.place(0.62, -4.75, 0.5); app.cast(qc);
 const qcTom = P.tomato({ r: 0.04, seed: 2 }); app.add(qcTom);
 const crateQ = P.crate({ fill: 'tomato', color: '#2f8a57', layers: 1 }); crateQ.position.set(0.95, 0.08, -4.35); crateQ.rotation.y = 0.4; app.add(crateQ);
 qc.act([{ t: 0, pose: 'stand', talk: 0 }]);
@@ -67,7 +67,7 @@ for (const [p, rad] of [[N0, 0.0068], [J, 0.0042]]) { const node = new THREE.Mes
   truss.add(P.hairyStem([top, top.clone().add(V(0, 0.006, 0)), knee, j], 0.0021, 0.0018, { seed: 20 + i, knuckle: 2 })); });
 const CL = F.compoundLeaf(); const leafMat = new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 }); for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26, 2, 3), leafMat); l.geometry.translate(0, 0.13, 0); l.position.set(-0.02, 0.86 + i * 0.04, 0.03); l.rotation.set(-1.0 + i * 0.25, i * 1.7 + 0.4, 0.2); l.castShadow = true; truss.add(l); }
 const flowerTex = P.leafTex('flower'); const flower = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), new THREE.MeshStandardMaterial({ map: flowerTex, alphaTest: 0.4, side: THREE.DoubleSide })); flower.geometry.attributes.uv.array.set([0, 1, 0.5, 1, 0, 0.5, 0.5, 0.5]); flower.position.set(-0.03, 0.99, 0.07); flower.rotation.set(-0.5, 0, 0); truss.add(flower);
-const dew = new THREE.Mesh(new THREE.SphereGeometry(0.004, 12, 8), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.0, transmission: 0.9, thickness: 0.004, transparent: true, opacity: 0.6 })); dew.position.set(0.075, 0.835, 0.098); truss.add(dew);
+
 const broad = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.28, 3, 3), new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55 })); broad.geometry.translate(0, 0.12, 0); broad.position.set(-0.07, 0.82, -0.05); broad.rotation.set(-0.35, 0.3, 0.15); broad.castShadow = true; truss.add(broad);
 const heroBee = bees[0][0]; app.on(t => { if (t > 4.9) { const u = K.smoother((t - 4.9) / 1.5); const fp = flower.getWorldPosition(V()); heroBee.position.set(fp.x + (1 - u) * 0.3, fp.y + 0.012 + (1 - u) * 0.12 + Math.sin(t * 9) * 0.004 * (1 - u), fp.z + (1 - u) * 0.25); heroBee.rotation.y = -2.2; } });
 

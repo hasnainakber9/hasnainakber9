@@ -86,7 +86,7 @@ let _tomatoMat = null;
 export function tomatoMat() {
   if (_tomatoMat) return _tomatoMat;
   const S = tomatoSkinMaps();
-  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: new THREE.Color(1.15, 1.15, 1.15), map: S.map, roughnessMap: S.rough, roughness: 1.0, clearcoat: 0.8, clearcoatRoughness: 0.07, specularIntensity: 0.28, normalMap: normalTex('skin', 5), normalScale: new THREE.Vector2(0.08, 0.08), envMapIntensity: 0.42 });
+  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: new THREE.Color(1.15, 1.15, 1.15), map: S.map, roughnessMap: S.rough, roughness: 1.0, clearcoat: 0.8, clearcoatRoughness: 0.13, specularIntensity: 0.28, normalMap: normalTex('skin', 5), normalScale: new THREE.Vector2(0.08, 0.08), envMapIntensity: 0.34 });   // (a sharper coat mirrors the horizon as a hard line round the fruit)
   m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <lights_physical_pars_fragment>', THREE.ShaderChunk.lights_physical_pars_fragment.replace('reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
     `float wrapW = saturate( ( dot( geometryNormal, directLight.direction ) + 0.5 ) / 1.5 );
      vec3 scatter = ( vec3( dotNL ) + vec3( 0.9, 0.28, 0.16 ) * max( wrapW - dotNL, 0.0 ) ) * directLight.color;
@@ -126,6 +126,7 @@ export function hairyStem(points, r0 = 0.006, r1 = r0 * 0.7, o = {}) {
     const c = base.clone().multiplyScalar(0.85 + 0.25 * u + (rr() - 0.5) * 0.06); col.set([c.r, c.g, c.b], k * 3); } }
   tube.setAttribute('color', new THREE.BufferAttribute(col, 3)); tube.computeVertexNormals();
   const m = mesh(tube, stemMat()); g.add(m);
+  for (const u of [0, 1]) { const cap = new THREE.SphereGeometry(radAt(u), 10, 8), c = base.clone().multiplyScalar(0.85 + 0.25 * u); cap.setAttribute('color', new THREE.Float32BufferAttribute(new Array(cap.attributes.position.count).fill(0).flatMap(() => [c.r, c.g, c.b]), 3)); const e = mesh(cap, stemMat()); e.position.copy(curve.getPointAt(u)); g.add(e); }   // rounded ends: an open tube end shows its dark inside
   if (o.hairs !== false) { const n = Math.round(L * (o.density ?? 7000)), hg = new THREE.CylinderGeometry(0.00004, 0.00008, 1, 3); hg.translate(0, 0.5, 0);
     const im = new THREE.InstancedMesh(hg, o.hairMat || (stemMat._hair || (stemMat._hair = new THREE.MeshStandardMaterial({ color: '#c9dba8', roughness: 0.55 }))), n), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), up = V(0, 1, 0);
     for (let i = 0; i < n; i++) { const u = rr(), P = curve.getPointAt(u), T = curve.getTangentAt(u), a = rr() * TAU, N = new THREE.Vector3().crossVectors(T, Math.abs(T.y) < 0.9 ? up : V(1, 0, 0)).normalize(), B = new THREE.Vector3().crossVectors(T, N);
@@ -268,16 +269,16 @@ export function lettuceMat(o = {}) {
   const r = prng(77); const map = canvasTex(256, 512, (g, w, h) => { g.fillStyle = 'rgb(218,218,218)'; g.fillRect(0, 0, w, h);
     for (let k = 0; k < 160; k++) { const x = r() * w, y = r() * h, rad = 6 + r() * 26, l = r() < 0.5 ? '235,238,225' : '196,200,196'; const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(${l},0.5)`); gr.addColorStop(1, `rgba(${l},0)`); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
     g.strokeStyle = 'rgba(255,255,240,0.2)'; g.lineWidth = 0.8; for (let k = 0; k < 260; k++) { let x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); for (let s2 = 0; s2 < 3; s2++) { x += (r() - 0.5) * 22; y += (r() - 0.5) * 22; g.lineTo(x, y); } g.stroke(); }
-    for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088; for (const sd of [-1, 1]) { g.strokeStyle = `rgba(255,255,236,${0.6 - k * 0.03})`; g.lineWidth = lerp(4, 1.2, k / 10); const y0 = (1 - u0) * h; g.beginPath(); g.moveTo(w / 2, y0); g.bezierCurveTo(w / 2 + sd * w * 0.16, y0 - h * 0.04, w / 2 + sd * w * 0.34, y0 - h * 0.1, w / 2 + sd * w * 0.5, y0 - h * 0.17); g.stroke(); } }
+    for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088 + (r() - 0.5) * 0.03; for (const sd of [-1, 1]) { g.strokeStyle = `rgba(255,255,236,${0.38 - k * 0.02})`; g.lineWidth = lerp(3.4, 1.0, k / 10); const y0 = (1 - u0) * h; g.beginPath(); g.moveTo(w / 2, y0); g.bezierCurveTo(w / 2 + sd * w * 0.16, y0 - h * 0.04, w / 2 + sd * w * 0.34, y0 - h * 0.1, w / 2 + sd * w * 0.5, y0 - h * 0.17); g.stroke(); } }
     for (let y = 0; y < h; y++) { const u = 1 - y / h, wv = lerp(30, 2.5, u ** 0.6); g.fillStyle = 'rgba(255,255,242,0.9)'; g.fillRect(w / 2 - wv / 2, y, wv, 1); } }, { clamp: true });
   // the blade between the veins is blistered (raised cells), the veins sunk into it
   const hc = document.createElement('canvas'); hc.width = 256; hc.height = 512; const hg = hc.getContext('2d'); hg.fillStyle = '#808080'; hg.fillRect(0, 0, 256, 512);
-  for (let k = 0; k < 420; k++) { const x = r() * 256, y = r() * 512, rad = 7 + r() * 14, gr = hg.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); hg.fillStyle = gr; hg.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
-  hg.strokeStyle = 'rgba(0,0,0,0.5)'; for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088, y0 = (1 - u0) * 512; for (const sd of [-1, 1]) { hg.lineWidth = lerp(5, 1.5, k / 10); hg.beginPath(); hg.moveTo(128, y0); hg.bezierCurveTo(128 + sd * 41, y0 - 20, 128 + sd * 87, y0 - 51, 128 + sd * 128, y0 - 87); hg.stroke(); } }
+  for (let k = 0; k < 420; k++) { const x = r() * 256, y = r() * 512, rad = 7 + r() * 14, gr = hg.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); hg.fillStyle = gr; hg.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+  hg.strokeStyle = 'rgba(0,0,0,0.3)'; for (let k = 0; k < 10; k++) { const u0 = 0.08 + k * 0.088, y0 = (1 - u0) * 512; for (const sd of [-1, 1]) { hg.lineWidth = lerp(5, 1.5, k / 10); hg.beginPath(); hg.moveTo(128, y0); hg.bezierCurveTo(128 + sd * 41, y0 - 20, 128 + sd * 87, y0 - 51, 128 + sd * 128, y0 - 87); hg.stroke(); } }
   hg.fillStyle = 'rgba(0,0,0,0.5)'; hg.fillRect(122, 0, 12, 512);
   const nc = document.createElement('canvas'); nc.width = 256; nc.height = 512; nc.getContext('2d').putImageData(heightToNormal(hg.getImageData(0, 0, 256, 512).data, 256, 512, 2.0), 0, 0);
   const normalMap = new THREE.CanvasTexture(nc); normalMap.colorSpace = THREE.NoColorSpace; normalMap.wrapS = normalMap.wrapT = THREE.ClampToEdgeWrapping;
-  const m = translucent(new THREE.MeshPhysicalMaterial({ vertexColors: true, map, normalMap, normalScale: new THREE.Vector2(0.9, 0.9), color: new THREE.Color(o.tint || '#ffffff').multiplyScalar(1.12), roughness: 0.42, sheen: 0.2, sheenRoughness: 0.5, sheenColor: new THREE.Color('#e8f5c8'), side: THREE.DoubleSide }), '#c8e07a', 0.45);
+  const m = translucent(new THREE.MeshPhysicalMaterial({ vertexColors: true, map, normalMap, normalScale: new THREE.Vector2(0.6, 0.6), color: new THREE.Color(o.tint || '#ffffff').multiplyScalar(1.12), roughness: 0.42, sheen: 0.2, sheenRoughness: 0.5, sheenColor: new THREE.Color('#e8f5c8'), side: THREE.DoubleSide }), '#c8e07a', 0.45);
   return (_lettuceMat[key] = m);
 }
 export function lettuceGeo(variant = 0, red = false) {

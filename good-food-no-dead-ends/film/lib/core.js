@@ -17,7 +17,7 @@ export { THREE, RoundedBoxGeometry, BGU };
 
 // ------------------------------------------------------------------ seek protocol
 let _ready; const readyP = new Promise(r => (_ready = r));
-window.__seek = async (t) => { await readyP; if (window.__app) window.__app.renderAt(t); };
+window.__seek = async (t) => { await readyP; if (window.__app) window.__app.renderFrame(t); };
 window.__THREE = THREE;   // (for QA snippets run in the page)
 
 // QA only: ?dbghand=NAME:L|R[:dist[:azimuth[:elevation]]] frames a character's hand (azimuth from the way they face, rad);
@@ -146,11 +146,11 @@ export function woodMaps(kind = 'plank', o = {}) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const u = x / W * Lu, v = y / H * Lv;
     let ring, strip = 0;
     if (kind === 'edge') { const sw = 0.025, si = Math.floor(v / sw); strip = (hash2(si, seed) - 0.5) * 0.16; ring = v * 160 + (fbm(u * 2 + si * 7.3, si * 3.1, 3) - 0.5) * 1.2 + si * 0.37; }
-    else ring = v * 34 + (fbm(u * 1.6 + seed, v * 4.2, 4) - 0.5) * 7 + 0.9 * Math.sin(u * 3.3 + v * 9 + seed);
+    else ring = v * 40 + (fbm(u * 1.6 + seed, v * 4.2, 4) - 0.5) * 5 + 0.7 * Math.sin(u * 3.3 + v * 9 + seed);
     const f = ring - Math.floor(ring), late = smooth((f - 0.6) / 0.28) * (1 - smooth((f - 0.93) / 0.07));
     const pore = Math.max(0, noise2(u * 9 + seed, v * 420) - 0.78) * 4.5 * 0.7 + Math.max(0, noise2(u * 23 + 5, v * 900 + seed) - 0.86) * 7 * 0.3;
     const tone = 0.9 + (fbm(u * 0.9 + 11, v * 5 + seed, 3) - 0.5) * 0.22 + strip + (noise2(u * 40, v * 160) - 0.5) * 0.05;
-    const L = clamp(tone * (1 - late * 0.32) * (1 - Math.min(1, pore) * 0.22), 0, 1.2), i = (y * W + x) * 4;
+    const L = clamp(tone * (1 - late * (kind === 'edge' ? 0.32 : 0.2)) * (1 - Math.min(1, pore) * 0.22), 0, 1.2), i = (y * W + x) * 4;   // (flat-sawn figure kept quiet: strong latewood reads as tiger stripes)
     col[i] = clamp(L * 238, 0, 255); col[i + 1] = clamp(L * 232, 0, 255); col[i + 2] = clamp(L * 222, 0, 255); col[i + 3] = 255;
     hgt[y * W + x] = -late * 0.35 - Math.min(1, pore) * 0.6 + (noise2(u * 60, v * 200) - 0.5) * 0.1;
     rou[i] = 0; rou[i + 1] = clamp(255 * ((o.rough ?? 0.5) + Math.min(1, pore) * 0.18 + late * 0.06), 0, 255); rou[i + 2] = 0; rou[i + 3] = 255; }
@@ -270,7 +270,7 @@ const GradeShader = {
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float time, vignette, grain, warmth, sat, contrast, lift, fade; uniform vec3 tint; uniform vec2 res; varying vec2 vUv;
-    float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + floor(time*24.0)*0.137) * 43758.5453); }
+    float hash(vec2 p){ p += floor(time * 24.0 + 0.5) * vec2(37.0, 17.0); vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }   // a new grain every frame
     void main(){
       vec2 c = vUv - 0.5; float r2 = dot(c,c);
       vec2 off = c * r2 * 0.008;
@@ -372,14 +372,17 @@ export class App {
   add(...objs) { for (const x of objs) this.scene.add(x.root || x); return objs[0]; }
   on(fn) { this.updaters.push(fn); return this; }
   after(fn) { this.late.push(fn); return this; }
-  cast(...ps) { for (const p of ps) { this.puppets.push(p); this.scene.add(p.root); } return ps[0]; }
+  cast(...ps) { for (const p of ps) { this.puppets.push(p); this.scene.add(p.root); p.root.traverse(o => { if (o.userData.lod) (this.lods || (this.lods = [])).push(o.userData.lod); }); } return ps[0]; }
   // pose everything at t without drawing (scenes use it once at load to measure, e.g. a prop's grip at a hand-off)
   evaluate(t) { this.t = t;
-    for (let pass = 0; pass < 2; pass++) { for (const u of this.updaters) u(t); for (const p of this.puppets) p.pose(t); this.scene.updateMatrixWorld(true);
+    for (let pass = 0; pass < 6; pass++) { for (const u of this.updaters) u(t); for (const p of this.puppets) p.pose(t); this.scene.updateMatrixWorld(true);
       for (const p of this.puppets) p.solve(t); this.scene.updateMatrixWorld(true); for (const u of this.late) u(t); this.scene.updateMatrixWorld(true); } }
-  renderAt(t) {
+  // everything at time t (people, props, camera, focus, fade, hair detail), without drawing
+  poseAt(t) {
     this.t = t;
-    for (let pass = 0; pass < 2; pass++) {          // two passes resolve cross-object targets (props that follow hands, etc.)
+    // repeated passes resolve cross-object targets (props that follow hands, hands that follow heads); six settle the
+    // pose from any previous state (from rest, two leave a wrist ~4 cm off), so a frame never depends on the one before
+    for (let pass = 0; pass < 6; pass++) {
       for (const u of this.updaters) u(t);
       for (const p of this.puppets) p.pose(t);
       this.scene.updateMatrixWorld(true);
@@ -391,7 +394,52 @@ export class App {
     if (this.rig) this.rig.apply(this, t);
     DBGCAM(this);
     if (this.fadeKeys) this.grade.uniforms.fade.value = keyed(this.fadeKeys, t, smooth);
-    this.composer.render();
+    this.grade.uniforms.time.value = t;
+    this.camera.updateMatrixWorld(); for (const f of this.lods || []) f(this.camera, this.h);
+  }
+  renderAt(t) { this.poseAt(t); this.composer.render(); }
+  // A frame as a film camera exposes it: K sub-frames spread over the shutter (half a frame at 24 fps), each with the
+  // camera nudged by a different sub-pixel offset, averaged in linear light before tone mapping. That is motion blur
+  // and anti-aliasing in one (fine hair and thin stems stop sparkling). Shadow maps are drawn once per frame and depth
+  // of field, bloom and the grade run once on the average (with the last sub-frame's depth, a 1/200 s away); a shutter
+  // never reaches across a cut. ?sub=K, or o.sub; 1 = a plain frame.
+  renderFrame(t) {
+    const K = this.sub ?? (+new URLSearchParams(location.search).get('sub') || this.o.sub || 1); this.sub = K;
+    if (K <= 1) return this.renderAt(t);
+    const r = this.renderer, C = this.composer, rp = C.passes[0], W = this.w, H = this.h, sh = (this.o.shutter ?? 0.5) / 24, cuts = this.rig ? this.rig.keys.filter(k => k.cut).map(k => k.t) : [];
+    if (!this._acc) { const quad = (frag, blend) => { const m = new THREE.ShaderMaterial({ uniforms: { src: { value: null }, w: { value: 1 } }, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: frag, depthTest: false, depthWrite: false, blending: blend ? THREE.CustomBlending : THREE.NoBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor });
+        const sc = new THREE.Scene(); sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m)); return { m, sc }; };
+      const frag = 'uniform sampler2D src; uniform float w; varying vec2 vUv; void main() { gl_FragColor = texture2D(src, vUv) * w; }';
+      this._acc = { rt: new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, depthBuffer: false }), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), add: quad(frag, true), put: quad(frag, false) }; }
+    const A = this._acc, halton = (i, b) => { let f = 1, x = 0; while (i > 0) { f /= b; x += f * (i % b); i = Math.floor(i / b); } return x; };
+    const inShot = (tk) => { for (const c of cuts) { if (tk < c && c <= t) tk = c; if (t < c && c <= tk) tk = c - 1e-4; } return clamp(tk, 0, this.duration); };   // stay inside this frame's shot
+    // how far things move on screen while the shutter is open (everything in frame near the focus distance: objects, and
+    // the bones of the people); more sub-frames where that would otherwise show as separate copies (about 3 px apart at most)
+    const Kf = this.o.subMax === 1 ? K : clamp(Math.ceil(this.motionPx(inShot(t - sh / 2), inShot(t + sh / 2)) / 3), K, this.o.subMax || 16); window.__lastK = Kf;
+    const quadTo = (q, target, src, w) => { q.m.uniforms.src.value = src; q.m.uniforms.w.value = w; r.setRenderTarget(target); const ac = r.autoClear; r.autoClear = false; r.render(q.sc, A.cam); r.autoClear = ac; };
+    const cc = r.getClearColor(new THREE.Color()), ca = r.getClearAlpha(); r.setRenderTarget(A.rt); r.setClearColor(0x000000, 0); r.clear(); r.setClearColor(cc, ca);
+    const order = Array.from({ length: Kf }, (_, k) => k).sort((a, b) => Math.abs(b + 0.5 - Kf / 2) - Math.abs(a + 0.5 - Kf / 2));   // the sub-frame nearest the middle last (its depth feeds the depth of field)
+    const autoShadow = r.shadowMap.autoUpdate; r.shadowMap.autoUpdate = false;
+    order.forEach((k, j) => {
+      const tk = inShot(t + ((k + 0.5) / Kf - 0.5) * sh);
+      this.camera.setViewOffset(W, H, halton(j + 1, 2) - 0.5, halton(j + 1, 3) - 0.5, W, H);
+      this.poseAt(tk); r.shadowMap.needsUpdate = j === 0;
+      rp.render(r, null, C.readBuffer);                       // the scene, linear HDR, with its depth
+      quadTo(A.add, A.rt, C.readBuffer.texture, 1 / Kf);
+    });
+    r.shadowMap.autoUpdate = autoShadow; this.camera.clearViewOffset();
+    quadTo(A.put, C.readBuffer, A.rt.texture, 1);            // the average replaces the colour; the depth stays
+    rp.enabled = false; C.render(); rp.enabled = true;
+  }
+  // largest on-screen movement (px) between t0 and t1 of anything in frame within a factor of two of the focus distance
+  // (nearer or further it is blurred by the depth of field anyway): object origins, and every bone of the people
+  motionPx(t0, t1) {
+    if (!this._probes) { const set = new Set(); this.scene.traverse(o => { if (o.isSkinnedMesh) o.skeleton.bones.forEach(b => set.add(b)); else if ((o.isMesh || o.isPoints) && o.visible) set.add(o); }); this._probes = [...set].slice(0, 6000); }
+    const P = this._probes, cam = this.camera, v = V(), snap = (tt) => { this.poseAt(tt); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+      const view = cam.matrixWorldInverse.clone(), proj = cam.projectionMatrix.clone(), f = this.dof ? this.dof.uniforms.focus.value : null;
+      return P.map(o => { o.getWorldPosition(v).applyMatrix4(view); const z = -v.z; if (z < cam.near) return null; if (f && (z < f * 0.5 || z > f * 2)) return null; v.applyMatrix4(proj); return Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1 ? null : [v.x * this.w / 2, v.y * this.h / 2]; }); };
+    const a = snap(t0), b = snap(t1); let m = 0; for (let i = 0; i < P.length; i++) if (a[i] && b[i]) m = Math.max(m, Math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]));
+    return m;
   }
   ready() { _ready(); return this; }
   // environment from a CC0 HDRI (Poly Haven via pmndrs/assets); used for light + reflections, not as backdrop
