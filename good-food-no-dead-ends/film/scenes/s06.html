@@ -67,14 +67,27 @@ const truck = P.handTruck(); S.add(truck);
 const tagM = K.mat('#f2c230', { roughness: 0.5 });
 const tc = [P.crate({ fill: 'tomatoUgly', color: '#2f8a57' }), P.crate({ fill: 'greens', color: '#2f8a57' })]; tc.forEach((c, i) => { const tag = K.box(0.08, 0.1, 0.004, tagM); tag.position.set(0.15, 0.2, 0.205); c.add(tag); S.add(c); });
 wkr.act([{ t: 0, pose: 'stand', talk: 0.6 }]);
-const handle = () => truck.localToWorld(V(0, 1.2, -0.16));
-wkr.hand('L', [{ t: 0, at: () => truck.localToWorld(V(-0.18, 1.2, -0.16)), pole: [-0.7, -0.6, -0.2] }]);
-wkr.hand('R', [{ t: 0, at: () => truck.localToWorld(V(0.18, 1.2, -0.16)), pole: [0.7, -0.6, -0.2] }, { t: 4.9, at: null, blend: 0.35 }, { t: 6.0, at: () => truck.localToWorld(V(0.18, 1.2, -0.16)), blend: 0.4 }]);
-app.on(t => { const r = wkr.rootAt(t); const yaw = r.yaw; truck.position.set(r.x + Math.sin(yaw) * 0.55, 0, r.z + Math.cos(yaw) * 0.55); truck.rotation.set(-0.25, yaw + Math.PI, 0); tc.forEach((c, i) => { c.position.copy(truck.localToWorld(V(0, 0.07 + i * 0.305, 0.12))); c.quaternion.copy(truck.quaternion); }); });
+// the hand truck goes ahead of him, nose plate (and crates) forward, tipped back onto its wheels so the handle leans
+// towards him; he holds the handle bar overhand, palms on top and fingers wrapped over and under it
+const tip = 0.42, reachT = 0.98;
+app.on(t => { const r = wkr.rootAt(t); const yaw = r.yaw; truck.position.set(r.x + Math.sin(yaw) * reachT, 0, r.z + Math.cos(yaw) * reachT); truck.rotation.set(-tip, yaw, 0, 'YXZ'); truck.updateMatrixWorld(true);
+  tc.forEach((c, i) => { c.position.copy(truck.localToWorld(V(0, 0.07 + i * 0.305, 0.12))); c.quaternion.copy(truck.quaternion); }); });
+const bar = (x) => truck.localToWorld(V(x, 1.22, -0.14)), tq = () => truck.getWorldQuaternion(new THREE.Quaternion());
+const barGrip = (sx) => ({ at: () => bar(sx * 0.15), aim: () => { const q = tq(); return { fingers: V(0, -0.35, 1).normalize().applyQuaternion(q), palm: V(0, -1, -0.35).normalize().applyQuaternion(q) }; }, shape: 'power' });
+wkr.hand('L', [{ t: 0, ...barGrip(-1), pole: [-0.7, -0.6, -0.2] }]);
+wkr.hand('R', [{ t: 0, ...barGrip(1), pole: [0.7, -0.6, -0.2] }, { t: 4.9, at: null, blend: 0.35 }, { t: 6.0, ...barGrip(1), blend: 0.4 }]);
 wkr.look([{ t: 0, at: V(3, 1.2, -1) }, { t: 4.2, at: () => luis.head.getWorldPosition(V()), blend: 0.35 }, { t: 7.5, at: V(1.2, 1.2, -8.5), blend: 0.5 }]);
 wkr.face([{ t: 0, smile: 0.2 }, { t: 4.3, smile: 0.05, brow: 0.35, tilt: 0.4 }, { t: 6.8, smile: 0.45, brow: 0.2, tilt: 0 }]);
-const tabAt = () => luis.arms.L.grip.getWorldPosition(V()).lerp(luis.arms.R.grip.getWorldPosition(V()), 0.5);
+// Luis holds the tablet by its sides: fingers spread under it, thumbs on the bezel; the tablet leads, the hands follow
+const tabW = 0.22, tabD = 0.16;
+const tabPose = () => { const q = luis.root.getWorldQuaternion(new THREE.Quaternion()).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -0.95)); return { p: luis.root.localToWorld(V(0.0, 1.07, 0.3)), q }; };   // screen tipped up towards him
+const tabAt = () => tab.getWorldPosition(V());
+const tabHold = { f: [[0.3, 0.35, 0.25], [0.12, 0.18, 0.1], [0.14, 0.2, 0.12], [0.18, 0.24, 0.14], [0.22, 0.28, 0.16]], opp: 0.35 };
+const tabGrip = (sx) => ({ at: () => tab.localToWorld(V(sx * (tabW / 2 - 0.035), 0.012, 0)),   // (palm centre 1.8 cm above the palm: the palm is on the back)
+  aim: () => { const q = tab.getWorldQuaternion(new THREE.Quaternion()); return { fingers: V(-sx, 0, -0.25).normalize().applyQuaternion(q), palm: V(0, 1, 0).applyQuaternion(q) }; }, shape: tabHold });
 luis.act([{ t: 0, pose: 'tablet' }]);
+luis.hand('L', [{ t: 0, ...tabGrip(-1), pole: [-0.7, -0.6, -0.3] }]);
+luis.hand('R', [{ t: 0, ...tabGrip(1), pole: [0.7, -0.6, -0.3] }]);
 luis.look([{ t: 0, at: tabAt }, { t: 1.6, at: () => wkr.head.getWorldPosition(V()), blend: 0.5 }, { t: 3.2, at: tabAt, blend: 0.3 }, { t: 4.3, at: () => wkr.head.getWorldPosition(V()), blend: 0.3 }, { t: 6.4, at: () => tc[0].getWorldPosition(V()), blend: 0.3 }, { t: 7.0, at: () => wkr.head.getWorldPosition(V()), blend: 0.3 }]);
 luis.face([{ t: 0, smile: 0.2, brow: 0.1 }, { t: 6.5, smile: 0.5, brow: 0.3 }]);
 // route-map tablet (wordless): hub → school kitchen; the route lights up on "Then route them to dinner."
@@ -82,8 +95,8 @@ const scr = document.createElement('canvas'); scr.width = 320; scr.height = 220;
 function drawMap(t) { const g = sg; g.fillStyle = '#eef1ec'; g.fillRect(0, 0, 320, 220); g.strokeStyle = '#cdd3cc'; g.lineWidth = 10; for (const [a, b, c, d] of [[0, 60, 320, 80], [0, 160, 320, 140], [90, 0, 110, 220], [230, 0, 210, 220]]) { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.stroke(); } g.fillStyle = '#b9d8b0'; g.fillRect(130, 95, 60, 35);
   const u = K.smoother((t - 6.7) / 1.2); g.strokeStyle = '#2f8a57'; g.lineWidth = 6; g.setLineDash([]); g.beginPath(); g.moveTo(60, 150); g.lineTo(60 + 40 * Math.min(1, u * 3), 150 - 6 * Math.min(1, u * 3)); if (u > 0.33) g.lineTo(100 + 0 * u, 145 - 85 * Math.min(1, (u - 0.33) * 3)); if (u > 0.66) g.lineTo(100 + 120 * Math.min(1, (u - 0.66) * 3), 60 + 10 * Math.min(1, (u - 0.66) * 3)); g.stroke();
   g.fillStyle = '#26364f'; g.beginPath(); g.arc(60, 150, 9, 0, 6.3); g.fill(); g.fillStyle = '#cf5f2a'; g.beginPath(); g.arc(225, 68, 10 + 3 * u, 0, 6.3); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(221, 62); g.lineTo(221, 74); g.moveTo(229, 62); g.lineTo(229, 74); g.stroke(); scrTex.needsUpdate = true; }
-const tab = new THREE.Group(); tab.add(K.box(0.22, 0.012, 0.16, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 })); const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); S.add(tab);
-app.after(t => { drawMap(t); tab.position.copy(tabAt()).add(V(0, 0.02, 0)); const q = new THREE.Quaternion(); luis.spine.getWorldQuaternion(q); tab.quaternion.copy(q); tab.rotateX(0.9); });
+const tab = new THREE.Group(); tab.add(K.box(tabW, 0.012, tabD, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 })); const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); S.add(tab);
+app.on(t => { drawMap(t); const { p, q } = tabPose(); tab.position.copy(p); tab.quaternion.copy(q); tab.updateMatrixWorld(true); });
 
 // camera
 const luisF = () => luis.head.getWorldPosition(V()).add(V(0, 0.09, 0)), wkrF = () => wkr.head.getWorldPosition(V()).add(V(0, 0.09, 0));

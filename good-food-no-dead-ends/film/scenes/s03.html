@@ -34,11 +34,17 @@ const qc = puppet('QC', extraSpec(24, { build: 'm', hairStyle: 'short', top: '#7
 const qcTom = P.tomato({ r: 0.04, seed: 2 }); app.add(qcTom);
 const crateQ = P.crate({ fill: 'tomato', color: '#2f8a57', layers: 1 }); crateQ.position.set(0.95, 0.08, -4.35); crateQ.rotation.y = 0.4; app.add(crateQ);
 qc.act([{ t: 0, pose: 'stand', talk: 0 }]);
-qc.hand('R', [{ t: 0, at: () => qc.root.localToWorld(V(0.14, 1.36, 0.32)), pole: [0.7, -0.6, -0.3] }, { t: 4.7, at: () => crateQ.localToWorld(V(-0.05, 0.2, 0.02)), blend: 0.6, pole: [0.7, -0.4, -0.4] }]);
-qc.hand('L', [{ t: 0, at: () => qc.root.localToWorld(V(0.06, 1.31, 0.3)), pole: [-0.7, -0.6, -0.3] }, { t: 4.4, at: null, blend: 0.5 }]);
+// the tomato rides in his right palm (cradled, palm up), and he turns it in the light by turning his wrist; then he
+// turns the hand over and sets it in the crate. The other hand stays down.
+const qd = (x, y, z) => qc.dirToWorld([x, y, z]);
+const turn = (t) => 0.45 * Math.sin(t * 1.3);
+const cradle = { at: () => qc.root.localToWorld(V(0.13, 1.33, 0.33)), pole: [0.7, -0.6, -0.3], shape: 'ball',
+  aim: (t) => { const f = qd(-0.4, 0.15, 1), p0 = qd(0.1, 1, -0.15); return { fingers: f, palm: p0.applyAxisAngle(f, turn(t)) }; } };
+qc.hand('R', [{ t: 0, ...cradle }, { t: 4.7, at: () => crateQ.localToWorld(V(-0.05, 0.27, 0.02)), blend: 0.6, pole: [0.7, -0.4, -0.4], shape: 'ball', aim: () => ({ fingers: qd(-0.2, -0.45, 1), palm: qd(0.1, -1, 0) }) }]);
+qc.hand('L', [{ t: 0, at: null }]);
 qc.look([{ t: 0, at: () => qcTom.getWorldPosition(V()) }]);
 qc.face([{ t: 0, smile: 0.2, brow: 0.2, squint: 0.2 }, { t: 3.8, smile: 0.55, brow: 0.3, squint: 0.1 }]);
-app.after(t => { const g = qc.arms.R.grip.getWorldPosition(V()); qcTom.position.copy(g); qcTom.rotation.set(0.2, t * 1.4, 0.3 * Math.sin(t * 2)); qcTom.visible = t < 5.3; });
+qc.attach('R', qcTom, { pos: [0, 0.004, 0.024], rot: [0.3, 0.6, 0.2], until: 5.3 }); app.after(t => { qcTom.visible = t < 5.3; });   // (on the palm: 2.4 cm out along the palm normal)
 
 // pollinators along the flower strip: little bees on looping flight paths (pure functions of t)
 const beeGeo = K.merged([{ geo: new THREE.SphereGeometry(0.012, 10, 8), m: K.M4(0, 0, 0, 0, 0, 0, 1, 0.8, 1.5), color: '#e2b528' }, { geo: new THREE.SphereGeometry(0.0125, 10, 8), m: K.M4(0, 0, -0.012, 0, 0, 0, 0.95, 0.8, 0.6), color: '#2a2018' }, { geo: new THREE.SphereGeometry(0.009, 8, 6), m: K.M4(0, 0.003, 0.016), color: '#2a2018' }]);

@@ -701,9 +701,10 @@ export class HumanPuppet extends Puppet {
     for (const s of ['L', 'R']) { const m = this.MS[s], back = this['palmN' + s].clone().negate();
       for (let f = 1; f <= 5; f++) { const n = `finger${f}-3.${m}`; if (!h.bone(n)) continue; const a = J(n), b = J(n, 't'), ax = b.clone().sub(a), len = ax.length(); ax.normalize();
         const bk = back.clone().sub(ax.clone().multiplyScalar(back.dot(ax))).normalize(), side = new THREE.Vector3().crossVectors(ax, bk);
-        const w = (f === 1 ? 0.0125 : f === 5 ? 0.0085 : 0.0105) * sc, L = Math.min(len * 0.62, (f === 1 ? 0.013 : 0.011) * sc), th = (f === 1 ? 0.0062 : 0.0054) * sc;
+        const w = (f === 1 ? 0.0115 : f === 5 ? 0.0078 : 0.0096) * sc, L = Math.min(len * 0.58, (f === 1 ? 0.012 : 0.0102) * sc), th = (f === 1 ? 0.0062 : 0.0054) * sc;
         const g = new THREE.PlaneGeometry(w, L, 6, 4); const P = g.attributes.position;
-        const col = new Float32Array(P.count * 3), base = new THREE.Color(this.spec.skin || '#b07650').lerp(new THREE.Color('#e9b4a6'), 0.42), edge = base.clone().lerp(new THREE.Color('#f2e2d6'), 0.4);
+        // the nail bed shows through the plate: the skin's own colour, a little pinker and lighter, with a paler free edge
+        const col = new Float32Array(P.count * 3), base = new THREE.Color(this.spec.skin || '#b07650').lerp(new THREE.Color('#d9a093'), 0.3), edge = base.clone().lerp(new THREE.Color('#e8d2c4'), 0.28);
         for (let i = 0; i < P.count; i++) { let x = P.getX(i); const y = P.getY(i), fy = (y + L / 2) / L; x *= 0.55 + 0.45 * Math.sqrt(clamp(fy / 0.35, 0, 1));   // rounded at the cuticle
           const u = x / (w / 2); P.setX(i, x); P.setZ(i, -0.55 * w * (1 - Math.cos(u * 0.9)) - 0.0004 * Math.abs(y / (L / 2)) ** 2);   // curved across the finger
           const c = base.clone().lerp(edge, Math.max(0, (fy - 0.82) / 0.18)); col.set([c.r, c.g, c.b], i * 3); }

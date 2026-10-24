@@ -27,17 +27,31 @@ for (let i = 0; i < 3; i++) { const c = P.crate({ fill: 'tomato', color: '#2f8a5
 // Asha: kneeling in the furrow, fingers in the soil; looks to the cloud bank; then to Luis
 const soilPt = V(0.62, 0.15, -0.55);
 asha.act([{ t: 0, pose: 'crouch', talk: 0.2 }]);
-asha.hand('L', [{ t: 0, at: soilPt, pole: [-0.6, -0.3, -0.7] }, { t: 1.6, at: () => asha.root.localToWorld(V(-0.05, 0.86, 0.36)), blend: 0.7, pole: [-0.8, -0.6, -0.2] }]);
-asha.hand('R', [{ t: 0, at: V(0.28, 0.6, -0.8), pole: [0.6, -0.4, -0.5] }, { t: 4.3, at: () => asha.root.localToWorld(V(0.03, 0.88, 0.38)), blend: 0.7, pole: [0.7, -0.6, -0.2] }]);
+// her right hand (driver 'L') digs into the soil, then comes up cupped, palm up, with a clump in it; at 4.3 the other
+// hand comes over it and crumbles the clump between thumb and fingertips
+const ad = (x, y, z) => asha.dirToWorld([x, y, z]);
+asha.hand('L', [{ t: 0, at: soilPt, pole: [-0.6, -0.3, -0.7], shape: 'relaxed', aim: () => ({ fingers: ad(0.1, -0.75, 0.65), palm: ad(0, -0.65, -0.75) }) },
+  { t: 1.6, at: () => asha.root.localToWorld(V(-0.04, 0.84, 0.36)), blend: 0.7, pole: [-0.8, -0.6, -0.2], shape: 'ball', aim: () => ({ fingers: ad(0.45, 0.12, 1), palm: ad(-0.1, 1, 0) }) }]);
+asha.hand('R', [{ t: 0, at: V(0.28, 0.6, -0.8), pole: [0.6, -0.4, -0.5], shape: 'relaxed', aim: () => ({ fingers: ad(-0.2, -0.5, 1), palm: ad(-0.3, -1, 0) }) },
+  { t: 4.3, at: () => { const f = asha.handFrame('L'); return f.pos.clone().add(V(0, 0, 1).applyQuaternion(f.quat).multiplyScalar(0.06)).add(asha.dirToWorld([1, 0, 0.3]).multiplyScalar(0.03)); }, blend: 0.7, pole: [0.7, -0.6, -0.2], shape: 'pinch',
+    aim: () => ({ fingers: ad(-0.55, -0.35, 1), palm: ad(0.15, -1, 0.1) }) }]);
 const storm = V(-31, 9, -25);
 asha.look([{ t: 0, at: soilPt }, { t: 0.95, at: storm, blend: 0.5 }, { t: 2.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.55 }, { t: 4.4, at: () => asha.arms.L.grip.getWorldPosition(V()), blend: 0.35 }, { t: 6.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.6 }]);
 asha.face([{ t: 0, smile: 0.1, brow: -0.1 }, { t: 1.0, smile: 0.0, brow: -0.2, squint: 0.3 }, { t: 4.4, smile: 0.15, brow: 0.1, tilt: 0.4, squint: 0 }, { t: 7.0, smile: 0.45, brow: 0.2, tilt: 0, blend: 0.6 }]);
 const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.028, 1), K.mat('#4a3421', { roughness: 1, normalMap: K.normalTex('soil', 1) })); app.add(clump);
-app.after(t => { const gp = asha.arms.L.grip.getWorldPosition(V()); clump.position.copy(gp); clump.visible = t > 1.4; clump.scale.setScalar(1 - 0.35 * K.win(t, 4.6, 5.6)); });
+app.after(t => { const f = asha.handFrame('L'), sc = 1 - 0.35 * K.win(t, 4.6, 5.6); clump.position.copy(f.pos).add(V(0, 0, 1).applyQuaternion(f.quat).multiplyScalar(0.028 * sc - 0.012)); clump.visible = t > 1.4; clump.scale.setScalar(sc); });   // resting in the cupped palm
 
 // Luis: walks up the furrow with a tablet; shows her the updated forecast
 luis.act([{ t: 0, pose: 'tablet' }, { t: 6.2, pose: 'tablet', mod: { spY: -0.25 }, blend: 0.6 }]);
-const tabAt = () => luis.arms.L.grip.getWorldPosition(V()).lerp(luis.arms.R.grip.getWorldPosition(V()), 0.5);
+const tabAt = () => tab.getWorldPosition(V());
+// he holds the tablet by its sides (fingers under it, thumbs on the bezel), screen tipped up to him; on his last line
+// he tips it towards Asha to show her the logged observation
+const tabW = 0.22, tabD = 0.16, tabHold = { f: [[0.3, 0.35, 0.25], [0.12, 0.18, 0.1], [0.14, 0.2, 0.12], [0.18, 0.24, 0.14], [0.22, 0.28, 0.16]], opp: 0.35 };
+const tabPose = (t) => { const q = luis.root.getWorldQuaternion(new THREE.Quaternion()).multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), -0.35 * K.win(t, 6.0, 6.6))).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -0.95 + 0.55 * K.win(t, 6.0, 6.6)));
+  return { p: luis.root.localToWorld(V(0.0, 1.07 - 0.04 * K.win(t, 6.0, 6.6), 0.3)), q }; };
+const tabGrip = (sx) => ({ at: () => tab.localToWorld(V(sx * (tabW / 2 - 0.035), 0.012, 0)), aim: () => { const q = tab.getWorldQuaternion(new THREE.Quaternion()); return { fingers: V(-sx, 0, -0.25).normalize().applyQuaternion(q), palm: V(0, 1, 0).applyQuaternion(q) }; }, shape: tabHold });
+luis.hand('L', [{ t: 0, ...tabGrip(-1), pole: [-0.7, -0.6, -0.3] }]);
+luis.hand('R', [{ t: 0, ...tabGrip(1), pole: [0.7, -0.6, -0.3] }]);
 luis.look([{ t: 0, at: () => asha.head.getWorldPosition(V()) }, { t: 2.4, at: tabAt, blend: 0.3 }, { t: 3.6, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }, { t: 5.9, at: tabAt, blend: 0.3 }, { t: 6.5, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }]);
 luis.face([{ t: 0, smile: 0.2 }, { t: 6.3, smile: 0.5, brow: 0.3 }]);
 // tablet with a live (wordless) forecast: rain band slides earlier when Asha's observation is logged
@@ -55,9 +69,9 @@ function drawScreen(t) {
   g.strokeStyle = `rgba(207,95,42,${pin})`; g.lineWidth = 2; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(75, 148); g.lineTo(cx - 20, 100); g.stroke(); g.setLineDash([]);
   scrTex.needsUpdate = true;
 }
-const tab = new THREE.Group(); const slab = K.box(0.22, 0.012, 0.16, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 }); tab.add(slab);
+const tab = new THREE.Group(); const slab = K.box(tabW, 0.012, tabD, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 }); tab.add(slab);
 const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); app.add(tab);
-app.after(t => { drawScreen(t); const gL = luis.arms.L.grip.getWorldPosition(V()), gR = luis.arms.R.grip.getWorldPosition(V()); tab.position.copy(gL).lerp(gR, 0.5).add(V(0, 0.02, 0)); const q = new THREE.Quaternion(); luis.spine.getWorldQuaternion(q); tab.quaternion.copy(q); tab.rotateY(Math.PI); tab.rotateX(-0.9 - 0.35 * K.win(t, 6.0, 6.6)); tab.rotateY(Math.PI); });
+app.on(t => { drawScreen(t); const { p, q } = tabPose(t); tab.position.copy(p); tab.quaternion.copy(q); tab.updateMatrixWorld(true); });
 
 // camera: A sunrise (match from the tomato) → B two-shot in the furrow → C Asha → D over-shoulder to Luis & tablet
 const ashaHead = () => asha.head.getWorldPosition(V()).add(V(0, 0.1, 0)), luisHead = () => luis.head.getWorldPosition(V()).add(V(0, 0.1, 0));
