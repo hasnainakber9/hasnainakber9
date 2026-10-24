@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s02 farm</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 02 | 6–14.5 s | FARM + LOCAL KNOWLEDGE — sunrise. Human observation corrects the forecast.
+// ASHA: "Rain's coming early."  LUIS: "The forecast updated."  ASHA: "It doesn't know this soil."  LUIS: "It learned from you."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import { farm, sensorStake } from '../lib/sets.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'soil']);
+const app = new K.App({ duration: 8.5, fov: 30, exposure: 1.0, dof: { aperture: 0.004, maxblur: 0.01 }, bloomStrength: 0.3, bloomThreshold: 0.82, warmth: 1.0, sat: 0.96, vignette: 0.36 });
+await app.hdri('park', { intensity: 0.3, rotation: 2.2 });
+const sunDir = V(0.45, 0.2, 1.0);
+const F = await farm(app, { sunDir, top: '#5a82b6', mid: '#e3ad86', horizon: '#f58a45', sunColor: '#ff8a40', fog: '#eaa678', cloudColor: '#ffcaa0', glow: 0.7, sunDisc: 3.2, sunSize: 0.99955, cloudYaw: -0.4, hemiSky: '#d6c2ae', clear: (x, z) => (Math.abs(x - 1.5) < 0.1 && z > -1.75 && z < -0.25) || (Math.abs(x + 6.0) < 0.1 && z > -6.8 && z < -5.2) /* lane for Luis; no bean stake inside the opening lens */, stormBank: true, stormYaw: -0.9, sunI: 3.4, hemi: 0.45, near: V(0.75, 0, -1), focus: V(0.8, 0, -1.4), shadowSize: 9, mastPos: [9.5, -24] });
+sensorStake(app, 0.42, -0.45).children[1].material.color.set('#cfd6cc');
+
+// cast
+const lines = await K.dialogue('s02');
+const asha = puppet('ASHA'); asha.place(0.68, -1.0, 0.45); app.cast(asha); asha.speak(lines);
+const luis = puppet('LUIS'); app.cast(luis); luis.speak(lines);
+luis.walk([{ t: 0, x: 0.85, z: -6.4, yaw: 0.0 }, { t: 1.1, x: 0.85, z: -5.8, yaw: 0.0 }, { t: 2.7, x: 0.95, z: -2.1, yaw: 0.2 }, { t: 3.4, x: 1.42, z: -1.1, yaw: -0.97, turnFast: true }]);
+const workers = [0, 1, 2, 3].map(i => { const w = puppet('W' + i, extraSpec(10 + i, { outer: i % 2 ? 'hivis' : 'none', outerColor: '#d2ea3c' })); w.place([2.25, -0.75, 3.75, -2.25][i], [-9, -12, -15, -18][i], [0.6, -0.4, 0.3, 2.6][i]); w.act([{ t: 0, pose: 'pick' }]); app.cast(w); return w; });
+const cartM = P.cart({}); cartM.position.set(4.6, 0.05, -14.5); cartM.rotation.y = 0.15; app.add(cartM);
+for (let i = 0; i < 3; i++) { const c = P.crate({ fill: 'tomato', color: '#2f8a57' }); c.position.set(4.6 + (i % 2) * 0.3 - 0.15, 0.73 + Math.floor(i / 2) * 0.31, -14.5 - 0.35); c.rotation.y = 0.15; app.add(c); }
+
+// Asha: kneeling in the furrow, fingers in the soil; looks to the cloud bank; then to Luis
+const soilPt = V(0.62, 0.15, -0.55);
+asha.act([{ t: 0, pose: 'crouch', talk: 0.2 }]);
+asha.hand('L', [{ t: 0, at: soilPt, pole: [-0.6, -0.3, -0.7] }, { t: 1.6, at: () => asha.root.localToWorld(V(-0.05, 0.86, 0.36)), blend: 0.7, pole: [-0.8, -0.6, -0.2] }]);
+asha.hand('R', [{ t: 0, at: V(0.28, 0.6, -0.8), pole: [0.6, -0.4, -0.5] }, { t: 4.3, at: () => asha.root.localToWorld(V(0.03, 0.88, 0.38)), blend: 0.7, pole: [0.7, -0.6, -0.2] }]);
+const storm = V(-31, 9, -25);
+asha.look([{ t: 0, at: soilPt }, { t: 0.95, at: storm, blend: 0.5 }, { t: 2.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.55 }, { t: 4.4, at: () => asha.arms.L.grip.getWorldPosition(V()), blend: 0.35 }, { t: 6.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.6 }]);
+asha.face([{ t: 0, smile: 0.1, brow: -0.1 }, { t: 1.0, smile: 0.0, brow: -0.2, squint: 0.3 }, { t: 4.4, smile: 0.15, brow: 0.1, tilt: 0.4, squint: 0 }, { t: 7.0, smile: 0.45, brow: 0.2, tilt: 0, blend: 0.6 }]);
+const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.028, 1), K.mat('#4a3421', { roughness: 1, normalMap: K.normalTex('soil', 1) })); app.add(clump);
+app.after(t => { const gp = asha.arms.L.grip.getWorldPosition(V()); clump.position.copy(gp); clump.visible = t > 1.4; clump.scale.setScalar(1 - 0.35 * K.win(t, 4.6, 5.6)); });
+
+// Luis: walks up the furrow with a tablet; shows her the updated forecast
+luis.act([{ t: 0, pose: 'tablet' }, { t: 6.2, pose: 'tablet', mod: { spY: -0.25 }, blend: 0.6 }]);
+const tabAt = () => luis.arms.L.grip.getWorldPosition(V()).lerp(luis.arms.R.grip.getWorldPosition(V()), 0.5);
+luis.look([{ t: 0, at: () => asha.head.getWorldPosition(V()) }, { t: 2.4, at: tabAt, blend: 0.3 }, { t: 3.6, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }, { t: 5.9, at: tabAt, blend: 0.3 }, { t: 6.5, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }]);
+luis.face([{ t: 0, smile: 0.2 }, { t: 6.3, smile: 0.5, brow: 0.3 }]);
+// tablet with a live (wordless) forecast: rain band slides earlier when Asha's observation is logged
+const scr = document.createElement('canvas'); scr.width = 320; scr.height = 220; const sg = scr.getContext('2d'); const scrTex = new THREE.CanvasTexture(scr); scrTex.colorSpace = THREE.SRGBColorSpace;
+function drawScreen(t) {
+  const g = sg; g.fillStyle = '#eef3f6'; g.fillRect(0, 0, 320, 220);
+  g.fillStyle = '#dfe8ee'; g.fillRect(0, 0, 320, 34); g.fillStyle = '#2f8a57'; g.beginPath(); g.arc(20, 17, 8, 0, 6.3); g.fill();
+  const shift = K.smoother((t - 2.55) / 1.0) * 70 + K.smoother((t - 6.4) / 0.9) * 0; // forecast moved earlier
+  for (let i = 0; i < 12; i++) { const x = 20 + i * 24; const center = 230 - shift; const v = Math.exp(-((x - center) ** 2) / 1800); g.fillStyle = `rgba(47,106,160,${0.25 + v * 0.75})`; const h = 20 + v * 110; g.fillRect(x, 190 - h, 16, h); }
+  g.fillStyle = '#9aa6b0'; g.fillRect(16, 191, 290, 2);
+  const cx = 230 - shift; g.fillStyle = '#6f7a86'; for (const [dx, dy, r] of [[-12, 0, 13], [4, -6, 16], [18, 1, 12]]) { g.beginPath(); g.arc(cx + dx, 58 + dy, r, 0, 6.3); g.fill(); }
+  g.strokeStyle = '#2f6aa0'; g.lineWidth = 3; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(cx + i * 10, 74); g.lineTo(cx + i * 10 - 4, 86); g.stroke(); }
+  // field observation pin (soil), pulsing when the model takes it in
+  const pin = K.win(t, 5.6, 6.0); g.fillStyle = `rgba(207,95,42,${0.3 + 0.7 * pin})`; g.beginPath(); g.arc(68, 150, 7 + 4 * pin * (1 + Math.sin(t * 8) * 0.3), 0, 6.3); g.fill();
+  g.strokeStyle = `rgba(207,95,42,${pin})`; g.lineWidth = 2; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(75, 148); g.lineTo(cx - 20, 100); g.stroke(); g.setLineDash([]);
+  scrTex.needsUpdate = true;
+}
+const tab = new THREE.Group(); const slab = K.box(0.22, 0.012, 0.16, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 }); tab.add(slab);
+const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); app.add(tab);
+app.after(t => { drawScreen(t); const gL = luis.arms.L.grip.getWorldPosition(V()), gR = luis.arms.R.grip.getWorldPosition(V()); tab.position.copy(gL).lerp(gR, 0.5).add(V(0, 0.02, 0)); const q = new THREE.Quaternion(); luis.spine.getWorldQuaternion(q); tab.quaternion.copy(q); tab.rotateY(Math.PI); tab.rotateX(-0.9 - 0.35 * K.win(t, 6.0, 6.6)); tab.rotateY(Math.PI); });
+
+// camera: A sunrise (match from the tomato) → B two-shot in the furrow → C Asha → D over-shoulder to Luis & tablet
+const ashaHead = () => asha.head.getWorldPosition(V()).add(V(0, 0.1, 0)), luisHead = () => luis.head.getWorldPosition(V()).add(V(0, 0.1, 0));
+const ashaFace = () => asha.head.getWorldPosition(V()).add(V(0, 0.08, 0)), luisFace = () => luis.head.getWorldPosition(V()).add(V(0, 0.09, 0));
+app.rig = new K.Rig([
+  { t: 0.0, pos: [-6.0, 1.72, -6.0], look: [18, 4.4, 48], fov: 15, focus: 70, aperture: 0.0004, hand: 0.15 },
+  { t: 1.1, pos: [-6.0, 1.76, -5.7], look: [18, 4.6, 48], fov: 14.5, focus: 70, aperture: 0.0004, hand: 0.15 },
+  { t: 1.1001, cut: true, pos: [0.6, 1.12, 1.7], look: [0.98, 1.12, -1.2], fov: 30, focus: ashaHead, aperture: 0.004 },
+  { t: 4.3, pos: [0.62, 1.12, 1.35], look: [0.98, 1.15, -1.2], fov: 28, focus: ashaHead, aperture: 0.004 },
+  { t: 4.3001, cut: true, pos: () => ashaFace().add(V(0.12, -0.14, 0.82)), look: () => ashaFace().add(V(0, -0.05, 0)), fov: 27, focus: ashaHead, aperture: 0.007 },
+  { t: 6.15, pos: () => ashaFace().add(V(0.1, -0.14, 0.76)), look: () => ashaFace().add(V(0, -0.05, 0)), fov: 26, focus: ashaHead, aperture: 0.007 },
+  { t: 6.1501, cut: true, pos: () => luisFace().add(V(-0.6, -0.3, 0.78)), look: () => luisFace().add(V(0, -0.12, 0)), fov: 29, focus: luisHead, aperture: 0.006 },
+  { t: 8.5, pos: () => luisFace().add(V(-0.55, -0.28, 0.7)), look: () => luisFace().add(V(0, -0.1, 0)), fov: 28, focus: luisHead, aperture: 0.006 },
+], { handheld: 0.7 });
+app.ready();
+</script></body></html>

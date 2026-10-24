@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.677,
+  "sentences": [
+    {
+      "text": "My grandmother made this every Sunday.",
+      "start": 0.1,
+      "end": 1.977
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.977,
+      "text": "My grandmother made this every Sunday."
+    }
+  ]
+}

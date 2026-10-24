@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.699,
+  "sentences": [
+    {
+      "text": "Oh, try the green one, it's lovely.",
+      "start": 0.1,
+      "end": 1.999
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.999,
+      "text": "Oh, try the green one, it's lovely."
+    }
+  ]
+}

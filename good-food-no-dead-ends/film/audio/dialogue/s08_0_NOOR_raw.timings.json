@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.549,
+  "sentences": [
+    {
+      "text": "So this came from the farm?",
+      "start": 0.1,
+      "end": 1.849
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.849,
+      "text": "So this came from the farm?"
+    }
+  ]
+}

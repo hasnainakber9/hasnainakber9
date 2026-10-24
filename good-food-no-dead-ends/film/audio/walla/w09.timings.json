@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.507,
+  "sentences": [
+    {
+      "text": "Where did you put the salt?",
+      "start": 0.1,
+      "end": 1.807
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.807,
+      "text": "Where did you put the salt?"
+    }
+  ]
+}

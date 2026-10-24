@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.315,
+  "sentences": [
+    {
+      "text": "Good thing we're cooking it.",
+      "start": 0.1,
+      "end": 1.615
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.615,
+      "text": "Good thing we're cooking it."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.704,
+  "sentences": [
+    {
+      "text": "Nope.",
+      "start": 0.1,
+      "end": 0.911
+    },
+    {
+      "text": "Just the greens that like it here.",
+      "start": 1.191,
+      "end": 3.004
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 0.911,
+      "text": "Nope."
+    },
+    {
+      "start": 1.191,
+      "end": 3.004,
+      "text": "Just the greens that like it here."
+    }
+  ]
+}

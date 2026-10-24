@@ -1,0 +1,13 @@
+# renders are rebuilt with film/render_scenes.sh (or film/render_resume.sh) and film/assemble.py; the finished
+# MP4s are delivered as files, too large for the repository
+film/renders/
+deliverables/*.mp4
+film/__pycache__/
+# regenerable audio: python3 film/audio/build_dialogue.py --skip-tts && python3 film/audio/build_mix.py
+film/audio/mix/
+film/audio/dialogue/s[0-9][0-9].wav
+# local test pages
+film/scenes/test_*.html
+
+# review copies sent to the user, not part of the project
+review/

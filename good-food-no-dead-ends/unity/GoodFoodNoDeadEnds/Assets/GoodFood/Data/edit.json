@@ -1,0 +1,360 @@
+{
+ "title": "GOOD FOOD. NO DEAD ENDS.",
+ "fps": 24,
+ "duration": 84.5,
+ "width": 1920,
+ "height": 1080,
+ "shots": [
+  {
+   "id": "s01",
+   "start": 0.0,
+   "duration": 6.0,
+   "glb": "s01.glb"
+  },
+  {
+   "id": "s02",
+   "start": 6.0,
+   "duration": 8.5,
+   "glb": "s02.glb"
+  },
+  {
+   "id": "s03",
+   "start": 14.5,
+   "duration": 7.5,
+   "glb": "s03.glb"
+  },
+  {
+   "id": "s04",
+   "start": 22.0,
+   "duration": 8.0,
+   "glb": "s04.glb"
+  },
+  {
+   "id": "s05",
+   "start": 30.0,
+   "duration": 8.0,
+   "glb": "s05.glb"
+  },
+  {
+   "id": "s06",
+   "start": 38.0,
+   "duration": 9.0,
+   "glb": "s06.glb"
+  },
+  {
+   "id": "s07",
+   "start": 47.0,
+   "duration": 8.5,
+   "glb": "s07.glb"
+  },
+  {
+   "id": "s08",
+   "start": 55.5,
+   "duration": 10.0,
+   "glb": "s08.glb"
+  },
+  {
+   "id": "s09a",
+   "start": 65.5,
+   "duration": 4.6,
+   "glb": "s09a.glb"
+  },
+  {
+   "id": "s09b",
+   "start": 70.1,
+   "duration": 3.4,
+   "glb": "s09b.glb"
+  },
+  {
+   "id": "s10",
+   "start": 73.5,
+   "duration": 6.5,
+   "glb": "s10.glb"
+  },
+  {
+   "id": "s11",
+   "start": 80.0,
+   "duration": 4.5,
+   "glb": null
+  }
+ ],
+ "dialogue": [
+  {
+   "char": "NOOR",
+   "text": "This one's ugly.",
+   "start": 0.8,
+   "end": 2.016,
+   "clip": "s01_0_NOOR.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "It's a tomato, not a job interview.",
+   "start": 2.6,
+   "end": 4.739,
+   "clip": "s01_1_ASHA.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "Rain's coming early.",
+   "start": 6.9,
+   "end": 8.279,
+   "clip": "s02_0_ASHA.wav"
+  },
+  {
+   "char": "LUIS",
+   "text": "The forecast updated.",
+   "start": 8.629,
+   "end": 10.07,
+   "clip": "s02_1_LUIS.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "It doesn't know this soil.",
+   "start": 10.42,
+   "end": 11.83,
+   "clip": "s02_2_ASHA.wav"
+  },
+  {
+   "char": "LUIS",
+   "text": "It learned from you.",
+   "start": 12.4,
+   "end": 13.551,
+   "clip": "s02_3_LUIS.wav"
+  },
+  {
+   "char": "NOOR",
+   "text": "So all our food grows here now?",
+   "start": 23.4,
+   "end": 25.266,
+   "clip": "s04_0_NOOR.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "Nope. Just the greens that like it here.",
+   "start": 26.2,
+   "end": 29.08,
+   "clip": "s04_1_ASHA.wav"
+  },
+  {
+   "char": "COLLEAGUE",
+   "text": "Protein... from microbes?",
+   "start": 31.4,
+   "end": 33.597,
+   "clip": "s05_0_COLLEAGUE.wav"
+  },
+  {
+   "char": "MAYA",
+   "text": "Yogurt is microbes.",
+   "start": 33.947,
+   "end": 35.278,
+   "clip": "s05_1_MAYA.wav"
+  },
+  {
+   "char": "COLLEAGUE",
+   "text": "Fair.",
+   "start": 36.2,
+   "end": 36.819,
+   "clip": "s05_2_COLLEAGUE.wav"
+  },
+  {
+   "char": "LUIS",
+   "text": "The school kitchen needs two crates by noon.",
+   "start": 39.0,
+   "end": 41.809,
+   "clip": "s06_0_LUIS.wav"
+  },
+  {
+   "char": "WORKER",
+   "text": "Those were marked surplus.",
+   "start": 42.4,
+   "end": 43.911,
+   "clip": "s06_1_WORKER.wav"
+  },
+  {
+   "char": "LUIS",
+   "text": "Then route them to dinner.",
+   "start": 44.6,
+   "end": 46.008,
+   "clip": "s06_2_LUIS.wav"
+  },
+  {
+   "char": "VENDOR",
+   "text": "Not the prettiest batch.",
+   "start": 49.2,
+   "end": 50.604,
+   "clip": "s07_0_VENDOR.wav"
+  },
+  {
+   "char": "COOK",
+   "text": "Good thing we're cooking it.",
+   "start": 51.6,
+   "end": 53.073,
+   "clip": "s07_1_COOK.wav"
+  },
+  {
+   "char": "NOOR",
+   "text": "So this came from the farm?",
+   "start": 57.5,
+   "end": 59.119,
+   "clip": "s08_0_NOOR.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "That, the greenhouse, and about six people you didn't see.",
+   "start": 60.1,
+   "end": 62.932,
+   "clip": "s08_1_ASHA.wav"
+  },
+  {
+   "char": "NOOR",
+   "text": "And the scraps?",
+   "start": 66.7,
+   "end": 67.733,
+   "clip": "s09_0_NOOR.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "Back to the soil.",
+   "start": 68.7,
+   "end": 69.838,
+   "clip": "s09_1_ASHA.wav"
+  },
+  {
+   "char": "NOOR",
+   "text": "Okay. Not ugly.",
+   "start": 74.9,
+   "end": 76.974,
+   "clip": "s10_0_NOOR.wav"
+  },
+  {
+   "char": "ASHA",
+   "text": "High praise.",
+   "start": 77.4,
+   "end": 78.422,
+   "clip": "s10_1_ASHA.wav"
+  }
+ ],
+ "captions": [
+  {
+   "start": 0.75,
+   "end": 2.366,
+   "text": "This one's ugly."
+  },
+  {
+   "start": 2.55,
+   "end": 5.089,
+   "text": "It's a tomato, not a job interview."
+  },
+  {
+   "start": 6.85,
+   "end": 8.539,
+   "text": "Rain's coming early."
+  },
+  {
+   "start": 8.579,
+   "end": 10.33,
+   "text": "The forecast updated."
+  },
+  {
+   "start": 10.37,
+   "end": 12.18,
+   "text": "It doesn't know this soil."
+  },
+  {
+   "start": 12.35,
+   "end": 13.901,
+   "text": "It learned from you."
+  },
+  {
+   "start": 23.35,
+   "end": 25.616,
+   "text": "So all our food grows here now?"
+  },
+  {
+   "start": 26.15,
+   "end": 29.43,
+   "text": "Nope. Just the greens that like it here."
+  },
+  {
+   "start": 31.35,
+   "end": 33.857,
+   "text": "Protein... from microbes?"
+  },
+  {
+   "start": 33.897,
+   "end": 35.628,
+   "text": "Yogurt is microbes."
+  },
+  {
+   "start": 36.15,
+   "end": 37.169,
+   "text": "Fair."
+  },
+  {
+   "start": 38.95,
+   "end": 42.159,
+   "text": "The school kitchen needs two crates by noon."
+  },
+  {
+   "start": 42.35,
+   "end": 44.261,
+   "text": "Those were marked surplus."
+  },
+  {
+   "start": 44.55,
+   "end": 46.358,
+   "text": "Then route them to dinner."
+  },
+  {
+   "start": 49.15,
+   "end": 50.954,
+   "text": "Not the prettiest batch."
+  },
+  {
+   "start": 51.55,
+   "end": 53.423,
+   "text": "Good thing we're cooking it."
+  },
+  {
+   "start": 57.45,
+   "end": 59.469,
+   "text": "So this came from the farm?"
+  },
+  {
+   "start": 60.05,
+   "end": 63.282,
+   "text": "That, the greenhouse, and about six people you didn't see."
+  },
+  {
+   "start": 66.65,
+   "end": 68.083,
+   "text": "And the scraps?"
+  },
+  {
+   "start": 68.65,
+   "end": 70.188,
+   "text": "Back to the soil."
+  },
+  {
+   "start": 74.85,
+   "end": 77.31,
+   "text": "Okay. Not ugly."
+  },
+  {
+   "start": 77.35,
+   "end": 78.772,
+   "text": "High praise."
+  }
+ ],
+ "titleCard": {
+  "shot": "s11",
+  "line1": "GOOD FOOD.",
+  "line2": "NO DEAD ENDS.",
+  "line1At": 0.35,
+  "line2At": 1.25,
+  "loopAt": 1.8,
+  "accent": "#d8401f",
+  "background": "#070605",
+  "text": "#f6f1e8"
+ }
+}

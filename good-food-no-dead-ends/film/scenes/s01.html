@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s01 tomato hook</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 01 | 0–6 s | TOMATO HOOK — community kitchen, late afternoon.
+// NOOR: "This one's ugly."   ASHA: "It's a tomato, not a job interview."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import { kitchen } from '../lib/sets.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'planks', 'tiles', 'soil']);
+const app = new K.App({ duration: 6.0, fov: 28, exposure: 1.05, dof: { aperture: 0.006, maxblur: 0.012 }, bloomStrength: 0.22, warmth: 1.03, vignette: 0.34 });
+await app.hdri('apartment', { intensity: 0.55, rotation: 1.2 });
+const K1 = await kitchen(app, { time: 'afternoon' });
+const top = K1.tableTop;
+
+// table dressing: a bowl of good tomatoes being sorted, a steel discard bowl, a few greens
+const good = P.ware.bowl(0.15, '#e2d6c2'); good.position.set(-0.78, top, -0.18); app.add(good);
+const tg = P.tomatoGeo({ r: 0.036, seg: 22 }), tm = P.tomatoMat();
+for (let i = 0; i < 9; i++) { const t = new THREE.Mesh(tg, tm); t.castShadow = true; const a = i * 2.3, d = i < 5 ? 0.06 : 0.02; t.position.set(-0.78 + Math.cos(a) * d, top + 0.05 + (i < 5 ? 0 : 0.04), -0.18 + Math.sin(a) * d); t.rotation.set(K.R(-0.3, 0.3), K.R(0, 6), K.R(-0.3, 0.3)); app.add(t); }
+const discard = K.lathe ? null : null;
+const dbowl = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [0.07, 0], [0.12, 0.05], [0.14, 0.085], [0.135, 0.087], [0.115, 0.05], [0.065, 0.006], [0, 0.006]].map(([a, b]) => new THREE.Vector2(a, b)), 36), K.MAT.steel()); dbowl.position.set(-0.19, top, -0.4); dbowl.castShadow = dbowl.receiveShadow = true; app.add(dbowl);
+const scrap = P.tomatoGeo({ r: 0.03, ugly: true, seg: 14, color: '#9a3a22', shoulder: '#6a4a22', seed: 9 }); for (let i = 0; i < 2; i++) { const s = new THREE.Mesh(scrap, tm); s.position.set(-0.21 + i * 0.05, top + 0.035, -0.4 + i * 0.03); s.scale.y = 0.6; app.add(s); }
+const board = P.ware.board(); board.position.set(0.35, top, -0.05); board.rotation.y = 0.2; app.add(board);
+const knife = P.ware.knife(); knife.position.set(0.4, top + 0.015, 0.02); knife.rotation.y = 1.2; app.add(knife);
+const greens = new THREE.Mesh(P.produceGeo('greens'), P.produceMat({ roughness: 0.6, clearcoat: 0.1 })); greens.position.set(0.62, top, -0.2); greens.scale.setScalar(1.3); greens.rotation.z = 1.4; app.add(greens);
+
+// hero: the imperfect, perfectly edible tomato
+const hero = P.tomato({ r: 0.05, ugly: true, seed: 4, color: '#cf3a1f', shoulder: '#e08a2a' }); hero.traverse(m => { if (m.isMesh) m.castShadow = true; }); app.add(hero);
+
+// cast
+const lines = await K.dialogue('s01');
+const noor = puppet('NOOR'); noor.place(-0.4, -0.74, 0); app.cast(noor); noor.speak(lines);
+const asha = puppet('ASHA'); app.cast(asha); asha.speak(lines);
+asha.walk([{ t: 0, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 0.9, x: 1.9, z: -1.7, yaw: -1.2 }, { t: 2.35, x: 0.22, z: -0.92, yaw: -0.5, turnFast: true }]);
+for (const c of K1.chairs) if (Math.abs(c.position.x - 0.4) < 0.1 && c.position.z < 0) c.visible = false;
+const cook = puppet('COOK'); cook.place(3.55, 0.35, Math.PI / 2); app.cast(cook); cook.act([{ t: 0, pose: 'stir', p: { h: 1.08 } }]); cook.look([{ t: 0, at: V(4.15, 1.0, 0.35) }]);
+const helper = puppet('HELPER', extraSpec(4, { build: 'm', elder: true, outer: 'apron', outerColor: '#d8cfba' })); helper.place(2.9, -1.35, Math.PI / 2 - 0.2); app.cast(helper); helper.act([{ t: 0, pose: 'chop', p: { h: 0.95 } }]); helper.look([{ t: 0, at: V(3.8, 0.9, -1.3) }]);
+
+// Noor: sitting, sorting; holds the tomato over the discard bowl
+const holdN = V(-0.19, 0.95, -0.47);
+noor.act([{ t: 0, pose: 'sit', p: { seat: 0.46, lean: 0.18 }, talk: 0.2 }]);
+noor.hand('R', [{ t: 0, at: holdN, pole: [0.7, -0.6, -0.3] }, { t: 3.05, at: null, blend: 0.5 }]);
+noor.hand('L', [{ t: 0, at: V(-0.58, top + 0.06, -0.3), pole: [-0.7, -0.6, -0.2] }]);
+noor.look([{ t: 0, at: hero }, { t: 2.35, at: () => asha.head.getWorldPosition(V()).add(V(0, 0.12, 0)), blend: 0.35 }, { t: 3.4, at: hero, blend: 0.4 }, { t: 4.2, at: () => asha.head.getWorldPosition(V()).add(V(0, 0.12, 0)), blend: 0.4 }]);
+noor.face([{ t: 0, smile: 0.0, brow: 0.25 }, { t: 0.7, smile: -0.35, brow: -0.1, tilt: 0.6, blend: 0.3 }, { t: 2.6, smile: 0.0, brow: 0.45, tilt: 0, blend: 0.3 }, { t: 4.5, smile: 0.55, brow: 0.2, blend: 0.5 }]);
+
+// Asha: reaches in, takes it, looks it over, delivers the line, lifts it to the window light
+const lift = V(0.08, 1.45, -0.66);
+asha.act([{ t: 0, pose: 'stand' }, { t: 3.2, pose: 'relaxed', blend: 0.8 }]);
+asha.hand('R', [{ t: 0, at: null }, { t: 2.45, at: () => hero.getWorldPosition(V()).add(V(0.0, 0.0, 0.03)), blend: 0.45, pole: [0.6, -0.7, -0.2] },
+  { t: 3.0, at: V(0.12, 1.2, -0.62), blend: 0.55, pole: [0.6, -0.7, -0.3] }, { t: 4.45, at: lift, blend: 0.5, pole: [0.8, -0.5, -0.2] }]);
+asha.look([{ t: 0, at: () => noor.head.getWorldPosition(V()) }, { t: 2.0, at: hero, blend: 0.3 }, { t: 3.55, at: () => noor.head.getWorldPosition(V()).add(V(0, 0.1, 0)), blend: 0.35 }, { t: 4.75, at: hero, blend: 0.35 }]);
+asha.face([{ t: 0, smile: 0.1, brow: 0.0 }, { t: 2.6, smile: 0.25, brow: 0.2, blend: 0.3 }, { t: 3.9, smile: 0.45, brow: 0.35, tilt: 0.3, blend: 0.4 }, { t: 4.9, smile: 0.35, brow: 0.1, tilt: 0, blend: 0.5 }]);
+
+// the tomato follows whichever hand holds it (hand-off at 2.95 s)
+app.after(t => {
+  const holder = t < 2.95 ? noor : asha; const gp = holder.arms.R.grip.getWorldPosition(V());
+  hero.position.copy(gp).add(V(0, 0.01, 0)); hero.rotation.set(0.15 + (t > 2.95 ? -0.25 : 0), 2.2 + (t > 4.45 ? 0.5 * K.smooth((t - 4.45) / 1.5) : 0), 0.1);
+});
+
+// camera: A) close two-plane shot on tomato + Noor's skeptical face (rack focus); B) two-shot as Asha takes it;
+// C) push into the tomato against the window glow until it fills the frame (match cut to the sunrise).
+const tomatoPos = () => hero.getWorldPosition(V());
+app.rig = new K.Rig([
+  { t: 0.0, pos: [0.08, 1.02, 0.3], look: [-0.28, 1.05, -0.7], fov: 27, focus: hero, aperture: 0.012 },
+  { t: 0.9, pos: [0.07, 1.025, 0.25], look: [-0.29, 1.06, -0.7], fov: 26, focus: hero, aperture: 0.012 },
+  { t: 1.3, pos: [0.06, 1.03, 0.22], look: [-0.3, 1.07, -0.7], fov: 25.5, focus: () => noor.head.getWorldPosition(V()), aperture: 0.012 },
+  { t: 2.4, pos: [0.05, 1.035, 0.18], look: [-0.31, 1.08, -0.7], fov: 25, focus: () => noor.head.getWorldPosition(V()), aperture: 0.012 },
+  { t: 2.4001, cut: true, pos: [0.25, 1.38, 1.15], look: [-0.06, 1.28, -0.75], fov: 32, focus: () => asha.head.getWorldPosition(V()), aperture: 0.004 },
+  { t: 4.4, pos: [0.22, 1.38, 0.98], look: [-0.06, 1.3, -0.75], fov: 30, focus: () => asha.head.getWorldPosition(V()), aperture: 0.004 },
+  { t: 4.4001, cut: true, pos: [-0.36, 1.51, 0.14], look: [0.08, 1.5, -0.66], fov: 22, focus: tomatoPos, aperture: 0.016 },
+  { t: 6.0, pos: [-0.02, 1.458, -0.47], look: [0.08, 1.45, -0.66], fov: 10, focus: tomatoPos, aperture: 0.03, ease: K.easeIn },
+], { handheld: 0.5 });
+app.ready();
+</script></body></html>

@@ -1,0 +1,36 @@
+{
+  "title": "GOOD FOOD. NO DEAD ENDS.",
+  "fps": 24,
+  "characters": {
+    "ASHA":      {"voice": "bf_emma",    "speed": 1.0,  "pitch": 1.0,  "desc": "farmer and co-op lead, 40s, dry humour"},
+    "NOOR":      {"voice": "af_sky",     "speed": 1.06, "pitch": 1.22, "desc": "curious child, 10-12"},
+    "LUIS":      {"voice": "am_michael", "speed": 1.0,  "pitch": 1.0,  "desc": "regional food-logistics coordinator"},
+    "MAYA":      {"voice": "af_bella",   "speed": 1.05, "pitch": 1.0,  "desc": "food scientist, early 30s"},
+    "COLLEAGUE": {"voice": "am_adam",    "speed": 1.0,  "pitch": 0.97, "desc": "Maya's colleague"},
+    "WORKER":    {"voice": "am_liam",    "speed": 1.0,  "pitch": 1.0,  "desc": "food hub worker"},
+    "VENDOR":    {"voice": "bm_lewis",   "speed": 1.0,  "pitch": 0.96, "desc": "market vendor"},
+    "COOK":      {"voice": "af_jessica", "speed": 1.0,  "pitch": 0.95, "desc": "community kitchen cook"}
+  },
+  "shots": [
+    {"id": "s01", "beat": "Tomato hook", "duration": 6.0, "env": "kitchen",
+     "lines": [["NOOR", "This one's ugly.", 0.8], ["ASHA", "It's a tomato, not a job interview.", 2.6]]},
+    {"id": "s02", "beat": "Farm and local knowledge", "duration": 8.5, "env": "farm",
+     "lines": [["ASHA", "Rain's coming early.", 0.9], ["LUIS", "The forecast updated.", 2.6], ["ASHA", "It doesn't know this soil.", 4.3], ["LUIS", "It learned from you.", 6.4]]},
+    {"id": "s03", "beat": "Harvest and resilience", "duration": 7.5, "env": "harvest", "lines": []},
+    {"id": "s04", "beat": "City growing", "duration": 8.0, "env": "greenhouse",
+     "lines": [["NOOR", "So all our food grows here now?", 1.4], ["ASHA", "Nope. Just the greens that like it here.", 4.2]]},
+    {"id": "s05", "beat": "Food science", "duration": 8.0, "env": "lab",
+     "lines": [["COLLEAGUE", "Protein... from microbes?", 1.4], ["MAYA", "Yogurt is microbes.", 3.9], ["COLLEAGUE", "Fair.", 6.2]]},
+    {"id": "s06", "beat": "Logistics", "duration": 9.0, "env": "hub",
+     "lines": [["LUIS", "The school kitchen needs two crates by noon.", 1.0], ["WORKER", "Those were marked surplus.", 4.4], ["LUIS", "Then route them to dinner.", 6.6]]},
+    {"id": "s07", "beat": "Market and access", "duration": 8.5, "env": "market",
+     "lines": [["VENDOR", "Not the prettiest batch.", 2.2], ["COOK", "Good thing we're cooking it.", 4.6]]},
+    {"id": "s08", "beat": "Shared meal", "duration": 10.0, "env": "kitchen",
+     "lines": [["NOOR", "So this came from the farm?", 2.0], ["ASHA", "That, the greenhouse, and about six people you didn't see.", 4.6]]},
+    {"id": "s09", "beat": "Loop closes", "duration": 8.0, "env": "loop",
+     "lines": [["NOOR", "And the scraps?", 1.2], ["ASHA", "Back to the soil.", 3.2]]},
+    {"id": "s10", "beat": "Return to table", "duration": 6.5, "env": "kitchen",
+     "lines": [["NOOR", "Okay. Not ugly.", 1.4], ["ASHA", "High praise.", 3.9]]},
+    {"id": "s11", "beat": "Title", "duration": 4.5, "env": "title", "lines": []}
+  ]
+}

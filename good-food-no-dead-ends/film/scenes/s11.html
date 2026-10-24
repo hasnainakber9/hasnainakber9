@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s11 title</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #070605; overflow: hidden; }
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', 'Inter Display', sans-serif; color: #f6f1e8; text-align: center; }
+  .l1, .l2 { font-weight: 900; letter-spacing: 0.02em; line-height: 1.02; font-size: 11.5vmin; opacity: 0; transform: translateY(1.2vmin); }
+  .l1 { animation: rise 0.9s cubic-bezier(.2,.7,.2,1) 0.35s forwards; }
+  .l2 { animation: rise 0.9s cubic-bezier(.2,.7,.2,1) 1.25s forwards; }
+  .dot { color: #d8401f; }
+  .loop { position: absolute; width: 74vmin; height: 74vmin; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); opacity: 0.0; animation: fadeIn 1.4s ease 1.8s forwards; }
+  .loop circle { fill: none; stroke: #d8401f; stroke-width: 0.35; stroke-linecap: round; stroke-dasharray: 289; stroke-dashoffset: 289; animation: draw 2.2s cubic-bezier(.4,0,.2,1) 1.8s forwards; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { to { opacity: 0.55; } }
+  @keyframes draw { to { stroke-dashoffset: 6; } }
+</style></head>
+<body>
+<svg class="loop" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg>
+<div class="card"><div class="l1">GOOD FOOD<span class="dot">.</span></div><div class="l2">NO DEAD ENDS<span class="dot">.</span></div></div>
+<script>window.__duration = 4.5;</script>
+</body></html>

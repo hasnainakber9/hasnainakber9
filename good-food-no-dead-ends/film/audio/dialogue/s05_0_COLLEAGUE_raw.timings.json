@@ -1,0 +1,28 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.979,
+  "sentences": [
+    {
+      "text": "Protein...",
+      "start": 0.1,
+      "end": 0.889
+    },
+    {
+      "text": "from microbes?",
+      "start": 1.169,
+      "end": 2.279
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 0.889,
+      "text": "Protein..."
+    },
+    {
+      "start": 1.169,
+      "end": 2.279,
+      "text": "from microbes?"
+    }
+  ]
+}

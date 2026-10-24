@@ -1,0 +1,28 @@
+{
+  "sample_rate": 24000,
+  "duration": 3.085,
+  "sentences": [
+    {
+      "text": "Okay.",
+      "start": 0.1,
+      "end": 1.039
+    },
+    {
+      "text": "Not ugly.",
+      "start": 1.319,
+      "end": 2.385
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.039,
+      "text": "Okay."
+    },
+    {
+      "start": 1.319,
+      "end": 2.385,
+      "text": "Not ugly."
+    }
+  ]
+}

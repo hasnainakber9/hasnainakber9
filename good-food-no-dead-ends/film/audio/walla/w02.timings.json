@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.763,
+  "sentences": [
+    {
+      "text": "Is there more of the stew left?",
+      "start": 0.1,
+      "end": 2.063
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 2.063,
+      "text": "Is there more of the stew left?"
+    }
+  ]
+}

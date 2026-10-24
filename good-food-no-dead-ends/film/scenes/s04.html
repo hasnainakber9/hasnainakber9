@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s04 greenhouse</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 04 | 22–30 s | CITY GROWING — a practical rooftop greenhouse for leafy greens, right in the city.
+// NOOR: "So all our food grows here now?"  ASHA: "Nope. Just the greens that like it here."
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V, R } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'soil']);
+K.seed(44);
+const app = new K.App({ duration: 8.0, fov: 32, exposure: 0.95, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.25, bloomThreshold: 0.8, warmth: 1.0, sat: 1.05, vignette: 0.3 });
+await app.hdri('sky', { intensity: 0.75, rotation: 0.6 });
+const S = app.scene;
+K.skyDome(app, { top: '#5a8cc8', mid: '#a8c6e2', horizon: '#e4e2d8', ground: '#8a8478', sunDir: V(-0.35, 0.8, 0.45), glow: 0.4, sunIntensity: 2, fogColor: '#dfe4e6', fogNear: 25, fogFar: 260 });
+await K.clouds(app, { count: 12, yaw: 0.2, spread: 2.6, opacity: 0.7, minY: 60, maxY: 140 });
+const sun = K.sunLight(app, { dir: V(-0.35, 0.8, 0.45), color: '#fff3e0', intensity: 3.6, size: 14, target: V(0, 0, -3), softness: 3 });
+K.fillLights(app, { sky: '#cfe0f0', ground: '#9a948a', hemi: 0.55 });
+
+// rooftop deck + parapet, surrounding city blocks (it is a city roof)
+const deck = K.groundPlane(app, { kind: 'plaster', color: '#a7a39a', size: 120, repeat: 30, normal: 'plaster', ns: 0.5 });
+const cityM = (c) => K.mat(c, { roughness: 0.85, map: K.grain('plaster', { repeat: 3 }) });
+const winTex = K.canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let y = 0; y < 8; y++) { g.fillStyle = 'rgba(0,0,0,0.06)'; g.fillRect(0, y * 32 + 28, w, 4); for (let x = 0; x < 6; x++) { g.fillStyle = K.rnd() < 0.12 ? '#e8d9b8' : '#55606a'; g.fillRect(10 + x * 42, 8 + y * 32, 22, 16); if (K.rnd() < 0.3) { g.fillStyle = '#7a8a5a'; g.fillRect(8 + x * 42, 22 + y * 32, 26, 4); } } } });
+const blocks = [[-55, -10, 16, 8, 26], [-48, -70, 20, 16, 30], [52, -30, 18, 12, 28], [58, 24, 14, 6, 22], [-14, -110, 30, 22, 26], [22, -100, 16, 28, 26], [-70, 36, 14, 4, 20], [70, -80, 18, 14, 30], [0, 60, 26, 4, 20], [-34, -48, 12, 2, 14], [36, -58, 12, 4, 14]];
+for (const [x, z, w, h, d] of blocks) { const tex = winTex.clone(); tex.needsUpdate = true; tex.repeat.set(w / 15, (h + 14) / 24); const m = K.mat(K.pick(['#d6c3a4', '#c9b49a', '#b9b3a6', '#e2d2b6', '#c7a68a']), { roughness: 0.85, map: tex }); const b = K.box(w, h + 14, d, m); b.position.set(x, (h + 14) / 2 - 14, z); S.add(b); const trees = F.tree({ height: 7, seed: Math.round(Math.abs(x)) + 1 }); trees.position.set(x + w / 2 + 3, -0.5, z + d / 2 + 2); S.add(trees); }
+const sideTex = P.backdropTex('city'); const far = new THREE.Mesh(new THREE.PlaneGeometry(400, 120), new THREE.MeshBasicMaterial({ map: sideTex, fog: false })); far.position.set(0, 20, -180); S.add(far);
+for (const [x, z, w, d] of [[0, -16.5, 22, 0.3], [0, 12.5, 22, 0.3], [-11, -2, 0.3, 29], [11, -2, 0.3, 29]]) S.add(K.at(K.box(w, 1.0, d, K.mat('#b9b3a8', { roughness: 0.9 })), x, 0.5, z));
+
+// --- Venlo glasshouse: 4 m bays, gutter 4.6 m, ridge 5.4 m; aluminium frame; condensation on the glass
+const X0 = -8, X1 = 8, Z0 = -15, Z1 = 11, GH = 4.6, RH = 5.4, BAY = 4;
+const alu = K.mat('#cfd3d6', { roughness: 0.35, metalness: 0.8 });
+const dropsN = K.canvasTex(512, 512, (g, w, h) => { g.fillStyle = 'rgb(128,128,255)'; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const x = Math.random() * w, y = Math.random() * h, r = 1.5 + Math.random() * 5; const gr = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r); gr.addColorStop(0, 'rgb(90,90,255)'); gr.addColorStop(0.7, 'rgb(165,165,240)'); gr.addColorStop(1, 'rgba(128,128,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.3); g.fill(); } }, { linear: true, repeat: [3, 3] });
+const glassM = new THREE.MeshPhysicalMaterial({ color: '#f2f8f6', roughness: 0.18, metalness: 0, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, normalMap: dropsN, normalScale: new THREE.Vector2(0.6, 0.6), clearcoat: 1, clearcoatRoughness: 0.1 });
+const gh = new THREE.Group(); S.add(gh);
+const pane = (w, h, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glassM); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = false; m.receiveShadow = false; m.renderOrder = 2; gh.add(m); return m; };
+const bar = (w, h, d, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = K.box(w, h, d, alu); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); gh.add(m); return m; };
+// walls
+for (const z of [Z0, Z1]) { pane(X1 - X0, GH, 0, GH / 2, z); for (let x = X0; x <= X1 + 0.01; x += 1) bar(0.05, GH, 0.06, x, GH / 2, z); bar(X1 - X0, 0.06, 0.08, 0, GH, z); bar(X1 - X0, 0.06, 0.08, 0, 0.8, z); }
+for (const x of [X0, X1]) { pane(Z1 - Z0, GH, x, GH / 2, (Z0 + Z1) / 2, 0, Math.PI / 2); for (let z = Z0; z <= Z1 + 0.01; z += 1) bar(0.06, GH, 0.05, x, GH / 2, z); bar(0.08, 0.06, Z1 - Z0, x, GH, (Z0 + Z1) / 2); bar(0.08, 0.06, Z1 - Z0, x, 0.8, (Z0 + Z1) / 2); }
+// roof: ridges run along z; each bay has two slopes; some vents open
+const slope = Math.atan2(RH - GH, BAY / 2), sl = Math.hypot(RH - GH, BAY / 2), L = Z1 - Z0;
+const vents = [];
+for (let bx = X0; bx < X1 - 0.01; bx += BAY) {
+  const cx = bx + BAY / 2;
+  for (const sd of [-1, 1]) { const p = pane(sl, L, cx + sd * BAY / 4, (GH + RH) / 2, (Z0 + Z1) / 2, -Math.PI / 2, 0, sd * slope); p.rotation.set(-Math.PI / 2, -sd * slope, 0); }
+  bar(0.08, 0.1, L, cx, RH, (Z0 + Z1) / 2); bar(0.12, 0.08, L, bx, GH, (Z0 + Z1) / 2);
+  for (let z = Z0; z <= Z1 + 0.01; z += 1.25) for (const sd of [-1, 1]) { const r = bar(sl, 0.04, 0.04, cx + sd * BAY / 4, (GH + RH) / 2, z); r.rotation.z = -sd * slope; }
+  for (let z = Z0 + 2; z < Z1 - 2; z += 5) { const hinge = new THREE.Group(); hinge.position.set(cx, RH, z); gh.add(hinge); const v = new THREE.Mesh(new THREE.PlaneGeometry(sl * 0.95, 1.2), glassM); v.position.set(sl * 0.47, 0, 0); v.rotation.x = -Math.PI / 2; hinge.add(v); const vf = K.box(sl * 0.95, 0.03, 1.22, alu); vf.position.set(sl * 0.47, -0.01, 0); hinge.add(vf); hinge.rotation.z = -slope + 0.32; vents.push(hinge); }
+  bar(0.1, GH, 0.1, bx, GH / 2, Z0 + 0.1); bar(0.1, GH, 0.1, bx, GH / 2, Z1 - 0.1);
+}
+for (let bx = X0; bx <= X1; bx += BAY) for (let z = Z0 + 4; z < Z1 - 1; z += 4) if (Math.abs(bx) > 1) bar(0.09, GH, 0.09, bx, GH / 2, z);
+for (const v of vents) v.traverse(m => { if (m.isMesh) m.userData.keep = true; });
+K.bake(gh, { skip: (m) => m.material === glassM });
+// shade screen partly drawn under the roof
+const screen = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, 9), new THREE.MeshStandardMaterial({ color: '#f4f1ea', transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 0.9, depthWrite: false })); screen.rotation.x = Math.PI / 2; screen.position.set(0, GH - 0.15, Z0 + 4.5); screen.castShadow = true; gh.add(screen);
+// floor + aisle
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), K.mat('#b9b6ae', { roughness: 0.75, map: K.grain('plaster', { repeat: 6 }), normalMap: K.normalTex('plaster', 6), normalScale: new THREE.Vector2(0.4, 0.4) })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0.012, (Z0 + Z1) / 2); floor.receiveShadow = true; S.add(floor);
+const wet = new THREE.Mesh(new THREE.PlaneGeometry(1.6, Z1 - Z0), K.mat('#8f8c86', { roughness: 0.18, metalness: 0.0 })); wet.rotation.x = -Math.PI / 2; wet.position.set(0, 0.014, (Z0 + Z1) / 2); wet.receiveShadow = true; S.add(wet);
+
+// --- NFT growing tables: gutters of lettuce on both sides of the central aisle
+const tables = []; const lettuce = [0, 1, 2].map(v => P.lettuceGeo(v)); const lm = P.leafMat('lettuce', { color: '#a6cf82' }), lmr = P.leafMat('lettuceRed');   // deeper green: the overhead sun washes pale leaves out
+const lists = [[], [], [], []]; const gutterM = K.mat('#f2f2ee', { roughness: 0.4 }), standM = K.mat('#9aa0a4', { roughness: 0.4, metalness: 0.7 });
+for (let z = Z0 + 1.5; z < Z1 - 1.2; z += 1.75) for (const side of [-1, 1]) {
+  const x0 = side * 1.05, x1 = side * 7.4, cx = (x0 + x1) / 2, len = Math.abs(x1 - x0);
+  const tg = new THREE.Group(); tg.position.set(cx, 0, z); S.add(tg);
+  for (let k = 0; k < 6; k++) { const gz = -0.5 + k * 0.2; tg.add(K.at(K.box(len, 0.06, 0.1, gutterM), 0, 0.9, gz)); }
+  for (let x = -len / 2 + 0.3; x <= len / 2; x += 1.6) for (const zz of [-0.55, 0.55]) tg.add(K.at(K.box(0.04, 0.9, 0.04, standM), x, 0.45, zz));
+  tg.add(K.at(K.box(len, 0.04, 0.04, standM), 0, 0.84, -0.55)); tg.add(K.at(K.box(len, 0.04, 0.04, standM), 0, 0.84, 0.55));
+  const pipe = K.box(0.05, 0.05, 1.25, K.mat('#3f74b0', { roughness: 0.4 })); pipe.position.set(side < 0 ? len / 2 - 0.05 : -len / 2 + 0.05, 0.98, 0); tg.add(pipe);
+  const stage = K.R(0.75, 1.15); const red = K.rnd() < 0.3;
+  for (let k = 0; k < 6; k++) for (let x = -len / 2 + 0.15; x < len / 2 - 0.1; x += 0.2) { const gx = cx + x, gz = z - 0.5 + k * 0.2; if (Math.abs(gx) < 1.6 && Math.abs(gz - 2.0) < 0.15 && k === 0) {} lists[red ? 3 : Math.floor(K.rnd() * 3)].push({ x: gx, y: 0.93, z: gz, ry: K.R(0, 6.28), s: stage * K.R(1.6, 2.0) }); }
+  tables.push(tg);
+}
+lists.forEach((l, i) => { if (l.length) K.instanced(S, i === 3 ? lettuce[0] : lettuce[i], i === 3 ? lmr : lm, l); });
+for (const tg of tables) K.bake(tg);
+const heroL = new THREE.Mesh(lettuce[1], new THREE.MeshStandardMaterial({ map: P.leafTex('lettuce'), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.5, color: '#62a03e' })); heroL.position.set(1.32, 0.93, -1.42); heroL.scale.setScalar(2.1); heroL.castShadow = true; S.add(heroL);
+// overhead misting line + HAF fans
+for (const side of [-1, 1]) { const ml = K.cyl(0.012, 0.012, Z1 - Z0 - 1, K.mat('#2a2a2a'), 6); ml.rotation.x = Math.PI / 2; ml.position.set(side * 4.2, 3.2, (Z0 + Z1) / 2); S.add(ml); }
+const fans = []; for (const [x, z] of [[-4.2, -8], [4.2, -2], [-4.2, 4]]) { const f = new THREE.Group(); f.add(K.rot(K.cyl(0.35, 0.35, 0.18, K.mat('#9aa0a4', { roughness: 0.4, metalness: 0.6 }), 24, { open: true }), Math.PI / 2, 0, 0)); const blades = new THREE.Group(); for (let i = 0; i < 4; i++) { const b = K.box(0.28, 0.02, 0.07, K.mat('#555')); b.position.x = 0.14; const bg = new THREE.Group(); bg.rotation.z = i * Math.PI / 2; bg.add(b); blades.add(bg); } f.add(blades); f.position.set(x, 3.6, z); S.add(f); fans.push(blades); }
+app.on(t => { for (const b of fans) b.rotation.z = t * 14; });
+const mist = []; for (let i = 0; i < 6; i++) mist.push(K.steam(app, { at: V(K.pick([-4.2, 4.2]), 2.9, K.R(Z0 + 2, Z1 - 2)), count: 8, height: -1.2, size: 0.5, opacity: 0.08, spread: 0.6, life: 4 }));
+K.motes(app, { count: 260, center: V(0, 2.2, -2), size: V(14, 3.5, 20), pointSize: 0.02, opacity: 0.4, drift: 0.2, color: '#f4fbff' });
+
+// --- workers harvesting into reusable crates on a trolley
+const workers = [];
+[[2.0, -5.5 + 0.5, -Math.PI / 2 + 0.2, 31], [-2.4, -9.0 + 0.5, Math.PI / 2, 32], [-2.0, 2.0, Math.PI / 2 - 0.2, 33]].forEach(([x, z, yaw, sd], i) => { const w = puppet('G' + i, extraSpec(sd, { outer: 'apron', outerColor: '#2f6a5a', sleeves: 'short' })); w.place(x, z - 0.55, yaw); app.cast(w); w.act([{ t: 0, pose: 'pick', mod: { spX: 0.35, drop: 0.02 } }]); workers.push(w); });
+for (const [x, z] of [[1.25, -5.9], [-1.3, -9.4]]) { const tr = new THREE.Group(); tr.add(K.at(K.box(0.7, 0.04, 0.5, standM), 0, 0.3, 0)); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tr.add(K.at(K.cyl(0.05, 0.05, 0.04, K.MAT.rubber(), 12), sx * 0.3, 0.05, sz * 0.2)); for (let i = 0; i < 3; i++) { const c = P.crate({ w: 0.6, d: 0.4, h: 0.22, color: '#2f8a57', fill: 'greens', layers: 1, level: 0.5 }); c.position.y = 0.32 + i * 0.225; tr.add(c); } tr.position.set(x, 0, z); S.add(tr); }
+
+// --- Noor and Asha walk the aisle toward camera
+const lines = await K.dialogue('s04');
+const noor = puppet('NOOR'); app.cast(noor); noor.speak(lines);
+const asha = puppet('ASHA'); app.cast(asha); asha.speak(lines);
+noor.walk([{ t: 0, x: 0.35, z: -9.2, yaw: 0 }, { t: 7.0, x: 0.3, z: -2.2, yaw: 0, ease: 'linear' }, { t: 8.0, x: 0.3, z: -1.9, yaw: 0.1 }]);
+asha.walk([{ t: 0, x: -0.35, z: -9.5, yaw: 0 }, { t: 7.0, x: -0.32, z: -2.5, yaw: 0, ease: 'linear' }, { t: 8.0, x: -0.32, z: -2.2, yaw: -0.05 }]);
+const lookUp = V(1.5, 4.8, -2), lettuceSide = () => V(2.4, 0.95, asha.root.position.z + 1.2);
+noor.look([{ t: 0, at: V(2.5, 1.2, -6) }, { t: 1.2, at: lookUp, blend: 0.6 }, { t: 2.6, at: () => asha.head.getWorldPosition(V()), blend: 0.4 }, { t: 5.0, at: () => asha.head.getWorldPosition(V()) }, { t: 6.6, at: V(2.6, 0.95, -3.5), blend: 0.5 }]);
+noor.face([{ t: 0, smile: 0.3, brow: 0.5 }, { t: 2.0, smile: 0.35, brow: 0.7 }, { t: 4.6, smile: 0.1, brow: 0.3, tilt: 0.3 }, { t: 7.0, smile: 0.4, brow: 0.2, tilt: 0 }]);
+asha.look([{ t: 0, at: () => noor.head.getWorldPosition(V()) }, { t: 1.0, at: V(-2.5, 1.0, -5), blend: 0.5 }, { t: 2.4, at: () => noor.head.getWorldPosition(V()), blend: 0.4 }, { t: 5.6, at: lettuceSide, blend: 0.4 }, { t: 6.6, at: () => noor.head.getWorldPosition(V()), blend: 0.4 }]);
+asha.face([{ t: 0, smile: 0.25 }, { t: 3.3, smile: 0.45, brow: 0.3, tilt: 0.4 }, { t: 6.0, smile: 0.35, brow: 0.1, tilt: 0 }]);
+asha.act([{ t: 0, pose: 'stand' }, { t: 5.5, pose: 'stand', mod: { aRx: -0.7, aRz: 0.6, eR: 0.45 }, blend: 0.5 }, { t: 6.8, pose: 'stand', blend: 0.6 }]);
+
+// camera: A macro lettuce → crane back to reveal the house; B tracking two-shot; C Asha's answer
+const mid = () => noor.head.getWorldPosition(V()).lerp(asha.head.getWorldPosition(V()), 0.5);
+app.rig = new K.Rig([
+  { t: 0.0, pos: [1.22, 1.3, -0.98], look: [1.33, 0.96, -1.42], fov: 30, focus: [1.32, 0.98, -1.4], aperture: 0.02 },
+  { t: 2.1, pos: [0.4, 2.1, 1.6], look: [0.0, 1.3, -8.0], fov: 38, focus: () => noor.head.getWorldPosition(V()), aperture: 0.002, ease: K.easeInOut },
+  { t: 2.1001, cut: true, pos: () => mid().add(V(0.15, -0.05, 2.4)), look: () => mid().add(V(0, -0.15, 0)), fov: 31, focus: () => noor.head.getWorldPosition(V()), aperture: 0.004 },
+  { t: 4.1, pos: () => mid().add(V(0.1, -0.05, 2.2)), look: () => mid().add(V(0, -0.15, 0)), fov: 30, focus: () => noor.head.getWorldPosition(V()), aperture: 0.004 },
+  { t: 4.1001, cut: true, pos: () => mid().add(V(0.02, -0.22, 1.95)), look: () => mid().add(V(0, -0.14, 0)), fov: 29, focus: () => asha.head.getWorldPosition(V()), aperture: 0.005 },
+  { t: 8.0, pos: () => mid().add(V(0.0, -0.22, 1.75)), look: () => mid().add(V(0, -0.12, 0)), fov: 28, focus: () => asha.head.getWorldPosition(V()), aperture: 0.005 },
+], { handheld: 0.5 });
+app.ready();
+</script></body></html>

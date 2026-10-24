@@ -1,0 +1,18 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.016,
+  "sentences": [
+    {
+      "text": "Back to the soil.",
+      "start": 0.1,
+      "end": 1.316
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 1.316,
+      "text": "Back to the soil."
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><title>s03 harvest</title>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
+<body><script type="module">
+// 03 | 14.5–22 s | HARVEST + RESILIENCE — mid-morning. No dialogue: farm ambience only.
+// Workers pick; a small electric cart carries crates; a person checks quality; hedgerow pollinators; macro leaf → greenhouse.
+import * as K from '../lib/core.js';
+import * as P from '../lib/props.js';
+import * as F from '../lib/foliage.js';
+import { farm } from '../lib/sets.js';
+import { puppet, extraSpec } from '../lib/people.js';
+const { THREE, V } = K;
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'soil']);
+const app = new K.App({ duration: 7.5, fov: 30, exposure: 1.05, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.18, warmth: 1.02, sat: 1.08, vignette: 0.32 });
+await app.hdri('park', { intensity: 0.55, rotation: 2.2 });
+const sunDir = V(0.55, 0.55, 0.65);
+await farm(app, { sunDir, top: '#4f86c4', mid: '#a9c4de', horizon: '#eadcc4', sunColor: '#fff0d8', fog: '#dfe2dc', cloudColor: '#ffffff', glow: 0.5, sunDisc: 2, sunI: 3.0, hemi: 0.6, hemiSky: '#bcd2ea', near: V(0.75, 0, -4), focus: V(0.8, 0, -4), shadowSize: 10, mastPos: [9.5, -24],
+  clear: (x, z) => Math.abs(x - 1.5) < 0.1 && z > -26 });
+
+// cart in the access lane, crates aboard; it creeps forward with the pickers
+const cart = P.cart({}); app.add(cart);
+const onCart = []; for (let i = 0; i < 4; i++) { const c = P.crate({ fill: 'tomato', color: '#2f8a57' }); c.position.set((i % 2) * 0.5 - 0.25, 0.71 + Math.floor(i / 2) * 0.305, -0.42); cart.add(c); onCart.push(c); }
+app.on(t => { cart.position.set(1.5, 0.02, -2.6 - t * 0.22); cart.rotation.y = Math.PI; cart.children.forEach(ch => { if (ch.geometry && ch.geometry.type === 'CylinderGeometry' && ch.position.y < 0.3) ch.rotation.x = t * 0.85; }); });
+
+// pickers
+const pickers = [];
+const specs = [extraSpec(21, { build: 'f', hairStyle: 'wrap', wrapColor: '#2f6b5a', top: '#c8b48a', sleeves: 'long' }), extraSpec(22, { build: 'm', hairStyle: 'cap', capColor: '#a04a5a', top: '#5e7f8c', outer: 'none' }), extraSpec(23, { build: 'f', elder: true, hairStyle: 'bun', top: '#9a7fb0' })];
+[[0.75, -3.4, Math.PI / 2], [0.75, -6.6, -Math.PI / 2 + 0.3], [-0.75, -9.2, Math.PI / 2]].forEach(([x, z, yaw], i) => { const w = puppet('P' + i, specs[i]); w.place(x, z, yaw); w.act([{ t: 0, pose: 'pick', mod: { spX: 0.5 + i * 0.05 } }]); app.cast(w); pickers.push(w); w.look([{ t: 0, at: w.root.localToWorld(V(0.1, 0.7, 0.5)) }]); });
+// crates at the pickers' feet, filling up
+const crateA = P.crate({ fill: 'tomato', color: '#2f8a57', layers: 1 }); crateA.position.set(0.85, 0.08, -2.8); crateA.rotation.y = 0.1; app.add(crateA);
+const crateB = P.crate({ fill: 'tomato', color: '#2f6aa0', layers: 1 }); crateB.position.set(0.7, 0.08, -7.3); app.add(crateB);
+
+// quality check: a worker lifts a tomato into the light, turns it, sets it in the crate
+const qc = puppet('QC', extraSpec(24, { build: 'm', hairStyle: 'short', top: '#7a8c5e', outer: 'apron', outerColor: '#d9cfb8', beard: true })); qc.place(0.62, -4.75, 0.5); app.cast(qc);
+const qcTom = P.tomato({ r: 0.04, seed: 2 }); app.add(qcTom);
+const crateQ = P.crate({ fill: 'tomato', color: '#2f8a57', layers: 1 }); crateQ.position.set(0.95, 0.08, -4.35); crateQ.rotation.y = 0.4; app.add(crateQ);
+qc.act([{ t: 0, pose: 'stand', talk: 0 }]);
+qc.hand('R', [{ t: 0, at: () => qc.root.localToWorld(V(0.14, 1.36, 0.32)), pole: [0.7, -0.6, -0.3] }, { t: 4.7, at: () => crateQ.localToWorld(V(-0.05, 0.2, 0.02)), blend: 0.6, pole: [0.7, -0.4, -0.4] }]);
+qc.hand('L', [{ t: 0, at: () => qc.root.localToWorld(V(0.06, 1.31, 0.3)), pole: [-0.7, -0.6, -0.3] }, { t: 4.4, at: null, blend: 0.5 }]);
+qc.look([{ t: 0, at: () => qcTom.getWorldPosition(V()) }]);
+qc.face([{ t: 0, smile: 0.2, brow: 0.2, squint: 0.2 }, { t: 3.8, smile: 0.55, brow: 0.3, squint: 0.1 }]);
+app.after(t => { const g = qc.arms.R.grip.getWorldPosition(V()); qcTom.position.copy(g); qcTom.rotation.set(0.2, t * 1.4, 0.3 * Math.sin(t * 2)); qcTom.visible = t < 5.3; });
+
+// pollinators along the flower strip: little bees on looping flight paths (pure functions of t)
+const beeGeo = K.merged([{ geo: new THREE.SphereGeometry(0.012, 10, 8), m: K.M4(0, 0, 0, 0, 0, 0, 1, 0.8, 1.5), color: '#e2b528' }, { geo: new THREE.SphereGeometry(0.0125, 10, 8), m: K.M4(0, 0, -0.012, 0, 0, 0, 0.95, 0.8, 0.6), color: '#2a2018' }, { geo: new THREE.SphereGeometry(0.009, 8, 6), m: K.M4(0, 0.003, 0.016), color: '#2a2018' }]);
+const wingM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+const bees = []; for (let i = 0; i < 14; i++) { const b = new THREE.Group(); b.add(new THREE.Mesh(beeGeo, K.vmat({ roughness: 0.5 }))); for (const sd of [-1, 1]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.01), wingM); w.position.set(sd * 0.011, 0.008, 0); w.rotation.x = -Math.PI / 2; b.add(w); b.userData['w' + sd] = w; } app.add(b); bees.push([b, K.R(-15, -11.5), K.R(-14, 2), K.R(0, 6), K.R(0.4, 1.0)]); }
+app.on(t => { for (const [b, x, z, ph, sp] of bees) { const a = t * sp * 2 + ph; b.position.set(x + Math.sin(a) * 0.5, 0.55 + Math.sin(a * 2.3) * 0.18, z + Math.cos(a * 0.8) * 0.6); b.rotation.y = a; for (const sd of [-1, 1]) b.userData['w' + sd].rotation.z = sd * Math.sin(t * 90 + ph) * 0.8; } });
+
+// macro hero truss for the final beat (close to camera, beside the access lane)
+const truss = new THREE.Group(); truss.position.set(0.3, 0.0, 1.1); truss.rotation.y = 1.2; app.add(truss);
+const stemPts = [[0, 0.62, 0], [0.03, 0.78, 0.02], [0.02, 0.92, 0.05], [-0.02, 1.02, 0.04]];
+truss.add(P.pipe(stemPts, 0.007, K.mat('#5a7a30', { roughness: 0.6 })));
+[[0.06, 0.8, 0.07, 0.034, '#c9301d'], [0.0, 0.76, 0.1, 0.031, '#d0461e'], [-0.05, 0.82, 0.05, 0.029, '#b8a43a']].forEach(([x, y, z, r, c], i) => { const tm = P.tomato({ r, color: c, shoulder: i === 2 ? '#9ab84a' : '#d9782a', seed: 11 + i }); tm.position.set(x, y, z); truss.add(tm); });
+const CL = F.compoundLeaf(); const leafMat = new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 }); for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26, 2, 3), leafMat); l.geometry.translate(0, 0.13, 0); l.position.set(-0.02, 0.86 + i * 0.04, 0.03); l.rotation.set(-1.0 + i * 0.25, i * 1.7 + 0.4, 0.2); l.castShadow = true; truss.add(l); }
+const flowerTex = P.leafTex('flower'); const flower = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), new THREE.MeshStandardMaterial({ map: flowerTex, alphaTest: 0.4, side: THREE.DoubleSide })); flower.geometry.attributes.uv.array.set([0, 1, 0.5, 1, 0, 0.5, 0.5, 0.5]); flower.position.set(-0.03, 0.99, 0.07); flower.rotation.set(-0.5, 0, 0); truss.add(flower);
+const dew = new THREE.Mesh(new THREE.SphereGeometry(0.004, 12, 8), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.0, transmission: 0.9, thickness: 0.004, transparent: true, opacity: 0.6 })); dew.position.set(0.075, 0.82, 0.098); truss.add(dew);
+const broad = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.28, 3, 3), new THREE.MeshStandardMaterial({ map: CL.map, normalMap: CL.normalMap, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55 })); broad.geometry.translate(0, 0.12, 0); broad.position.set(-0.07, 0.82, -0.05); broad.rotation.set(-0.35, 0.3, 0.15); broad.castShadow = true; truss.add(broad);
+const heroBee = bees[0][0]; app.on(t => { if (t > 4.9) { const u = K.smoother((t - 4.9) / 1.5); const fp = flower.getWorldPosition(V()); heroBee.position.set(fp.x + (1 - u) * 0.3, fp.y + 0.012 + (1 - u) * 0.12 + Math.sin(t * 9) * 0.004 * (1 - u), fp.z + (1 - u) * 0.25); heroBee.rotation.y = -2.2; } });
+
+// camera: A tracking down the furrow past pickers with the cart alongside → B the quality check → C macro truss, push into a leaf (match to greenhouse)
+const qcFace = () => qc.head.getWorldPosition(V()).add(V(0, 0.1, 0));
+const trussP = (x, y, z) => truss.localToWorld(V(x, y, z));
+app.rig = new K.Rig([
+  { t: 0.0, pos: [0.0, 1.35, 0.6], look: [0.6, 0.85, -6.0], fov: 34, focus: () => pickers[0].head.getWorldPosition(V()), aperture: 0.003 },
+  { t: 2.7, pos: [0.05, 1.32, -0.9], look: [0.6, 0.85, -7.5], fov: 33, focus: () => pickers[1].head.getWorldPosition(V()), aperture: 0.003, ease: K.smooth },
+  { t: 2.7001, cut: true, pos: () => qcFace().add(V(0.3, -0.12, 0.85)), look: () => qcFace().add(V(0.06, -0.12, 0.1)), fov: 31, focus: () => qcTom.getWorldPosition(V()), aperture: 0.006 },
+  { t: 5.0, pos: () => qcFace().add(V(0.26, -0.14, 0.74)), look: () => qcFace().add(V(0.06, -0.16, 0.1)), fov: 30, focus: () => qcTom.getWorldPosition(V()), aperture: 0.006 },
+  { t: 5.0001, cut: true, pos: () => trussP(0.05, 0.86, 0.5), look: () => trussP(0.0, 0.84, 0.05), fov: 28, focus: () => trussP(0.03, 0.8, 0.08), aperture: 0.02 },
+  { t: 7.5, pos: () => trussP(-0.05, 0.92, 0.12), look: () => trussP(-0.07, 0.93, -0.05), fov: 18, focus: () => trussP(-0.07, 0.93, -0.03), aperture: 0.03, ease: K.easeIn },
+], { handheld: 0.6 });
+app.ready();
+</script></body></html>

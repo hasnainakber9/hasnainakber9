@@ -1,0 +1,28 @@
+{
+  "sample_rate": 24000,
+  "duration": 2.147,
+  "sentences": [
+    {
+      "text": "Ha!",
+      "start": 0.1,
+      "end": 0.633
+    },
+    {
+      "text": "Ha!",
+      "start": 0.913,
+      "end": 1.447
+    }
+  ],
+  "cues": [
+    {
+      "start": 0.1,
+      "end": 0.633,
+      "text": "Ha!"
+    },
+    {
+      "start": 0.913,
+      "end": 1.447,
+      "text": "Ha!"
+    }
+  ]
+}

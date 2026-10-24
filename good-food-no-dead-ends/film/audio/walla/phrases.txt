@@ -1,0 +1,18 @@
+af_heart|How much for the peppers today?
+am_eric|These look great, I'll take two.
+bf_alice|Is there more of the stew left?
+bm_daniel|Pass the bread, would you?
+af_nova|We had so many tomatoes this week.
+am_puck|My grandmother made this every Sunday.
+bf_lily|Careful, it's still really hot.
+am_liam|No way, really? That's brilliant.
+af_kore|Come by on Thursday, we'll have greens.
+bm_fable|Where did you put the salt?
+af_river|It smells amazing in here.
+am_onyx|Two of those please, and the onions.
+bf_isabella|That's exactly what I said!
+am_fenrir|We should do this every week.
+af_sarah|Do you want some rice with that?
+bm_george|They're cheaper if they're a bit bumpy.
+af_jessica|Oh, try the green one, it's lovely.
+am_michael|I'll bring the crates back tomorrow.
