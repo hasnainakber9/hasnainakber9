@@ -503,7 +503,7 @@ function clothMat(color, o = {}) {
     sh.fragmentShader = 'varying vec3 vGpos;\nvarying vec2 vUv0;\nvarying vec2 vEdge;\n' + decl + '\n' + lib + '\n' + sh.fragmentShader
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n{\n' + (o.pattern || '') + '\n}')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ float hgt = 0.0;\n' + (o.bump || '') +
-        '\n vec3 sp = -vViewPosition, sx = dFdx(sp), sy = dFdy(sp), R1 = cross(sy, normal), R2 = cross(normal, sx); float det = dot(sx, R1) * faceDirection;\n vec3 grad = sign(det) * (dFdx(hgt) * R1 + dFdy(hgt) * R2); normal = normalize(abs(det) * normal - grad); }'); };
+        '\n vec3 sp = -vViewPosition, sx = dFdx(sp), sy = dFdy(sp), R1 = cross(sy, normal), R2 = cross(normal, sx); float det = dot(sx, R1) * faceDirection;\n vec3 grad = sign(det) * (dFdx(hgt) * R1 + dFdy(hgt) * R2), nb = abs(det) * normal - grad; if (dot(nb, nb) > 1e-30) normal = normalize(nb); }'); };   // (where a derivative comes out zero, e.g. at the frame edge, nb is zero: keep the normal; normalising zero is NaN)
   const key = 'cloth:' + (o.bump || '').length + ':' + (o.pattern || '').length + ':' + Object.keys(U).join(',') + (o.lift ? ':lift' + o.lift : ''); m.customProgramCacheKey = () => key;
   return frontLit(m);
 }
@@ -915,6 +915,9 @@ function dome(M, o) {
     for (let k = 0; k < n; k++) { pos[k * 3] = C.x + D[k].x * R[k]; pos[k * 3 + 1] = C.y + D[k].y * R[k]; pos[k * 3 + 2] = C.z + D[k].z * R[k]; } }
   for (let j = 0; j < Hs; j++) for (let i = 0; i < W; i++) { const a = j * (W + 1) + i, b = a + W + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  // the crown point is one point (the whole first row): one normal for all of it. The first vertex there has only a
+  // degenerate face, so no normal at all, and normalising a zero vector in the shader gives NaN (a black box once bloomed)
+  { const nr = g.attributes.normal, up = V(); for (let i = 0; i <= W; i++) up.add(V().fromBufferAttribute(nr, W + 1 + i)); up.normalize(); for (let i = 0; i <= W; i++) nr.setXYZ(i, up.x, up.y, up.z); }
   const uv = new Float32Array(pos.length / 3 * 2); for (let k = 0; k < uv.length / 2; k++) { uv[k * 2] = (k % (W + 1)) / W * 0.6 / 0.03; uv[k * 2 + 1] = Math.floor(k / (W + 1)) / Hs * 0.2 / 0.03; } g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   // a point of the bottom edge at angle ph (0 = front), for a brim
   g.userData.edge = (ph) => { const f = (ph + Math.PI) / TAU * W, i = clamp(Math.floor(f), 0, W - 1), u = f - i, a = (Hs * (W + 1) + i) * 3, b = a + 3; return V(lerp(pos[a], pos[b], u), lerp(pos[a + 1], pos[b + 1], u), lerp(pos[a + 2], pos[b + 2], u)); };

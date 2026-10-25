@@ -409,7 +409,9 @@ export class App {
     const r = this.renderer, C = this.composer, rp = C.passes[0], W = this.w, H = this.h, sh = (this.o.shutter ?? 0.5) / 24, cuts = this.rig ? this.rig.keys.filter(k => k.cut).map(k => k.t) : [];
     if (!this._acc) { const quad = (frag, blend) => { const m = new THREE.ShaderMaterial({ uniforms: { src: { value: null }, w: { value: 1 } }, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: frag, depthTest: false, depthWrite: false, blending: blend ? THREE.CustomBlending : THREE.NoBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor });
         const sc = new THREE.Scene(); sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m)); return { m, sc }; };
-      const frag = 'uniform sampler2D src; uniform float w; varying vec2 vUv; void main() { gl_FragColor = texture2D(src, vUv) * w; }';
+      // (a NaN or infinite sample is dropped, by a select, not arithmetic: NaN * 0 is NaN, and here isnan() misses it;
+      // the bloom and the depth of field would spread one such pixel into a black box)
+      const frag = 'uniform sampler2D src; uniform float w; varying vec2 vUv; void main() { vec4 c = texture2D(src, vUv); gl_FragColor = mix(vec4(0.0), c * w, lessThan(abs(c), vec4(6.0e4))); }';
       this._acc = { rt: new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, depthBuffer: false }), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), add: quad(frag, true), put: quad(frag, false) }; }
     const A = this._acc, halton = (i, b) => { let f = 1, x = 0; while (i > 0) { f /= b; x += f * (i % b); i = Math.floor(i / b); } return x; };
     const inShot = (tk) => { for (const c of cuts) { if (tk < c && c <= t) tk = c; if (t < c && c <= tk) tk = c - 1e-4; } return clamp(tk, 0, this.duration); };   // stay inside this frame's shot
