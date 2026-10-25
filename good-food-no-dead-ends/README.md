@@ -24,17 +24,14 @@ Requirements: Python 3 with numpy, scipy and Pillow; FFmpeg with libx264, rubber
    python3 audio/build_dialogue.py --skip-tts
    python3 audio/build_mix.py
    ```
-3. Render every shot. At 1920×1080 on a CPU-only machine this takes about three hours:
+3. Render every shot. Each frame is exposed as four or more sub-frames over a half-frame shutter (motion blur and anti-aliasing), written as lossless PNGs, then encoded per shot. It also renders the title card in 16:9 and in native 9:16. At 1920×1080 on a CPU-only machine this takes about 16 hours. The script works in time-boxed chunks (here 6600 s) and picks up where it stopped, so run the same command again until it prints `ALL DONE`:
    ```
-   ./render_scenes.sh final 1920 1080 24
+   cd film
+   SUB=4 ./render_final.sh final2 6600 s01 s02 s03 s04 s05 s06 s07 s08 s09a s09b s10 s11
    ```
-   Add the native 9:16 title card for the vertical cut:
+4. Assemble the master, the captioned and vertical versions, and the SRT into `deliverables/`, and QA them (reports in `film/renders/final2/qa/`):
    ```
-   python3 <video-studio>/scripts/html_to_video.py http://127.0.0.1:8765/proj/film/scenes/s11.html -o renders/final/s11_vertical.mp4 --width 1080 --height 1920 --fps 24
-   ```
-4. Assemble the master, the captioned and vertical versions, and the SRT into `deliverables/`:
-   ```
-   python3 assemble.py final
+   ./finalize.sh final2
    ```
 
 Useful while editing: `./render_still.sh s07 5.9` renders one frame to `film/renders/stills/`, `python3 conprobe.py s07` prints a shot page's console errors, and `./render_scenes.sh preview 640 360 12` makes a quick rough cut.
