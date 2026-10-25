@@ -12,7 +12,7 @@ Everything in the film is either original work made for this entry or third-part
 | Glasses (Maya) | "glasses" by punkduck, MakeHuman community assets | CC BY 3.0 — credit: *Glasses by punkduck, CC BY 3.0* | Maya's glasses |
 | Tight jeans (in the repository only, not shown in the film) | "Tightjeans" by punkduck, MakeHuman community assets | CC BY 3.0 — credit: *Tightjeans by punkduck, CC BY 3.0* | Not used on screen |
 | three.js r170 (renderer, post-processing passes, loaders, exporters) | three.js project, npm `three@0.170.0`, vendored in `film/lib/` | MIT (`film/lib/THREE-LICENSE`) | Real-time 3D rendering of every shot |
-| HDR environment maps: apartment, park, sky, workshop, warehouse, city | Poly Haven HDRIs, resized and re-encoded by `@pmndrs/assets` 1.7.0 | CC0 1.0 (`film/lib/assets/LICENSE-CC0.txt`) | Image-based lighting and reflections only; never shown as a visible background |
+| HDR environment maps: apartment, park, sky, hall, warehouse, city | Poly Haven HDRIs, resized and re-encoded by `@pmndrs/assets` 1.7.0 | CC0 1.0 (`film/lib/assets/LICENSE-CC0.txt`) | Image-based lighting and reflections only; never shown as a visible background |
 | Tiling normal maps (soil, rock, wood grain, cloth, plaster, skin, knit and others) | `@pmndrs/assets` 1.7.0, from the emmelleppi/normal-maps collection | CC0 1.0 (package licence) | Surface detail on materials |
 | Cloud sprite texture | `@pmndrs/assets` 1.7.0 | CC0 1.0 | Sky clouds |
 | All other textures (leaves, tomato skin, labels, screens, backdrops, wood, straw) | Procedurally generated in code | Owned by the entrant | Materials |

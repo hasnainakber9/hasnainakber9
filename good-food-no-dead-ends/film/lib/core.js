@@ -444,6 +444,7 @@ export class App {
   ready() { _ready(); return this; }
   // environment from a CC0 HDRI (Poly Haven via pmndrs/assets); used for light + reflections, not as backdrop
   async hdri(name, o = {}) {
+    const QP = new URLSearchParams(location.search); if (QP.has('hdri')) { const [n, r] = QP.get('hdri').split(':'); name = n; if (r) o = Object.assign({}, o, { rotation: +r }); }   // (look tests)
     const mod = await import(`./assets/hdri/${name}.exr.js`);
     const tex = await new EXRLoader().loadAsync(mod.default); tex.mapping = THREE.EquirectangularReflectionMapping;
     this.scene.environment = tex; this.scene.environmentIntensity = o.intensity ?? 1.0;

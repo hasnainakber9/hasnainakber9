@@ -129,16 +129,25 @@ export async function farm(app, o = {}) {
   const fl = [], gl = []; for (let z = 6; z > -80; z -= 0.35) for (const sx of [-1, 1]) { fl.push({ x: sx * (13.4 + R(-0.6, 0.6)), z: z + R(-0.15, 0.15), ry: R(0, TAU), s: R(0.8, 1.3) }); gl.push({ x: sx * (13.6 + R(-0.9, 0.9)), z: z + R(-0.2, 0.2), ry: R(0, TAU), s: R(0.8, 1.4) }); }
   instanced(S, flowers, fm, fl, { cast: false }); instanced(S, grass, gm, gl, { cast: false });
   const TG = F.treeGeos({ height: 8, seed: 3 }); const tl = []; for (let i = 0; i < 40; i++) tl.push({ x: R(-140, 140), z: R(-230, -110), ry: R(0, TAU), s: R(0.7, 1.6) }); for (let i = 0; i < 12; i++) tl.push({ x: R(-60, -22), z: R(-90, -5), ry: R(0, TAU), s: R(0.8, 1.3) }); for (let i = 0; i < 8; i++) tl.push({ x: R(24, 70), z: R(-90, 0), ry: R(0, TAU), s: R(0.8, 1.3) });
-  for (let i = 0; i < 30; i++) tl.push({ x: R(-220, 220), z: R(140, 280), ry: R(0, TAU), s: R(0.8, 1.5) });   // distant tree lines to the south
+  for (let i = 0; i < 30; i++) tl.push({ x: R(-220, 220), z: R(140, 280), ry: R(0, TAU), s: R(0.8, 1.5) });   // (the draws stay, so the rest of the farm keeps its layout)
   // a distant crown is a dense mass: little sunlight gets through it, so far trees stand dark against a low sun
-  // instead of glowing like the backlit leaves of a near one
-  // and far away, trees stand in copses and along hedge lines rather than one by one (lollipops on the skyline): the far
-  // ones are regrouped round a few centres (from their own stream, so the rest of the layout is unchanged)
-  { const rr = prng(3141), far = tl.filter(p => Math.hypot(p.x, p.z) >= 100); let k = 0;
-    while (k < far.length) { const n = Math.min(far.length - k, 4 + Math.floor(rr() * 4)), c = far[k], sp = 5 + rr() * 9, ax = rr() * TAU;
-      for (let i = 0; i < n; i++, k++) { const u = (rr() - 0.5) * 2; far[k].x = c.x + Math.cos(ax) * u * sp * 1.6 + (rr() - 0.5) * sp * 0.5; far[k].z = c.z + Math.sin(ax) * u * sp * 1.6 + (rr() - 0.5) * sp * 0.5; far[k].s = 0.9 + rr() * 0.8; } } }
-  const nearTrees = tl.filter(p => Math.hypot(p.x, p.z) < 100), farTrees = tl.filter(p => Math.hypot(p.x, p.z) >= 100), bark = vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) });
-  instanced(S, TG.trunk, bark, tl); instanced(S, TG.crown, F.foliageMat('cluster'), nearTrees); instanced(S, TG.crown, F.foliageMat('cluster', { translucency: 0.12, color: '#a8a8a8' }), farTrees);
+  // instead of glowing like the backlit leaves of a near one.
+  // Far away the fields are bounded by hedgerows, and trees stand in them, alone and in twos and threes with gaps
+  // between, and in a few copses (trees dotted one by one over bare ground read as lollipops on the skyline): rows
+  // across the view to the south and to the north, from their own random stream
+  const nearTrees = tl.filter(p => Math.hypot(p.x, p.z) < 100), farTrees = [], hedges = [];
+  { const rr = prng(3141), RR = (a, b) => a + (b - a) * rr();
+    for (const z0 of [150, 204, 266, -124, -170, -228]) { const ph = rr() * TAU, wav = RR(3, 8), zAt = (x) => z0 + Math.sin(x / 47 + ph) * wav;
+      for (let x = -330; x < 330; x += RR(2.2, 3.2)) hedges.push({ x, z: zAt(x) + RR(-0.6, 0.6), ry: rr() * TAU, s: RR(1.1, 1.8) });
+      for (let x = -330 + RR(0, 25); x < 330;) { const n = rr() < 0.5 ? 1 : 2 + Math.floor(rr() * 3);
+        for (let i = 0; i < n; i++) { const xi = x + i * RR(4, 7.5); farTrees.push({ x: xi, z: zAt(xi) + RR(-2, 2), ry: rr() * TAU, s: RR(0.8, 1.45) }); }
+        x += n * 6 + RR(12, 48); } }
+    for (const [cx, cz, n] of [[-150, 182, 14], [92, 236, 18], [214, 168, 10], [-64, -150, 12], [146, -198, 16]]) { const rad = 6 + n * 0.9;
+      for (let i = 0; i < n; i++) { const a = rr() * TAU, d = Math.sqrt(rr()) * rad; farTrees.push({ x: cx + Math.cos(a) * d * 1.4, z: cz + Math.sin(a) * d, ry: rr() * TAU, s: RR(0.85, 1.5) * (1 - 0.25 * d / rad) }); } } }
+  const bark = vmat({ roughness: 0.92, normalMap: normalTex('rock', 3), normalScale: new THREE.Vector2(0.8, 0.8) }), TGf = F.treeGeos({ height: 8, seed: 3, cards: 170 });
+  instanced(S, TG.trunk, bark, nearTrees); instanced(S, TG.crown, F.foliageMat('cluster'), nearTrees);
+  instanced(S, TGf.trunk, bark, farTrees, { cast: false }); instanced(S, TGf.crown, F.foliageMat('cluster', { translucency: 0.12, color: '#a8a8a8' }), farTrees, { cast: false });
+  instanced(S, F.shrubGeo({ size: 1.6, seed: 9, cards: 60, cardScale: 0.5 }), F.foliageMat('shrub', { translucency: 0.1, color: '#8c8c8c' }), hedges, { cast: false });
   // drip lines along each tomato bed
   for (let b = -2; b <= 2; b++) { const dl = cyl(0.008, 0.008, 72, MAT.rubber(), 6); dl.rotation.x = Math.PI / 2; dl.position.set(b * bedPitch + 0.14, 0.13, -32); S.add(dl); }
   // barn with solar roof + small weather mast in the distance

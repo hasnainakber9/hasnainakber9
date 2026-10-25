@@ -113,7 +113,7 @@ export class Puppet {
     const r = D.headR;
     const ref = D.thigh + D.shin + D.ankle + 0.04 + D.torso + D.neck + 0.92 * r + 1.0 * r;
     const s = this.s = spec.height / ref;
-    this.hipY = (D.thigh + D.shin + D.ankle) * s;
+    this.hipY = (D.thigh + D.shin + D.ankle) * s; this.ankleY = D.ankle * s;
     this.seed = [...name].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0; this.rand = prng(this.seed);
     this.phase = this.rand() * 10;
     const mats = this.mats = {
@@ -409,6 +409,10 @@ export class Puppet {
     Lg.L.leg.rotation.set(P.lLx, -P.lLy, -P.lLz); Lg.R.leg.rotation.set(P.lRx, P.lRy, P.lRz);
     Lg.L.knee.rotation.set(P.kL, 0, 0); Lg.R.knee.rotation.set(P.kR, 0, 0);
     Lg.L.ankle.rotation.set(P.fL, 0, 0); Lg.R.ankle.rotation.set(P.fR, 0, 0);
+    // walking: the hips ride at the height that keeps the lower foot on the ground (a straight stance leg swung off the
+    // vertical would otherwise lift the walker clear of the floor at every stride)
+    if (rt.moving > 0.01 && this.ankleY != null) { this.root.updateMatrixWorld(true); const iy = this.root.position.y;
+      const low = Math.min(Lg.L.ankle.getWorldPosition(va).y, Lg.R.ankle.getWorldPosition(vb).y) - iy; this.hips.position.y -= (low - this.ankleY) * Math.min(1, rt.moving * 1.5); }
   }
   // ---------------------------------------------------------------- per-frame: IK, gaze, face
   solve(t) {
@@ -602,8 +606,8 @@ function buildCastHuman(name, spec, seed, o = {}) {
   const H = HUMANS[name] || extraHuman(spec, seed);
   const h = buildHuman(Object.assign({ height: spec.height }, H, { brows: false, hair: null }));   // strand hair and brows are added below
   const hair = H.hair || {}; const q = (H.extra ? 0.45 : 1) * (typeof location !== 'undefined' && new URLSearchParams(location.search).has('hairq') ? +new URLSearchParams(location.search).get('hairq') : 1);
-  scalpLayer(h, KIT, hair.color || '#1a1411'); scalpTint(h, KIT, hair.color || '#1a1411');
-  strandHair(h, KIT, hair.style || 'short', Object.assign({ seed: seed % 997 }, hair, { count: Math.round((hair.count || ({ bun: 9000, ponytail: 9000, puff: 11000, short: 12000, cropped: 12000, capped: 9000 }[hair.style] || 9000)) * q) }));
+  scalpLayer(h, KIT, hair.color || '#1a1411'); scalpTint(h, KIT, hair.color || '#1a1411', hair.style === 'short' ? { band: 0.01 } : {});   // (short sides: the scalp darkens close above the hairline)
+  strandHair(h, KIT, hair.style || 'short', Object.assign({ seed: seed % 997 }, hair, { count: Math.round((hair.count || ({ bun: 9000, ponytail: 9000, puff: 11000, short: 20000, cropped: 12000, capped: 9000 }[hair.style] || 9000)) * q) }));
   if (H.beard) strandHair(h, KIT, H.beard.style, Object.assign({ seed: seed % 991 + 1 }, H.beard, { count: Math.round((H.beard.count || 7000) * q) }));
   strandBrows(h, KIT, Object.assign({ seed: seed % 983 + 2 }, H.brows || {}, { count: Math.round(((H.brows || {}).count || 380) * q) }));
   // o.off: outer layers left off in this scene (aprons come off for the meal: seated, a hanging apron would cut through the lap)
@@ -651,7 +655,7 @@ export class HumanPuppet extends Puppet {
     const hip = { L: J('upperleg01.R'), R: J('upperleg01.L') }, knee = { L: J('lowerleg01.R'), R: J('lowerleg01.L') }, ank = { L: J('foot.R'), R: J('foot.L') };
     const thigh = (hip.L.distanceTo(knee.L) + hip.R.distanceTo(knee.R)) / 2, shin = (knee.L.distanceTo(ank.L) + knee.R.distanceTo(ank.R)) / 2;
     const hipJ = hip.L.clone().add(hip.R).multiplyScalar(0.5);
-    this.hipY = (ank.L.y + ank.R.y) / 2 + thigh + shin; this.lift = this.hipY - hipJ.y;
+    this.hipY = (ank.L.y + ank.R.y) / 2 + thigh + shin; this.lift = this.hipY - hipJ.y; this.ankleY = (ank.L.y + ank.R.y) / 2;
     this.hips.position.set(0, this.hipY, 0);
     for (const s of ['L', 'R']) { const Lg = this.legs[s]; Lg.leg.position.set(hip[s].x, 0, hip[s].z); Lg.knee.position.set(0, -thigh, 0); Lg.ankle.position.set(0, -shin, 0); }
     const sp = J('spine05'), nk = J('neck01'), hd = J('head');

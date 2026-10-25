@@ -265,6 +265,34 @@ function weightsFrom(mesh) {
     const acc = []; for (const [d, i] of best) { const wd = 1 / (Math.sqrt(d) + 0.002); for (let k = 0; k < 4; k++) acc.push([si[i * 4 + k], sw[i * 4 + k] * wd]); }
     return mixW(acc.filter(e => e[1] > 0), [], 0); };
 }
+// the outside of a skinned garment in its bind pose, for trim laid on it: the nearest point of a face turned the way
+// hint is (so never a rim, which stands across the surface) that lies square under q, the face's normal, the signed
+// distance of q above it, and skin weights interpolated across the face. Trim kept off it by a set distance and so
+// weighted moves as the surface under it does; weights blended from the nearest vertices drift off it in a pose.
+// A face's corners can name six bones between them and a vertex takes four: the lightest go to their nearest kin
+// that stays (a breast bone to the spine it hangs from), not shared out among the rest (which hands an arm's
+// share of the chest to the arm, so that the trim lifts off or sinks in as the arm moves).
+function surfaceOf(mesh, reach = 0.012) {
+  const g = mesh.geometry, p = g.attributes.position.array, ix = g.index.array, si = g.attributes.skinIndex.array, sw = g.attributes.skinWeight.array, cs = reach, grid = new Map();
+  const bones = mesh.skeleton.bones, par = bones.map(b => bones.indexOf(b.parent)), depth = (b) => { let d = 0; for (let a = par[b]; a >= 0; a = par[a]) d++; return d; };
+  const kin = (b, set) => { for (let a = par[b], up = 1; a >= 0; a = par[a], up++) if (set.has(a)) return [a, up];   // an ancestor, or failing that the nearest descendant
+    let best = null; for (const c of set.keys()) { let d = 0; for (let a = c; a >= 0; a = par[a], d++) if (a === b) { if (!best || d < best[1]) best = [c, d]; break; } } return best; };
+  const fold4 = (list) => { const acc = new Map(); for (const [b, w] of list) acc.set(b, (acc.get(b) || 0) + w);
+    while (acc.size > 4) { let lo = -1; for (const [b, w] of acc) if (lo < 0 || w < acc.get(lo) || (w === acc.get(lo) && depth(b) > depth(lo))) lo = b; const w = acc.get(lo); acc.delete(lo);
+      const k = kin(lo, acc), to = k ? k[0] : [...acc.entries()].sort((x, y) => y[1] - x[1])[0][0]; acc.set(to, acc.get(to) + w); }
+    const s = [...acc.values()].reduce((t, w) => t + w, 0) || 1; return [...acc.entries()].sort((x, y) => y[1] - x[1]).map(([b, w]) => [b, w / s]); };
+  const key = (x, y, z) => (x + 512) * 1048576 + (y + 512) * 1024 + (z + 512), a = V(), b = V(), c = V(), tri = new THREE.Triangle(a, b, c), cp = V(), fn = V(), bc = V();
+  for (let f = 0; f < ix.length; f += 3) { a.fromArray(p, ix[f] * 3); b.fromArray(p, ix[f + 1] * 3); c.fromArray(p, ix[f + 2] * 3); const lo = a.clone().min(b).min(c), hi = a.clone().max(b).max(c);
+    for (let x = Math.floor(lo.x / cs); x <= Math.floor(hi.x / cs); x++) for (let y = Math.floor(lo.y / cs); y <= Math.floor(hi.y / cs); y++) for (let z = Math.floor(lo.z / cs); z <= Math.floor(hi.z / cs); z++) {
+      const k = key(x, y, z); let l = grid.get(k); if (!l) grid.set(k, l = []); l.push(f); } }
+  return (q, hint) => { let best = null, bd = reach; const cx = Math.floor(q.x / cs), cy = Math.floor(q.y / cs), cz = Math.floor(q.z / cs);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const l = grid.get(key(cx + dx, cy + dy, cz + dz)); if (l) for (const f of l) {
+      a.fromArray(p, ix[f] * 3); b.fromArray(p, ix[f + 1] * 3); c.fromArray(p, ix[f + 2] * 3); tri.getNormal(fn); if (fn.dot(hint) < 0.2) continue;
+      tri.closestPointToPoint(q, cp); const d = cp.distanceTo(q), s = q.clone().sub(a).dot(fn); if (d >= bd || Math.sqrt(Math.max(0, d * d - s * s)) > 0.0015) continue;
+      bd = d; tri.getBarycoord(cp, bc); best = { f, p: cp.clone(), n: fn.clone(), s: q.clone().sub(cp).dot(fn), b: [bc.x, bc.y, bc.z] }; } }
+    if (best) best.w = fold4([0, 1, 2].flatMap(k => [0, 1, 2, 3].map(j => [si[ix[best.f + k] * 4 + j], sw[ix[best.f + k] * 4 + j] * Math.max(0, best.b[k])])).filter(e => e[1] > 0));
+    return best; };
+}
 // the outside of a garment's body as a radius per (angle round the axis C, height), openings filled in smoothly from
 // their edges: points and normals on it, and the angle at which its front passes a given x
 function radialField(gar, C, y0, y1) {
@@ -452,6 +480,9 @@ function fabric(color, o = {}) {
       sh.vertexShader = 'attribute vec3 gpos;\nvarying vec3 vGpos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGpos = gpos;');
       sh.fragmentShader = 'varying vec3 vGpos;\n' + Object.keys(U).map(k => `uniform float ${k};`).join('\n') + '\n' + sh.fragmentShader.replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n' + o.pattern); };
     const key = 'fab:' + o.pattern.length + ':' + Object.keys(U).join(','); m.customProgramCacheKey = () => key; }
+  if (o.lift) { const prev = m.onBeforeCompile, key = m.customProgramCacheKey ? m.customProgramCacheKey() : 'fab';   // as clothMat's lift: every mesh drawn with it carries the attribute
+    m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); sh.vertexShader = 'attribute float lift;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>\n if (lift > 0.0) gl_Position = projectionMatrix * vec4(mvPosition.xyz * (1.0 - ${o.lift.toFixed(4)} * lift / max(length(mvPosition.xyz), 0.01)), 1.0);`); };
+    m.customProgramCacheKey = () => key + ':lift' + o.lift; }
   return frontLit(m);
 }
 const BAND = (c, w, x) => `(1.0 - smoothstep(${w} - 0.0012, ${w} + 0.0012, abs(${x} - ${c})))`;
@@ -466,11 +497,14 @@ function clothMat(color, o = {}) {
   const lib = 'float lineAA(float d, float w) { float aa = max(fwidth(d), 1e-6); return clamp((0.5 * w + aa - abs(d)) / (2.0 * aa), 0.0, 1.0) * min(1.0, w / aa); }';
   m.onBeforeCompile = (sh) => { for (const k in U) sh.uniforms[k] = { value: U[k] };
     sh.vertexShader = 'attribute vec3 gpos;\nattribute vec2 edgeD;\nvarying vec3 vGpos;\nvarying vec2 vUv0;\nvarying vec2 vEdge;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGpos = gpos; vUv0 = uv; vEdge = edgeD;');
+    // o.lift: vertices with attribute lift = 1 are drawn as if that much nearer along the line of sight (the same pixel,
+    // a nearer depth), so trim lying on a garment wins over it where skinning brings the two a hair through each other
+    if (o.lift) sh.vertexShader = 'attribute float lift;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>\n if (lift > 0.0) gl_Position = projectionMatrix * vec4(mvPosition.xyz * (1.0 - ${o.lift.toFixed(4)} * lift / max(length(mvPosition.xyz), 0.01)), 1.0);`);
     sh.fragmentShader = 'varying vec3 vGpos;\nvarying vec2 vUv0;\nvarying vec2 vEdge;\n' + decl + '\n' + lib + '\n' + sh.fragmentShader
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n{\n' + (o.pattern || '') + '\n}')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ float hgt = 0.0;\n' + (o.bump || '') +
         '\n vec3 sp = -vViewPosition, sx = dFdx(sp), sy = dFdy(sp), R1 = cross(sy, normal), R2 = cross(normal, sx); float det = dot(sx, R1) * faceDirection;\n vec3 grad = sign(det) * (dFdx(hgt) * R1 + dFdy(hgt) * R2); normal = normalize(abs(det) * normal - grad); }'); };
-  const key = 'cloth:' + (o.bump || '').length + ':' + (o.pattern || '').length + ':' + Object.keys(U).join(','); m.customProgramCacheKey = () => key;
+  const key = 'cloth:' + (o.bump || '').length + ':' + (o.pattern || '').length + ':' + Object.keys(U).join(',') + (o.lift ? ':lift' + o.lift : ''); m.customProgramCacheKey = () => key;
   return frontLit(m);
 }
 
@@ -618,7 +652,7 @@ export function labCoat(h, K, color = '#f2f2ec') {
   // the shirt underneath only shows through the opening, round the neck and at the cuffs
   hideUnder(h, (x, y, z) => { if (y < hemY - 0.01) return false;
     if (z > F.midZ && y > yBtn - 0.012 && Math.abs(x - F.midX) < vRoll(y) + 0.009) return false;
-    if (y > yT - 0.012 && Math.hypot(x - F.neck.x, z - F.neck.z) < 0.085) return false;
+    if (y > yT - 0.03 && Math.hypot(x - F.neck.x, z - F.neck.z) < 0.095) return false;   // (under the collar, where it meets the lapels)
     for (const s of ['L', 'R']) if (Math.hypot(x - F.wr[s].x, y - F.wr[s].y, z - F.wr[s].z) < 0.085) return false;
     return true; });
   const nip = nipples(h, K), yFront = (nip.length ? Math.max(...nip.map(p => p.y)) : F.chest + 0.1) + 0.06, yBack = F.chest + 0.19 * sc, yHang = (a) => lerp(yFront, yBack, smoothstep(1.2, 2.2, Math.abs(a)));
@@ -657,7 +691,7 @@ export function labCoat(h, K, color = '#f2f2ec') {
   // lapels, collar and pockets: topstitched a little in from their edges
   const trim = clothMat(color, { roughness: 0.84, sheen: 0.4, ns: 0.3, tile: 0.025,
     pattern: `float dash = step(0.45, fract((vGpos.x + vGpos.y + vGpos.z) * 230.0)); diffuseColor.rgb *= 1.0 - 0.14 * dash * max(lineAA(vEdge.x - 0.0055, 0.00045), lineAA(vEdge.y - 0.016, 0.00045));`,
-    bump: `hgt += 0.0006 * smoothstep(0.0, 0.005, vEdge.x);` });
+    bump: `hgt += 0.0006 * smoothstep(0.0, 0.005, vEdge.x);`, lift: 0.003 });
   const armpits = ['L', 'R'].map(s => F.sh[s].clone().add(V(Math.sign(F.midX - F.sh[s].x) * 0.02, -0.05, 0)));
   const coat = garment(h, K, upper, { gap: (v) => (side(v) ? 0.009 : 0.009), give: 0.5, loose: 0.008, iters: 40, soften: 10, nipSmooth: 0.05, mat, name: 'labcoat', island: side, rim: 0.0022,
     smoothW: { centres: armpits, radius: 0.14 * sc, iters: 12 }, boneMap: (() => { const nb = boneIdx(K, ['neck01', 'neck02', 'neck03', 'head']), sp = K.meta.bones.findIndex(b => b.name === 'spine01'); return (b) => (nb.has(b) ? sp : b); })(),
@@ -665,15 +699,23 @@ export function labCoat(h, K, color = '#f2f2ec') {
     extend: (ctx) => DBG.includes('noskirt') ? null : hemSkirt(ctx, { C: F.hip, bottom, clear: 0.022, flare: 0.12, folds: 0.009 }) });
   if (DBG.includes('wire')) mat.wireframe = true;
   if (DBG.includes('normals')) coat.mesh.material = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
-  const parts = [coat.mesh], W = weightsFrom(coat.mesh), RF = radialField(coat, F.hip, bottom - 0.01, F.neck.y + 0.05);
-  const attach = (pos, idx, uv, name, ed = null, m = trim) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    g.setAttribute('edgeD', new THREE.Float32BufferAttribute(ed || new Array(pos.length / 3 * 2).fill(1), 2)); g.setIndex(idx); g.computeVertexNormals(); g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => W(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])); parts.push(skinnedMesh(h, g, m, name)); };
+  const parts = [coat.mesh], W = weightsFrom(coat.mesh), S = surfaceOf(coat.mesh), RF = radialField(coat, F.hip, bottom - 0.01, F.neck.y + 0.05);
+  // fit[i] = { n: which way the coat under vertex i faces, want: the least it may lie above it (-1: anything), lift }: where the coat
+  // is under it the vertex is raised to that and weighted from the face, so that it stays above it in every pose; lift: drawn
+  // nearer by the trim material's lift (what is left of skinning's drift near the shoulders is a millimetre or two)
+  const attach = (pos, idx, uv, name, ed = null, m = trim, fit = null) => { const g = new THREE.BufferGeometry(), sw = [];
+    for (let i = 0; i < pos.length / 3; i++) { const q = V().fromArray(pos, i * 3), f = fit && fit[i], hit = f && S(q, f.n);
+      if (hit && hit.s < f.want) { q.copy(hit.p).addScaledVector(hit.n, f.want); q.toArray(pos, i * 3); } sw.push(hit ? hit.w : W(q.x, q.y, q.z)); }
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setAttribute('edgeD', new THREE.Float32BufferAttribute(ed || new Array(pos.length / 3 * 2).fill(1), 2)); g.setIndex(idx); g.computeVertexNormals(); g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => sw[i]);
+    g.setAttribute('lift', new THREE.Float32BufferAttribute(Array.from({ length: pos.length / 3 }, (_, i) => (fit && fit[i] && fit[i].lift ? 1 : 0)), 1)); parts.push(skinnedMesh(h, g, m, name)); };
+  const clear = (off) => (off > 0 ? Math.max(off + 0.0008, 0.0015) : -1);   // lying on the coat: a little more than the shape asks, never less than 1.5 mm
   const grid = (rows, cols, idx, base = 0, closeCols = false) => { const nc = cols; for (let j = 0; j < rows - 1; j++) for (let i = 0; i < (closeCols ? nc : nc - 1); i++) { const a = base + j * nc + i, b = base + j * nc + (i + 1) % nc, c = a + nc, d = base + (j + 1) * nc + (i + 1) % nc; idx.push(a, b, d, a, d, c); } };
 
   // lapels: each folds back along a straight roll line from the top button to the side of the neck and lies on the coat,
   // widening to the lapel point, after which the gorge runs back up to the roll line. A fold at the roll line; under it the
   // facing reaches back beneath the coat's cut edge; a thin edge all round.
-  { const pos = [], uv = [], idx = [], ed = [];
+  { const pos = [], uv = [], idx = [], ed = [], fit = [];
     for (const sg of [1, -1]) {
       const B = [F.midX + sg * 0.004, yBtn - 0.004], T = [F.midX + sg * xt, yT], Lr = Math.hypot(T[0] - B[0], T[1] - B[1]), d = [(T[0] - B[0]) / Lr, (T[1] - B[1]) / Lr], nn = [sg * d[1], -sg * d[0]];
       const up = 0.8, wl = (u) => Math.max(0.004, 0.072 * sc * (u < up ? u / up : (1 - u) / (1 - up)));
@@ -681,10 +723,11 @@ export function labCoat(h, K, color = '#f2f2ec') {
         for (let k = 1; k <= 9; k++) c.push([0.0015 + (w - 0.0015) * k / 9, 0.0026]); c.push([w, 0.0003]); return c; };
       const base = pos.length / 3, NC = sec(0.05, 0).length;
       for (let i = 0; i <= NU; i++) { const u = i / NU, rx = B[0] + d[0] * u * Lr, ry = B[1] + d[1] * u * Lr, w = wl(u);
-        for (const [dist, off] of sec(w, u)) { const p = RF.onFront(rx + nn[0] * dist, ry + nn[1] * dist, off); pos.push(p.x, p.y, p.z); uv.push(u * Lr, dist + off); ed.push(off > 0.002 ? w - dist : 1, 1); } }
+        for (const [dist, off] of sec(w, u)) { const x = rx + nn[0] * dist, y = ry + nn[1] * dist, p = RF.onFront(x, y, off); pos.push(p.x, p.y, p.z); uv.push(u * Lr, dist + off); ed.push(off > 0.002 ? w - dist : 1, 1);
+          fit.push({ n: RF.normal(RF.angleAtX(x, y), y), want: clear(off), lift: off > 0 }); } }
       grid(NU + 1, NC, idx, base);
     }
-    attach(pos, idx, uv, 'labcoat-lapels', ed); }
+    attach(pos, idx, uv, 'labcoat-lapels', ed, trim, fit); }
 
   // collar: a stand round the back of the neck from one lapel's top to the other's, rolling over into a fall that lies on
   // the coat's yoke a little below the neckline; the notch is the gap between the fall's end and the lapel's gorge
@@ -697,7 +740,7 @@ export function labCoat(h, K, color = '#f2f2ec') {
     const ring = (A, a) => { const f = ((a + Math.PI) / TAU * NB - 0.5 + 2 * NB) % NB, k = Math.floor(f), u = f - k; return lerp(A[k], A[(k + 1) % NB], u); };
     const SF = sphereField(coat, V(nk.x, nk.y - 0.14 * sc, nk.z)), polar = (a, r, y) => V(nk.x + Math.sin(a) * r, y, nk.z + Math.cos(a) * r);
     const TL = RF.onFront(F.midX + xt, yT, 0.0026), TR = RF.onFront(F.midX - xt, yT, 0.0026), aLt = Math.atan2(TL.x - nk.x, TL.z - nk.z), aRt = Math.atan2(TR.x - nk.x, TR.z - nk.z) + TAU;
-    const NS = 72, pos = [], uv = [], idx = [], ed = []; let NC = 0;
+    const NS = 72, pos = [], uv = [], idx = [], ed = [], fit = []; let NC = 0;
     for (let i = 0; i <= NS; i++) { const a = lerp(aLt, aRt, i / NS), e = Math.min(a - aLt, aRt - a), be = 1 - smoothstep(0, 0.95, e), b2 = be * be, T3 = a < Math.PI ? TL : TR;
       const ra = ring(rad, a), ya = ring(yb, a), hs = lerp(0.025, 0.005, be) * sc, rT = Math.hypot(T3.x - nk.x, T3.z - nk.z);
       const rr = lerp(ra - 0.006, rT, b2), yr = lerp(ya + hs, T3.y + 0.002, b2), Nn = polar(a, lerp(ra, rT, b2), lerp(ya, T3.y - 0.004, b2));
@@ -708,11 +751,11 @@ export function labCoat(h, K, color = '#f2f2ec') {
       for (let k = 1; k <= 8; k++) { const t = k / 8; sec.push(c4.clone().multiplyScalar((1 - t) ** 2).addScaledVector(Q, 2 * t * (1 - t)).addScaledVector(E, t * t)); }
       sec.push(E.clone().addScaledVector(En, -0.0022));
       NC = sec.length; let acc = 0; const toE = sec.map((p, k) => (k >= 4 ? sec.slice(k, -1).reduce((t, q, j, arr) => t + (j ? q.distanceTo(arr[j - 1]) : 0), 0) : 1));
-      sec.forEach((p, k) => { if (k) acc += p.distanceTo(sec[k - 1]); pos.push(p.x, p.y, p.z); uv.push(a * 0.07, acc); ed.push(toE[k], 1); }); }
+      sec.forEach((p, k) => { if (k) acc += p.distanceTo(sec[k - 1]); pos.push(p.x, p.y, p.z); uv.push(a * 0.07, acc); ed.push(toE[k], 1); fit.push({ n: En, want: k < 5 ? -1 : k < NC - 1 ? 0.0034 : 0.0015, lift: k >= 5 }); }); }
     grid(NS + 1, NC, idx);
     for (const r0i of [0, NS]) { const base = r0i * NC, cap = pos.length / 3; let cx = 0, cy = 0, cz = 0; for (let k = 0; k < NC; k++) { cx += pos[(base + k) * 3] / NC; cy += pos[(base + k) * 3 + 1] / NC; cz += pos[(base + k) * 3 + 2] / NC; }
-      pos.push(cx, cy, cz); uv.push(0, 0); ed.push(1, 1); for (let k = 0; k < NC - 1; k++) idx.push(cap, base + k, base + k + 1); }
-    if (!DBG.includes('nocollar')) attach(pos, idx, uv, 'labcoat-collar', ed); }
+      pos.push(cx, cy, cz); uv.push(0, 0); ed.push(1, 1); fit.push(null); for (let k = 0; k < NC - 1; k++) idx.push(cap, base + k, base + k + 1); }
+    if (!DBG.includes('nocollar')) attach(pos, idx, uv, 'labcoat-collar', ed, trim, fit); }
 
   // patch pockets: a panel lying on the coat, rounded at the bottom corners, its mouth gaping a little, edges with thickness
   const pocket = (aC, yb, yt, hw, gapeAmt, name, full = false) => { const NI = 16, NJ = 18, cr = 0.012, pos = [], uv = [], idx = [], ed = [], H = yt - yb;
@@ -787,14 +830,17 @@ function frontField(h, K, o) {
 function frontPanel(h, K, o) {
   const F = frame(h), { zAt, srcAt } = frontField(h, K, { bottom: o.bottom, top: o.top, reach: Math.max(o.halfW(o.bottom), o.halfW(o.top)) + 0.03, clear: o.clear, slope: o.slope });
   const NU = 28, NV = Math.max(10, Math.round((o.top - o.bottom) / 0.012)), pos = [], uv = [], ws = [], idx = [];
-  for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const y = lerp(o.bottom, o.top, j / NV), x = F.midX + (i / NU * 2 - 1) * o.halfW(y); pos.push(x, y, o.zFix ? o.zFix(x, y, zAt(x, y)) : zAt(x, y)); uv.push(x, y); ws.push(baseSkin(K, srcAt(x, y))); }
+  for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const y = lerp(o.bottom, o.top, j / NV), x = F.midX + (i / NU * 2 - 1) * o.halfW(y), q = V(x, y, o.zFix ? o.zFix(x, y, zAt(x, y)) : zAt(x, y)); let w = null;
+    // o.over: [S, clear] per layer under the panel (surfaceOf), first found wins: lifted to clear above it and weighted from it, so it stays on it in a pose
+    for (const [S, clear] of o.over || []) { const hit = S(q, V(0, 0, 1)); if (!hit) continue; if (hit.s < clear) q.copy(hit.p).addScaledVector(hit.n, clear); w = hit.w; break; }
+    pos.push(q.x, q.y, q.z); uv.push(x, y); ws.push(w || baseSkin(K, srcAt(x, y))); }
   for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + NU + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
   // edge thickness all round
   const ring = []; for (let i = 0; i < NU; i++) ring.push([i, i + 1]); for (let j = 0; j < NV; j++) ring.push([j * (NU + 1) + NU, (j + 1) * (NU + 1) + NU]);
   for (let i = NU; i > 0; i--) ring.push([NV * (NU + 1) + i, NV * (NU + 1) + i - 1]); for (let j = NV; j > 0; j--) ring.push([j * (NU + 1), (j - 1) * (NU + 1)]);
   const th = 0.0025; for (const [a, b] of ring) { const base = pos.length / 3; for (const [k, dz] of [[a, 0], [b, 0], [b, -th], [a, -th]]) { pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2] + dz); uv.push(uv[k * 2], uv[k * 2 + 1]); ws.push(ws[k]); } idx.push(base, base + 2, base + 1, base, base + 3, base + 2); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-  g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => ws[i]);
+  g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => ws[i]); if (o.lift) g.setAttribute('lift', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3).fill(1), 1));
   return { mesh: skinnedMesh(h, g, o.mat, o.name || 'panel'), corner: (sd) => { const k = NV * (NU + 1) + (sd > 0 ? NU : 0); return V(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]); } };
 }
 
@@ -806,7 +852,12 @@ export function apron(h, K, color, o = {}) {
   // never cross: at the bottom the bib lies just on the skirt's surface
   const skirt = hangSkirt(h, K, { top: yt + 0.005, bottom: F.knee - 0.03, a0: -1.2, a1: 1.2, clear: 0.016, flare: 0.05, folds: 0.006, mat, name: 'apron-skirt', rim: 0.002, topSmooth: 10, rimTop: true });
   const zs = skirt.userData.zAt;
-  const bib = frontPanel(h, K, { bottom: yt - 0.025, top, halfW: (y) => halfW * lerp(1, 0.68, smoothstep(F.chest - 0.04, top, y)), clear: 0.007, mat, name: 'apron',
+  // the bib and the strap lie on the shirt (the bib's foot on the skirt) and take their weights from the face under them, so
+  // they stay on it when she leans or reaches (weights of the skin under it let the shirt come through); drawn a little nearer
+  const shirt = h.meshes.find(m => (h.clothes || []).some(c => c.key === m.name && !/^shoes/.test(c.key))), onShirt = shirt && surfaceOf(shirt, 0.02), onSkirt = surfaceOf(skirt, 0.02);
+  const matL = fabric(color, { roughness: 0.9, sheen: 0.3, normal: 'cloth', ns: 0.45, tile: 0.02, lift: 0.003 });
+  const bib = frontPanel(h, K, { bottom: yt - 0.025, top, halfW: (y) => halfW * lerp(1, 0.68, smoothstep(F.chest - 0.04, top, y)), clear: 0.007, mat: matL, name: 'apron', lift: true,
+    over: [[onSkirt, 0.0045], ...(onShirt ? [[onShirt, 0.005]] : [])],
     zFix: (x, y, z) => lerp(z, Math.max(z, zs(x, Math.min(y, yt + 0.005)) + 0.0045), smoothstep(yt + 0.08, yt + 0.02, y)) });
   const parts = [bib.mesh, skirt];
   // the waist ties run from the skirt's top corners round the back (in front the bib runs on into the skirt)
@@ -820,22 +871,26 @@ export function apron(h, K, color, o = {}) {
   const rise = (c, n) => Array.from({ length: 5 }, (_, i) => out(c.clone().lerp(n, (i + 1) / 6)));
   const cR = bib.corner(1), cL = bib.corner(-1), sewn = (c) => c.clone().add(V(0, -0.02, -0.004));   // (sewn on behind the bib's top corners)
   const pts = [sewn(cR), cR, ...rise(cR, round[0]), ...round, ...rise(cL, round[round.length - 1]).reverse(), cL, sewn(cL)];
-  const shirt = h.meshes.find(m => (h.clothes || []).some(c => c.key === m.name && !/^shoes/.test(c.key)));   // it moves with the collar it lies on
-  parts.push(band(h, K, new THREE.CatmullRomCurve3(pts), (p) => V(p.x - nk.x, 0, p.z - nk.z).normalize(), 0.022, T, mat, shirt ? weightsFrom(shirt) : 'spine01', 'apron-strap'));
+  const fit = onShirt && ((p, n) => { const hit = onShirt(p, n.clone().add(V(0, 0.8, 0)).normalize()); if (!hit) return null; const want = T / 2 + 0.0025;   // (it moves with the collar it lies on)
+    return { p: hit.s < want ? hit.p.clone().addScaledVector(hit.n, want) : p, w: hit.w }; });
+  parts.push(band(h, K, new THREE.CatmullRomCurve3(pts), (p) => V(p.x - nk.x, 0, p.z - nk.z).normalize(), 0.022, T, matL, shirt ? weightsFrom(shirt) : 'spine01', 'apron-strap', { fit, lift: true }));
   return parts;
 }
 
 // a flat strap along a curve: width w across it (perpendicular to the curve and to normal(p), the way it faces), thickness t,
 // rounded edges; skinned rigidly to a bone (by name) or by skin(x, y, z) -> weights
-function band(h, K, curve, normal, w, t, mat, skin, name) {
-  const N = 96, M = 12, pos = [], uv = [], idx = [], L = curve.getLength();
-  for (let i = 0; i <= N; i++) { const u = i / N, p = curve.getPointAt(u), T = curve.getTangentAt(u), n0 = normal(p), b = new THREE.Vector3().crossVectors(T, n0).normalize(), n = new THREE.Vector3().crossVectors(b, T).normalize();
+// o.fit(p, n) -> { p, w } | null: moves a point of the centre line (off what it lies on) and gives its weights; o.lift: lift attribute
+function band(h, K, curve, normal, w, t, mat, skin, name, o = {}) {
+  const N = 96, M = 12, pos = [], uv = [], idx = [], L = curve.getLength(), sw = [];
+  for (let i = 0; i <= N; i++) { const u = i / N, T = curve.getTangentAt(u); let p = curve.getPointAt(u); const n0 = normal(p), f = o.fit && o.fit(p, n0); if (f) p = f.p;
+    const b = new THREE.Vector3().crossVectors(T, n0).normalize(), n = new THREE.Vector3().crossVectors(b, T).normalize();
     for (let j = 0; j < M; j++) { const th = j / M * TAU, c = Math.cos(th), s = Math.sin(th), ex = Math.sign(c) * Math.pow(Math.abs(c), 0.25) * w / 2, ey = Math.sign(s) * Math.pow(Math.abs(s), 0.6) * t / 2;   // a flat rounded section
-      const q = p.clone().addScaledVector(b, ex).addScaledVector(n, ey); pos.push(q.x, q.y, q.z); uv.push(u * L, (ex / w + 0.5) * w); } }
+      const q = p.clone().addScaledVector(b, ex).addScaledVector(n, ey); pos.push(q.x, q.y, q.z); uv.push(u * L, (ex / w + 0.5) * w); sw.push(f ? f.w : null); } }
   for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) { const a = i * M + j, b2 = i * M + (j + 1) % M, c = a + M, d = b2 + M; idx.push(a, c, b2, b2, c, d); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); const bi = typeof skin === 'string' ? K.meta.bones.findIndex(x => x.name === skin) : -1;
-  setSkin(g, pos.length / 3, (i) => bi >= 0 ? [[bi, 1]] : skin(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])); return skinnedMesh(h, g, mat, name);
+  setSkin(g, pos.length / 3, (i) => sw[i] || (bi >= 0 ? [[bi, 1]] : skin(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]))); if (o.lift) g.setAttribute('lift', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3).fill(1), 1));
+  return skinnedMesh(h, g, mat, name);
 }
 
 // ------------------------------------------------------------------ headwear on the fitted head (dome = skull surface pushed out)

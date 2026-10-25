@@ -113,7 +113,19 @@ export function strandHair(h, K, style, o = {}) {
       }
     }
   }
-  if (style === 'short' || style === 'cropped' || style === 'capped') {
+  if (style === 'short') {   // a man's cut: short back and sides tapering to the hairline, longer on top and combed back from a side parting, rising off the forehead (one length all round hangs over the ears like a bowl)
+    const whorl = V(M.C.x + M.R.x * 0.1, M.top, M.C.z - M.R.z * 0.35), xp = M.C.x + M.R.x * 0.36, Lt = o.len || 0.042;
+    for (let i = 0; i < (o.count || 15000); i++) {
+      const { p, n } = scalp(r); if (!ok(p)) continue;
+      const top = smoothstep(M.C.y, M.C.y + M.R.y * 0.42, p.y), zf = (p.z - M.C.z) / M.R.z, back = smoothstep(-0.25, -0.7, zf), hh = (p.y - M.hairline(p.x, p.z)) / M.sz;
+      const away = p.clone().sub(whorl); away.y = Math.min(away.y, 0) - 0.03; away.normalize();
+      const d0 = V(0, -0.4, -1).normalize().lerp(V(p.x < xp ? -0.42 : 0.55, -0.05, -1).normalize(), top).lerp(away, back * (1 - 0.6 * top)).normalize();
+      const front = smoothstep(0.35, 0.8, zf) * top, len = lerp(0.009, Lt, top * (1 - 0.5 * back)) * (0.75 + r() * 0.4) * lerp(0.55, 1, smoothstep(0, 0.025, hh));
+      const pts = grow(p, n, M, { len, segs: len > 0.02 ? 8 : 4, dir: () => d0, lift: 0.06 + 0.4 * front, hug: 0.9, release: 0.15, gravity: 0.03, shell0: 0.01, shell1: lerp(0.015, 0.06, top) }, r);
+      add(pts, 0.00034, col(r() * 0.6));
+    }
+  }
+  if (style === 'cropped' || style === 'capped') {
     const whorl = V(M.C.x + M.R.x * 0.1, M.top, M.C.z - M.R.z * 0.35); const L = style === 'cropped' ? 0.008 : style === 'capped' ? 0.02 : (o.len || 0.035);
     for (let i = 0; i < (o.count || 12000); i++) {
       const { p, n } = scalp(r); if (!ok(p)) continue;
@@ -222,6 +234,8 @@ function buildRibbons(h, M, strands, o) {
 export function strandBrows(h, K, o = {}) {
   const M = h._head || (h._head = headModel(h, K)); const r = prng(o.seed || 21); const strands = [];
   const col = new THREE.Color(o.color || '#1a1411');
+  const archAt = (u) => 0.019 + 0.004 * Math.cos((u - 0.004) / 0.028 * Math.PI) - 0.0035 * Math.max(0, u - 0.012) / 0.014;   // brow centre line above the eye
+  const thAt = (u) => (o.thick || 0.0034) * (u < 0 ? 1.1 : 1 - 0.55 * Math.max(0, u) / 0.026);                          // thicker at the inner end, tapering out
   for (const side of ['L', 'R']) {
     const e = h.joint('eye.' + side); const out = Math.sign(e.x - M.C.x) || 1; const sz = M.sz;
     const tris = [];
@@ -229,16 +243,17 @@ export function strandBrows(h, K, o = {}) {
       const x = (h.P[a * 3] + h.P[b * 3] + h.P[c * 3]) / 3, y = (h.P[a * 3 + 1] + h.P[b * 3 + 1] + h.P[c * 3 + 1]) / 3, z = (h.P[a * 3 + 2] + h.P[b * 3 + 2] + h.P[c * 3 + 2]) / 3;
       const u = (x - e.x) * out / sz;                                       // -inner (nose side) .. +outer
       if (u < -0.017 || u > 0.026 || z < e.z - 0.006) continue;
-      const arch = 0.019 + 0.004 * Math.cos((u - 0.004) / 0.028 * Math.PI) - 0.0035 * Math.max(0, u - 0.012) / 0.014;   // brow centre line above the eye
-      const th = (o.thick || 0.0034) * (u < 0 ? 1.1 : 1 - 0.55 * Math.max(0, u) / 0.026);                          // thicker at the inner end, tapering out
-      if (Math.abs((y - e.y) / sz - arch) > th) continue; tris.push(a, b, c); }
+      if (Math.abs((y - e.y) / sz - archAt(u)) > thAt(u)) continue; tris.push(a, b, c); }
     const s = sampler(h, tris);
     // a soft shadow of the brow on the skin under the hairs, so the brow reads as a shape and not as hatching
     if (h.body.geometry.attributes.hairMask) { const a = h.body.geometry.attributes.hairMask, inB = new Set(tris);
       for (let i = 0; i < K.bmap.length; i++) if (inB.has(K.bmap[i])) a.setX(i, Math.max(a.getX(i), o.shadow ?? 0.45)); a.needsUpdate = true; }
-    for (let i = 0; i < Math.round((o.count || 380) * 2.1); i++) { const { p, n, root } = s(r); const u = (p.x - e.x) * out / sz;
-      const dir = V(out * (0.55 + 0.45 * Math.min(1, (u + 0.017) / 0.02)), (u < -0.008 ? 0.75 : 0.18) + (r() - 0.5) * 0.25, 0.15).normalize();
-      const pts = grow(p, n, M, { len: (o.len || 0.006) * (0.55 + r() * 0.6), segs: 4, dir: () => dir, lift: 0.02, hug: 0.98, shell0: -1, shell1: 0 }, r);
+    // the hairs lie flat and run out towards the temple, those along the top edge angled a little down and those along the
+    // bottom a little up, so they meet along the middle (a herringbone) and the edges stay smooth; at the inner end they
+    // stand up. Shorter towards the edges: hairs all pointing up and out make a bristling, spiky top edge
+    for (let i = 0; i < Math.round((o.count || 380) * 2.1); i++) { const { p, n, root } = s(r); const u = (p.x - e.x) * out / sz, vy = clamp(((p.y - e.y) / sz - archAt(u)) / thAt(u), -1, 1);
+      const inner = smoothstep(-0.004, -0.012, u), dir = V(out * (0.55 + 0.45 * Math.min(1, (u + 0.017) / 0.02)) * (1 - 0.45 * inner), lerp(0.14 - 0.5 * vy, 0.8 - 0.25 * vy, inner) + (r() - 0.5) * 0.16, 0.12).normalize();
+      const pts = grow(p, n, M, { len: (o.len || 0.006) * (0.55 + r() * 0.5) * (1 - 0.4 * vy * vy), segs: 4, dir: () => dir, lift: 0.02, hug: 0.98, shell0: -1, shell1: 0 }, r);
       const c = col.clone().offsetHSL(0, (r() - 0.5) * 0.1, (r() - 0.35) * 0.14); strands.push({ pts, w0: (o.w || 0.00014) * 0.5, c, root }); }
   }
   return buildRibbons(h, M, strands, o);
@@ -248,7 +263,7 @@ export function strandBrows(h, K, o = {}) {
 export function scalpTint(h, K, color, o = {}) {
   const M = h._head || (h._head = headModel(h, K)); const a = h.body.geometry.attributes.hairMask; const soft = (o.soft || 0.007) * M.sz, amt = o.amount ?? 0.88;
   for (let i = 0; i < K.bmap.length; i++) { const v = K.bmap[i]; if (!M.onHead(v)) continue; const y = h.P[v * 3 + 1], hl = M.hairline(h.P[v * 3], h.P[v * 3 + 2]);
-    a.setX(i, amt * smoothstep(hl - soft * 0.4, hl + soft + 0.022 * M.sz, y)); }   // ramps up over the thinning hairline band
+    a.setX(i, amt * smoothstep(hl - soft * 0.4, hl + soft + (o.band ?? 0.022) * M.sz, y)); }   // ramps up over the thinning hairline band
   const c = new THREE.Color(color), lum = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;   // (grey hair: a lighter root colour, also under a grey beard)
   a.needsUpdate = true; h.body.material.userData.hairRoot.value.copy(c).multiplyScalar(o.mul ?? (lum > 0.3 ? 0.88 : 0.7));
 }

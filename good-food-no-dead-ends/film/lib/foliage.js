@@ -73,7 +73,7 @@ function crownGeo(C, R, n, size, r, o = {}) {
     const base = pos.length / 3;
     for (const [u, v] of [[0, 0], [1, 0], [1, 1], [0, 1]]) { const p = c.clone().addScaledVector(a1, (u - 0.5) * s).addScaledVector(a2, (v - 0.5) * s); pos.push(p.x, p.y, p.z);
       const sn = p.clone().sub(C); sn.set(sn.x / R.x, sn.y / R.y, sn.z / R.z).normalize(); const nn = sn.multiplyScalar(0.7).addScaledVector(nrm, 0.3).normalize(); nor.push(nn.x, nn.y, nn.z); uv.push(u, v); }
-    const ao = (0.42 + 0.58 * k * k) * (0.82 + 0.18 * clamp((d.y + 1) / 2, 0, 1)) * (0.9 + r() * 0.2); const cc = tint.clone().multiplyScalar(ao).offsetHSL((r() - 0.5) * 0.02, 0, 0);
+    const ao = (o.shade ? o.shade(c) * (0.7 + 0.3 * k * k) : (0.42 + 0.58 * k * k) * (0.82 + 0.18 * clamp((d.y + 1) / 2, 0, 1))) * (0.9 + r() * 0.2); const cc = tint.clone().multiplyScalar(ao).offsetHSL((r() - 0.5) * 0.02, 0, 0);
     for (let q = 0; q < 4; q++) col.push(cc.r, cc.g, cc.b);
     idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -81,17 +81,34 @@ function crownGeo(C, R, n, size, r, o = {}) {
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return g;
 }
 const geoCache = {};
-// { trunk, crown } for a broadleaf tree of the given height (ground at y = 0)
+// { trunk, crown } for a broadleaf tree of the given height (ground at y = 0), grown in the open: a short trunk forking
+// low into spreading limbs, the crown a cluster of lobes round their ends and over the middle, broader than it is tall
+// (one ellipsoid of leaves on a long bare trunk reads as a lollipop, worst against the sky). Darker inside the
+// whole crown, not inside each lobe.
 export function treeGeos(o = {}) {
   const key = 'tree' + JSON.stringify(o); if (geoCache[key]) return geoCache[key];
-  const h = o.height || 7, r = prng(o.seed || 3), parts = [];
-  parts.push({ geo: new THREE.CylinderGeometry(h * 0.02, h * 0.038, h * 0.6, 10, 4), m: M4(0, h * 0.3, 0), color: o.bark || '#4f4031' });
-  const fork = V(0, h * 0.5, 0);
-  for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + r() * 0.6, tilt = 0.45 + r() * 0.5, L = h * (0.24 + r() * 0.12); const dir = V(Math.sin(tilt) * Math.cos(a), Math.cos(tilt), Math.sin(tilt) * Math.sin(a));
-    const m = new THREE.Matrix4().compose(fork.clone().addScaledVector(dir, L / 2), new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), dir), V(1, 1, 1)); parts.push({ geo: new THREE.CylinderGeometry(h * 0.005, h * 0.014, L, 6), m, color: o.bark || '#4f4031' }); }
-  const C = V(0, h * 0.66, 0), R = V(h * 0.3, h * 0.26, h * 0.3);
-  const out = { trunk: merged(parts), crown: crownGeo(C, R, o.cards || 260, h * 0.16, r, { color: o.leafTint }) };
-  return (geoCache[key] = out);
+  const h = o.height || 7, r = prng(o.seed || 3), parts = [], bark = o.bark || '#4f4031';
+  parts.push({ geo: new THREE.CylinderGeometry(h * 0.024, h * 0.045, h * 0.4, 10, 4), m: M4(0, h * 0.2, 0), color: bark });
+  const fork = V(0, h * 0.34, 0), lobes = [{ C: V(0, h * 0.58, 0), R: V(h * 0.27, h * 0.2, h * 0.27) }, { C: V((r() - 0.5) * h * 0.1, h * 0.76, (r() - 0.5) * h * 0.1), R: V(h * 0.2, h * 0.16, h * 0.2) }];
+  const nL = 6 + Math.floor(r() * 2);
+  for (let i = 0; i < nL; i++) { const a = i / nL * TAU + r() * 0.7, tilt = 0.55 + r() * 0.55, L = h * (0.24 + r() * 0.14), dir = V(Math.sin(tilt) * Math.cos(a), Math.cos(tilt), Math.sin(tilt) * Math.sin(a));
+    const m = new THREE.Matrix4().compose(fork.clone().addScaledVector(dir, L / 2), new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), dir), V(1, 1, 1)); parts.push({ geo: new THREE.CylinderGeometry(h * 0.006, h * 0.016, L, 6), m, color: bark });
+    const end = fork.clone().addScaledVector(dir, L), rr = h * (0.13 + r() * 0.09);
+    lobes.push({ C: end.add(V(0, rr * 0.4, 0)), R: V(rr * (1.05 + r() * 0.3), rr * (0.75 + r() * 0.2), rr * (1.05 + r() * 0.3)) }); }
+  let lo = 1e9, hi = -1e9, ext = 0; for (const l of lobes) { lo = Math.min(lo, l.C.y - l.R.y); hi = Math.max(hi, l.C.y + l.R.y); ext = Math.max(ext, Math.hypot(l.C.x, l.C.z) + Math.max(l.R.x, l.R.z)); }
+  const mid = (lo + hi) / 2, half = (hi - lo) / 2;
+  const shade = (c) => { const q = Math.hypot(c.x / ext, (c.y - mid) / half, c.z / ext); return (0.38 + 0.62 * clamp(q, 0, 1) ** 1.5) * (0.8 + 0.2 * clamp((c.y - lo) / (hi - lo), 0, 1)); };
+  const area = lobes.map(l => l.R.x * l.R.y + l.R.y * l.R.z + l.R.x * l.R.z), A = area.reduce((t, x) => t + x, 0), total = (o.cards || 260) * 1.35;
+  const crown = joinGeos(lobes.map((l, i) => crownGeo(l.C, l.R, Math.max(10, Math.round(total * area[i] / A)), h * 0.13, r, { color: o.leafTint, shade })));
+  return (geoCache[key] = { trunk: merged(parts), crown });
+}
+// indexed geometries with the same attributes, one after another
+function joinGeos(gs) {
+  const names = Object.keys(gs[0].attributes), out = new THREE.BufferGeometry(), idx = []; let base = 0;
+  for (const nm of names) { const sz = gs[0].attributes[nm].itemSize, arr = new Float32Array(gs.reduce((t, g) => t + g.attributes[nm].array.length, 0)); let off = 0;
+    for (const g of gs) { arr.set(g.attributes[nm].array, off); off += g.attributes[nm].array.length; } out.setAttribute(nm, new THREE.Float32BufferAttribute(arr, sz)); }
+  for (const g of gs) { for (const i of g.index.array) idx.push(i + base); base += g.attributes.position.count; }
+  out.setIndex(idx); return out;
 }
 export function tree(o = {}) {
   const g = new THREE.Group(), T = treeGeos(o);

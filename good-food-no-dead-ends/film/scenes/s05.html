@@ -11,10 +11,14 @@ const { THREE, V } = K;
 await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'tiles', 'diamond']);
 K.seed(55);
 const app = new K.App({ duration: 8.0, fov: 30, exposure: 1.0, dof: { aperture: 0.004, maxblur: 0.012 }, bloomStrength: 0.22, bloomThreshold: 0.85, warmth: 0.99, sat: 1.0, vignette: 0.32, tint: '#fbfdff' });
-await app.hdri('workshop', { intensity: 0.7, rotation: 0.4 });
+await app.hdri('hall', { intensity: 0.7, rotation: 0.4 });   // (neutral: the workshop's yellow machinery streaked the steel tanks)
 const S = app.scene; S.background = new THREE.Color('#cfd6d8');
 // room 14 x 12, 6 m high, clerestory windows on the back wall
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 14), K.mat('#8f9a94', { roughness: 0.35, map: K.grain('plaster', { repeat: 6 }), normalMap: K.normalTex('plaster', 6), normalScale: new THREE.Vector2(0.25, 0.25) })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
+// floor: a seamless resin floor, pale grey-green, faintly clouded, satin (a lab floor, not concrete)
+const epoxy = K.canvasTex(1024, 1024, (g, w, h) => { g.fillStyle = '#c9cfcb'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 90; i++) { const x = K.rnd() * w, y = K.rnd() * h, r = 60 + K.rnd() * 220, l = K.rnd() < 0.5 ? '255,255,255' : '150,160,155'; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${l},0.07)`); gr.addColorStop(1, `rgba(${l},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(${K.rnd() < 0.5 ? '90,98,94' : '235,238,236'},${0.12 + K.rnd() * 0.15})`; g.fillRect(K.rnd() * w, K.rnd() * h, 1.5, 1.5); } }, { repeat: [4, 4] });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 14), new THREE.MeshPhysicalMaterial({ color: '#aab4af', map: epoxy, roughness: 0.32, clearcoat: 0.35, clearcoatRoughness: 0.18, envMapIntensity: 0.6 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
 const walls = new THREE.Group(); S.add(walls);
 const tileM = K.mat('#eef1ef', { roughness: 0.3, normalMap: K.normalTex('tiles', 10), normalScale: new THREE.Vector2(0.6, 0.6) }), paintM = K.MAT.plaster('#e6e8e3', 3);
 walls.add(K.at(K.box(16, 2.2, 0.2, tileM), 0, 1.1, -5.5)); walls.add(K.at(K.box(16, 1.6, 0.2, paintM), 0, 2.2 + 0.8, -5.5));
@@ -42,7 +46,19 @@ cab.position.set(4.3, 0.8, -1.6); cab.rotation.y = -0.6; S.add(cab);
 
 // stainless lab bench with sample work
 const bench = new THREE.Group(); S.add(bench); bench.position.set(0, 0, 0);
-bench.add(K.at(K.box(2.6, 0.05, 0.75, K.MAT.brushed(), { r: 0.01 }), 0, 0.92, 0)); bench.add(K.at(K.box(2.5, 0.8, 0.7, K.mat('#dfe3e2', { roughness: 0.45 }), { r: 0.02 }), 0, 0.45, 0));
+bench.add(K.at(K.box(2.6, 0.05, 0.75, K.MAT.brushed(), { r: 0.01 }), 0, 0.92, 0));
+// the base: a laminate cabinet run on a recessed plinth, a row of drawers over cupboard doors, steel bar handles
+{ const carc = K.mat('#d9dedc', { roughness: 0.5 }), front = K.mat('#e3e7e5', { roughness: 0.38 }), plinth = K.mat('#4a4f52', { roughness: 0.7 }), bar = K.MAT.brushed();
+  bench.add(K.at(K.box(2.5, 0.1, 0.62, plinth), 0, 0.05, -0.02));
+  bench.add(K.at(K.box(2.5, 0.795, 0.68, carc), 0, 0.1 + 0.3975, 0));
+  const n = 4, W = 2.5 / n, gap = 0.004, zf = 0.34 + 0.009;
+  for (let i = 0; i < n; i++) { const x = -1.25 + W * (i + 0.5);
+    bench.add(K.at(K.box(W - gap, 0.155, 0.018, front, { r: 0.003 }), x, 0.895 - 0.0775 - 0.012, zf));                 // drawer
+    bench.add(K.at(K.box(W - gap, 0.6, 0.018, front, { r: 0.003 }), x, 0.1 + 0.3 + 0.006, zf));                       // door
+    const hb = K.cyl(0.006, 0.006, 0.14, bar, 10); hb.rotation.z = Math.PI / 2; hb.position.set(x, 0.81, zf + 0.025); bench.add(hb);
+    const hd = K.cyl(0.006, 0.006, 0.12, bar, 10); hd.position.set(x + (i % 2 ? -1 : 1) * (W / 2 - 0.06), 0.56, zf + 0.025); bench.add(hd);
+    for (const [hx, hy, len, vert] of [[x, 0.81, 0.14, 0], [x + (i % 2 ? -1 : 1) * (W / 2 - 0.06), 0.56, 0.12, 1]]) for (const e of [-1, 1]) {   // stand-offs
+      const so = K.cyl(0.004, 0.004, 0.02, bar, 8); so.rotation.x = Math.PI / 2; so.position.set(hx + (vert ? 0 : e * len * 0.4), hy + (vert ? e * len * 0.4 : 0), zf + 0.014); bench.add(so); } } }
 const rackG = new THREE.Group(); rackG.add(K.box(0.3, 0.05, 0.1, K.mat('#2f6aa0', { roughness: 0.4 }))); for (let i = 0; i < 6; i++) { const tube = K.cyl(0.011, 0.011, 0.11, P.MAT ? null : K.MAT.glass({ opacity: 0.35 }), 10); tube.position.set(-0.125 + i * 0.05, 0.05, 0); rackG.add(tube); const fill = K.cyl(0.0095, 0.0095, 0.06, K.mat(['#f1ead8', '#efe3c6', '#e9dfc0'][i % 3], { roughness: 0.5 }), 10); fill.position.set(-0.125 + i * 0.05, 0.03, 0); rackG.add(fill); }
 rackG.position.set(0.55, 0.96, -0.12); bench.add(rackG);
 const cupsT = []; for (let i = 0; i < 5; i++) { const c = P.ware.cup(0.024, '#f6f4ee'); c.position.set(-0.75 + i * 0.07, 0.945, 0.12 + (i % 2) * 0.05); bench.add(c); const y = K.cyl(0.022, 0.022, 0.006, K.mat('#f3eee2', { roughness: 0.35 }), 14); y.position.set(c.position.x, 0.99, c.position.z); bench.add(y); cupsT.push(c); }
