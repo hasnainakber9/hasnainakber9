@@ -572,17 +572,35 @@ function collar(h, K, gar, mat, o) {
   // the top; without it, it stands straight up from the neckline
   const NG = 72, GN = o.hug !== undefined ? extentGrid(h, K, nk, nk.y - 0.08, nk.y + 0.1, NG, 0.004, 0.13) : null;
   const neckR = (a, y0, y1) => { const k = Math.floor((a + Math.PI) / TAU * NG) % NG; let m = 0; for (let y = y0; y <= y1; y += 0.004) m = Math.max(m, GN.at(k, y)); return m; };
+  // the top's distance in, per angle, smoothed round the neck (raw, it follows every bump of jaw and throat and the band
+  // ruckles where neighbouring angles disagree)
+  const rT = new Float32Array(NS + 1); for (let i = 0; i <= NS; i++) { const a = gap + (i / NS) * (TAU - 2 * gap), [r0, y0] = at(a); rT[i] = GN ? Math.min(r0 - 0.002, neckR(a, y0 + o.height * 0.5, y0 + o.height + 0.01) + o.hug) : r0 - 0.002 - 0.008; }
+  for (let s = 0; s < 6; s++) { const c = rT.slice(); for (let i = 1; i < NS; i++) rT[i] = Math.min(c[i], (c[i - 1] + 2 * c[i] + c[i + 1]) / 4 + 0.0015); }
   for (let i = 0; i <= NS; i++) { const a = gap + (i / NS) * (TAU - 2 * gap); const [r0, y0] = at(a); const dir = V(Math.sin(a), 0, Math.cos(a));
-    const rTop = GN ? Math.min(r0 - 0.002, neckR(a, y0 + o.height * 0.5, y0 + o.height + 0.01) + o.hug) : r0 - 0.002 - 0.008;
+    const rTop = rT[i];
     for (let j = 0; j <= PR; j++) { const t = j / PR * TAU, c = Math.cos(t), sn = Math.sin(t);
       const ry = y0 - 0.012 + o.height * 0.5 * (1 + Math.sign(sn) * Math.pow(Math.abs(sn), 0.6));          // a rounded band (superellipse profile)
       const f = clamp((ry - y0) / o.height, 0, 1), inner = lerp(r0 - 0.002, rTop, GN ? f * f * (3 - 2 * f) : f);   // closes in towards the top
       const rr = inner + o.thick * 0.5 * (1 + Math.sign(c) * Math.pow(Math.abs(c), 0.6));
-      const p = V(nk.x, ry, nk.z).addScaledVector(dir, rr); pos.push(p.x, p.y, p.z); const up = clamp((ry - y0) / o.height, 0, 1) * 0.6; wts.push([[sb, 1 - up], [nb, up]]); } }
+      const p = V(nk.x, ry, nk.z).addScaledVector(dir, rr); pos.push(p.x, p.y, p.z); const up = clamp((ry - y0) / o.height, 0, 1) * 0.2; wts.push([[sb, 1 - up], [nb, up]]); } }   // (it stands on the shoulders: a head turn barely moves it; more and the ring twists)
   for (let i = 0; i < NS; i++) for (let j = 0; j < PR; j++) { const a = i * (PR + 1) + j, b = a + PR + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+  const uv = []; for (let i = 0; i <= NS; i++) for (let j = 0; j <= PR; j++) uv.push(i / NS * TAU * 0.09, j / PR * 0.14);
+  // the band's two ends, either side of the zip, closed (an open end shows the inside of the tube as a crumpled flap):
+  // a fan on their own vertices, so the end is flat-shaded and the band's normals are left alone
+  for (const i of [0, NS]) { const base = pos.length / 3, c = V(); for (let j = 0; j < PR; j++) c.add(V().fromArray(pos, (i * (PR + 1) + j) * 3)); c.multiplyScalar(1 / PR);
+    for (let j = 0; j < PR; j++) { const k = i * (PR + 1) + j; pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]); wts.push(wts[k]); uv.push(0.5 + 0.02 * Math.cos(j / PR * TAU), 0.5 + 0.02 * Math.sin(j / PR * TAU)); }
+    pos.push(c.x, c.y, c.z); wts.push(wts[i * (PR + 1)]); uv.push(0.5, 0.5);
+    for (let j = 0; j < PR; j++) { const a = base + j, b = base + (j + 1) % PR, m = base + PR; if (i) idx.push(m, a, b); else idx.push(m, b, a); } }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-  const uv = []; for (let i = 0; i <= NS; i++) for (let j = 0; j <= PR; j++) uv.push(i / NS * TAU * 0.09, j / PR * 0.14); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setAttribute('gpos', new THREE.Float32BufferAttribute(pos, 3)); setSkin(g, pos.length / 3, (i) => wts[i]);
+  // the garment's own neckline inside the band's foot is never seen, and its quilting puffs out through the band (in
+  // jagged patches, worse as the shoulders move): not drawn, except across the opening at the front
+  if (gar.mesh) { const bg = gar.mesh.geometry, bp = bg.attributes.position, inside = new Uint8Array(bp.count);
+    for (let v = 0; v < bp.count; v++) { const x = bp.getX(v) - nk.x, y = bp.getY(v), z = bp.getZ(v) - nk.z, a = Math.atan2(x, z); if (Math.abs(a) < gap * 1.5) continue;
+      const [r0, y0] = at(a); if (y > y0 - 0.016 && Math.hypot(x, z) < r0 - 0.002 + o.thick + 0.004) inside[v] = 1; }
+    const ix = bg.index.array, keep = []; for (let f = 0; f < ix.length; f += 3) if (!(inside[ix[f]] && inside[ix[f + 1]] && inside[ix[f + 2]])) keep.push(ix[f], ix[f + 1], ix[f + 2]);
+    if (keep.length < ix.length) bg.setIndex(keep); }
   return skinnedMesh(h, g, mat, 'collar');
 }
 
