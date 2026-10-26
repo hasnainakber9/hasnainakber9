@@ -286,7 +286,7 @@ def panel_turtle(out, layout):
         hh, r1, r2, cap = 132, 2.25, 2.1, 190
         h1, h2 = int(iw / r1), int(iw / r2); PH = B + hh + h1 + G + h2 + cap + B
         page = Image.new("RGB", (PW, PH), PAPER); d = ImageDraw.Draw(page)
-        t = ["3. THE TURTLE TEST"]; f = fit_font(d, t, "black", PW - 2 * B - 200, 84, 0.01); draw_text_centered(d, (B, B, PW - B, B + hh - 6), t, f, tracking=0.01)
+        t = ["3. THE TURTLE TEST"]; f = fit_font(d, t, "black", PW - 2 * B - 200, 84); draw_text_centered(d, (B, B, PW - B, B + hh - 6), t, f)
         y1 = B + hh; paste_framed(page, fit_crop(a26, r1, 0.62), (B + G, y1, B + G + iw, y1 + h1), K5)
         y2 = y1 + h1 + G; paste_framed(page, fit_crop(a50, r2, 0.42), (B + G, y2, B + G + iw, y2 + h2), K5)
         year_tag(d, (B + G + 22, y1 + 20), "2026", 46); year_tag(d, (B + G + 22, y2 + 20), "2050", 46)
@@ -296,8 +296,8 @@ def panel_turtle(out, layout):
     else:
         hh, r = 230, 1.95; h = int(iw / r); PH = B + hh + h + G + h + G + B
         page = Image.new("RGB", (PW, PH), PAPER); d = ImageDraw.Draw(page)
-        t = ["WE FINALLY LEARNED", "WHO HAS THE RIGHT OF WAY."]; f = fit_font(d, t, "black", PW - 2 * B - 120, 84, 0.005)
-        draw_text_centered(d, (B, B + 4, PW - B, B + hh - 4), t, f, spacing=1.08, tracking=0.005)
+        t = ["WE FINALLY LEARNED", "WHO HAS THE RIGHT OF WAY."]; f = fit_font(d, t, "black", PW - 2 * B - 120, 84)   # (set whole, so the font's kerning pairs apply: "Y." and "WA")
+        draw_text_centered(d, (B, B + 4, PW - B, B + hh - 4), t, f, spacing=1.08)
         y1 = B + hh; paste_framed(page, fit_crop(a26, r, 0.5), (B + G, y1, B + G + iw, y1 + h), K5)
         y2 = y1 + h + G; paste_framed(page, fit_crop(a50, r, 0.5), (B + G, y2, B + G + iw, y2 + h), K5)
         year_tag(d, (B + G + 22, y1 + 22), "2026", 50); year_tag(d, (B + G + 22, y2 + 22), "2050", 50)
