@@ -1,18 +1,18 @@
 {
   "sample_rate": 24000,
-  "duration": 2.4,
+  "duration": 2.208,
   "sentences": [
     {
-      "text": "The forecast updated.",
+      "text": "Then so are we.",
       "start": 0.1,
-      "end": 1.7
+      "end": 1.508
     }
   ],
   "cues": [
     {
       "start": 0.1,
-      "end": 1.7,
-      "text": "The forecast updated."
+      "end": 1.508,
+      "text": "Then so are we."
     }
   ]
 }

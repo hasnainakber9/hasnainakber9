@@ -11,7 +11,7 @@
 | Time | Place | What happens | Dialogue |
 |---|---|---|---|
 | 0–6 s | Family kitchen, afternoon | Noor holds a lumpy tomato over the discard bowl. Asha takes it and holds it up. | NOOR: This one's ugly. ASHA: It's a tomato, not a job interview. |
-| 6–14.5 s | Farm at sunrise | Asha crumbles soil by a moisture sensor. Luis's tablet shows the rain band moving earlier. | ASHA: Rain's coming early. LUIS: The forecast updated. ASHA: It doesn't know this soil. LUIS: It learned from you. |
+| 6–14.5 s | Farm at sunrise | Asha crumbles dry soil by a moisture sensor while a storm bank builds. Luis walks up with a tablet: the rain has moved two hours earlier, and a call-out to the street fills with forty neighbours. | ASHA: Storm's two hours early. LUIS: Then so are we. ASHA: Six of us against that? LUIS: Forty neighbours said yes. |
 | 14.5–22 s | Harvest | Pickers in the rows, a quality check, a small electric cart with a solar canopy, bees on the hedgerow, the tomato truss. | none |
 | 22–30 s | Rooftop greenhouse | Leafy greens in hydroponic channels above the city. | NOOR: So all our food grows here now? ASHA: Nope. Just the greens that like it here. |
 | 30–38 s | Fermentation lab | Pilot fermenters. Maya holds up a sample of microbial protein. | COLLEAGUE: Protein... from microbes? MAYA: Yogurt is microbes. COLLEAGUE: Fair. |
@@ -26,7 +26,7 @@
 
 Each technology does one ordinary job and people stay in charge of it. Nothing in the film claims hunger or waste is solved.
 
-- **Forecasts that learn from farmers.** Soil-moisture probes and local weather models are everyday precision-farming tools. The exchange "It doesn't know this soil." / "It learned from you." puts the farmer's knowledge into the model rather than replacing it.
+- **A harvest the neighbourhood turns out for.** Short-range weather warnings already give farms hours of notice; what decides whether the crop is saved is who can come. Community-supported farms and volunteer gleaning networks call people in this way today. The scene's warning comes from a forecast, but the answer comes from the street: "Then so are we." / "Forty neighbours said yes."
 - **Greenhouses for what suits them.** Hydroponic rooftop growing works well for leafy greens and herbs, not for staple crops. Asha says exactly that, which is also the joke.
 - **Microbial protein.** Fermentation-made proteins are already sold. The scene treats them as a familiar idea ("Yogurt is microbes.") rather than a miracle.
 - **Logistics with judgement.** Software flags surplus; a person decides to send it to a school kitchen before it spoils.

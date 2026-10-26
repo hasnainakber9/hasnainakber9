@@ -10,7 +10,7 @@
 
 ## Longer version (LinkedIn, YouTube description)
 
-> A tomato too ugly for the fruit bowl turns out to be the start of a loop: a farm that listens to its soil, greens grown where they suit, protein from microbes, surplus rerouted to a school kitchen, a market that sells the imperfect batch, one shared table, and scraps that go back to the soil.
+> A tomato too ugly for the fruit bowl turns out to be the start of a loop: a farm racing a storm with forty neighbours, greens grown where they suit, protein from microbes, surplus rerouted to a school kitchen, a market that sells the imperfect batch, one shared table, and scraps that go back to the soil.
 >
 > The future of food is a loop, not a line. GOOD FOOD. NO DEAD ENDS.
 >

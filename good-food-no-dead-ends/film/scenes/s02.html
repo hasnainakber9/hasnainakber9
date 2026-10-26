@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta charset="utf-8"><title>s02 farm</title>
 <script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/jsm/"}}</script></head>
 <body><script type="module">
-// 02 | 6–14.5 s | FARM + LOCAL KNOWLEDGE — sunrise. Human observation corrects the forecast.
-// ASHA: "Rain's coming early."  LUIS: "The forecast updated."  ASHA: "It doesn't know this soil."  LUIS: "It learned from you."
+// 02 | 6–14.5 s | FARM + NEIGHBOURS — sunrise. The storm moves up; the street turns out to bring the harvest in first.
+// ASHA: "Storm's two hours early."  LUIS: "Then so are we."  ASHA: "Six of us against that?"  LUIS: "Forty neighbours said yes."
 import * as K from '../lib/core.js';
 import * as P from '../lib/props.js';
 import { farm, sensorStake } from '../lib/sets.js';
@@ -36,41 +36,49 @@ asha.hand('R', [{ t: 0, at: V(0.28, 0.6, -0.8), pole: [0.6, -0.4, -0.5], shape: 
   { t: 4.3, at: () => { const f = asha.handFrame('L'); return f.pos.clone().add(V(0, 0, 1).applyQuaternion(f.quat).multiplyScalar(0.06)).add(asha.dirToWorld([1, 0, 0.3]).multiplyScalar(0.03)); }, blend: 0.7, pole: [0.7, -0.6, -0.2], shape: 'pinch',
     aim: () => ({ fingers: ad(-0.55, -0.35, 1), palm: ad(0.15, -1, 0.1) }) }]);
 const storm = V(-31, 9, -25);
-asha.look([{ t: 0, at: soilPt }, { t: 0.95, at: storm, blend: 0.5 }, { t: 2.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.55 }, { t: 4.4, at: () => asha.arms.L.grip.getWorldPosition(V()), blend: 0.35 }, { t: 6.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.6 }]);
+asha.look([{ t: 0, at: soilPt }, { t: 0.95, at: storm, blend: 0.5 }, { t: 2.9, at: () => luis.head.getWorldPosition(V()), blend: 0.5, w: 0.55 }, { t: 4.3, at: () => asha.arms.L.grip.getWorldPosition(V()), blend: 0.3 }, { t: 4.95, at: storm, blend: 0.45 }, { t: 6.5, at: () => tab.getWorldPosition(V()), blend: 0.35 }, { t: 7.25, at: () => luis.head.getWorldPosition(V()), blend: 0.45, w: 0.6 }]);
 asha.face([{ t: 0, smile: 0.1, brow: -0.1 }, { t: 1.0, smile: 0.0, brow: -0.2, squint: 0.3 }, { t: 4.4, smile: 0.15, brow: 0.1, tilt: 0.4, squint: 0 }, { t: 7.0, smile: 0.45, brow: 0.2, tilt: 0, blend: 0.6 }]);
 const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.028, 1), K.mat('#4a3421', { roughness: 1, normalMap: K.normalTex('soil', 1) })); app.add(clump);
 app.after(t => { const f = asha.handFrame('L'), g = K.smooth((t - 1.25) / 0.3), sc = (1 - 0.35 * K.win(t, 4.6, 5.6)) * Math.max(0.001, g); clump.position.copy(f.pos).add(V(0, 0, 1).applyQuaternion(f.quat).multiplyScalar(0.028 * sc - 0.012)); clump.visible = g > 0.01; clump.scale.setScalar(sc); });   // gathered as her fingers close in the soil, then resting in the cupped palm
 
-// Luis: walks up the furrow with a tablet; shows her the updated forecast
+// Luis: walks up the furrow with a tablet; shows her the neighbours signing up
 luis.act([{ t: 0, pose: 'tablet' }, { t: 6.2, pose: 'tablet', mod: { spY: -0.25 }, blend: 0.6 }]);
 const tabAt = () => tab.getWorldPosition(V());
 // he holds the tablet by its sides (fingers under it, thumbs on the bezel), screen tipped up to him; on his last line
-// he tips it towards Asha to show her the logged observation
+// he tips it towards Asha to show her the sign-ups
 const tabW = 0.22, tabD = 0.16, tabHold = { f: [[0.3, 0.35, 0.25], [0.12, 0.18, 0.1], [0.14, 0.2, 0.12], [0.18, 0.24, 0.14], [0.22, 0.28, 0.16]], opp: 0.35 };
 const tabPose = (t) => { const q = luis.root.getWorldQuaternion(new THREE.Quaternion()).multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), -0.35 * K.win(t, 6.0, 6.6))).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -0.95 + 0.55 * K.win(t, 6.0, 6.6)));
   return { p: luis.root.localToWorld(V(0.0, 1.07 - 0.04 * K.win(t, 6.0, 6.6), 0.3)), q }; };
 const tabGrip = (sx) => ({ at: () => tab.localToWorld(V(sx * (tabW / 2 - 0.035), 0.012, 0)), aim: () => { const q = tab.getWorldQuaternion(new THREE.Quaternion()); return { fingers: V(-sx, 0, -0.25).normalize().applyQuaternion(q), palm: V(0, 1, 0).applyQuaternion(q) }; }, shape: tabHold });
-luis.hand('L', [{ t: 0, ...tabGrip(-1), pole: [-0.7, -0.6, -0.3] }]);
-luis.hand('R', [{ t: 0, ...tabGrip(1), pole: [0.7, -0.6, -0.3] }]);
+// left hand flat under the tablet, carrying it; right hand on its edge, thumb over the bezel: the screen stays clear
+const tq = () => tab.getWorldQuaternion(new THREE.Quaternion()), tdir = (x, y, z) => V(x, y, z).normalize().applyQuaternion(tq());
+const flatHold = { f: [[0.1, 0.1, 0.05], [0.04, 0.05, 0.03], [0.04, 0.05, 0.03], [0.05, 0.06, 0.04], [0.06, 0.08, 0.05]], opp: 0.1, spread: 0.05 };
+luis.hand('L', [{ t: 0, at: () => tab.localToWorld(V(-0.04, -0.05, 0.03)), aim: () => ({ fingers: tdir(0.85, 0, -0.5), palm: tdir(0, 1, 0) }), shape: flatHold, pole: [-0.7, -0.6, -0.3] }]);
+luis.hand('R', [{ t: 0, at: () => tab.localToWorld(V(tabW / 2 + 0.012, -0.012, 0.02)), aim: () => ({ fingers: tdir(-0.15, 0.25, -1), palm: tdir(-1, 0, 0) }), shape: tabHold, pole: [0.7, -0.6, -0.3] }]);
 luis.look([{ t: 0, at: () => asha.head.getWorldPosition(V()) }, { t: 2.4, at: tabAt, blend: 0.3 }, { t: 3.6, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }, { t: 5.9, at: tabAt, blend: 0.3 }, { t: 6.5, at: () => asha.head.getWorldPosition(V()), blend: 0.35 }]);
 luis.face([{ t: 0, smile: 0.2 }, { t: 6.3, smile: 0.5, brow: 0.3 }]);
-// tablet with a live (wordless) forecast: rain band slides earlier when Asha's observation is logged
+// tablet: the rain band slides two hours earlier as she says it; then the call-out to the street fills up
 const scr = document.createElement('canvas'); scr.width = 320; scr.height = 220; const sg = scr.getContext('2d'); const scrTex = new THREE.CanvasTexture(scr); scrTex.colorSpace = THREE.SRGBColorSpace;
 function drawScreen(t) {
   const g = sg; g.fillStyle = '#eef3f6'; g.fillRect(0, 0, 320, 220);
   g.fillStyle = '#dfe8ee'; g.fillRect(0, 0, 320, 34); g.fillStyle = '#2f8a57'; g.beginPath(); g.arc(20, 17, 8, 0, 6.3); g.fill();
-  const shift = K.smoother((t - 2.55) / 1.0) * 70 + K.smoother((t - 6.4) / 0.9) * 0; // forecast moved earlier
+  const shift = K.smoother((t - 1.0) / 1.0) * 70; // the storm moved up two hours
   for (let i = 0; i < 12; i++) { const x = 20 + i * 24; const center = 230 - shift; const v = Math.exp(-((x - center) ** 2) / 1800); g.fillStyle = `rgba(47,106,160,${0.25 + v * 0.75})`; const h = 20 + v * 110; g.fillRect(x, 190 - h, 16, h); }
   g.fillStyle = '#9aa6b0'; g.fillRect(16, 191, 290, 2);
   const cx = 230 - shift; g.fillStyle = '#6f7a86'; for (const [dx, dy, r] of [[-12, 0, 13], [4, -6, 16], [18, 1, 12]]) { g.beginPath(); g.arc(cx + dx, 58 + dy, r, 0, 6.3); g.fill(); }
   g.strokeStyle = '#2f6aa0'; g.lineWidth = 3; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(cx + i * 10, 74); g.lineTo(cx + i * 10 - 4, 86); g.stroke(); }
-  // field observation pin (soil), pulsing when the model takes it in
-  const pin = K.win(t, 5.6, 6.0); g.fillStyle = `rgba(207,95,42,${0.3 + 0.7 * pin})`; g.beginPath(); g.arc(68, 150, 7 + 4 * pin * (1 + Math.sin(t * 8) * 0.3), 0, 6.3); g.fill();
-  g.strokeStyle = `rgba(207,95,42,${pin})`; g.lineWidth = 2; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(75, 148); g.lineTo(cx - 20, 100); g.stroke(); g.setLineDash([]);
+  // the call-out: a card slides up and forty neighbours answer it, one after another (a person glyph turns green)
+  const up = K.smoother((t - 6.0) / 0.5); if (up > 0) { const y0 = 220 - up * 168;
+    g.fillStyle = '#ffffff'; g.fillRect(8, y0, 304, 170); g.fillStyle = '#2f8a57'; g.fillRect(8, y0, 304, 4);
+    const n = Math.round(40 * K.smoother(K.clamp((t - 6.5) / 1.6, 0, 1)));
+    g.fillStyle = '#1e2a24'; g.font = '700 30px sans-serif'; g.textBaseline = 'top'; g.fillText(String(n), 20, y0 + 12);
+    g.fillStyle = '#7b8a83'; g.fillRect(70, y0 + 20, 70, 5); g.fillRect(70, y0 + 30, 46, 5);   // (the card's caption, as wordless bars)
+    for (let i = 0; i < 40; i++) { const col = i % 10, row = Math.floor(i / 10), x = 26 + col * 29, y = y0 + 64 + row * 25, on = i < n;
+      g.fillStyle = on ? '#2f8a57' : '#d3dbd7'; g.beginPath(); g.arc(x, y, 5, 0, 6.3); g.fill(); g.beginPath(); g.ellipse(x, y + 13, 9, 6, 0, Math.PI, 0); g.fill(); } }
   scrTex.needsUpdate = true;
 }
 const tab = new THREE.Group(); const slab = K.box(tabW, 0.012, tabD, K.mat('#24272c', { roughness: 0.4 }), { r: 0.006 }); tab.add(slab);
-const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); app.add(tab);
+const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false, color: new THREE.Color(0.62, 0.62, 0.62) })); screen.rotation.x = -Math.PI / 2; screen.position.y = 0.007; tab.add(screen); app.add(tab);
 app.on(t => { drawScreen(t); const { p, q } = tabPose(t); tab.position.copy(p); tab.quaternion.copy(q); tab.updateMatrixWorld(true); });
 
 // camera: A sunrise (match from the tomato) → B two-shot in the furrow → C Asha → D over-shoulder to Luis & tablet
@@ -84,7 +92,10 @@ app.rig = new K.Rig([
   { t: 4.3001, cut: true, pos: () => ashaFace().add(V(0.12, -0.14, 0.82)), look: () => ashaFace().add(V(0, -0.05, 0)), fov: 27, focus: ashaHead, aperture: 0.007 },
   { t: 6.15, pos: () => ashaFace().add(V(0.1, -0.14, 0.76)), look: () => ashaFace().add(V(0, -0.05, 0)), fov: 26, focus: ashaHead, aperture: 0.007 },
   { t: 6.1501, cut: true, pos: () => luisFace().add(V(-0.6, -0.3, 0.78)), look: () => luisFace().add(V(0, -0.12, 0)), fov: 29, focus: luisHead, aperture: 0.006 },
-  { t: 8.5, pos: () => luisFace().add(V(-0.55, -0.28, 0.7)), look: () => luisFace().add(V(0, -0.1, 0)), fov: 28, focus: luisHead, aperture: 0.006 },
+  { t: 7.15, pos: () => luisFace().add(V(-0.57, -0.29, 0.73)), look: () => luisFace().add(V(0, -0.11, 0)), fov: 28.5, focus: luisHead, aperture: 0.006 },
+  // as he tips the tablet to her, the camera drops onto it: the board filling with neighbours
+  { t: 8.05, pos: () => tab.localToWorld(V(0.0, 0.34, 0.24)), look: () => tab.localToWorld(V(0, 0, -0.01)), fov: 34, focus: () => tabAt(), aperture: 0.003 },
+  { t: 8.5, pos: () => tab.localToWorld(V(0.0, 0.32, 0.22)), look: () => tab.localToWorld(V(0, 0, -0.01)), fov: 33, focus: () => tabAt(), aperture: 0.003 },
 ], { handheld: 0.7 });
 app.ready();
 </script></body></html>

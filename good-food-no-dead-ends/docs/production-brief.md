@@ -128,9 +128,9 @@ crops, precision irrigation, soil monitoring, AI-assisted forecasting,
 efficient cold chains, suitable controlled-environment growing,
 fermentation, safe food rescue, composting and anaerobic digestion.
 
-**Human agency —** AI forecasts and coordinates; farmers, workers,
-scientists, cooks and communities decide. Show a farmer correcting a
-forecast with local knowledge.
+**Human agency —** forecasts warn and software coordinates; farmers,
+workers, scientists, cooks and communities decide and act. Show a
+neighbourhood answering a farm's call before a storm.
 
 **Equity by design —** Show affordable access, dignified food
 distribution, different cuisines, workers with agency and accessible
@@ -290,15 +290,15 @@ ASHA: “It's a tomato, not a job interview.”</td>
 </tr>
 <tr class="even">
 <td>02 | 6–14s</td>
-<td>Farm + local knowledge</td>
+<td>Farm + neighbours</td>
 <td>Asha checks soil and a crop leaf. Mixed crops, hedgerows, targeted
 irrigation, moisture sensor, workers inspecting produce. Minimal
 dashboard.</td>
-<td>ASHA: “Rain's coming early.”<br />
-LUIS: “The forecast updated.”<br />
-ASHA: “It doesn't know this soil.”<br />
-LUIS: “It learned from you.”</td>
-<td>AI is a tool improved by human observations.</td>
+<td>ASHA: “Storm's two hours early.”<br />
+LUIS: “Then so are we.”<br />
+ASHA: “Six of us against that?”<br />
+LUIS: “Forty neighbours said yes.”</td>
+<td>The forecast gives warning; the community brings the harvest in.</td>
 </tr>
 <tr class="odd">
 <td>03 | 14–22s</td>

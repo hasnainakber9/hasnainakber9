@@ -1,18 +1,18 @@
 {
   "sample_rate": 24000,
-  "duration": 2.251,
+  "duration": 2.421,
   "sentences": [
     {
-      "text": "It doesn't know this soil.",
+      "text": "Six of us against that?",
       "start": 0.1,
-      "end": 1.551
+      "end": 1.721
     }
   ],
   "cues": [
     {
       "start": 0.1,
-      "end": 1.551,
-      "text": "It doesn't know this soil."
+      "end": 1.721,
+      "text": "Six of us against that?"
     }
   ]
 }

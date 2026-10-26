@@ -1,18 +1,18 @@
 {
   "sample_rate": 24000,
-  "duration": 2.187,
+  "duration": 2.379,
   "sentences": [
     {
-      "text": "Rain's coming early.",
+      "text": "Storm's two hours early.",
       "start": 0.1,
-      "end": 1.487
+      "end": 1.679
     }
   ],
   "cues": [
     {
       "start": 0.1,
-      "end": 1.487,
-      "text": "Rain's coming early."
+      "end": 1.679,
+      "text": "Storm's two hours early."
     }
   ]
 }

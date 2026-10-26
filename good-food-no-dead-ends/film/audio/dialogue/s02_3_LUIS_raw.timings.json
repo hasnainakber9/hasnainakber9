@@ -1,18 +1,18 @@
 {
   "sample_rate": 24000,
-  "duration": 2.144,
+  "duration": 2.485,
   "sentences": [
     {
-      "text": "It learned from you.",
+      "text": "Forty neighbours said yes.",
       "start": 0.1,
-      "end": 1.444
+      "end": 1.785
     }
   ],
   "cues": [
     {
       "start": 0.1,
-      "end": 1.444,
-      "text": "It learned from you."
+      "end": 1.785,
+      "text": "Forty neighbours said yes."
     }
   ]
 }

@@ -14,8 +14,8 @@
   "shots": [
     {"id": "s01", "beat": "Tomato hook", "duration": 6.0, "env": "kitchen",
      "lines": [["NOOR", "This one's ugly.", 0.8], ["ASHA", "It's a tomato, not a job interview.", 2.6]]},
-    {"id": "s02", "beat": "Farm and local knowledge", "duration": 8.5, "env": "farm",
-     "lines": [["ASHA", "Rain's coming early.", 0.9], ["LUIS", "The forecast updated.", 2.6], ["ASHA", "It doesn't know this soil.", 4.3], ["LUIS", "It learned from you.", 6.4]]},
+    {"id": "s02", "beat": "Farm and neighbours", "duration": 8.5, "env": "farm",
+     "lines": [["ASHA", "Storm's two hours early.", 0.9], ["LUIS", "Then so are we.", 2.6], ["ASHA", "Six of us against that?", 4.3], ["LUIS", "Forty neighbours said yes.", 6.2]]},
     {"id": "s03", "beat": "Harvest and resilience", "duration": 7.5, "env": "harvest", "lines": []},
     {"id": "s04", "beat": "City growing", "duration": 8.0, "env": "greenhouse",
      "lines": [["NOOR", "So all our food grows here now?", 1.4], ["ASHA", "Nope. Just the greens that like it here.", 4.2]]},
