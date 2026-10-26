@@ -1,0 +1,162 @@
+<!doctype html><html><head><meta charset="utf-8"><title>meme: they finally learned to listen</title>
+<script type="importmap">{"imports":{"three":"../../film/lib/three.module.js","three/addons/":"../../film/lib/jsm/"}}</script></head>
+<body><script type="module">
+// THEY FINALLY LEARNED TO LISTEN. A humpback breaches at sunset beside a survey ship whose deck display reads
+// DETECTED: WHALES NEARBY -> CHANGING COURSE.
+// Layers: bg (sea, sky, mountains, the splash's foam on the water), fg:whale (the whale and its spray, lit from the
+// front-left by a cool key the sunset plate does not have), fg:ship (the ship, under the warm sun)
+import { K, THREE, V, subject, lightFor, applyLayer, sdfGeometry, sd, taperTube, printTex } from '../lib/meme.js';
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'diamond']);
+K.seed(31);
+const app = new K.App({ duration: 4, fov: 42, exposure: 0.95, dof: { aperture: 0.0003, maxblur: 0.002 }, bloomStrength: 0.25, bloomThreshold: 0.8, warmth: 1.0, sat: 1.0, vignette: 0.0, grain: 0.0 });
+const S = app.scene;
+const sunDir = V(-0.62, 0.06, -1).normalize();
+K.skyDome(app, { top: '#3f5288', mid: '#e39a72', horizon: '#ffb766', ground: '#2a3240', sunColor: '#ffcf8a', sunDir, sunIntensity: 9, sunSize: 0.99958, glow: 1.4, fogColor: '#e2967a', fogNear: 300, fogFar: 3200, env: 0.9 });
+await K.clouds(app, { count: 14, yaw: Math.atan2(sunDir.x, -sunDir.z), spread: 1.1, opacity: 0.6, color: '#ffb48c', minY: 40, maxY: 120, scale: 1.3 });
+lightFor(K.sunLight(app, { dir: V(-0.62, 0.16, -1), color: '#ffc27e', intensity: 2.4, size: 60, target: V(4, 0, -10), softness: 3 }), 'bg');
+lightFor(K.fillLights(app, { sky: '#8a93c0', ground: '#3a3440', hemi: 0.5 }), 'bg');
+
+// ------------------------------------------------------------------ the sea: swell and chop on a big grid, a ripple normal map, sky reflections
+const SEA = new THREE.PlaneGeometry(4000, 4000, 360, 360); SEA.rotateX(-Math.PI / 2);
+{ const P = SEA.attributes.position; for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), d = Math.hypot(x, z), f = 1 / (1 + d / 120);
+    P.setY(i, f * (0.22 * Math.sin(x * 0.11 + z * 0.05) + 0.14 * Math.sin(x * 0.05 - z * 0.13 + 1.3) + 0.1 * Math.sin(x * 0.31 + z * 0.27) + 0.05 * Math.sin(x * 0.7 - z * 0.55))); } SEA.computeVertexNormals(); }
+const ripple = K.canvasTex(512, 512, (g, w, h) => { const img = g.createImageData(w, h), r = K.prng(9); const hgt = new Float32Array(w * h);
+  for (let k = 0; k < 60; k++) { const kx = (1 + Math.floor(r() * 9)) * (r() < 0.5 ? -1 : 1), ky = Math.floor(r() * 12) - 4, ph = r() * 6.28, a = 1 / Math.hypot(kx, ky);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) hgt[y * w + x] += a * Math.sin((kx * x / w + ky * y / h) * 6.2832 + ph); }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, dx = hgt[y * w + (x + 1) % w] - hgt[i], dy = hgt[((y + 1) % h) * w + x] - hgt[i], l = Math.hypot(dx * 3, dy * 3, 1);
+    img.data[i * 4] = (-dx * 3 / l * 0.5 + 0.5) * 255; img.data[i * 4 + 1] = (dy * 3 / l * 0.5 + 0.5) * 255; img.data[i * 4 + 2] = (1 / l * 0.5 + 0.5) * 255; img.data[i * 4 + 3] = 255; }
+  g.putImageData(img, 0, 0); });
+ripple.colorSpace = THREE.NoColorSpace; ripple.wrapS = ripple.wrapT = THREE.RepeatWrapping; ripple.repeat.set(1300, 1300);
+const sea = new THREE.Mesh(SEA, new THREE.MeshPhysicalMaterial({ color: '#0c2236', roughness: 0.1, metalness: 0.0, normalMap: ripple, normalScale: new THREE.Vector2(0.6, 0.6), envMapIntensity: 0.6, clearcoat: 0.6, clearcoatRoughness: 0.08, specularIntensity: 1.0 }));
+sea.receiveShadow = true; sea.userData.occluder = true; S.add(sea);
+// mountains on the left, a dark headland in the haze
+for (const [z, amp, base, col, seed, x0, x1] of [[-1300, 240, 10, '#3f3348', 4, -2400, 120], [-1800, 340, 30, '#5f4b62', 5, -2800, 700]]) {
+  const N = 240, pos = [], idx = []; for (let i = 0; i <= N; i++) { const t = i / N, x = x0 + t * (x1 - x0), env = Math.sin(Math.min(1, t * 1.3) * Math.PI * 0.95), h = base + amp * env * (0.55 + 0.6 * K.fbm(i / 16 + seed * 5, seed, 5)); pos.push(x, h, z, x, -10, z + 40); }
+  for (let i = 0; i < N; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  S.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: col, roughness: 1, side: THREE.DoubleSide }))); }
+// foam where the whale broke the surface: a ring of white water, torn at the edges
+const foamTex = K.canvasTex(1024, 1024, (g, w, h) => { g.clearRect(0, 0, w, h); const r = K.prng(5);
+  for (let i = 0; i < 2600; i++) { const a = r() * 6.283, rr = (0.12 + Math.pow(r(), 0.7) * 0.36) * w, x = w / 2 + Math.cos(a) * rr, y = h / 2 + Math.sin(a) * rr * 0.9, s = 4 + r() * 22;
+    const gr = g.createRadialGradient(x, y, 0, x, y, s); const al = (0.35 + r() * 0.5) * (1 - Math.max(0, (rr / w - 0.38) / 0.12)); gr.addColorStop(0, `rgba(255,255,255,${al})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - s, y - s, 2 * s, 2 * s); }
+  const c = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.2); c.addColorStop(0, 'rgba(240,248,255,0.9)'); c.addColorStop(1, 'rgba(240,248,255,0)'); g.fillStyle = c; g.fillRect(0, 0, w, h); });
+const foam = new THREE.Mesh(new THREE.PlaneGeometry(16, 13), new THREE.MeshStandardMaterial({ map: foamTex, transparent: true, depthWrite: false, roughness: 0.6, color: '#f2e6dc' }));
+foam.rotation.x = -Math.PI / 2; foam.position.set(-3.4, 0.55, -7.0); foam.scale.set(1.5, 1.4, 1); foam.renderOrder = 3; S.add(foam);
+
+// ------------------------------------------------------------------ the humpback (fg:whale): breaching, belly to the camera, rising up and to the right
+const whale = new THREE.Group(); S.add(whale);
+{ const L = 13.5;   // local frame: +x from tail to snout, +y its back, +z its left
+  // the body as a smooth chain of ellipsoids from the tail stock to the broad, flat-topped rostrum; the lower jaw and
+  // throat swell below the head, pleated
+  const segs = [[0.30, 0.42, 0.36], [0.38, 0.62, 0.55], [0.46, 0.85, 0.8], [0.54, 1.08, 1.02], [0.62, 1.22, 1.18], [0.7, 1.22, 1.22], [0.77, 1.1, 1.18], [0.84, 0.86, 1.06], [0.9, 0.62, 0.9], [0.95, 0.4, 0.66], [0.99, 0.22, 0.4]];
+  const body = (x, y, z) => { let d = 1e9;
+    for (const [u, ry, rz] of segs) d = sd.smin(d, sd.ellipsoid(x, y, z, [u * L, 0, 0], [L * 0.07, ry, rz]), 0.55);
+    d = sd.smin(d, sd.ellipsoid(x, y, z, [L * 0.84, -0.45, 0], [L * 0.13, 0.78, 0.98]), 0.4);   // the throat
+    const u = x / L;
+    if (y < 0 && u > 0.55) { const a = Math.atan2(z, -y), g = Math.sin(a * 44) * 0.018 * K.smooth((u - 0.55) / 0.12) * K.smooth(1.35 - Math.abs(a)); d -= g; }   // ventral pleats
+    if (u > 0.84) for (let k = 0; k < 16; k++) { const uu = 0.85 + k * 0.009, side = k % 2 ? 1 : -1, cx = uu * L, half = segs[9][2] * (1 - (uu - 0.9) * 3), cy = 0.36 * (1 - (uu - 0.84) * 4), cz = side * Math.max(0.12, half * 0.45);
+      d = sd.smin(d, sd.sphere(x, y, z, [cx, cy, cz], 0.065), 0.04); }   // tubercles along the rostrum
+    return d; };
+  const fin = (x, y, z, sg) => { // long pectoral fin, its leading edge scalloped; raised and swept back
+    const a = V(L * 0.72, -0.25, sg * 0.75), b = V(L * 0.5, 1.2, sg * 3.9), ab = b.clone().sub(a), t = K.clamp(V(x, y, z).sub(a).dot(ab) / ab.lengthSq(), 0, 1), c = a.clone().addScaledVector(ab, t), w = 0.42 * (1 - t * 0.75) * (1 + 0.08 * Math.sin(t * 40));
+    const dv = V(x, y, z).sub(c), nrm = V(0, 0, 1).cross(ab).normalize(), along = dv.dot(nrm), thick = dv.clone().sub(nrm.clone().multiplyScalar(along)).length();
+    return Math.hypot(Math.max(Math.abs(along) - w, 0), Math.max(thick - 0.06 * (1 - t * 0.6), 0)) - 0.02; };
+  const sdf = (x, y, z) => { let d = body(x, y, z); d = sd.smin(d, fin(x, y, z, 1), 0.15); d = sd.smin(d, fin(x, y, z, -1), 0.15); d = sd.smax(d, -sd.box(x, y, z, [L * 0.9, -0.12, 0], [L * 0.1, 0.012, 1.3]), 0.012); return d; };
+  const geo = sdfGeometry(sdf, [L * 0.22, -1.8, -4.6, L * 1.03, 1.5, 4.6], 0.045, { color: (x, y, z) => {
+    const u = x / L, n = K.fbm(x * 1.4, y * 1.4 + z * 0.7, 4), back = new THREE.Color('#2d3238'), belly = new THREE.Color('#d9d6cf'), scar = new THREE.Color('#9b9b98');
+    const fz = Math.abs(z) > 0.9 && y > -0.6 ? K.smooth((Math.abs(z) - 1.2) / 1.6) : 0;   // the fins: white underneath, mottled above
+    let c = back.clone().lerp(belly, K.smooth((-y - 0.1 + (n - 0.5) * 0.5) / 0.35) * K.smooth((u - 0.4) / 0.1)).lerp(belly, fz * (0.7 + 0.3 * n));
+    if (K.fbm(x * 3, z * 3 + y * 2, 3) > 0.7) c.lerp(scar, 0.45);   // barnacle patches and scars
+    return [c.r * (0.9 + 0.2 * n), c.g * (0.9 + 0.2 * n), c.b * (0.9 + 0.2 * n)]; } });
+  const skin = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.5, clearcoat: 0.45, clearcoatRoughness: 0.3, normalMap: K.normalTex('skin', 4), normalScale: new THREE.Vector2(0.6, 0.6), envMapIntensity: 1.0 });
+  const m = new THREE.Mesh(geo, skin); m.castShadow = true; whale.add(m);
+  // the eye, just above the corner of the mouth
+  for (const sg of [1, -1]) whale.add(K.at(K.sphere(0.07, new THREE.MeshPhysicalMaterial({ color: '#0d0f12', roughness: 0.1, clearcoat: 1 })), L * 0.8, -0.05, sg * 1.13));
+  // spray streaming off the body: sprites of white water
+  const sprayTex = K.canvasTex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+  const sm = new THREE.SpriteMaterial({ map: sprayTex, color: '#fff4ec', transparent: true, depthWrite: false, opacity: 0.85 }), r = K.prng(3);
+  for (let i = 0; i < 1400; i++) { const u = 0.3 + r() * 0.45, t = r(); const sp = new THREE.Sprite(sm.clone()); const s = 0.04 + Math.pow(r(), 2) * 0.45 * (1 - u * 0.6);
+    sp.position.set(u * L, -1.1 + r() * 0.7 - t * 1.6, (r() - 0.5) * 2.6); sp.scale.set(s, s, 1); sp.material.opacity = 0.35 + r() * 0.6; sp.userData.maskOpacity = 0.5; whale.add(sp); }
+  for (let i = 0; i < 700; i++) { const sp = new THREE.Sprite(sm.clone()), s = 0.025 + r() * 0.07; sp.position.set(L * (0.35 + r() * 0.5), -1.3 - r() * 2.8, (r() - 0.5) * 3.2); sp.scale.set(s, s * 3.2, 1); sp.material.opacity = 0.6 + r() * 0.35; sp.userData.maskOpacity = 0.7; whale.add(sp); }
+}
+whale.position.set(-6.6, -5.6, -7.2); whale.rotation.set(0, -0.35, 0.95);
+const wk = lightFor(new THREE.DirectionalLight('#dce6f8', 1.7), 'fg:whale'); wk.position.set(-10, 8, 14); wk.target.position.set(-2, 2, -6); wk.castShadow = true; S.add(wk, wk.target);
+S.add(lightFor(new THREE.HemisphereLight('#9fb0d4', '#24303c', 0.7), 'fg:whale'));
+const wr = lightFor(new THREE.DirectionalLight('#ffb070', 1.4), 'fg:whale'); wr.position.set(-30, 4, -60); S.add(wr);
+subject(whale, 'whale');
+
+// ------------------------------------------------------------------ the survey ship (fg:ship), bow-on three-quarter, the display on the superstructure
+const ship = new THREE.Group(); S.add(ship);
+{ const hullM = new THREE.MeshPhysicalMaterial({ color: '#3a4250', roughness: 0.45, metalness: 0.3, clearcoat: 0.4, clearcoatRoughness: 0.3 }), white = K.mat('#e9e7e1', { roughness: 0.5, metalness: 0.1 }), orange = K.mat('#d8662a', { roughness: 0.5 });
+  // hull: lofted sections, keel to deck edge on each side, the bow raked and flared, a transom at the stern; red
+  // antifouling below the waterline, a white boot-top, dark topsides
+  const N = 40, M = 14, pos = [], idx = [], col = [], keel = -2.2, LEN = 26;
+  const sect = (u) => { const bow = K.smooth((u - 0.62) / 0.38), b = 3.3 * (1 - Math.pow(bow, 1.6) * 0.98), sheer = 2.6 + bow * 1.3 + (1 - u) * 0.1, rake = bow * bow * 2.6; return { b, sheer, rake, bow }; };
+  for (let i = 0; i <= N; i++) { const u = i / N, { b, sheer, rake, bow } = sect(u), x0 = -LEN / 2 + u * LEN;
+    for (let j = 0; j <= 2 * M; j++) { const v = j / (2 * M), side = v < 0.5 ? -1 : 1, w = Math.abs(v - 0.5) * 2;   // w: 0 at the keel, 1 at the deck edge
+      const t = w, y = keel + (sheer - keel) * (t < 0.35 ? Math.pow(t / 0.35, 2) * 0.32 : 0.32 + (t - 0.35) / 0.65 * 0.68), bilge = Math.sin(Math.min(1, t / 0.45) * Math.PI / 2);
+      const z = side * b * (bilge * (1 - bow * 0.5) + bow * 0.5 * t) * (1 + 0.12 * bow * t), x = x0 + rake * (y - keel) / (sheer - keel);
+      pos.push(x, y, z); const c = y < -0.15 ? '#7d2b22' : y < 0.15 ? '#ecebe6' : y > 2.3 ? '#e9e7e1' : '#2f4a6c', cc = new THREE.Color(c); col.push(cc.r, cc.g, cc.b); } }
+  const R = 2 * M + 1; for (let i = 0; i < N; i++) for (let j = 0; j < 2 * M; j++) { const a2 = i * R + j, b2 = a2 + R; idx.push(a2, b2, a2 + 1, a2 + 1, b2, b2 + 1); }
+  { const base = pos.length / 3, c0 = new THREE.Color('#26303d'); let cx = 0, cy = 0; for (let j = 0; j <= 2 * M; j++) { cx += pos[j * 3]; cy += pos[j * 3 + 1]; } pos.push(cx / R, cy / R, 0); col.push(c0.r, c0.g, c0.b);
+    for (let j = 0; j < 2 * M; j++) idx.push(base, j + 1, j); }   // transom
+  const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); hg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); hg.setIndex(idx); hg.computeVertexNormals();
+  const hull = new THREE.Mesh(hg, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.25, clearcoat: 0.5, clearcoatRoughness: 0.25, side: THREE.DoubleSide })); ship.add(hull);
+  ship.add(K.at(K.box(22, 0.2, 6.4, K.mat('#6b6e72', { roughness: 0.8 })), -1.5, 2.62, 0));   // deck
+  // a row of portholes and a rubbing strake along the topsides (both sides), following the hull's flare
+  { const rim = K.mat('#cfd2d4', { roughness: 0.35, metalness: 0.7 }), pg = K.mat('#0e141c', { roughness: 0.1, metalness: 0.3 });
+    for (const sd2 of [1, -1]) { for (let x = -10; x <= 4.6; x += 1.45) { const ph = new THREE.Group(); ph.add(K.cyl(0.2, 0.2, 0.06, rim, 20)); ph.add(K.at(K.cyl(0.15, 0.15, 0.08, pg, 20), 0, 0.01, 0)); ph.rotation.x = sd2 * Math.PI / 2; ph.position.set(x, 1.45, sd2 * 3.34); ship.add(ph); }
+      const st = K.box(21.5, 0.14, 0.12, K.mat('#1c2632', { roughness: 0.5 })); st.position.set(-2.2, 2.05, sd2 * 3.36); ship.add(st); } }
+  // superstructure: two decks of white house, a bridge with a band of dark windows, a person at the helm
+  const house = new THREE.Group(); house.position.set(-3, 2.6, 0); ship.add(house);
+  house.add(K.at(K.box(9, 2.6, 5.4, white, { r: 0.08 }), 0, 1.3, 0)); house.add(K.at(K.box(6.5, 2.4, 5.0, white, { r: 0.08 }), 0.4, 3.8, 0));
+  const glass = new THREE.MeshPhysicalMaterial({ color: '#1b2430', roughness: 0.05, metalness: 0.2, envMapIntensity: 1.5, clearcoat: 1 });
+  house.add(K.at(K.box(6.6, 1.0, 5.1, glass), 0.4, 4.25, 0)); house.add(K.at(K.box(0.2, 1.0, 5.15, white), 3.66, 4.25, 0));
+  for (const z of [-1.5, 0, 1.5]) house.add(K.at(K.box(6.62, 1.02, 0.12, white), 0.4, 4.25, z));
+  house.add(K.at(K.box(7.2, 0.18, 5.8, orange), 0.4, 5.1, 0));
+  { const p = new THREE.Group(); p.position.set(2.6, 3.4, 0.9); house.add(p); p.add(K.at(K.cyl(0.2, 0.24, 0.85, K.mat('#2c3e58'), 12), 0, 0.42, 0)); p.add(K.at(K.sphere(0.13, K.mat('#8a6a52')), 0, 0.98, 0)); }
+  // mast with radar and antennas
+  const mast = new THREE.Group(); mast.position.set(-0.5, 5.2, 0); mast.scale.setScalar(0.6); house.add(mast); mast.add(K.at(K.cyl(0.12, 0.18, 4, K.mat('#e9e7e1', { roughness: 0.4 }), 12), 0, 2, 0));
+  mast.add(K.at(K.box(2.6, 0.12, 0.3, K.mat('#30343a')), 0, 2.6, 0)); mast.add(K.at(K.box(1.6, 0.08, 0.16, K.mat('#d9d9d4')), 0, 3.5, 0)); mast.add(K.at(K.cyl(0.04, 0.04, 2.4, K.mat('#d9d9d4'), 6), 0.6, 4.6, 0));
+  mast.add(K.at(K.sphere(0.32, K.mat('#f0efea', { roughness: 0.3 })), -0.7, 4.2, 0));
+  // railings
+  for (const z of [-3.1, 3.1]) { const r = K.cyl(0.035, 0.035, 22, K.mat('#d9d9d4', { metalness: 0.6, roughness: 0.3 }), 8); r.rotation.z = Math.PI / 2; r.position.set(0.5, 3.6, z); ship.add(r);
+    for (let x = -10; x <= 11; x += 1.5) ship.add(K.at(K.cyl(0.03, 0.03, 1.0, K.mat('#d9d9d4', { metalness: 0.6 }), 6), x, 3.1, z)); }
+  // the display: a framed screen on the house front, facing the camera — printed text and icons, glowing
+  const scr = printTex(4.4, 3.0, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0b2a3e'); gr.addColorStop(1, '#06182a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(80,200,240,0.06)'; for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1.5);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#9fe9ff'; g.shadowColor = 'rgba(120,220,255,0.65)'; g.shadowBlur = h * 0.02;
+    g.font = `700 ${h * 0.12}px Inter`; g.fillText('DETECTED:', w / 2, h * 0.17); g.fillText('WHALES NEARBY', w / 2, h * 0.34);
+    g.font = `700 ${h * 0.105}px Inter`; g.fillText('→ CHANGING COURSE', w / 2, h * 0.52);
+    g.strokeStyle = '#9fe9ff'; g.lineWidth = h * 0.022; g.lineCap = 'round'; const cx = w * 0.3, cy = h * 0.78;   // sonar arcs
+    for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(cx - w * 0.06, cy + h * 0.06, h * (0.06 + k * 0.055), -Math.PI * 0.85, -Math.PI * 0.15); g.stroke(); }
+    g.beginPath(); g.arc(cx - w * 0.06, cy + h * 0.06, h * 0.018, 0, Math.PI * 2); g.fillStyle = '#9fe9ff'; g.fill();
+    // a whale glyph: a humped body nose-left, the tail stock rising to a raised fluke, a flipper, an eye, a spout
+    const wx = w * 0.68, wy = h * 0.8, s = h * 0.085; g.fillStyle = '#9fe9ff';
+    g.beginPath(); g.moveTo(wx - s * 2.1, wy + s * 0.15);
+    g.bezierCurveTo(wx - s * 2.0, wy - s * 0.9, wx - s * 0.3, wy - s * 1.15, wx + s * 0.9, wy - s * 0.55);
+    g.quadraticCurveTo(wx + s * 1.5, wy - s * 0.3, wx + s * 1.75, wy - s * 0.95);
+    g.lineTo(wx + s * 1.45, wy - s * 1.45); g.quadraticCurveTo(wx + s * 1.95, wy - s * 1.25, wx + s * 2.05, wy - s * 1.0); g.quadraticCurveTo(wx + s * 2.35, wy - s * 1.35, wx + s * 2.75, wy - s * 1.3);
+    g.lineTo(wx + s * 2.2, wy - s * 0.75); g.quadraticCurveTo(wx + s * 1.9, wy + s * 0.25, wx + s * 0.8, wy + s * 0.45);
+    g.bezierCurveTo(wx - s * 0.2, wy + s * 0.75, wx - s * 1.6, wy + s * 0.75, wx - s * 2.1, wy + s * 0.15); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(wx - s * 0.6, wy + s * 0.35); g.quadraticCurveTo(wx - s * 0.2, wy + s * 1.0, wx + s * 0.35, wy + s * 0.95); g.quadraticCurveTo(wx, wy + s * 0.5, wx - s * 0.6, wy + s * 0.35); g.fill();
+    g.fillStyle = '#06182a'; g.beginPath(); g.arc(wx - s * 1.45, wy - s * 0.05, s * 0.12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#9fe9ff'; g.lineWidth = h * 0.012; for (const [dx, a] of [[-0.25, -0.5], [0, 0], [0.25, 0.5]]) { g.beginPath(); g.moveTo(wx - s * 1.25, wy - s * 1.0); g.quadraticCurveTo(wx - s * (1.25 - dx * 2), wy - s * 1.6, wx - s * (1.25 - dx * 3.4), wy - s * 1.9); g.stroke(); }
+  }, 420);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 3.0), new THREE.MeshBasicMaterial({ map: scr, color: new THREE.Color(1.15, 1.15, 1.15) }));
+  const bez = K.box(4.7, 3.3, 0.18, K.mat('#1a1d22', { roughness: 0.4, metalness: 0.5 })); const sg = new THREE.Group(); sg.add(bez); screen.position.z = 0.1; sg.add(screen);
+  sg.position.set(0.0, 1.45, 2.8); house.add(sg);
+}
+ship.position.set(13.2, 0, -15.5); ship.rotation.y = -0.32;
+const sk = lightFor(new THREE.DirectionalLight('#ffc07a', 2.6), 'fg:ship'); sk.position.set(-60, 12, -90); sk.target.position.set(13.2, 0, -15.5); sk.castShadow = true; sk.shadow.mapSize.set(2048, 2048);
+Object.assign(sk.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 200 }); S.add(sk, sk.target);
+S.add(lightFor(new THREE.HemisphereLight('#a0a6c8', '#2a2c34', 0.8), 'fg:ship'));
+{ const sf = lightFor(new THREE.DirectionalLight('#b9c4e0', 0.9), 'fg:ship'); sf.position.set(-8, 6, 30); sf.target.position.set(13.2, 1, -15.5); S.add(sf, sf.target); }   // the sky behind the camera, a cool fill on the topsides
+ship.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+subject(ship, 'ship');
+
+const CAM = V(1.2, 2.1, 17), LOOK = V(2.6, 4.5, -10);
+app.on(() => { app.camera.position.copy(CAM); app.camera.lookAt(LOOK); if (app.dof) app.dof.uniforms.focus.value = 24; });
+applyLayer(app);
+app.ready(); window.__ready = true;
+</script></body></html>

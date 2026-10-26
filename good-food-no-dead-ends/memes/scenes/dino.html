@@ -1,0 +1,187 @@
+<!doctype html><html><head><meta charset="utf-8"><title>meme: they stopped burning our ancestors</title>
+<script type="importmap">{"imports":{"three":"../../film/lib/three.module.js","three/addons/":"../../film/lib/jsm/"}}</script></head>
+<body><script type="module">
+// FINALLY. THEY STOPPED BURNING OUR ANCESTORS. Two fossil skeletons in a museum gallery look out of a tall window at a
+// valley of wind turbines, solar fields, a lake and a city at sunset.
+// Layers: bg (the valley), fg:room (window wall, ledge, railing, floor), fg:skel (the skeletons, under the gallery's
+// cool spotlights while the room is lit by the low sun)
+import { K, THREE, V, subject, lightFor, applyLayer, sdfGeometry, sd, taperTube, printTex } from '../lib/meme.js';
+import * as B from '../lib/bones.js';
+await K.loadNormals(['clay', 'skin', 'cloth', 'knit', 'rock', 'plaster', 'woodgrain', 'diamond']);
+K.seed(23);
+const app = new K.App({ duration: 4, fov: 42, exposure: 0.92, dof: { aperture: 0.0004, maxblur: 0.003 }, bloomStrength: 0.18, bloomThreshold: 0.86, warmth: 1.0, sat: 1.0, vignette: 0.0, grain: 0.0 });
+const S = app.scene;
+const sunDir = V(0.55, 0.07, -1).normalize();
+K.skyDome(app, { top: '#5d7fae', mid: '#e9b98c', horizon: '#ffcf8e', ground: '#5a5048', sunColor: '#ffd9a0', sunDir, sunIntensity: 7, sunSize: 0.99962, glow: 1.2, fogColor: '#efc9a2', fogNear: 500, fogFar: 7000, env: 0.8 });
+await K.clouds(app, { count: 12, yaw: Math.atan2(sunDir.x, -sunDir.z) + 0.2, spread: 1.0, opacity: 0.55, color: '#ffd2a8', minY: 60, maxY: 140, scale: 1.6 });
+lightFor(K.sunLight(app, { dir: V(0.55, 0.22, -1), color: '#ffcf96', intensity: 2.6, size: 400, target: V(0, -26, -300), softness: 4, mapSize: 4096 }), 'bg');
+lightFor(K.fillLights(app, { sky: '#8aa6d6', ground: '#6a5a46', hemi: 0.6 }), 'bg');
+
+// ------------------------------------------------------------------ the valley (bg)
+const valley = new THREE.Group(); valley.position.y = -26; S.add(valley);
+const RG = K.prng(77);
+// ground: rolling meadow, darker in the hollows; a lake in the middle distance
+const G = new THREE.PlaneGeometry(3000, 2400, 200, 160); G.rotateX(-Math.PI / 2); { const P = G.attributes.position, c = new Float32Array(P.count * 3);
+  for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i) - 1200; let h = (K.fbm(x / 180, z / 180, 4) - 0.5) * 22 + Math.max(0, -z - 900) * 0.05; const lake = Math.hypot((x + 230) / 260, (z + 560) / 110); if (lake < 1.3) h = Math.min(h, -2 + (lake - 1) * 6);
+    if (z > -40) h = -30; P.setXYZ(i, x, h, z); const gr = new THREE.Color('#5d7f3c').lerp(new THREE.Color('#8a9a4a'), K.fbm(x / 60, z / 60, 3)); c[i * 3] = gr.r; c[i * 3 + 1] = gr.g; c[i * 3 + 2] = gr.b; }
+  G.setAttribute('color', new THREE.BufferAttribute(c, 3)); G.computeVertexNormals(); }
+const ground = new THREE.Mesh(G, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, map: K.grain('leafy', { repeat: 300, scale: 6 }) })); ground.position.z = 0; ground.receiveShadow = true; valley.add(ground);
+const lake = new THREE.Mesh(new THREE.CircleGeometry(1, 96), new THREE.MeshPhysicalMaterial({ color: '#3d5a78', roughness: 0.06, metalness: 0.0, envMapIntensity: 1.6, clearcoat: 1, clearcoatRoughness: 0.04 }));
+lake.rotation.x = -Math.PI / 2; lake.scale.set(270, 115, 1); lake.position.set(-230, -1.2, -560); valley.add(lake);
+// mountains: three ridges, hazier with distance
+for (const [z, amp, base, col, seed] of [[-1500, 170, 40, '#8a6f86', 1], [-1900, 260, 60, '#9c7f95', 2], [-2300, 330, 80, '#b294a6', 3]]) {
+  const N = 300, pos = [], idx = []; for (let i = 0; i <= N; i++) { const x = -2600 + i / N * 5200, h = base + amp * (0.5 * K.fbm(i / 18 + seed * 7, seed, 5) + 0.6 * Math.pow(K.fbm(i / 55 + seed, seed * 3, 3), 2)); pos.push(x, h, z, x, -40, z + 60); }
+  for (let i = 0; i < N; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  valley.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: col, roughness: 1, side: THREE.DoubleSide }))); }
+// conifers: layered tiers with ragged edges
+const pineGeo = (() => { const parts = []; for (let k = 0; k < 6; k++) { const r = 2.4 * (1 - k / 7), h = 3.6, c = new THREE.ConeGeometry(r, h, 11, 2); const P = c.attributes.position;
+    for (let i = 0; i < P.count; i++) { const y = P.getY(i); if (y < 0) { const a = Math.atan2(P.getZ(i), P.getX(i)), j = 1 + 0.22 * Math.sin(a * 7 + k) ; P.setX(i, P.getX(i) * j); P.setZ(i, P.getZ(i) * j); P.setY(i, y - 0.25 * Math.abs(Math.sin(a * 3.5 + k))); } }
+    c.translate(0, 2.2 + k * 1.7 + h / 2, 0); parts.push(c.toNonIndexed()); }
+  const tr = new THREE.CylinderGeometry(0.18, 0.26, 3, 6); tr.translate(0, 1.5, 0); parts.push(tr.toNonIndexed()); return parts; })();
+const pineFol = K.merged(pineGeo.slice(0, -1).map(g => ({ geo: g, color: '#2f4a2c', jitter: 0.08 }))), pineTr = K.merged([{ geo: pineGeo.at(-1), color: '#4a3a2c' }]);
+const pines = [];
+for (let i = 0; i < 1400; i++) { const x = -900 + RG() * 1800, z = -60 - RG() * 1200; if (Math.hypot((x + 230) / 290, (z + 560) / 130) < 1.15) continue; if (x > -60 && x < 340 && z > -420 && z < -150) continue;   // (the lake; the solar field)
+  const cl = K.fbm(x / 70, z / 70, 3); if (cl < 0.47) continue; pines.push({ x, z, y: -1, ry: RG() * 6.3, s: 0.8 + RG() * 0.7 }); }
+for (let i = 0; i < 90; i++) pines.push({ x: -260 + RG() * 220, z: -80 - RG() * 160, y: -1, ry: RG() * 6, s: 1 + RG() * 0.6 });   // a stand in the foreground, below the window
+K.instanced(valley, pineFol, K.vmat({ roughness: 0.9 }), pines); K.instanced(valley, pineTr, K.vmat({ roughness: 0.9 }), pines);
+// solar field: rows of tilted panels on posts; cells and busbars in a crisp printed grid
+const cellTex = K.canvasTex(512, 256, (g, w, h) => { g.fillStyle = '#1b2c4a'; g.fillRect(0, 0, w, h); const cw = w / 12, ch = h / 6;
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 6; j++) { const gr = g.createLinearGradient(0, j * ch, 0, (j + 1) * ch); gr.addColorStop(0, '#22385e'); gr.addColorStop(1, '#172a48'); g.fillStyle = gr; g.fillRect(i * cw + 2, j * ch + 2, cw - 4, ch - 4);
+    g.fillStyle = 'rgba(190,200,215,0.35)'; g.fillRect(i * cw + cw * 0.33, j * ch + 2, 1.2, ch - 4); g.fillRect(i * cw + cw * 0.66, j * ch + 2, 1.2, ch - 4); }
+  g.strokeStyle = '#b8bec6'; g.lineWidth = 5; g.strokeRect(2, 2, w - 4, h - 4); });
+cellTex.anisotropy = 16;
+const panelM = new THREE.MeshPhysicalMaterial({ map: cellTex, roughness: 0.18, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.3 });
+const panel = new THREE.BoxGeometry(4.0, 0.06, 2.0), panels = [], posts = [];
+for (let r = 0; r < 36; r++) for (let c = 0; c < 72; c++) { const x = -30 + c * 4.3, z = -170 - r * 6.5; panels.push({ x, z, y: 1.6 + (K.fbm(x / 180, z / 180, 4) - 0.5) * 22, rx: -0.5, s: 1 });
+  if (c % 2 === 0) posts.push({ x, z, y: 0.4 + (K.fbm(x / 180, z / 180, 4) - 0.5) * 22 }); }
+K.instanced(valley, panel, panelM, panels, { cast: false }); K.instanced(valley, new THREE.CylinderGeometry(0.06, 0.06, 2.4, 5), K.mat('#8d939a', { roughness: 0.4, metalness: 0.7 }), posts, { cast: false });
+// wind turbines: tapered tower, nacelle, hub, three twisted blades
+const turbine = (h) => { const g = new THREE.Group(), white = K.mat('#eef0f0', { roughness: 0.42, metalness: 0.1 });
+  g.add(K.at(K.cyl(h * 0.018, h * 0.035, h, white, 20), 0, h / 2, 0)); const nac = K.box(h * 0.12, h * 0.045, h * 0.05, white, { r: h * 0.012 }); nac.position.set(-h * 0.03, h + h * 0.02, 0); g.add(nac);
+  const hub = new THREE.Group(); hub.position.set(h * 0.035, h + h * 0.02, 0); g.add(hub); hub.add(K.at(K.sphere(h * 0.026, white), 0, 0, 0));
+  for (let k = 0; k < 3; k++) { const pts = [], rad = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V(0, t * h * 0.62, Math.sin(t * 2.2) * h * 0.012)); rad.push(h * (0.022 * (1 - t * 0.85) + 0.002)); }
+    const bl = new THREE.Mesh(taperTube(pts, rad, 8, { flat: 0.28 }), white); bl.rotation.x = k / 3 * Math.PI * 2; hub.add(bl); }
+  g.userData.hub = hub; return g; };
+const turbs = [];
+for (const [x, z, h, ph] of [[-230, -330, 90, 0.2], [-120, -430, 95, 1.3], [-20, -600, 100, 0.7], [70, -380, 85, 2.0], [230, -170, 80, 0.4], [330, -700, 105, 1.1], [470, -480, 95, 2.4], [-340, -720, 110, 0.9], [560, -880, 110, 1.7], [-480, -500, 100, 2.9], [150, -900, 115, 0.3], [-640, -950, 120, 1.9]]) {
+  const t = turbine(h); t.position.set(x, -1 + (K.fbm(x / 180, (z - 1200) / 180 + 0, 4) - 0.5) * 0, z); t.rotation.y = -0.35; t.userData.hub.rotation.x = ph; valley.add(t); turbs.push(t); }
+// a low research campus by the lake, and the city on the right under the sun
+const campus = new THREE.Group(); campus.position.set(420, 0, -760); campus.scale.setScalar(0.6); valley.add(campus);
+campus.add(K.at(K.box(120, 14, 40, K.mat('#ece6dc', { roughness: 0.6 })), 0, 7, 0)); campus.add(K.at(K.box(122, 6, 41, new THREE.MeshPhysicalMaterial({ color: '#2a3a4a', roughness: 0.05, metalness: 0.4, envMapIntensity: 1.5 })), 0, 6, 0.5));
+const towerTex = (seed) => { const r = K.prng(seed); return K.canvasTex(256, 512, (g, w, h) => { g.fillStyle = '#6f7f92'; g.fillRect(0, 0, w, h); for (let y = 6; y < h; y += 18) { g.fillStyle = '#8e9db0'; g.fillRect(0, y + 12, w, 4); for (let x = 5; x < w; x += 14) { g.fillStyle = r() < 0.18 ? '#ffd8a0' : '#4f5f72'; g.fillRect(x, y, 10, 11); } } }); };
+for (const [x, z, w, h, sd2] of [[620, -760, 40, 160, 1], [700, -840, 34, 210, 2], [780, -760, 44, 130, 3], [860, -900, 50, 260, 4], [540, -880, 30, 120, 5], [940, -800, 36, 170, 6], [1020, -950, 48, 220, 7]]) {
+  const t = towerTex(sd2 * 13); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / 30, h / 40);
+  valley.add(K.at(K.box(w, h, w, new THREE.MeshPhysicalMaterial({ color: '#c7d0dc', map: t, roughness: 0.25, metalness: 0.3, envMapIntensity: 1.2 }), { cast: false }), x, h / 2 - 2, z)); }
+valley.traverse(o => { if (o.isMesh) o.receiveShadow = true; });
+
+// ------------------------------------------------------------------ the gallery (fg:room): window wall, ledge, railing, floor
+const room = new THREE.Group(); S.add(room);
+const conc = (c, rx = 1, ry = 1) => { const t = K.grain('plaster', { repeat: rx }); return K.mat(c, { roughness: 0.85, map: t, normalMap: K.normalTex('plaster', rx), normalScale: new THREE.Vector2(0.4, 0.4) }); };
+const WX0 = -5.4, WX1 = 6.3, WY0 = 0.95, WY1 = 6.7, WZ = -1.2;   // the window opening
+room.add(K.at(K.box(4, 12, 0.5, conc('#56524d', 2)), WX0 - 2, 6, WZ)); room.add(K.at(K.box(4, 12, 0.5, conc('#56524d', 2)), WX1 + 2, 6, WZ));
+room.add(K.at(K.box(30, 3, 0.5, conc('#56524d', 2)), 0, WY1 + 1.5, WZ));
+const frameM = K.mat('#26272a', { roughness: 0.5, metalness: 0.6 });
+for (const x of [WX0, WX1]) room.add(K.at(K.box(0.22, WY1 - WY0, 0.3, frameM), x, (WY0 + WY1) / 2, WZ + 0.05));
+room.add(K.at(K.box(WX1 - WX0 + 0.22, 0.22, 0.3, frameM), (WX0 + WX1) / 2, WY1, WZ + 0.05));
+const glass = new THREE.Mesh(new THREE.PlaneGeometry(WX1 - WX0, WY1 - WY0), new THREE.MeshPhysicalMaterial({ color: '#ffffff', transparent: true, opacity: 0.06, roughness: 0.02, metalness: 0, envMapIntensity: 0.6 }));
+glass.position.set((WX0 + WX1) / 2, (WY0 + WY1) / 2, WZ); glass.userData.maskOpacity = 0; room.add(glass);
+// ledge and the parapet under the window, the gallery floor in polished concrete, a brushed steel railing along the ledge
+room.add(K.at(K.box(WX1 - WX0 + 4, WY0, 0.6, conc('#4a4744', 2)), (WX0 + WX1) / 2, WY0 / 2, WZ));
+room.add(K.at(K.box(WX1 - WX0 + 4, 0.08, 0.9, conc('#6a655f', 3)), (WX0 + WX1) / 2, WY0 + 0.04, WZ + 0.2));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 14), new THREE.MeshPhysicalMaterial({ color: '#a39788', roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.4, map: K.grain('plaster', { repeat: 5 }), normalMap: K.normalTex('plaster', 5), normalScale: new THREE.Vector2(0.2, 0.2) }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, 5.8); floor.receiveShadow = true; room.add(floor);
+const steel = K.mat('#9aa0a6', { roughness: 0.3, metalness: 0.9 });
+const railZ = WZ + 0.55, rail = (y) => { const c = K.cyl(0.03, 0.03, WX1 - WX0 + 3, steel, 16); c.rotation.z = Math.PI / 2; c.position.set((WX0 + WX1) / 2, y, railZ); room.add(c); };
+rail(WY0 + 1.0); rail(WY0 + 0.55);
+for (let x = WX0 - 1; x <= WX1 + 1; x += 1.6) { const p = K.cyl(0.028, 0.028, 1.0, steel, 12); p.position.set(x, WY0 + 0.5, railZ); room.add(p); }
+// low, warm sun through the window lights the room; a little bounce
+const roomSun = lightFor(new THREE.DirectionalLight('#ffc888', 2.4), 'fg:room'); roomSun.position.set(18, 4.5, -30); roomSun.target.position.set(-1, 1, 3); roomSun.castShadow = true; roomSun.shadow.mapSize.set(2048, 2048);
+Object.assign(roomSun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 80 }); S.add(roomSun, roomSun.target);
+S.add(lightFor(new THREE.HemisphereLight('#e3cdb6', '#6a5a4a', 1.3), 'fg:room'));
+const roomFill = lightFor(new THREE.DirectionalLight('#f0e2d0', 0.9), 'fg:room'); roomFill.position.set(-4, 8, 12); S.add(roomFill);
+room.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+subject(room, 'room');
+
+// ------------------------------------------------------------------ the skeletons (fg:skel)
+const skel = new THREE.Group(); S.add(skel);
+const bone = B.boneMat({ color: '#a8835c' });
+// --- Tyrannosaurus: hips 2.9 m, about 11 m long; here turned to look out of the window (+x, -z)
+{ const T = new THREE.Group(), parts = []; T.position.set(-3.2, 0, 2.4); T.rotation.y = 0.5; skel.add(T);   // local: +x forward (head), +y up, +z its left
+  const hip = V(0, 2.9, 0);
+  // neck and back: from the skull's base down the neck, along the back to the hips
+  const back = B.spine([V(3.05, 3.55, 0), V(2.7, 3.3, 0), V(2.25, 3.25, 0), V(1.4, 3.2, 0), V(0.5, 3.05, 0), V(0, 2.95, 0)], [0.26, 0.25, 0.22, 0.2, 0.2, 0.2], 19, V(0, 1, 0), { spine: [0.6, 0.8, 1.4, 1.6, 1.6, 1.5], lean: 0.35, tpl: 0.7 });
+  parts.push(...back.parts);
+  // tail: long, tapering, held level; chevrons below
+  const tail = B.spine([V(0, 2.95, 0), V(-1.2, 3.0, 0), V(-2.6, 2.75, 0.1), V(-4.0, 2.3, 0.35), V(-5.4, 1.75, 0.7), V(-6.4, 1.3, 1.1)], [0.22, 0.2, 0.16, 0.12, 0.085, 0.055], 40, V(0, 1, 0), { spine: [1.1, 0.9, 0.6, 0.4, 0.25, 0.15], lean: 0.8, tp: (u) => u < 0.35, tpl: 0.8, cl: () => 1.05 });
+  parts.push(...tail.parts);
+  for (const t of tail.tops) if (t.u < 0.75) { const d = V(0, -1, 0); parts.push(...B.longBone(t.p.clone().add(V(0, -t.s * 0.25, 0)), t.p.clone().add(V(-t.s * 0.4, -t.s * (2.2 - t.u * 1.8), 0)), t.s * 0.07)); }
+  // ribs: deep, curving round to the gastralia
+  for (const t of back.tops) if (t.u > 0.38 && t.u < 0.95) { const len = 1.25 * Math.sin((t.u - 0.3) / 0.7 * Math.PI) + 0.25; for (const sg of [1, -1]) parts.push(B.rib(t.p, V(0, 0, sg), V(0, -1, 0), V(-0.45, 0, 0), len, 0.026, 1.35)); }
+  for (let i = 0; i < 14; i++) { const x = 0.7 + i * 0.12, y = 1.6 - Math.sin(i / 13 * Math.PI) * 0.12; for (const sg of [1, -1]) parts.push(B.digit([V(x, y, 0), V(x + 0.05, y + 0.03, sg * 0.3), V(x + 0.1, y + 0.12, sg * 0.52)], 0.022)[0]); }
+  // pelvis: ilium blade, pubis with its boot, ischium
+  { const out = [[-0.55, 3.0], [-0.42, 3.12], [-0.1, 3.18], [0.3, 3.16], [0.55, 3.06], [0.5, 2.94], [0.28, 2.9], [0.14, 2.78], [-0.04, 2.77], [-0.16, 2.88], [-0.44, 2.9]];
+    for (const sg of [1, -1]) parts.push(B.blade(out, 0.05, V(0, 0, 0), sg * 0.17)); }
+  parts.push(...B.longBone(V(0.25, 2.75, 0), V(0.75, 1.5, 0), 0.07), ...B.longBone(V(0.75, 1.5, -0.12), V(1.05, 1.4, 0.12), 0.12, { flat: 0.6 }));
+  parts.push(...B.longBone(V(-0.3, 2.75, 0), V(-0.9, 1.8, 0), 0.06));
+  // legs: femur, tibia, metatarsals, three toes with claws; the left a stride ahead
+  for (const [sg, fx] of [[1, 0.35], [-1, -0.25]]) { const z = sg * 0.38, h = V(0.1, 2.75, z), k = V(fx + 0.55, 1.55, z * 1.1), a = V(fx - 0.05, 0.62, z * 1.1), f = V(fx + 0.15, 0.08, z * 1.1);
+    parts.push(...B.longBone(h, k, 0.12), ...B.longBone(k, a, 0.095), ...B.longBone(a, f, 0.065));
+    for (const [dz, l] of [[-0.12, 0.42], [0, 0.55], [0.12, 0.42]]) { const tp = f.clone().add(V(l, -0.05, dz * 1.6)); parts.push(...B.digit([f.clone().add(V(0, 0, dz * 0.4)), f.clone().add(V(l * 0.5, 0.0, dz)), tp], 0.045), ...B.claw(tp, V(1, -0.6, dz), 0.14, 0.035)); } }
+  // tiny arms
+  for (const sg of [1, -1]) { const sh = V(1.85, 2.55, sg * 0.4), el = V(2.05, 2.15, sg * 0.45), wr = V(2.35, 2.05, sg * 0.42); parts.push(...B.longBone(sh, el, 0.035), ...B.longBone(el, wr, 0.028));
+    for (const dz of [-0.03, 0.03]) parts.push(...B.digit([wr, wr.clone().add(V(0.12, -0.05, dz))], 0.016), ...B.claw(wr.clone().add(V(0.12, -0.05, dz)), V(0.6, -1, 0), 0.06, 0.014)); }
+  // skull: a deep, narrow box of bone with the orbit, antorbital and temporal openings cut through; jaw open a little
+  const SK = V(3.85, 3.65, 0), sk = (x, y, z) => { const lx = x - SK.x, ly = y - SK.y, lz = z; const w = 0.24 + 0.12 * K.smooth((-lx + 0.7) / 1.0), hgt = 0.38 - 0.16 * K.smooth((lx + 0.2) / 0.9);
+      let d = sd.box(lx, ly, lz, [0, 0, 0], [0.75, hgt, w], 0.12); d = sd.smin(d, sd.ellipsoid(lx, ly, lz, [-0.55, 0.12, 0], [0.32, 0.38, 0.3]), 0.12);
+      d = sd.smax(d, -sd.ellipsoid(lx, ly, lz, [-0.32, 0.12, 0], [0.13, 0.15, 1]), 0.04); d = sd.smax(d, -sd.ellipsoid(lx, ly, lz, [0.12, 0.02, 0], [0.3, 0.13, 1]), 0.04);
+      d = sd.smax(d, -sd.ellipsoid(lx, ly, lz, [-0.62, 0.06, 0], [0.12, 0.2, 1]), 0.03); d = sd.smax(d, -sd.ellipsoid(lx, ly, lz, [0.6, 0.06, 0], [0.07, 0.05, 1]), 0.02);
+      return d; };
+  const skull = sdfGeometry(sk, [SK.x - 1.0, SK.y - 0.55, -0.5, SK.x + 0.9, SK.y + 0.6, 0.5], 0.018); skull.deleteAttribute('color'); parts.push(skull);
+  const jaw = sdfGeometry((x, y, z) => { const lx = x - SK.x, ly = y - (SK.y - 0.4), r = 0.06 + 0.1 * K.smooth((-lx + 0.4) / 0.9), wz = 0.2 + 0.12 * K.smooth((-lx + 0.4) / 0.9);
+      const rot = 0.14, cx = lx * Math.cos(rot) + ly * Math.sin(rot), cy = -lx * Math.sin(rot) + ly * Math.cos(rot); let d = 1e9;
+      for (const sg of [1, -1]) d = Math.min(d, sd.box(cx, cy, z, [-0.05, 0, sg * wz], [0.72, r, 0.035], 0.03)); return sd.smin(d, sd.box(cx, cy, z, [0.62, 0, 0], [0.06, 0.06, 0.2], 0.04), 0.06); },
+    [SK.x - 0.9, SK.y - 0.75, -0.45, SK.x + 0.85, SK.y - 0.15, 0.45], 0.018); jaw.deleteAttribute('color'); parts.push(jaw);
+  // teeth: upper row hanging from the maxilla, lower row rising from the jaw
+  const teeth = []; for (let i = 0; i < 13; i++) { const u = i / 12, x = SK.x + 0.66 - u * 1.0; for (const sg of [1, -1]) { const zw = 0.19 + 0.1 * u, top = V(x, SK.y - 0.2 - 0.06 * u, sg * zw);
+      teeth.push(...B.claw(top, V(0.08, -1, 0), 0.13 - 0.04 * u + (i % 3) * 0.01, 0.028));
+      const lw = V(x - 0.02, SK.y - 0.44 - 0.14 * (1 - u) + 0.02, sg * (zw - 0.02)); teeth.push(...B.claw(lw, V(0.05, 1, 0), 0.1 - 0.03 * u, 0.024)); } }
+  const tm = new THREE.MeshStandardMaterial({ color: '#d8c8a8', roughness: 0.55, vertexColors: true }); T.add(B.bake(teeth, tm, '#cdbb96', 3));
+  T.add(B.bake(parts, bone, '#6a5038', 1));
+  T.add(B.armature([[0.0, 0, 2.6], [1.5, 0, 3.0]], [[V(0, 2.6, 0), V(0.8, 2.85, 0), V(1.5, 3.0, 0), V(2.6, 3.25, 0)]]));
+}
+// --- a juvenile sauropod in front, neck raised to the window
+{ const D = new THREE.Group(), parts = []; D.position.set(0.4, 0, 4.3); D.rotation.y = 0.2; skel.add(D);
+  const neck = B.spine([V(0.9, 1.75, 0), V(1.5, 2.15, 0), V(2.0, 2.75, 0), V(2.3, 3.35, 0), V(2.6, 3.75, 0)], [0.17, 0.15, 0.13, 0.115, 0.1], 15, V(-1, 1, 0).normalize(), { spine: [0.55, 0.5, 0.45, 0.4, 0.35], lean: 0.15, tpl: 0.55, cl: () => 2.1 });
+  const back = B.spine([V(0.9, 1.75, 0), V(0.2, 1.85, 0), V(-0.6, 1.8, 0), V(-1.0, 1.7, 0)], [0.14, 0.15, 0.15, 0.15], 11, V(0, 1, 0), { spine: [0.9, 1.1, 1.1, 1.0], lean: 0.2 });
+  const tail = B.spine([V(-1.0, 1.7, 0), V(-1.9, 1.45, 0), V(-2.9, 0.95, 0.2), V(-3.8, 0.45, 0.6), V(-4.5, 0.2, 1.1)], [0.14, 0.12, 0.09, 0.06, 0.035], 30, V(0, 1, 0), { spine: [0.9, 0.7, 0.5, 0.3, 0.2], lean: 0.5, tp: (u) => u < 0.3 });
+  parts.push(...neck.parts, ...back.parts, ...tail.parts);
+  for (const t of back.tops) for (const sg of [1, -1]) parts.push(B.rib(t.p, V(0, 0, sg), V(0, -1, 0), V(-0.3, 0, 0), 0.75 * Math.sin(0.2 + t.u * 2.4) + 0.22, 0.022, 1.5));
+  for (const t of neck.tops) for (const sg of [1, -1]) parts.push(...B.longBone(t.p.clone().add(V(0, -t.s * 0.3, sg * t.s * 0.4)), t.p.clone().add(V(-t.s * 1.5, -t.s * 0.55, sg * t.s * 0.5)), t.s * 0.1));   // cervical ribs
+  { const out = [[-0.92, 1.84], [-0.8, 1.94], [-0.56, 1.98], [-0.32, 1.92], [-0.28, 1.8], [-0.44, 1.76], [-0.6, 1.66], [-0.76, 1.74]]; for (const sg of [1, -1]) parts.push(B.blade(out, 0.04, V(0, 0, 0), sg * 0.2)); }
+  // columnar legs, each with a short broad foot
+  for (const [x, sg, ph] of [[0.65, 1, 0.1], [0.65, -1, -0.1], [-0.6, 1, -0.08], [-0.6, -1, 0.12]]) { const z = sg * 0.3, top = V(x, x > 0 ? 1.55 : 1.65, z), kn = V(x + ph, 0.85, z * 1.05), an = V(x + ph * 0.5, 0.18, z * 1.05);
+    parts.push(...B.longBone(top, kn, 0.075), ...B.longBone(kn, an, 0.06)); for (let k = 0; k < 4; k++) { const dz = (k - 1.5) * 0.06; parts.push(...B.digit([an.clone().add(V(0, 0, dz)), an.clone().add(V(0.18, -0.13, dz * 1.6))], 0.028)); } }
+  // skull: a short deep snout, big nasal openings high up in front of the orbit, the jaw line with peg teeth
+  const H0 = V(2.82, 3.86, 0), head = sdfGeometry((x, y, z) => { const lx = x - H0.x, ly = y - H0.y;
+      let d = sd.smin(sd.box(lx, ly, z, [0.1, -0.02, 0], [0.17, 0.09, 0.085], 0.06), sd.ellipsoid(lx, ly, z, [-0.1, 0.05, 0], [0.13, 0.13, 0.1]), 0.07);
+      d = sd.smin(d, sd.ellipsoid(lx, ly, z, [0.0, 0.12, 0], [0.12, 0.08, 0.07]), 0.05);
+      d = sd.smax(d, -sd.ellipsoid(lx, ly, z, [-0.1, 0.07, 0], [0.055, 0.06, 1]), 0.015); d = sd.smax(d, -sd.ellipsoid(lx, ly, z, [0.03, 0.15, 0], [0.06, 0.04, 1]), 0.015);
+      d = sd.smax(d, -sd.ellipsoid(lx, ly, z, [0.14, 0.03, 0], [0.06, 0.035, 1]), 0.015); d = sd.smax(d, -sd.box(lx, ly, z, [0.1, -0.06, 0], [0.24, 0.012, 0.2], 0.0), 0.006);   // fenestrae; the mouth line
+      return d; }, [H0.x - 0.3, H0.y - 0.17, -0.14, H0.x + 0.34, H0.y + 0.25, 0.14], 0.009); head.deleteAttribute('color'); parts.push(head);
+  for (let i = 0; i < 9; i++) for (const sg of [1, -1]) { const x = H0.x + 0.26 - i * 0.028; parts.push(...B.claw(V(x, H0.y - 0.045, sg * (0.07 - i * 0.002)), V(0, -1, 0), 0.03, 0.009)); }
+  D.add(B.bake(parts, bone, '#73583e', 2));
+  D.add(B.armature([[0.1, 0, 1.75], [-0.6, 0, 1.6]], [[V(0.1, 1.6, 0), V(0.9, 1.65, 0), V(1.7, 2.3, 0), V(2.3, 3.2, 0)]]));
+}
+// cool gallery spotlights from above and behind the camera, from the left: not the warm window light
+const spot = lightFor(new THREE.SpotLight('#e6eeff', 900, 40, 0.5, 0.6, 1.6), 'fg:skel'); spot.position.set(-6, 9, 9); spot.target.position.set(-1.5, 2.2, 2.5); spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); S.add(spot, spot.target);
+const spot2 = lightFor(new THREE.SpotLight('#dfe8ff', 380, 40, 0.6, 0.7, 1.6), 'fg:skel'); spot2.position.set(4, 8, 8); spot2.target.position.set(-1, 2.5, 2); S.add(spot2, spot2.target);
+S.add(lightFor(new THREE.HemisphereLight('#c8d4ea', '#3a3a3a', 0.35), 'fg:skel'));
+subject(skel, 'skel');
+
+// ------------------------------------------------------------------ camera: low in the gallery, looking out
+const CAM = V(1.0, 3.5, 9.8), LOOK = V(-0.3, 2.45, -1);
+app.on(() => { app.camera.position.copy(CAM); app.camera.lookAt(LOOK); if (app.dof) app.dof.uniforms.focus.value = 9; });
+applyLayer(app);
+app.ready(); window.__ready = true;
+</script></body></html>

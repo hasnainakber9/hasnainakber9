@@ -11,3 +11,7 @@ film/scenes/test_*.html
 
 # review copies sent to the user, not part of the project
 review/
+
+# meme render layers: rebuilt with memes/render_layers.py
+memes/layers/
+memes/__pycache__/

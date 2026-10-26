@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>lookdev</title>
+<script type="importmap">{"imports":{"three":"../../film/lib/three.module.js","three/addons/":"../../film/lib/jsm/"}}</script></head>
+<body><script type="module">
+import { K, THREE, V, subject, lightFor, applyLayer } from '../lib/meme.js';
+import { tortoise } from '../lib/tortoise.js';
+import { car, truck } from '../lib/vehicles.js';
+await K.loadNormals(['clay', 'skin', 'cloth', 'rock', 'plaster']);
+const app = new K.App({ duration: 4, fov: 35, exposure: 1.0, bloomStrength: 0.1, bloomThreshold: 0.9, vignette: 0, grain: 0 });
+const S = app.scene;
+K.skyDome(app, { top: '#5b8fd0', mid: '#9fc2e6', horizon: '#dfe8ee', sunDir: V(-0.6, 0.55, 0.45), sunIntensity: 0, glow: 0.4, fogColor: '#cfdce6', fogNear: 50, fogFar: 400, env: 0.9 });
+K.sunLight(app, { dir: V(0.5, 0.7, 0.6), color: '#fff0d8', intensity: 2.6, size: 12, target: V(0, 0, 0), softness: 3 });
+K.fillLights(app, { sky: '#bcd2ec', ground: '#8a7a64', hemi: 0.6 });
+const gp = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), K.mat('#8a8a86', { roughness: 0.9 })); gp.rotation.x = -Math.PI / 2; gp.receiveShadow = true; S.add(gp);
+const what = new URLSearchParams(location.search).get('what') || 'turtle';
+let CAM, LOOK;
+const t0 = performance.now();
+if (what === 'turtle') { const t = tortoise({}); S.add(t); CAM = V(1.3, 0.75, 1.9); LOOK = V(0.05, 0.38, 0); }
+else { const a = car({ type: 'sedan', color: '#9a1f1c' }); a.position.set(0, 0, 3); S.add(a); const b = car({ type: 'suv', color: '#2f3a4a' }); b.position.set(-1, 0, -0.5); S.add(b);
+  const c = car({ type: 'hatch', color: '#c9cbcc' }); c.position.set(6, 0, 1); S.add(c); const d = truck({ color: '#f0f0ee', stripe: '#2e6fb0' }); d.position.set(4, 0, -5); S.add(d);
+  CAM = V(14, 3.2, 10); LOOK = V(1.5, 1, -0.5); }
+console.log('build ms', performance.now() - t0);
+app.on(() => { app.camera.position.copy(CAM); app.camera.lookAt(LOOK); });
+applyLayer(app); app.ready(); window.__ready = true;
+</script></body></html>

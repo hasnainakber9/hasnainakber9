@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8"><title>meme: the turtle test, 2026</title>
+<script type="importmap">{"imports":{"three":"../../film/lib/three.module.js","three/addons/":"../../film/lib/jsm/"}}</script></head>
+<body><script type="module">
+// THE TURTLE TEST, 2026: a tortoise halfway across a four-lane urban highway, traffic bearing down, the city in smog.
+// Layers: bg (the highway plate), fg:turtle (the tortoise, lit from the front right by its own light; the plate's sun
+// is low behind on the left, through haze)
+import { K, THREE, V, subject, lightFor, applyLayer, printTex } from '../lib/meme.js';
+import * as F from '../../film/lib/foliage.js';
+import { tortoise } from '../lib/tortoise.js';
+import { car, truck } from '../lib/vehicles.js';
+import * as RK from '../lib/roadkit.js';
+const road = RK.road;
+await K.loadNormals(['clay', 'skin', 'cloth', 'rock', 'plaster']);
+K.seed(26);
+const app = new K.App({ duration: 4, fov: 38, exposure: 0.95, dof: { aperture: 0.00028, maxblur: 0.003 }, bloomStrength: 0.18, bloomThreshold: 0.85, warmth: 1.0, sat: 0.95, vignette: 0, grain: 0 });
+const S = app.scene;
+const SUN = V(-0.45, 0.32, -0.83);
+K.skyDome(app, { top: '#8f9aa6', mid: '#b5b2a8', horizon: '#cdbfa6', sunDir: SUN, sunIntensity: 1.2, sunColor: '#ffe2b8', glow: 0.9, fogColor: '#c3b7a2', fogNear: 25, fogFar: 560, env: 0.8 });
+await K.clouds(app, { count: 8, yaw: -0.4, spread: 1.0, opacity: 0.35, color: '#e6ddcc', minY: 40, maxY: 70, scale: 1.1 });
+lightFor(K.sunLight(app, { dir: SUN, color: '#f5d8ae', intensity: 2.1, size: 45, target: V(2, 0, -32), softness: 6, mapSize: 4096 }), 'bg');
+lightFor(K.fillLights(app, { sky: '#c9c6bd', ground: '#6e6656', hemi: 0.85 }), 'bg');
+
+// ------------------------------------------------------------------ the asphalt (lib/roadkit.js: aggregate times a non-repeating macro map)
+const LANE = 3.6, X0 = -3.6, X1 = X0 + 4 * LANE, SH0 = X0 - 0.9, SH1 = X1 + 3.0, LEN = 420;
+road(S, SH0, SH1, 8, LEN, 3, [0, 1, 2, 3].map(i => X0 + LANE * (i + 0.5)));
+const OX1 = -5.5, OX0 = OX1 - 4 * LANE; road(S, OX0 - 3, OX1 + 0.9, 8, LEN, 9, [0, 1, 2, 3].map(i => OX0 + LANE * (i + 0.5)));
+// paint: dashed lane lines (3 m dash, 9 m gap), solid edge lines; worn a little, in cold-plastic white
+const stripe = (x, z0, z1, w = 0.15, col) => RK.stripe(S, x, z0, z1, w, col);
+for (const xs of [[X0 + LANE, X0 + 2 * LANE, X0 + 3 * LANE], [OX0 + LANE, OX0 + 2 * LANE, OX0 + 3 * LANE]]) for (const x of xs) for (let z = 7; z > -LEN + 10; z -= 12) stripe(x, z - 3, z, 0.15);
+stripe(X0 - 0.15, -LEN + 10, 8, 0.15, '#e2b52a'); stripe(X1 + 0.15, -LEN + 10, 8, 0.2); stripe(OX1 + 0.15, -LEN + 10, 8, 0.15, '#e2b52a'); stripe(OX0 - 0.15, -LEN + 10, 8, 0.2);
+
+// ------------------------------------------------------------------ the median barrier, guardrail, light poles, verges, sound wall
+{ const prof = new THREE.Shape([[-0.3, 0], [-0.3, 0.08], [-0.2, 0.33], [-0.08, 0.81], [0.08, 0.81], [0.2, 0.33], [0.3, 0.08], [0.3, 0]].map(([x, y]) => new THREE.Vector2(x, y)));
+  const jg = new THREE.ExtrudeGeometry(prof, { depth: LEN, bevelEnabled: false }); jg.translate(0, 0, -LEN + 8);
+  const jm = K.mat('#b6b1a6', { roughness: 0.9, map: K.grain('plaster', { repeat: 60, scale: 3 }) }); const jb = new THREE.Mesh(jg, jm); jb.position.x = (X0 + OX1) / 2 - 0.4; jb.castShadow = jb.receiveShadow = true; S.add(jb);
+  for (let z = 8; z > -LEN; z -= 6) { const j = K.box(0.012, 0.8, 0.6, K.mat('#7d786e')); j.position.set(jb.position.x, 0.4, z); S.add(j); }   // the segment joints
+}
+{ const rail = K.mat('#a9adb0', { roughness: 0.35, metalness: 0.85 }), post = K.mat('#8f9396', { roughness: 0.5, metalness: 0.7 });
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32, LEN), rail); beam.position.set(SH1 + 0.6, 0.62, 8 - LEN / 2); beam.castShadow = true; S.add(beam);
+  for (const dy of [-0.08, 0.08]) { const ribs = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, LEN), rail); ribs.position.set(SH1 + 0.57, 0.62 + dy, 8 - LEN / 2); S.add(ribs); }
+  for (let z = 8; z > -LEN; z -= 1.9) { const p = K.box(0.1, 0.75, 0.15, post); p.position.set(SH1 + 0.72, 0.37, z); S.add(p); } }
+const poleM = K.mat('#9a9ea2', { roughness: 0.45, metalness: 0.8 }), lampM = new THREE.MeshStandardMaterial({ color: '#202224', emissive: '#fff0d0', emissiveIntensity: 0.25, roughness: 0.3 });
+for (let z = -36; z > -LEN; z -= 42) { const x = (X0 + OX1) / 2 - 0.4, p = K.cyl(0.09, 0.14, 12, poleM, 12); p.position.set(x, 6.8, z); S.add(p);
+  for (const s of [1, -1]) { const arm = K.box(2.6, 0.08, 0.1, poleM); arm.position.set(x + s * 1.3, 12.6, z); arm.rotation.z = s * 0.06; S.add(arm); const hd = K.box(0.7, 0.14, 0.32, lampM); hd.position.set(x + s * 2.6, 12.5, z); S.add(hd); } }
+// verges: dry, dusty grass rising to a sound wall on the right; scrub and a few dusty trees beyond the far carriageway
+const dry = K.mat('#a39469', { map: K.grain('leafy', { repeat: 40, scale: 5 }), roughness: 1 });
+{ const vg = new THREE.PlaneGeometry(12, LEN, 8, 1); const vp = vg.attributes.position; for (let i = 0; i < vp.count; i++) { const u = (vp.getX(i) + 6) / 12; vp.setZ(i, Math.pow(u, 1.6) * 3.2); } vg.computeVertexNormals();
+  const v = new THREE.Mesh(vg, dry); v.rotation.x = -Math.PI / 2; v.position.set(SH1 + 6.6, 0.01, 8 - LEN / 2); v.receiveShadow = true; S.add(v);
+  const wallTex = K.canvasTex(512, 256, (g, w, h) => { const r = K.prng(12); g.fillStyle = '#b4ad9e'; g.fillRect(0, 0, w, h); for (let i = 0; i < 4; i++) { const k = 0.92 + r() * 0.1; g.fillStyle = `rgb(${172 * k | 0},${166 * k | 0},${154 * k | 0})`; g.fillRect(i * 128 + 2, 0, 124, h); }
+    g.fillStyle = 'rgba(70,64,56,0.5)'; for (let i = 0; i <= 4; i++) g.fillRect(i * 128 - 2, 0, 4, h); for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(90,82,70,${r() * 0.12})`; g.fillRect(r() * w, h * 0.6 + r() * h * 0.4, 2, 4 + r() * 20); } });
+  wallTex.wrapS = THREE.RepeatWrapping; wallTex.repeat.set(LEN / 16, 1);
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.6, LEN), [K.mat('#b4ad9e', { roughness: 0.9 }), K.mat('#ffffff', { map: wallTex, roughness: 0.9 }), K.mat('#a8a192'), K.mat('#a8a192'), K.mat('#a8a192'), K.mat('#a8a192')]);
+  wall.position.set(SH1 + 12.6, 3.2 + 2.3, 8 - LEN / 2); wall.castShadow = wall.receiveShadow = true; S.add(wall);
+  const lv = new THREE.Mesh(new THREE.PlaneGeometry(60, LEN), dry); lv.rotation.x = -Math.PI / 2; lv.position.set(OX0 - 3 - 30, 0.01, 8 - LEN / 2); lv.receiveShadow = true; S.add(lv); }
+for (let i = 0; i < 26; i++) { const z = -20 - i * 14 + K.R(-5, 5), x = OX0 - 9 - K.R(0, 30), t = F.tree({ height: K.R(6, 10), seed: 40 + i }); t.position.set(x, 0, z); t.rotation.y = K.R(0, 6); t.traverse(o => { if (o.material && o.material.color) o.material = o.material.clone(), o.material.color.multiplyScalar(0.85).lerp(new THREE.Color('#9a8f68'), 0.25); }); S.add(t); }
+for (let i = 0; i < 40; i++) { const sb = F.shrub({ size: K.R(0.5, 1.1), seed: 70 + i }); sb.position.set(SH1 + K.R(2.5, 10), 0.3 + K.R(0, 1.5), -K.R(2, 300)); S.add(sb); }
+
+// ------------------------------------------------------------------ the city at the end of the road, in smog
+const winTex = (seed, lit) => { const r = K.prng(seed); return K.canvasTex(256, 512, (g, w, h) => { g.fillStyle = '#8d939a'; g.fillRect(0, 0, w, h);
+  for (let y = 10; y < h; y += 26) { g.fillStyle = '#a2a6aa'; g.fillRect(0, y + 16, w, 6); for (let x = 6; x < w; x += 16) { g.fillStyle = r() < lit ? '#c4c8cb' : '#6c737b'; g.fillRect(x, y, 11, 15); } } }); };
+{ const r = K.prng(77); for (let i = 0; i < 34; i++) { const w = 14 + r() * 26, h = 30 + r() * r() * 150, x = -260 + r() * 520, z = -470 - r() * 160;
+  const t = winTex(i * 13 + 5, 0.2); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / 10, h / 16);
+  const b = K.box(w, h, w * (0.7 + r() * 0.4), K.mat('#b3b6b8', { map: t, roughness: 0.5, metalness: 0.25 }), { cast: false }); b.position.set(x, h / 2, z); S.add(b); } }
+
+// ------------------------------------------------------------------ the traffic: our carriageway bearing down on the camera, the far one heading away
+const park = (v, x, z, heading, len, wid) => RK.park(S, v, x, z, heading, len, wid);
+const COLS = ['#e9e9e6', '#1a1c1f', '#a4a7ab', '#5d6166', '#24324a', '#8c1f1a', '#d8d2c2', '#3e4a3a', '#f0f0ee', '#6b6f75', '#2a2d33'];
+const r = K.prng(2026), pick = (a) => a[Math.floor(r() * a.length)];
+const toward = -Math.PI / 2, away = Math.PI / 2;
+// near: a box truck in the right lane, a second behind in the next, a car close in the left lanes
+park(truck({ color: '#eceae4', box: '#dcdcd8', stripe: '#9c2a22' }), X0 + LANE * 3.5, -12.5, toward, 9, 2.4);
+park(truck({ color: '#d7dade', box: '#c9ccce', len: 6.2 }), X0 + LANE * 2.5, -19, toward, 9, 2.4);
+park(car({ type: 'suv', color: '#2a2d33' }), X0 + LANE * 0.5 - 0.1, -13, toward, 4.8, 1.9);
+park(car({ type: 'sedan', color: '#a4a7ab' }), X0 + LANE * 1.5 + 0.2, -11, toward, 4.7, 1.9);
+for (let lane = 0; lane < 4; lane++) { let z = [-24, -27, -33, -31][lane]; while (z > -330) { const isT = lane >= 2 && r() < 0.35, gap = isT ? 13 : 8.5;
+  if (isT) park(truck({ color: pick(['#eceae4', '#d7dade', '#c8ccd0']), box: pick(['#dcdcd8', '#c9ccce', '#e6e4dc']), stripe: r() < 0.3 ? pick(['#2e6fb0', '#9c2a22', '#3b7a46']) : null }), X0 + LANE * (lane + 0.5) + (r() - 0.5) * 0.4, z, toward, 9, 2.4);
+  else park(car({ type: pick(['sedan', 'sedan', 'hatch', 'suv']), color: pick(COLS) }), X0 + LANE * (lane + 0.5) + (r() - 0.5) * 0.5, z, toward, 4.7, 1.9);
+  z -= gap + r() * 6 + z * -0.02; } }
+for (let lane = 0; lane < 4; lane++) { let z = -8 - r() * 20; while (z > -300) { park(car({ type: pick(['sedan', 'hatch', 'suv']), color: pick(COLS), lights: 0.3, tail: 1.2 }), OX0 + LANE * (lane + 0.5), z, away, 4.7, 1.9); z -= 14 + r() * 30; } }
+
+// ------------------------------------------------------------------ the tortoise (fg:turtle), halfway across, looking up the road at the traffic
+const T = tortoise({ headYaw: 0.85, headPitch: 0.1, neck: 1.0 }); T.position.set(0.25, 0, 1.25); T.rotation.y = -0.5; S.add(T); subject(T, 'turtle');
+const tk = lightFor(new THREE.DirectionalLight('#e9eef6', 3.0), 'fg:turtle'); tk.position.set(5, 4.5, 5); tk.target.position.set(0, 0.3, 0); tk.castShadow = true; tk.shadow.mapSize.set(2048, 2048);
+Object.assign(tk.shadow.camera, { left: -1.5, right: 1.5, top: 1.5, bottom: -1.5, near: 1, far: 20 }); tk.shadow.bias = -0.0004; S.add(tk, tk.target);
+S.add(lightFor(new THREE.HemisphereLight('#c9d4e2', '#5a5248', 0.75), 'fg:turtle'));
+const trim = lightFor(new THREE.DirectionalLight('#ffd9a8', 1.2), 'fg:turtle'); trim.position.set(-3, 2, -4); S.add(trim);
+
+// ------------------------------------------------------------------ camera: low on the tarmac, a long lens's compression without one
+const CAM = V(1.15, 0.58, 4.15), LOOK = V(1.5, 0.9, -30);
+app.on(() => { app.camera.position.copy(CAM); app.camera.lookAt(LOOK); if (app.dof) app.dof.uniforms.focus.value = 3.0; });
+applyLayer(app);
+app.ready(); window.__ready = true;
+</script></body></html>
