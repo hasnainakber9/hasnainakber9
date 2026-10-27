@@ -1,4 +1,4 @@
-// Builds briefs/The_Game_Reimagined_Production_Guide.docx (node build_game_reimagined.js)
+// Builds briefs/The_Game_Reimagined_Production_Guide.docx (node build_game_reimagined.js)  — revision 2: a story with characters and voice
 const fs = require('fs');
 const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, ShadingType, LevelFormat } = require('docx');
 
@@ -19,165 +19,132 @@ const gap = () => P('', { after: 60 });
 
 const kids = [];
 kids.push(P('THE GAME, REIMAGINED', { b: true, s: 52, c: ACC, after: 40 }));
-kids.push(P('Sport in 2100, filmed as if we were there.', { s: 26, c: MUTE, after: 60 }));
-kids.push(P('Production guide and copy-ready brief · hyperrealistic · one 105-second film and one looping GIF · nine sports', { s: 20, c: MUTE, after: 240 }));
-kids.push(P([['The idea in one line. ', { b: true }], ['Every sport comes down to one second: the read, the act, the verdict, the face. In 2100 the second is the same as it was in 1900. What has changed is everything around it: the heat the venue has to beat, the power under the bonnet, the way the call is made, how a body is protected, and how a billion people watch. The film is nine of those seconds, one per sport, built on the same four beats, so the audience feels the pattern and then feels it break at the end, when all nine seconds happen at once.', {}]], { box: true, shade: PAPER, after: 200 }));
+kids.push(P('One city. Nine finals. The hottest day of 2100. A story with voices.', { s: 26, c: MUTE, after: 60 }));
+kids.push(P('Production guide and copy-ready brief · revision 2 · hyperrealistic · one 105-second film with dialogue and one looping GIF', { s: 20, c: MUTE, after: 240 }));
+kids.push(P([['The idea in one line. ', { b: true }], ['A multi-sport championship on the hottest day anyone can remember. The woman running it, Zara Okafor, has one number on her wrist all day: the heat reading that decides whether people can play. Nine venues check in by radio as the number climbs toward the limit. By evening it is over the line, the football final cannot start, and sixty thousand people are waiting under a closed roof. The climax is a number falling. The film\'s claim is that sport survived the climate because people built for it and then had the nerve to wait.', {}]], { box: true, shade: PAPER, after: 200 }));
 
 kids.push(H1('1. Copy-ready quick brief (paste this to the team)'));
-kids.push(P('Make two hyperrealistic pieces under the title THE GAME, REIMAGINED: a 105-second film and a 4-second looping GIF, both set in a plausible 2100 and both shot like a premium live-action sports documentary, never like a game engine or a trailer. Nine sports: football, motor racing, cricket, tennis, golf, skydiving, basketball, American football, baseball. No real leagues, clubs, kits, badges, broadcasters or athletes anywhere; every team, venue and livery is invented, every face is a nobody. No narration. Sound is the sport itself plus a restrained score.', { after: 100 }));
-kids.push(P('Film structure: a 5-second cold open, nine 10-second segments, a 10-second finale. Every segment is the same four beats in the same order: THE READ (an athlete sees it coming), THE ACT (the strike, the pass, the corner, the exit), THE VERDICT (the decision is made, by a human with better tools), THE FACE (one reaction, held). The 2100 detail in each segment is one thing, in the background, that a 2026 viewer would notice and a 2100 viewer wouldn\'t: a roof that closes against heat, a car that makes no exhaust, a helmet that reports an impact, a line call nobody argues with. The finale cuts all nine acts together on one beat and ends on the crowd.', { after: 100 }));
-kids.push(P('GIF: THE MOMENT BEFORE. A 3×3 grid, nine athletes, each caught in the ritual before the act: the ball bounced before the serve, the bowler walking back to the mark, the batter\'s waggle, the driver\'s hands flexing on the wheel, the skydiver\'s hand on the door frame. Nothing is ever released. The loop is the tension; it never resolves. 4 seconds, 1080×1080, seamless.', { after: 100 }));
-kids.push(P('Realism is the whole job: anatomy under load, sweat, fabric, turf divots, ball spin, long-lens compression, stadium light, crowds of individuals. If the future technology were switched off, every frame should still be a great sports photograph. Treat every 2100 detail as a scenario, not a prediction. No spending on paid tools, music or licences and no posting without the project owner\'s written approval.', { after: 120 }));
+kids.push(P('Make two hyperrealistic pieces under the title THE GAME, REIMAGINED: a 105-second film with dialogue and a 4-second looping GIF, set during a multi-sport championship in one city on the hottest day of 2100, shot like a tense live-action sports documentary. The protagonist is Zara, the championship\'s operations director; her antagonist is a number, the wet-bulb heat reading on her wrist, which decides when play must stop. Nine venues (skydiving, golf, cricket, motor racing, tennis, baseball, basketball, American football, football) check in by radio through the day as the number climbs. The last act is the football final: the reading is over the limit, the roof is closed, the cooling is at full, sixty thousand people are waiting, and Zara refuses to start until the number drops. It drops. They play. Twenty-six short lines of dialogue (section 5), all radio chatter and venue talk, none of it to camera. No narrator. Invented teams, kits, venues and faces only; no real leagues, badges or athletes.', { after: 100 }));
+kids.push(P('GIF: THE NUMBER. Zara\'s wrist readout, fixed close-up: the heat reading ticking down through the limit, the stadium lights flaring on in the reflection of the screen, the loop returning via a glance at a stopwatch. 4 s, 1080×1080. Text in the post: WE WAITED. THEN WE PLAYED.', { after: 100 }));
+kids.push(P('Realism is the job: real sweat, real fabric, real stadium light, athletes with weight, crowds of individuals, tools held by hands. Every technology supports people and officials, never replaces them. Injuries are not abolished; heat is not defeated, it is managed. All 2100 details are scenarios. No paid tools, music or licences and no posting without the project owner\'s written sign-off.', { after: 120 }));
 
 kids.push(H1('2. Deliverables'));
 kids.push(table([1500, 3500, 2700, 2400], ['Piece', 'What it is', 'Spec', 'What a viewer should feel'], [
-  ['Film', 'Nine decisive seconds, one per sport, each built on the same four beats, then all nine at once.', '105 s (hard limits 95–115); 1920×1080; 24 or 25 fps; stereo; SRT for the few on-screen words; MP4 master plus ProRes or image sequence.', 'The sport hasn\'t changed. Everything that protects it, powers it and judges it has.'],
-  ['GIF', 'The ritual before the act, nine times over, never released.', '4 s loop; 1080×1080; GIF under 8 MB plus MP4 master; no flashing.', 'Held breath.'],
+  ['Film', 'A day-long race between a championship and the heat, told through its operations director and nine venues on the radio, ending on a final that waits.', '105 s (95–115); 1920×1080; 24 fps; stereo at −14 LUFS; MP4 master plus ProRes; SRT of every line; vertical 9:16 cut.', 'My pulse went up over a number. They built for this. They still had to wait.'],
+  ['GIF', 'The number dropping through the limit as the lights come on.', '4 s loop; 1080×1080; GIF under 8 MB plus MP4.', 'Relief.'],
 ]));
 gap();
 kids.push(H2('Boundaries'));
 for (const t of [
-  'No real-world sporting brands: no league names, club names, crests, kit designs, sponsor marks, broadcaster graphics, car liveries, stadium names or recognisable athletes. The prize rules require permission for third-party material and none will be sought. Everything is invented and must not resemble a real one closely enough to be mistaken for it.',
-  'The rules and equipment of each sport stay as they are unless the segment shows the change on screen (a different ball, a different roof). Don\'t invent new sports or new scoring.',
-  'Technology supports the athlete and the official; it never replaces either. No robot players, no AI referee as a character, no exoskeletons.',
-  'No injuries are shown as impossible. Protection improves; bodies still break; medical teams are still there.',
-  'The future is 2100, which is 74 years off: equipment, venues and vehicles look like excellent versions of today\'s, not science fiction.',
-  'No invented statistics, records or speeds on screen.',
+  'No real-world sporting brands, bodies, kits, crests, venues or athletes; everything invented and kept away from lookalikes.',
+  'Technology supports the athlete and the official. The decision to play is always a person\'s. No AI referee, no automated "match cancelled".',
+  'The heat is real and dangerous in the film; nobody collapses on screen; the medical team is visible and ready; a player is pulled by data in one scene and does not argue.',
+  'Rules and equipment of each sport unchanged unless the change is shown.',
+  'No statistics or records on screen except the heat reading, which is the film\'s own clock.',
+  'Dialogue is locked (section 5): re-time it, never rewrite it; nobody addresses camera; lines are said while working.',
 ]) kids.push(B(t));
 
-kids.push(H1('3. What is already true, and what 2100 could look like'));
-kids.push(P('Each segment\'s 2100 detail extends something that exists now. Keep this table beside the shot list so every detail has a root. Re-check the current items before release; sport changes fast.', { after: 100 }));
-kids.push(table([2200, 4000, 3900], ['Thread', 'Where it is today', 'Where the film takes it by 2100'], [
-  ['Officiating', 'Ball-tracking review in cricket and tennis; electronic line calling has replaced line judges at major tennis events; semi-automated offside in top-flight football; an automated ball-strike challenge system trialled in baseball.', 'The call is instant and visible to the whole ground, and the human official still announces it. Disputes are over in seconds. The emotion moves from arguing the call to living with it.'],
-  ['Athlete protection', 'Padded helmet covers and impact sensors in American football; concussion protocols; instrumented mouthguards; heat rules that pause play.', 'Impact loads are read live by the medical bench; a player is pulled by the data, not the coach\'s hunch. Nobody pretends injury is gone.'],
-  ['Climate and venues', 'Retractable roofs; misting and shade in hot-climate stadiums; evening starts for heat; cricket and tennis already schedule around wet-bulb limits.', 'Venues built to beat 2100 heat: deep shade, cooled seating, roofs that close in minutes, matches timed to the sun. The desert cricket ground is the clearest example.'],
-  ['Power and vehicles', 'Hybrid racing with sustainable fuels and a growing electric share; electric support fleets; fully electric race series.', 'The racing car is silent-ish, fast, and exhausts nothing; the sound is tyres, wind and the crowd. Pit stops swap energy, not fuel.'],
-  ['Land and water', 'Golf courses under pressure for water; native-planting and reduced-turf designs; drought-tolerant grasses.', 'A course that is mostly native habitat with narrow playing corridors; irrigation only where the ball lands.'],
-  ['Watching', 'Tracking data in broadcasts; alternate camera feeds; stadium screens showing reviews.', 'The crowd sees what the official sees, when the official sees it, on the venue\'s own screens; no headset wall between the fan and the pitch.'],
+kids.push(H1('3. What is true now, and what 2100 extends'));
+kids.push(table([2200, 4000, 3900], ['Thread', 'Today', 'In the film'], [
+  ['Heat rules', 'Tennis, cricket and athletics already use wet-bulb or heat-stress thresholds that pause or stop play; roofs are closed for heat at major events.', 'One threshold governs every venue; the operations director holds the number and the decision.'],
+  ['Venues', 'Retractable roofs, cooled seating, misting, evening starts in hot climates.', 'A football stadium that closes its roof in minutes and cools sixty thousand seats; a desert cricket ground under deep shade; a ballpark that opens at dusk.'],
+  ['Officiating', 'Electronic line calling; ball tracking; semi-automated offside; pitch-tracking challenge systems.', 'Calls are instant and shown to the ground; the human official announces them.'],
+  ['Athlete protection', 'Instrumented helmets and mouthguards; concussion protocols; medical staff on the bench.', 'A quarterback is pulled by impact data; a medical chief, not a coach, makes the call.'],
+  ['Power', 'Hybrid and electric racing; sustainable fuels; venue storage and solar.', 'The racing cars make no exhaust; the stadium runs its roof and cooling on its own storage when the city grid strains.'],
 ]));
 gap();
-kids.push(P([['Guardrail. ', { b: true }], ['The film shows these as scenarios. Nothing on screen or in the caption claims a named body has adopted or will adopt any of it.', {}]], { box: true, shade: PAPER }));
+kids.push(P([['Guardrail. ', { b: true }], ['Nothing on screen or in the caption claims a named body has adopted or will adopt any of it.', {}]], { box: true, shade: PAPER }));
 
-kids.push(H1('4. The spine: four beats, nine times'));
-kids.push(P('What makes nine sports in 105 seconds a film rather than a showreel is repetition with a twist at the end. Every segment runs the same four beats, in the same order, at roughly the same lengths. By the third sport the audience is counting; by the ninth they are waiting for the face; in the finale all nine acts land on one drum hit.', { after: 100 }));
-kids.push(table([1800, 1600, 6700], ['Beat', 'Length', 'What it is'], [
-  ['THE READ', '2–3 s', 'The athlete sees it before it happens. Eyes, a weight shift, a glance at the defence or the wind. Long lens, shallow focus, the venue soft behind.'],
-  ['THE ACT', '3–4 s', 'The strike, the pass, the exit, the corner. Real speed; one slow-motion beat at most, at the point of contact. This is where the physics must be perfect.'],
-  ['THE VERDICT', '2 s', 'The decision, made by a person with better tools: the official\'s signal, the screen the crowd sees, the data on the bench. Quick. No argument.'],
-  ['THE FACE', '1–2 s', 'One reaction, held: relief, fury, a laugh, a grimace. Human. Then cut.'],
+kids.push(H1('4. The people'));
+kids.push(table([1700, 4500, 3900], ['Who', 'Reference', 'Voice'], [
+  ['ZARA OKAFOR', 'Operations director of the championship, 52, Black, cropped grey hair, a radio earpiece, a wrist readout she keeps covering with her sleeve and uncovering. Sweat on her collar all day.', 'Low, dry, economical. Never raises her voice; the room gets quieter when she talks. Warm with Kofi, blunt with everyone else.'],
+  ['KOFI MENSAH', 'Her deputy, 31, Ghanaian, runs between venues, always slightly out of breath, tablet held from underneath.', 'Fast, hopeful, counts things out loud. Her optimism, and her conscience.'],
+  ['DR LENA VOSS', 'Medical chief, 45, German, calm hands, a cooler bag over one shoulder.', 'Flat, factual; every line is a measurement or a decision.'],
+  ['IMANI REYES', 'Striker in the football final, 24, Afro-Latina, the best player in the tournament, waiting in a tunnel for ninety minutes.', 'Few words; one joke; one look.'],
+  ['THE VENUES', 'Nine managers heard on the radio, named only by venue: DROPZONE, LINKS, DESERT, CIRCUIT, CENTRE COURT, BALLPARK, ARENA, GRIDIRON, STADIUM.', 'Each has one line of texture: a laugh, a worry, a number.'],
 ]));
 
-kids.push(H1('5. Running order (105 seconds)'));
-kids.push(table([1100, 1500, 4500, 3000], ['Time', 'Segment', 'The second, and the 2100 detail', 'Sound'], [
-  ['0–5', 'Cold open', 'Black. Studs on a tunnel floor, a ball bounced, an engine starting, a crowd going quiet. One wide frame: a venue at golden hour, roof half-closed, people pouring in. Title card for one second.', 'Sport sounds in the dark; the crowd\'s hush is the cue.'],
-  ['5–15', 'Football', 'THE READ: a winger glances at the full-back\'s feet. THE ACT: a cut inside and a low strike into the far corner, caught at real speed from behind the goal. THE VERDICT: the automated offside line appears on the venue screen for the whole ground, the official signals, nobody protests. THE FACE: the scorer doesn\'t celebrate; she looks for the player who played the pass. 2100 detail: the roof closing against the evening heat as play continues.', 'Boots, the ball\'s thump, a roar that drops to a murmur for the screen, then climbs.'],
-  ['15–25', 'Motor racing', 'THE READ: the driver\'s eyes flick to the mirror, hands flex. THE ACT: a late-braking pass into a fast corner, the car\'s nose dipping, tyres at the limit. THE VERDICT: track-limits data flashes green on the pit wall; the engineer nods. THE FACE: the driver exhales, visible through the visor. 2100 detail: no exhaust, no fuel haze; the pit stop swaps an energy pack.', 'Tyres, wind, gravel, a crowd under grandstand roofs; the car is quieter than the crowd.'],
-  ['25–35', 'Cricket', 'THE READ: the bowler at the top of the mark, reading the batter\'s guard. THE ACT: the run-up, the release, the seam upright, the ball beating the bat and striking the pad. THE VERDICT: the ball-track replay on the big screen, three reds, the finger goes up. THE FACE: the batter looks up at the sun, then at the dressing room. 2100 detail: the ground is in a desert; deep shade over every stand, cooled seating, a 6 pm start.', 'The ball off the pitch, the thud on the pad, the appeal, silence, the roar.'],
-  ['35–45', 'Tennis', 'THE READ: the server bounces the ball four times, eyes on the receiver\'s feet. THE ACT: a wide serve, a return at full stretch, a rally ending in a drive down the line. THE VERDICT: the electronic call, instant, shown on the court-side screens; the chair umpire announces it. THE FACE: the loser of the point laughs at how good the shot was. 2100 detail: no line judges, no challenge; the match just continues.', 'Strings, shoes squeaking, the call, polite applause turning to a roar.'],
-  ['45–55', 'Golf', 'THE READ: the player throws grass, watches it drift, changes club. THE ACT: the swing, the ball\'s flight against cloud, the drop and roll to a foot from the hole. THE VERDICT: the caddie\'s nod, the player\'s own ruling on a drop earlier, respected. THE FACE: a grin at the caddie. 2100 detail: the course is native scrub and wildflower with narrow fairways; sprinklers only around greens.', 'Wind, the strike, birds, a gallery\'s intake of breath.'],
-  ['55–65', 'Skydiving', 'THE READ: a hand on the door frame, a look at the horizon, a check of the wrist altimeter. THE ACT: the exit, the tumble, the body flattening into stable freefall over a vast landscape, fabric roaring. THE VERDICT: the altitude alarm in the helmet, the canopy opening clean. THE FACE: under the canopy, a shout nobody hears. 2100 detail: the suit\'s telemetry visible as a single small readout on the wrist, nothing else.', 'Wind that fills everything, then the crack of the canopy, then near-silence.'],
-  ['65–75', 'Basketball', 'THE READ: the guard sees the help defender cheat. THE ACT: a drive, a crossover, a rise and a dunk over the late rotation. THE VERDICT: the shot-clock buzzer, a glance at the official, a foul call waved off. THE FACE: the dunker helps the defender up. 2100 detail: the arena\'s floor shows the play\'s key lines to the crowd for a second after the whistle, then clears.', 'Sneakers, the rim, a crowd that has already stood up.'],
-  ['75–85', 'American football', 'THE READ: the quarterback reads the safety rotating. THE ACT: a step up, a throw into a closing window, the catch and the hit. THE VERDICT: the receiver\'s helmet reports the impact to the bench; a doctor is already walking. THE FACE: the receiver holds the ball up from the ground, then is sat down anyway. 2100 detail: the helmet, softer and smarter, and the medical team acting on data rather than on how the player says he feels.', 'Pads, the catch, the hit, a hush, the crowd\'s relief as he sits up.'],
-  ['85–95', 'Baseball', 'THE READ: the pitcher reads the batter\'s stance; the batter reads the pitcher\'s grip. THE ACT: a fastball, a swing, contact, the ball into the gap, a slide into second. THE VERDICT: the pitch-track call on the screen and the umpire\'s signal, a tag reviewed and confirmed in two seconds. THE FACE: the runner dusting off, nodding at the fielder. 2100 detail: the ballpark is under deep shade with a roof that opens at dusk; the lights come on as the inning ends.', 'The pop of the mitt, the crack, the slide, the crowd.'],
-  ['95–105', 'Finale', 'All nine ACTS cut on one beat, each two or three frames: the strike, the pass, the release, the serve, the swing, the exit, the dunk, the throw, the contact. Then the widest frame of the film: a crowd, every kind of person, in the venue from the cold open, the roof now closed, lights on. Fade. THE GAME, REIMAGINED. Small line: sport in 2100, as it could be.', 'One drum hit per act, then the crowd, then silence on the title.'],
+kids.push(H1('5. Running order (105 seconds), dialogue locked'));
+kids.push(P('The heat reading appears as a small overlay in Zara\'s scenes only, added in post, never generated. It climbs from 27.0 to 31.4 and must fall below 31.0 for play. Those numbers are the film\'s own scale; the caption says so.', { after: 100 }));
+kids.push(table([1000, 1600, 4300, 3200], ['Time', 'Place', 'What happens', 'Lines'], [
+  ['0–8', 'Dawn, the dropzone', 'Black; a radio crackle. A skydiver exits an aircraft into a pink dawn; the camera falls with her. Cut to Zara on a stadium roof watching the sky, uncovering her wrist: 27.0.', 'DROPZONE (radio): First jumper away. Sky\'s clear. ZARA: Enjoy it. It\'s the last cool hour.'],
+  ['8–18', 'Morning, the links and the desert', 'A golfer reads the wind on a course of scrub and narrow fairways. A fast bowler at a desert ground under deep shade; the ball beats the bat and hits the pad; the tracking replay; the finger. Zara in a buggy between venues, Kofi beside her with the tablet.', 'LINKS: We\'re fine. Wind\'s doing the cooling. DESERT: Shade\'s holding. 29 and climbing. KOFI: Nine venues. Nine clear. ZARA: Say that at six o\'clock.'],
+  ['18–30', 'Midday, the circuit', 'Racing cars with no exhaust into a fast corner; a late pass; tyres at the limit. In the pit lane, Lena checks a driver\'s core temperature on a handheld. Zara\'s wrist: 30.1.', 'CIRCUIT: Track temp\'s brutal. Drivers are inside limits. LENA (to Zara, radio): Inside. Not comfortable. ZARA: Noted. Keep them inside.'],
+  ['30–42', 'Afternoon, Centre Court and the ballpark', 'A serve, a return at full stretch, a rally; the electronic call on the screens; the umpire announces it. The ballpark\'s roof is closed; a swing, contact, a slide, a tag reviewed in two seconds. Zara\'s wrist: 30.8.', 'CENTRE COURT: Roof\'s coming over. We\'re okay. BALLPARK: Closed since noon. Cold beer, cold seats. ZARA: Show-off. KOFI: Thirty point eight. ZARA: I can read.'],
+  ['42–55', 'Early evening, the arena and the gridiron', 'A drive and a dunk in the cooled arena. On the gridiron a quarterback throws into a closing window; the hit; his helmet reports the impact; Lena is already walking onto the field. He protests with his eyes; he sits. Zara watches it on Kofi\'s tablet.', 'LENA (radio): Gridiron. Number twelve is done for the night. GRIDIRON: He says he\'s fine. LENA: He says that. His helmet doesn\'t. ZARA: Lena\'s call. Sit him.'],
+  ['55–66', 'Dusk, the stadium', 'The football final\'s venue: sixty thousand people, the roof closing like an eyelid, the cooling vents breathing. In the tunnel, Imani, boots on, bouncing a ball. Zara arrives. Her wrist: 31.2. Over the limit.', 'STADIUM: Roof\'s closed. Cooling\'s at full. We\'re ready. ZARA: The number isn\'t. KOFI: It\'s point two over. ZARA: Then it\'s over.'],
+  ['66–78', 'The wait', 'Nobody plays. The crowd sings, then quiets. Kofi paces. The city grid strains and the stadium drops onto its own storage; the lights dip and hold. Imani sits on the tunnel floor. Zara stands at the touchline with her sleeve rolled back, watching the number not move.', 'KOFI: We could start and stop if it climbs. ZARA: You don\'t start what you might have to stop. KOFI: Sixty thousand people, Zara. ZARA: Sixty thousand people who\'ll be alive at the end of it. IMANI (to a teammate, tunnel): She\'ll wait. I\'d wait.'],
+  ['78–90', 'The number', 'Sunset through the roof\'s seam. The reading: 31.2. 31.1. A hold. 31.0. 30.9. Zara covers her wrist with her sleeve and lifts the radio.', 'ZARA: All venues. Stadium is go. Play. STADIUM: Copy. Lights. (The floods flare. The roar.)'],
+  ['90–101', 'The final', 'Imani out of the tunnel at a run. Kick-off. A read, a cut inside, a low strike into the far corner; the offside line on the venue screen for everyone; the official signals; no protest. Imani doesn\'t celebrate; she looks for the player who played the pass. Zara, at the touchline, finally sits down.', 'KOFI: Did you see that? ZARA: I saw it. (beat) Nine venues. Nine played.'],
+  ['101–105', 'Title', 'The stadium under the title. THE GAME, REIMAGINED. Small line: sport in 2100, as it could be.', 'Crowd, then silence on the title.'],
 ]));
 
-kids.push(H1('6. The GIF: THE MOMENT BEFORE'));
-kids.push(P('Nine athletes in a 3×3 grid, each caught in the ritual that comes before the act, and the act never comes. The loop is the tension. It is seamless because rituals are loops: the ball bounces, the hands flex, the bowler walks back.', { after: 100 }));
-kids.push(table([2000, 8100], ['Panel', 'The ritual (4-second loop, returns to its first frame)'], [
-  ['1 · Football', 'The taker stands over a free kick, eyes between ball and wall, one breath; the wall shuffles.'],
-  ['2 · Motor racing', 'Gloved hands on the wheel, flexing; the start lights overhead, none lit yet; the mirror trembling with vibration.'],
-  ['3 · Cricket', 'The bowler at the top of the mark, rubbing the ball on the thigh, looking down the pitch.'],
-  ['4 · Tennis', 'The server bouncing the ball, four bounces per loop, eyes up on the fourth.'],
-  ['5 · Golf', 'The waggle: club head hovering behind the ball, a look at the target, back to the ball.'],
-  ['6 · Skydiving', 'A hand on the aircraft door frame, wind pulling at the suit, the ground far below, a thumbs-up to someone out of frame.'],
-  ['7 · Basketball', 'At the free-throw line: three dribbles, a spin of the ball, a breath.'],
-  ['8 · American football', 'Under centre, head up, reading the defence; a hard count that moves nobody.'],
-  ['9 · Baseball', 'The batter\'s waggle in the box, eyes on the pitcher, who is reading the sign.'],
-]));
-gap();
+kids.push(H1('6. The arc, so the edit protects it'));
 for (const t of [
-  'Consistent light across the grid: all nine at the same time of day in the same kind of light, so the grid reads as one picture.',
-  'No captions inside the panels. The title, if used, sits in the post, not the image.',
-  'Every loop must be invisible: match the first and last frames of each panel exactly; test each panel alone, then the grid.',
-  '1080×1080; 4 s; GIF under 8 MB with a palette built from the grid; MP4 master kept.',
+  'The number is the clock. It is on screen in every Zara scene and rises every time we return to her: 27.0, 29 (spoken), 30.1, 30.8, 31.2. The audience learns the limit at 55 s and feels it before then.',
+  'Each venue check-in is both a sport and a pressure reading. Keep the radio lines overlapping the action; never cut away from the sport to show someone talking.',
+  'The turning point is Lena pulling the quarterback at 48 s. It establishes that this world stops for safety and that nobody argues. That is what makes the stadium wait credible ten seconds later.',
+  'The climax is 66–90 s, a quarter of the film, and it is a woman watching a number. Hold it. The temptation is to cut to crowd and pacing; stay on Zara\'s face and the digits.',
+  'The release is the roar and the lights at 88 s; the goal at 95 s is the reward, not the climax.',
+  'The last line answers the first scene: "nine clear" at the start, "nine played" at the end.',
 ]) kids.push(B(t));
 
-kids.push(H1('7. Hyperrealism rulebook for sport'));
+kids.push(H1('7. The GIF: THE NUMBER'));
+kids.push(table([2200, 7900], ['Element', 'Specification'], [
+  ['Frame', 'Macro on Zara\'s wrist readout, the sleeve pushed back, skin with sweat, the stadium behind as bokeh. The readout is a plain matte screen with a single number (composited in post, not generated).'],
+  ['Action', '31.2 → 31.1 → 31.0 → 30.9 over three seconds; on 30.9 the stadium floods flare in the screen\'s reflection and the bokeh behind turns to light. Her thumb slides the sleeve back over the screen.'],
+  ['Loop', 'The sleeve covering the screen is the seam; the next pass opens with the sleeve pulling back to 31.2.'],
+  ['Text', 'None in the image. In the post: WE WAITED. THEN WE PLAYED.'],
+  ['Export', '1080×1080; 4 s; GIF under 8 MB; MP4 master.'],
+]));
+
+kids.push(H1('8. Hyperrealism rulebook for sport'));
 kids.push(table([2400, 7700], ['Property', 'Rule'], [
-  ['Bodies', 'Muscle under load, veins, sweat, skin that creases; weight on the planted foot; follow-through that obeys momentum. Freeze any frame: hands, fingers and feet must be right.'],
-  ['Fabric and kit', 'Shirts pull at the shoulder, shorts ride, gloves crease, helmets scuff, boots carry grass. Invented kits with real tailoring, no logos.'],
-  ['Surfaces', 'Turf divots and bare patches, clay skid marks, tyre marbles off the racing line, court dust, a wet outfield.'],
-  ['Ball physics', 'Seam and spin visible; dip and swerve plausible; bounce height true to the surface; the ball deforms on contact for a frame.'],
-  ['Lenses', '400–600 mm compression from the stands; 24–35 mm at pitch level; macro at the point of contact; real rack focus; a touch of chromatic fringe on the longest glass.'],
-  ['Light', 'Stadium floods with multiple shadows per player; golden hour from one side; night games with the crowd lit by the pitch; lens flare that behaves.'],
-  ['Crowds', 'Individuals, not tiles: different clothes, different reactions, some not watching. No cloned faces, no uniform waving.'],
-  ['Broadcast layer', 'Minimal. The verdict screens are in the venue, filmed as objects; no overlay graphics on the film\'s own frame except the title.'],
-  ['Motion', 'Real speed with one slow beat per segment at contact; motion blur consistent with 24 fps and a 180° shutter; no speed ramps that break physics.'],
+  ['Bodies', 'Muscle under load, sweat that actually runs, veins, skin creasing; weight on the planted foot; follow-through that obeys momentum. Freeze any frame: hands, feet, equipment correct.'],
+  ['Heat', 'It must be visible: shimmer over the track, wet collars, players drinking, ice towels, shade sought; the air itself looks heavy in the afternoon scenes.'],
+  ['Kit and surfaces', 'Invented kits with real tailoring; turf divots, clay skids, tyre marbles, court dust; a wet outfield; a roof seam with daylight bleeding through.'],
+  ['Lenses', '400–600 mm from the stands; 24–35 mm at pitch level; macro at contact and on the wrist; real rack focus; a touch of chromatic fringe on long glass.'],
+  ['Light', 'Dawn pink at the dropzone; brutal noon at the circuit; closed-roof cool light at the ballpark; floods with multiple shadows at the stadium; the lights dipping on battery.'],
+  ['Crowds', 'Individuals. During the wait, some sing, some sit, some film with phones, some leave for water. No cloned faces.'],
+  ['Voices', 'Radio lines compressed and crackled, on the edge of the mix; in-person lines close and dry; nothing recorded like an advert.'],
+  ['Overlays', 'The heat number only, small, in Zara\'s scenes. No scoreboards, no graphics on the film\'s own frame.'],
 ]));
 
-kids.push(H1('8. Rights and representation'));
+kids.push(H1('9. Rights, team, workflow, QA'));
 for (const t of [
-  'Invent every club, league, livery, venue and badge; keep colours and crests far from any real one. Keep a list of the invented names so the edit stays consistent.',
-  'Athletes are invented people, diverse by default: women\'s and men\'s sport both appear without comment; para-sport appears if a segment can carry it honestly.',
-  'Music is original or fully licensed; sound effects are recorded or licensed; fonts licensed. Log every file before picture lock.',
-  'Nothing on screen or in the post copy names a real body, event or person.',
+  'Invent every club, league, venue, crest and livery; keep a list so the edit stays consistent. Music original or fully licensed; voices recorded or synthesised with rights; fonts licensed.',
+  'Team: director (the arc, the wait, the final cut); sports and heat-safety research lead (section 3, plausibility of every threshold and call); cinematography and generation lead (reference boards, one shot at a time, the four faces consistent all day); editor and compositor (the cut, the number overlay, the GIF, the vertical); sound and production (voices, radio texture, crowd, score, mix, rights log).',
+  'Order of work: record or synthesise the twenty-six lines first and lock timing; reference sheets for Zara, Kofi, Lena, Imani and the nine venues; generate the stadium wait first (it is the film), then the final, then the venue check-ins; rough cut with voices and temp score; muted test (can a new viewer say what the number means?); sound, grade, overlay, GIF, exports, rights log.',
+  'QA: freeze every athletic act at five points; confirm the number rises monotonically and falls only once; confirm no real badge or lookalike; play the GIF twenty times; check the SRT against every spoken word; the 9:16 crop keeps the wrist and the faces.',
+  'Project owner approves post, platform and timing. Deadline: treat 31 October 2026 as final.',
 ]) kids.push(B(t));
 
-kids.push(H1('9. Team and workflow'));
-kids.push(table([2300, 4400, 3400], ['Role', 'Owns', 'Signs off on'], [
-  ['Director', 'The spine, the running order, the finale, every approved shot.', 'The four-beat structure is intact in every segment.'],
-  ['Sports continuity', 'Rules, equipment, movement, venue logic, the 2100 detail\'s root in section 3.', 'Nothing a knowledgeable fan would laugh at.'],
-  ['Cinematography and generation', 'Reference boards per sport, lens plan, shot prompts, one shot at a time.', 'Anatomy and physics at freeze-frame.'],
-  ['Editor and compositor', 'The cut, the finale\'s nine-beat montage, the grid, loops, exports.', 'Loop proof; muted test.'],
-  ['Sound and coordination', 'Soundscape, score, licences, shot tracker, release pack.', 'Rights log complete; loudness −14 LUFS, true peak under −1 dBTP, range at least 8 LU.'],
-]));
+kids.push(H1('10. Prompts'));
+kids.push(P([['MASTER PROMPT (prefix every shot). ', { b: true }], ['Hyperrealistic live-action sports documentary photography set in 2100 on the hottest day of the year, shot on cinema cameras with real lenses, natural and stadium light, real motion blur, visible heat shimmer and sweat. Athletes and staff are invented people with exact anatomy under load. Invented kits, venues and liveries with no logos or lettering. Crowds of distinct individuals. Technology is integrated and plausible, held by hands or built into the venue; no holograms, overlays or robots. No text in the image. The sport is recognisable and physically exact.', {}]], { box: true, shade: PAPER }));
 gap();
-kids.push(H2('Order of work'));
-for (const t of [
-  'Agree the invented world: nine venues, nine kits or liveries, the 2100 detail per segment, the lens plan.',
-  'Build a reference board per sport: the real sport\'s correct equipment, stances and camera positions.',
-  'Generate THE ACT for every segment first; it is the hardest beat and decides whether the segment survives.',
-  'Then THE READ, THE VERDICT and THE FACE, matched to the act\'s lighting and venue.',
-  'Rough cut with temp sound; muted test with a sports fan who has not seen it.',
-  'Finale montage, grid, loops, sound, grade, exports, rights log.',
-  'Project owner approves the post, platform and timing before anything is uploaded. Deadline: treat 31 October 2026 as final.',
-]) kids.push(B(t));
-
-kids.push(H1('10. Quality control'));
-for (const t of [
-  'Freeze every ACT at five frames: hands, feet, ball, equipment, follow-through.',
-  'Count the beats: every segment has all four, in order, within its ten seconds.',
-  'Switch the 2100 detail off in your head: is the frame still a great sports photograph? If not, redo it.',
-  'Check every kit, crest and livery against a real-world lookalike test; change anything that could be mistaken.',
-  'Play each GIF panel alone twenty times, then the grid twenty times, on a phone.',
-  'Read the post copy: no named league, event or athlete; the 2100 line says "as it could be".',
-]) kids.push(B(t));
-
-kids.push(H1('11. Prompts'));
-kids.push(P([['MASTER PROMPT (prefix every shot). ', { b: true }], ['Hyperrealistic live-action sports documentary photography set in 2100, shot on cinema cameras with real lenses: long-lens compression from the stands, wide lenses at field level, macro at the point of contact, natural stadium and daylight behaviour, lens flare and chromatic fringe where real glass would show them, 24 fps motion blur. Athletes are invented people with exact anatomy under load, sweat, creased skin and fabric that pulls and rides. Invented kits, venues and liveries with no logos, badges or lettering. Crowds of distinct individuals. Future technology is one background detail per scene, integrated and plausible, never a hologram, never an overlay on the frame, never a robot. The sport is recognisable and physically exact. No text in the image.', {}]], { box: true, shade: PAPER }));
-gap();
-kids.push(table([1700, 8400], ['Segment', 'Shot prompt for THE ACT (append to master); build READ, VERDICT and FACE from the same venue and light'], [
-  ['Football', 'Evening, roof half-closed overhead and closing; a winger cuts inside the full-back and strikes low into the far corner, seen from a low camera behind the goal net, the keeper diving late, grass flying from the planted foot, crowd a wall of colour behind the glass.'],
-  ['Motor racing', 'A late-braking pass into a fast corner, trackside long lens, the following car\'s nose dipping under braking, tyres at the limit with visible flex, gravel at the edge, no exhaust or heat haze from either car, grandstand under a long roof.'],
-  ['Cricket', 'Desert ground under deep shade, 6 pm light; a fast bowler in delivery stride seen side-on at 600 mm, seam upright on release, the ball beating the bat and striking the pad, dust from the crease.'],
-  ['Tennis', 'Hard court at dusk under lights; a serve from behind the baseline at 400 mm, ball toss at apex, racquet at full extension, strings deforming, the receiver already moving.'],
-  ['Golf', 'A links-style course that is mostly native scrub and wildflower with narrow fairways; a full swing at impact from face-on, turf divot in the air, ball a streak, gallery\'s faces following the flight.'],
-  ['Skydiving', 'Exit from an aircraft door over a vast landscape, camera outside with the jumper, fabric roaring and rippling, body flattening into stable freefall, horizon curved slightly by the wide lens, a small wrist readout the only instrument.'],
-  ['Basketball', 'Arena at full noise; a drive and rise for a dunk over a late rotation, low camera under the basket, hand on the rim, the defender\'s hand inches short, floor reflections of the lights.'],
-  ['American football', 'A quarterback stepping up and throwing into a closing window, then the catch and the hit at 400 mm, pads compressing, the receiver\'s helmet a softer modern design, turf spray.'],
-  ['Baseball', 'Shaded ballpark at dusk, roof opening; the swing at contact from the high-home camera, bat flexing, ball compressed for one frame, the runner\'s slide into second with dust, the tag.'],
+kids.push(table([1700, 8400], ['Scene', 'Shot prompt (append to master)'], [
+  ['Dropzone', 'A skydiver exiting an aircraft into a pink dawn over a city, camera outside and falling with her, fabric roaring; then a woman in her fifties with cropped grey hair and a radio earpiece on a stadium roof at sunrise, looking up, pushing back her sleeve.'],
+  ['Links and desert', 'A golfer throwing grass to read the wind on a links of scrub and narrow fairways; a fast bowler at a desert ground under deep shade striking the batter\'s pad, dust from the crease, a ground screen showing a tracked ball path; a woman and a young man in a buggy between venues, he with a tablet held from underneath.'],
+  ['Circuit', 'Racing cars with no exhaust into a fast corner at noon, heat shimmer over the track, tyres flexing; a pit lane where a medical chief with a cooler bag reads a handheld against a driver\'s neck.'],
+  ['Centre Court and ballpark', 'A roof sliding over a tennis court mid-rally, a return at full stretch, court-side screens showing the call; a closed ballpark in cool light, a swing, a slide into second, a tag.'],
+  ['Arena and gridiron', 'A dunk over a late defender in a cooled arena; a quarterback\'s throw into a closing window and the hit, his helmet a softer modern design; a medical chief walking onto the field while the player sits up and argues with his eyes.'],
+  ['Stadium, dusk', 'A sixty-thousand-seat stadium with its roof closing like an eyelid, cooling vents along the stands, a striker in the tunnel bouncing a ball, the operations director arriving at the touchline, her wrist bare.'],
+  ['The wait', 'The same stadium with the roof closed, crowd singing then quiet, floods dipping and holding, a striker sitting on the tunnel floor, the operations director at the touchline watching her wrist, sweat on her collar, sunset through the roof seam.'],
+  ['The final', 'Floods flaring, a striker sprinting from the tunnel, kick-off, a cut inside and a low strike into the far corner from behind the goal, an offside line on the venue screen, the official\'s signal, the scorer looking for the passer, a woman at the touchline sitting down.'],
 ]));
 gap();
 kids.push(H2('Reject list'));
 for (const t of [
   'Any real badge, kit, livery, venue, broadcaster graphic or recognisable athlete.',
-  'Holograms, floating overlays, headsets on the crowd, robots, exoskeletons, levitating anything.',
-  'Impossible physics: wrong ball flight, wrong bounce, cars that corner without load, bodies without weight.',
-  'Cloned crowd faces, uniform crowd motion, empty stands at a decisive moment.',
-  'Text, numbers or scoreboards inside generated frames.',
-  'Speed ramps that break momentum; more than one slow beat per segment.',
+  'A line not in section 5; anyone speaking to camera; a narrator.',
+  'A collapse, a heat casualty, or a world where heat is no longer dangerous.',
+  'Holograms, floating overlays, robots, exoskeletons; the number generated inside a frame.',
+  'Impossible physics; cloned crowds; empty stands during the wait.',
+  'The climax cut short: the wait must hold for its full length.',
 ]) kids.push(B(t));
+
+kids.push(H1('11. Caption (draft)'));
+kids.push(P('Nine finals, one city, the hottest day of 2100. The operations director has one number on her wrist, and it decides whether people can play. Heat rules already stop tennis and cricket today; roofs already close for it. In 2100 the venues are built for it, the calls are instant, the medics pull players by data, and the final still has to wait for a number to fall. The game survived because we built for the heat and had the nerve to wait. THE GAME, REIMAGINED. #xhopememeprize', { i: true }));
 
 const doc = new Document({ numbering: { config: [{ reference: 'dots', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 420, hanging: 260 } } } }] }] },
   styles: { default: { document: { run: { font: 'Calibri', size: 21, color: INK } } } },
