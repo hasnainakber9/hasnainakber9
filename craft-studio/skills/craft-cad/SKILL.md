@@ -48,7 +48,41 @@ command listing are the ground truth when anything here disagrees.
 
 ## Recipes
 
-RECIPES_PLACEHOLDER
+All of these ran against CADCraft 0.14.0. Coordinates are drawing units with y up: millimetres
+with `--metric` (new drawings are imperial without it). `export CADCRAFT_CONFIG_DIR=` (empty) keeps
+the user's settings folder out of headless runs.
+
+```bash
+CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"; CAD=$(python3 "$CRAFT" ensure cadcraft)
+# A room plan from JSON commands: layers, closed walls with an inner offset, a label and a dimension.
+# "{last}" is the handle the previous --cmd returned. Set DIMSCALE (plot scale) before dimensioning.
+"$CAD" run --metric --cmd 'setvar {"name":"DIMSCALE","value":50}' \
+  --cmd 'layer.new {"name":"Walls","color":"red","lineweight":0.5,"current":true}' \
+  --cmd 'pline {"vertices":[[0,0],[6000,0],[6000,4000],[0,4000]],"closed":true}' \
+  --cmd 'offset {"handle":"{last}","distance":200,"side":[3000,2000]}' \
+  --cmd 'layer.new {"name":"Text","color":"white","current":true}' \
+  --cmd 'text {"at":[3000,2000],"text":"LIVING 24 m²","height":250,"justify":"MC"}' \
+  --cmd 'dimlinear {"p1":[0,0],"p2":[6000,0],"at":[3000,-800]}' \
+  --save room.dxf --export room.png
+# Plot to scale on a sheet (model space fits the sheet unless "fit":false)
+"$CAD" run room.dxf --cmd 'plot {"path":"room-A4.pdf","layout":"Model","paper":"A4","landscape":true,"fit":false,"scale":"1:50"}'
+# AutoCAD-style typed commands, or a .scr file (one input line at a time)
+"$CAD" run --metric --script 'rectang 0,0 200,120\ncircle 30,30 8\ncircle 170,90 8\ndimlinear 0,0 200,0 100,-15\nzoom e\n' \
+  --save plate.dxf --export plate.png
+"$CAD" run --metric --script-file plate.scr --save plate.dwg --export plate.pdf
+# Open, inspect and convert DWG/DXF
+"$CAD" info drawing.dwg --compact                      # extents, layers, entity counts, units
+"$CAD" convert drawing.dwg drawing.pdf                  # also .svg, .png, .dxf (DWG -> DXF)
+"$CAD" run drawing.dxf --cmd 'saveas {"path":"drawing-2013.dwg","version":2013}'
+# Query: room labels, closed shapes with area/perimeter, entities by type
+"$CAD" run plan.dwg --cmd 'texts {"contains":"bed"}' --cmd 'shapes {"layer":"Walls"}'
+```
+
+Check every drawing by looking at the `--export` PNG (model space) and the plotted PDF (render a
+page with PdfCraft: `pdfcraft-cli render room-A4.pdf --page 1 --dpi 80 --out plot.png`). Text
+height and DIMSCALE must suit the plot scale (2.5 mm text at 1:50 is 125 units). Keep a DXF master
+next to any DWG, since DWG output goes through a DXF-to-DWG bridge; reopen it to verify. Layouts
+(paper space with viewports), hatches, blocks, LISP and `publish` are in `references/cadcraft.md`.
 
 ## Limits
 

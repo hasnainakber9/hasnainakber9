@@ -130,7 +130,8 @@ echo '[{"command":"inspect.code","params":{"id":2,"language":"react"}}]' > code.
 "$CLI" run code.json --in app.figcraft | python3 -c 'import sys,json;print(json.loads(sys.stdin.readline())["result"]["code"])'
 # 8. One frame repeated per data row, in two sizes, each copy exported (id = the frame from info --json; it needs auto layout and a layer named "Headline")
 echo '[{"command":"data.fill","params":{"id":2,"dir":"out/carousel","rows":[{"name":"01","Headline":"Ship in 7 days"},{"name":"02","Headline":{"text":"Loads in under a second","fit":{"maxLines":2}}}],"formats":[{"name":"feed","width":1080,"height":1350},{"name":"story","width":1080,"height":1920}]}}]' > fill.json
-"$CLI" run fill.json --in post.figcraft --out post.figcraft   # result.missing lists keys that match no layer
+mkdir -p out/carousel   # data.fill does not create "dir"; without it every export lands in result.errors
+"$CLI" run fill.json --in post.figcraft --out post.figcraft   # result: {ids, files, missing (keys that match no layer), errors?}
 # 9. Convert imports; confine a run to two folders
 "$CLI" info client.fig && "$CLI" convert client.fig client.figcraft && "$CLI" convert logo.svg logo.figcraft
 "$CLI" render in/doc.figcraft -o out/ok.png --automation-read-root in --automation-write-root out

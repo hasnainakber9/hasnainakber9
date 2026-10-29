@@ -64,7 +64,63 @@ Subcommands, command ids, script formats and recipes: `references/wordcraft.md`,
 
 ## Recipes
 
-RECIPES_PLACEHOLDER
+All of these ran against WordCraft 0.12.0, GridCraft 0.13.0, DeckCraft 0.12.0 and PdfCraft 0.15.0.
+
+```bash
+CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"
+WC=$(python3 "$CRAFT" ensure wordcraft); export WORDCRAFT_REGION=en-GB   # A4; en-US for Letter
+"$WC" convert draft.md report.docx && "$WC" convert report.docx report.pdf --update-fields   # Markdown headings, lists, tables become styles
+"$WC" text in.docx; "$WC" info in.docx; "$WC" inspect in.docx         # text, summary, structure (JSON)
+"$WC" render report.docx p2.png --page 2 --scale 1.5                    # look at a page
+"$WC" run --file template.docx --cmd 'edit.replaceAll={"text":"{{NAME}}","with":"Ada Lovelace"}' --print --save offer.docx
+"$WC" run --file contract.docx --author "Claude (review)" --cmd 'review.trackChanges={"value":true}' \
+  --cmd 'select.text={"text":"thirty (30) days"}' --cmd 'text.insert={"text":"forty-five (45) days"}' \
+  --cmd 'select.text={"text":"Governing Law"}' --cmd 'review.newComment={"text":"Confirm the jurisdiction."}' \
+  --save reviewed.docx && "$WC" convert reviewed.docx redline.pdf --markup
+
+GC=$(python3 "$CRAFT" ensure gridcraft)
+"$GC" info book.xlsx; "$GC" cat book.xlsx --sheet Sales --range A1:F20  # add --formulas or --csv as needed
+"$GC" run --in book.xlsx --quiet \
+  --cmd 'range.setValues={"range":"A1","values":[["Item","Cost"],["Rent",1200],["Food",400],["Total","=SUM(B2:B3)"]]}' \
+  --cmd 'home.bold={"range":"A1:B1"}' --cmd 'home.numberFormat={"range":"B2:B4","format":"Currency"}' \
+  --cmd 'insert.chart={"range":"A1:B3","type":"column","title":"Costs","at":"D2"}' --out book.xlsx --print A1:B4
+"$GC" eval '=AVERAGEIFS(D:D,B:B,"North")' --in book.xlsx --sheet Sales  # evaluate without changing anything
+"$GC" convert data.csv data.xlsx; "$GC" convert book.xlsx sheet.pdf --sheet Summary
+
+DK=$(python3 "$CRAFT" ensure deckcraft)
+"$DK" run --cmd 'file.new={"theme":"Harbor","blank":true}' \
+  --cmd 'slide.new={"layout":"title","title":"Q3 results","body":"Finance review"}' \
+  --cmd 'slide.new={"layout":"titleAndContent","title":"Highlights","body":"Revenue up 12%\n\tRenewals drove it\nCosts flat"}' \
+  --cmd 'slide.new={"layout":"titleOnly","title":"Revenue by region"}' \
+  --cmd 'insert.chart={"type":"column","rect":[80,130,800,380],"categories":["NA","EU","APAC"],"series":[{"name":"Q3","values":[42,31,18]}]}' \
+  --cmd 'chart.options={"title":"Revenue (USD m)","legend":null}' --save q3.pptx
+"$DK" render q3.pptx --all --scale 1 shots/ && "$DK" convert q3.pptx q3.pdf      # look, then export
+"$DK" run --in deck.pptx --print --cmd 'text.replace={"text":"2025","with":"2026"}' --save deck.pptx
+"$DK" convert outline.md outline.pptx                                     # Markdown outline to slides
+
+PF=$(python3 "$CRAFT" ensure pdfcraft)
+"$PF" info in.pdf; "$PF" text in.pdf --page 3; "$PF" render in.pdf --page 1 --dpi 110 --out p1.png
+"$PF" combine a.pdf b.pdf --out ab.pdf; "$PF" extract in.pdf --pages 1,3,5-8 --out sel.pdf
+"$PF" split in.pdf --every 10 --out-dir parts/
+"$PF" edit in.pdf --rotate 1,2:90 --delete 5 --move 4:1 --title "Q3 report" --out out.pdf
+# Multi-step work (comments, forms, redaction, OCR, passwords) is a JSON script of tools in one session:
+cat > redact.json <<'EOF'
+[{"tool":"doc_open","args":{"path":"in.pdf"}},
+ {"tool":"redact_mark","args":{"doc":1,"pattern":"email"}},
+ {"tool":"redact_apply","args":{"doc":1}},
+ {"tool":"doc_save","args":{"doc":1,"path":"redacted.pdf"}}]
+EOF
+"$PF" run --script redact.json --root . --report && "$PF" audit redacted.pdf && "$PF" text redacted.pdf | grep -c @
+```
+
+`"$PF" tools` lists all 181 PdfCraft tools with JSON Schemas (forms: `form_fields`/`form_fill`;
+comments: `comment_add`; OCR: `ocr_recognize`, which needs the models described in the reference).
+
+Gotchas that bite: WordCraft's `run` writes only the first `--save` (use a script's `"save"` list for
+DOCX and PDF together); GridCraft's CSV output holds displayed values and its PDF export blanks
+non-Latin text (deliver XLSX, or build the PDF through WordCraft); DeckCraft slide indices are
+0-based and shape ids repeat across slides (always `slide.go` first); PdfCraft pages are 1-based,
+`redact_mark` with no match stops the script, and a single `run TOOL` call has no open document.
 
 ## Rules
 
