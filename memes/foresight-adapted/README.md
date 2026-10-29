@@ -36,3 +36,12 @@ Every meme keeps its original template. The old captions, Reddit logo bubbles an
 - Carter Center guinea worm case counts, 2024
 - Our World in Data, life expectancy
 - World Bank Poverty and Inequality Platform
+
+## Women's health set (20–23)
+
+| # | File | Template | Caption | Fact behind it |
+|---|---|---|---|---|
+| 20 | 20_hpv_look | Disappointed look | How cervical cancer looks at girls who got the HPV jab at 12 | Public Health Scotland (JNCI, Jan 2024): no cervical cancer cases found in women fully vaccinated at 12–13 since the programme began in 2008 |
+| 21 | 21_uncanny_nerve_map | Mr Incredible uncanny | The nerves of the penis were mapped in detail by 1998 / The clitoris got its first full nerve map in 2026 | Amsterdam UMC synchrotron study, bioRxiv preprint, 20 Mar 2026 (two donors; not yet peer reviewed) |
+| 22 | 22_clown_womens_health | Clown applying makeup | Medicine explaining women's health: wandering womb (Ancient Greece); no races over 200 m (Olympics 1928–1960); "just hysteria" (DSM until 1980); women left out of early drug trials (FDA 1977–1993) | Plato's *Timaeus*; IAAF ban after the 1928 800 m; DSM-III dropped hysterical neurosis in 1980; FDA guideline reversed July 1993 |
+| 23 | 23_hulk_speculum | Crying Hulk | Guys, cervical screening can be done at home now. No speculum. / Hoohas have been bracing for that cold metal duck-bill since the 1800s. | FDA approved the Teal Wand at-home self-collection kit, 9 May 2025; Australia has offered self-collection since 2022 |
