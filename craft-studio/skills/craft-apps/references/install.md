@@ -21,9 +21,10 @@ tagged `v<version>` (for example `v0.17.0`) and carries a `SHA256SUMS.txt` for a
 | Web | `<app>-web-<ver>.zip` | no CLI; the whole app as a static WebAssembly site |
 
 Every archive unpacks into one top-level folder named like the archive. The helper finds the
-latest release through the GitHub API, or through the release feed the ArtCraft Launcher reads
+latest release through the GitHub API, the release feed the ArtCraft Launcher reads
 (`https://api.storyteller.ai/v1/craft_apps/release_info`, every file with its SHA-256; it does not
-list FigCraft yet), or through the releases page. It picks the right archive for the OS and CPU,
+list FigCraft yet), the releases page, or the newest `vX.Y.Z` tag from `git ls-remote` (for
+networks that block GitHub's API but not git or downloads). It picks the right archive for the OS and CPU,
 checks it against the published SHA-256 (the API's asset digest, the feed, or `SHA256SUMS.txt`),
 extracts only the CLI into `~/.craft-studio/bin`, and records what it installed in
 `~/.craft-studio/installed.json`. It refuses a file it cannot verify unless you pass `--no-verify`.
@@ -70,8 +71,10 @@ cargo build --release --locked -p <app>-cli      # binary: target/release/<app>-
   libheif), `filmcraft-cli --features whisper` (speech-to-text captions). Build them by hand with
   `cargo build --release --locked -p <app>-cli --features <name>` in `~/.craft-studio/src/<app>`
   with `CARGO_TARGET_DIR=~/.craft-studio/target`, then copy the binary into `~/.craft-studio/bin`.
-- Japanese UI and Type fonts come from `storytold/craft-fonts`; point `CRAFT_FONTS_DIR` at a
-  clone of it when building. Without it the apps use the system's CJK fonts.
+- Fonts: release builds embed `storytold/craft-fonts` (CJK, Arabic script including Urdu, Hebrew,
+  Thai, Devanagari, and theme fonts). `ensure` fetches the craft-fonts commit pinned in the app's
+  release workflow into `~/.craft-studio/src/craft-fonts-<commit>` and sets `CRAFT_FONTS_DIR`, so
+  source builds match. By hand: clone craft-fonts at that commit and export `CRAFT_FONTS_DIR`.
 - Disk: the shared build cache grows by roughly 1-3 GB per app. `python3 "$CRAFT" clean --target`
   frees it once the binaries are installed; `clean --src` removes the checkouts.
 

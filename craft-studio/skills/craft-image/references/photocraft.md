@@ -162,7 +162,9 @@ EOF
 - In `run`, add `--cmd document.inspect` last. Its JSON line has the full tree: `kind` (Pixel/Type/Adjustment…), `bounds`, `hasMask`, `effects.items[].kind`, `text.text`, `smartFilters`, `selectionBounds`.
 - To look at it, render a flat PNG preview and open it: `"$CLI" run work.psd --cmd image.imageSize --params '{"width":1024}' --out /tmp/preview.png`. For files that are already small, `"$CLI" convert work.psd /tmp/preview.png`.
 - Spot-check colours with `--cmd document.pixel --params '{"x":10,"y":10}'`, which returns floats 0..1.
-- Stderr `warning:` lines and the `warnings` arrays are the lossy-export, missing-font and import notes. Read them before you hand the file over.
+- Stderr `warning:` lines and the `warnings` arrays carry the lossy-export, missing-font and import notes. Read them before you hand the file over.
+  - `N layer(s) flattened; layers, masks and blend modes are not kept` and `lossy compression` are normal for PNG/JPEG output.
+  - The PDF flattening warning is normal too.
 
 ## MCP server
 - Headless: `"$CLI" mcp --automation-read-root /abs/in --automation-write-root /abs/out`
@@ -175,7 +177,7 @@ EOF
 - Tools:
   - Documents: `session_list`, `doc_open`, `doc_new`, `doc_place`, `doc_replace_smart_object`, `doc_save`, `doc_export`, `doc_export_layers`, `doc_export_data_sets`, `doc_import_data_sets`, `doc_inspect`, `doc_select`, `doc_close` (the last two are headless only).
   - Previews and commands: `doc_render_preview`/`render_preview` (`max_side` ≤ 2048, returns a PNG image), `command_list {filter,enabled_only}`, `command_run {id,params,wait}`, `command_batch {steps,stop_on_error}` (≤ 256 steps, no rollback), `jobs_list`, `jobs_cancel`.
-  - Bridge only: `ui_inspect`, `ui_screenshot`, `ui_pointer`, `ui_menu_invoke`, `ui_set`, `control_call`.
+  - Bridge only: `ui_inspect`, `ui_screenshot`, `ui_pointer`, `ui_menu_invoke`, `ui_set`, `control_call`. They are listed in headless mode too (26 tools in all) but return a tool error there.
   - Resources: `photocraft://document` and `photocraft://commands`.
 - Over MCP and `serve`, every `file.*` command that takes a path (`file.open`, `file.saveAs`, `file.placeEmbedded`, `file.export.layersToFiles`…) is refused. Use the `doc_*` tools. `doc_save` with no `path` writes back only to a PSD, PSB or `.pcraft` file.
 - To try something safely, run `command_run image.duplicate {}` first and experiment on the copy. Undo is `command_run edit.undo`, once per history entry.
@@ -190,6 +192,6 @@ Needed only to watch or drive the visible desktop UI: pointer input, menus and w
 - The quality scale differs by place. CLI `--quality` is 1..100. Engine params (`file.automate.batch`, `file.scripts.imageProcessor`, `file.saveACopy`, MCP `doc_export_layers`) use Photoshop's 0..12.
 - A flag value that starts with `-` needs `=`, as in `--out=-x.png`. `--params` must be a JSON object and must follow a `--cmd`.
 - `batch` is not recursive. It writes `<stem>.<ext>`, so `a.png` and `a.tif` collide: the second fails and the exit status is 1. An `--out` equal to `--in` is refused without `--in-place`.
-- Adjustments and filters act on the active layer, which is the top one after a new layer is added. Flatten first, or select with `layer.select {"name":…}`.
+- Adjustments and filters act on the active layer, which is the top one after a new layer is added. After `layer.newAdjustmentLayer.*` or `type.create`, a filter fails with `filters need a pixel layer (active layer is an Adjustment layer)` (or `a Type layer`). Filter first, flatten, or run `layer.select {"name":"Background"}` (`"Layer 0"` for a PNG with alpha).
 - An RGBA PNG opens as `Layer 0`, not a locked Background. A GIF opens in Indexed mode; convert with `image.mode.rgb` before filtering.
 - `info`, `run` and `batch` need UTF-8 paths; `convert` accepts any path.

@@ -36,11 +36,11 @@ python3 "$CRAFT" remove --all; python3 "$CRAFT" clean   # uninstall; free the bu
 
 `ensure` looks in this order: `$<APP>_CLI` (e.g. `PHOTOCRAFT_CLI`), `~/.craft-studio/bin`, `PATH`
 (the apps' .deb/.rpm packages put `<app>-cli` in `/usr/bin`), the usual install folders, then
-downloads the latest release for this OS and CPU (SHA-256 checked), and if downloads are blocked
-builds it from source (`git` + `cargo`). A download takes seconds; a first source build takes
-about 5-25 minutes per app (later apps reuse the shared build cache). Run a source build with a
-long timeout or in the background and keep working on the plan meanwhile. `$CRAFT_HOME` moves the
-install folder (default `~/.craft-studio`).
+downloads the latest release for this OS and CPU (SHA-256 checked; this works in claude.ai chat,
+Claude Code cloud sessions and on the user's computer and takes seconds), and only if no release
+can be fetched builds the release tag from source (`git` + `cargo`, about 2-10 minutes per app).
+Run a source build in the background and keep working on the plan meanwhile. `$CRAFT_HOME` moves
+the install folder (default `~/.craft-studio`).
 
 ## Route the job
 
@@ -73,7 +73,9 @@ is the better tool.
   `<app>-cli commands` (or `tools`) are the ground truth.
 - **MCP server.** For a long interactive session on the user's own machine (many small edits,
   reading state between steps): `python3 "$CRAFT" mcp <app> --root <project folder> --register`,
-  then `/mcp` or a restart in Claude Code picks it up. Always confine it to a folder with `--root`.
+  then `/mcp` or a restart in Claude Code picks it up. `--root` confines the server to that folder
+  where the app supports it; GridCraft, CADCraft, FilmCraft and LightCraft cannot be confined, so
+  say so before registering one of those.
 - **The live desktop app.** When the user wants to watch, or a feature only exists in the UI:
   start the app with `--control <port>` and drive it through the CLI's bridge or attach mode.
   `references/mcp.md` has the exact flags per app.

@@ -54,9 +54,9 @@ DC=$(python3 "$CRAFT" ensure designcraft)
 "$DC" run --in brochure.idml --scale 1 --all-pages pages/ --export brochure.pdf --export brochure.designcraft
 "$DC" run --in brochure.idml --cmd preflight.run           # overset text, missing fonts and links after the reflow
 ```
-- DesignCraft opens `.indd`/`.indt` **directly** too (`file.open` / `file.openIdml` convert them in memory with this crate, and the conversion warnings come back in `warnings`), so `"$DC" run --in brochure.indd ...` works without the `indd` binary. Use `indd` when you need the `.idml` on disk, an audit, or a bulk run.
+- DesignCraft opens `.indd`/`.indt` **directly** too (`file.open` / `file.openIdml` convert them in memory with this crate), so `"$DC" run --in brochure.indd ...` works without the `indd` binary. `run --in` does not print the conversion warnings; `echo '{"command":"file.open","params":{"path":"/abs/brochure.indd"}}' | "$DC" script -` shows them in `warnings`. Use `indd` when you need the `.idml` on disk, an audit, or a bulk run.
 - Keep the IDML next to the original `Links/` folder and any `Document Fonts/` folder. DesignCraft reads linked images next to the file or from `Links/`, and loads document fonts first.
-- Expect reflow. DesignCraft's composer is not InDesign's, so line breaks, overset and page count can differ. Render the pages and look at them before handing anything over.
+- Expect reflow. DesignCraft's composer is not InDesign's, and fonts the machine lacks are substituted, so line breaks, overset and page count can differ. A test with an open sample flyer (InDesign fonts Birch Std and Mesquite Std missing) rendered recognisably but showed 28 overset frames in `preflight.run`. Render the pages and look at them before handing anything over.
 
 ## Gotchas
 - `convert` creates the output file before converting, so a failed conversion can leave a partial `.idml` behind. Delete it, or check the exit code before using it.

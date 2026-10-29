@@ -345,13 +345,19 @@ def resolve_release(app: App, version: Optional[str]) -> Tuple[str, Optional[dic
         errors.append(f"release feed: {e!r}")
     try:
         final = http_final_url(f"{GITHUB_WEB}/{ORG}/{app.repo_name}/releases/latest")
+        m = re.search(r"/releases/tag/([^/?#]+)", final)
+        if m:
+            return m.group(1), None
+        errors.append("releases page: no release")
     except (urllib.error.URLError, OSError) as e:
         errors.append(f"releases page: {e}")
-        raise InstallError("no release information reachable from here (" + "; ".join(errors) + ")")
-    m = re.search(r"/releases/tag/([^/?#]+)", final)
-    if not m:
-        raise InstallError(f"{app.title} has no published release yet")
-    return m.group(1), None
+    # Some networks (Claude Code cloud sessions) block GitHub's API and pages but let git and the
+    # release downloads through: take the newest tag from git and try its files.
+    git = shutil.which("git")
+    tag = latest_tag(app, git, dict(os.environ, GIT_TERMINAL_PROMPT="0")) if git else None
+    if tag:
+        return tag, None
+    raise InstallError("no release information reachable from here (" + "; ".join(errors) + ")")
 
 
 def pick_member(names_sizes: List[Tuple[str, int]], member_name: str) -> Optional[str]:

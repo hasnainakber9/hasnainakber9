@@ -55,6 +55,7 @@ The CLI has a hand-written parser: an unknown option is an error, and `--help` p
 | `denoise-serve` | `denoise-serve [--model ID] [--models DIR] [--listen ADDR] [--token-env VAR] [--run-on auto\|gpu\|cpu] [--max-connections N]` | Serve AI Denoise tiles to other machines (plain TCP) |
 
 ## Recipes
+All of these ran cleanly against the 0.15.0 release binary, using synthetic DNG and PNG inputs.
 ```bash
 CLI=$(python3 "$CRAFT" ensure lightcraft)
 
@@ -67,7 +68,7 @@ CLI=$(python3 "$CRAFT" ensure lightcraft)
 #    Options go BEFORE the first command. A word without "=" starts the next command.
 "$CLI" run --import /abs/IMG_0412.NEF develop.auto develop.wb mode=daylight \
   develop.set 'values={"light.exposure":0.3,"color.vibrance":15}' \
-  app.export path=/abs/out/IMG_0412.jpg longEdge=0 quality=90 conflict=overwrite
+  app.export path=/abs/out/IMG_0412.jpg longEdge=0 quality=90
 
 # 3. A look from a file: a partial settings JSON, an .lcpreset or a Lightroom XMP preset
 echo '{"light":{"contrast":14,"shadows":12},"color":{"vibrance":18},"effects":{"clarity":12}}' > look.json
@@ -76,7 +77,7 @@ echo '{"light":{"contrast":14,"shadows":12},"color":{"vibrance":18},"effects":{"
 # 4. A preset on a whole folder, then batch export with sizing, sharpening and a watermark.
 #    --import selects every imported photo; preset.apply and app.export then act on the selection.
 "$CLI" run --import /abs/shoot preset.apply id=lc.warm-glow \
-  app.export dir=/abs/delivery format=jpeg longEdge=2048 quality=85 sharpen=screen metadata=copyright \
+  app.export dir=/abs/delivery format=jpeg longEdge=2048 quality=85 sharpen=screen metadata=copyright conflict=overwrite \
   naming='{name}-web' 'watermark={"text":"© 2026 Jane Doe","size":0.03,"opacity":0.6,"anchor":"bottomRight"}'
 # Built-in preset ids are lc.<slug>: warm-glow cool-morning teal-orange vivid-pop faded-matte
 # bw-high-contrast bw-sepia crisp-landscape golden-hour blue-hour moody cinematic … (`presets.list`)
@@ -161,7 +162,7 @@ echo '{"light":{"contrast":14,"shadows":12},"color":{"vibrance":18},"effects":{"
   - Positional files and folders are imported at start. **They are not a sandbox.**
   - There is no folder-sandboxing flag. The `export`, `render_photo` and `screenshot` paths can write anywhere the user can, except over a library original or its XMP sidecar.
   - Without `--library` the session is in memory only.
-  - `--compact` drops the generated `cmd_<id>` tools (one per command, e.g. `cmd_photo_rate`); `run_command` still reaches every command.
+  - In 0.15.0 the full list is 393 tools: 17 helpers plus 376 generated `cmd_<id>` tools, one per command (e.g. `cmd_photo_rate`). `--compact` drops the generated ones, leaving 17; `run_command` still reaches every command.
 - Attach to the running app: `"$CLI" mcp --connect 127.0.0.1:7980` (bare `--connect` means that address; `--connect 7980` works too).
   - The server starts even if the app is not up yet, and connects on the first call.
   - FILES, `--demo` and `--library` are refused in this mode.
@@ -178,10 +179,12 @@ Use it when the user wants to see edits in their open LightCraft, or works on a 
 ## Gotchas
 - `app.export` in `run` or MCP defaults to a **3000 px long edge**; `render` defaults to full size. Pass `longEdge=0` for full resolution.
 - The export format is `format=` if given. Otherwise it is `path`'s extension; with `dir=` it is JPEG; and a headless `path` with an unknown extension gets PNG.
-- The default `conflict=unique` writes `name-2.jpg` on a re-run. Pass `conflict=overwrite` to replace earlier outputs. Nothing ever overwrites an original or its sidecar; `render IN -o IN` is refused.
+- With `dir=`, the default `conflict=unique` writes `name-2.jpg` on a re-run; pass `conflict=overwrite` to replace earlier outputs. An explicit `path=` is simply overwritten.
+- Nothing ever overwrites an original or its sidecar: `render IN -o IN` and an export onto an original are refused with "LightCraft never writes over an original".
 - `develop.set`, `develop.auto`, `develop.merge` and `crop.set` act on the **active photo only**. For many photos pass `'ids=[…]'`, or use `preset.apply`, which acts on the selection.
 - `run` without `--library` is in memory: export in the same invocation, or the edits are lost.
 - `run` flags must come before the first command, and a bare word (no `=`) starts a new command. So `captions=true` is a param, but `true` alone would be a command. Quote `[…]` and `{…}` for zsh.
 - White balance: `wb.temp`/`wb.tint` through `develop.set` are Kelvin and tint on raws with colour matrices. Elsewhere they are relative, with 6500/0 meaning as shot. A `wb` object in a settings JSON is relative unless it includes `"scale":"kelvin"`.
 - `ui.*` methods other than `ui.render` need `--connect` to a running app. `snapshot` runs on the CPU, and `LIGHTCRAFT_GPU=1` does not change that.
+- On a machine without a usable GPU, every run prints `WARN lightcraft_gpu: gpu: rendering on the CPU …` on stderr. It is harmless, and `LIGHTCRAFT_GPU=0` silences it.
 - Library writes that hit a full disk return `saved in memory but not written to disk`. Treat that as a failure until a later save succeeds.

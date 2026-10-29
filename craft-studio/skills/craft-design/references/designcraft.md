@@ -162,6 +162,7 @@ There are 540+ engine commands, plus UI-only commands that run only in the app. 
 - Pixels: `"$CLI" run --in doc.designcraft --scale 1 --all-pages /tmp/pages/`, then open the `page-NNN.png` files with Read. Use `--page N --scale 2 --export /tmp/p.png` for a close-up.
 - Structure: `"$CLI" run --in doc.designcraft --cmd document.inspect` lists pages, spreads, items (ids, bounds, fill, story) and stories with `overset`, styles, swatches and the selection.
 - Problems: `--cmd preflight.run` reports overset text, missing fonts and links, low resolution, RGB colour, missing glyphs and empty text; `--cmd font.list` shows missing fonts first. Do not hand over a document with overset text.
+- Import warnings: `run --in` opens silently. `echo 'file.open {"path": "/abs/in.indd"}' | "$CLI" script -` prints `warnings` (font files skipped, InDesign conversion notes, missing package parts).
 - PDF: `"$CLI" validate-pdf out.pdf`. MCP: `render_page {page, scale}` returns the PNG inline; `get_story {story}` shows overset.
 
 ## MCP server
