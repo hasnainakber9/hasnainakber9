@@ -92,7 +92,7 @@ G=$(python3 "$CRAFT" ensure gridcraft)
   --cmd 'insert.chart={"range":"A1:B3","type":"column","title":"Monthly costs","at":"E2"}' \
   --cmd 'home.conditionalFormat={"range":"B2:B3","rule":{"type":"cellIs","operator":"greaterThan","value":"1000","preset":"lightRedFill"}}' \
   --out book.xlsx && "$G" info book.xlsx      # -> chart ColumnClustered "Monthly costs" at E2, 1 series
-# Excel table: --cmd 'insert.table={"range":"A1:C4","style":"TableStyleMedium2","name":"Costs"}'
+# Excel table: --cmd 'insert.table={"range":"A1:C4","style":"TableStyleMedium2","name":"Costs","header":true}'
 
 # 6. Sort (keys by column letter) and AutoFilter (select inside the data first)
 "$G" run --in sales.xlsx --quiet \
@@ -201,7 +201,7 @@ Use the app only when the user wants changes in their open window, a screenshot,
 - `range.setValues` and `write_range` parse strings like typed input using en-US rules: `"05.04.2026"` becomes the date 5/4/2026 (May 4), `"2.500"` becomes 2.5 and `"00123"` becomes 123. Pass `"parse":false` to keep the strings as text.
 - Formulas must use English function names and `,` as the argument separator in every API, whatever the UI language.
 - `.csv`, `.tsv` and `.html` outputs, and `convert ... .pdf`, contain only the active sheet, meaning the one active when the file was saved. Choose it with `--sheet`, or with `sheet.activate` in `run`. CSV gets the displayed text, so set `home.numberFormat {"format":"General"}` first if you need raw numbers.
-- `home.formatAsTable` without `"header":true` guesses whether the first row is a header, as Excel does. If any header cell is blank, it treats the row as data, inserts a `Column1, Column2...` row and shifts the data down one row. Pass `header:true`.
+- `insert.table` and `home.formatAsTable` without `"header":true` guess whether the first row is a header, as Excel does. This happens even though the params doc says the default is true. If any header cell is blank, the row is treated as data: a `Column1, Column2...` row is inserted and the data shifts down one row. Pass `header:true`.
 - A table style (`insert.table`, `home.formatAsTable`) gives the header row white text. If you also fill the header manually with a light colour, the header becomes unreadable. Use one or the other.
 - A chart or range wider than the page spills onto more PDF pages. Use `pageLayout.pageSetup {"orientation":"landscape","fitToPage":true,"fitWidth":1,"fitHeight":0}`.
 - `--help` works only at the top level. `run --help` fails with `unknown option --help`.
