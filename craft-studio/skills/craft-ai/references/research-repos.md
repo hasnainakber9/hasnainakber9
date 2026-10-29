@@ -14,7 +14,7 @@ licence file, so treat the code as all rights reserved.
 | FineTrainers-Conditioning | Video-model training | 2025-01 (branches 2025-02) | Apache-2.0 | Fork of finetrainers; WIP branches |
 | cloud-worker | Video-model serving | 2026-08 | none | Recent notes for MiniMax H3 on ComfyUI |
 | storyteller-ml | ML monorepo | 2025-02 | none at root | Vendored copies; use upstreams |
-| vits-finetuning | TTS training | 2023-06 | MIT | Stale; still runs on Colab-class GPUs |
+| vits-finetuning | TTS training | 2023-06 | MIT | Stale; sized for Colab-class GPUs |
 | torchscript-models | TorchScript export notes | 2020-11 | none | Stale; notes only |
 | fakeyou-recast | Real-time voice conversion app | 2023-03 | none | Stale; external model links |
 | realtime-voice-conversion | Voice conversion | 2020-09 | none | Archived |
@@ -22,7 +22,7 @@ licence file, so treat the code as all rights reserved.
 | cloudcam, CloudCamPlugin, point-generator | Point clouds to Unreal | 2021-2022 | none | WIP demos |
 | k4a-sys-temp | Azure Kinect Rust bindings | 2021-01 | MIT-style | README: "Do not use." |
 | bevy-mocap | Facial mocap in Bevy | 2024-02 | none | Bevy 0.12 era |
-| xsens-packet-send, motion-capture-data | Xsens mocap | 2022 | none | Niche, still works offline |
+| xsens-packet-send, motion-capture-data | Xsens mocap | 2022 | none | Niche; needs Xsens data and Unreal |
 | UE4-OSC | Unreal plugin | 2020-10 | MIT | Archived fork |
 | RuntimeAudioImporter, RuntimeFilesDownloader | Unreal plugins | 2021 | MIT | Old forks |
 | UnrealZeroMQ, EventCenterPlugin, ActorSpawningPlugin | Unreal plugins | 2021 | none | Fork / WIP / stub |
