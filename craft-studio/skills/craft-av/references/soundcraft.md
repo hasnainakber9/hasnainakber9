@@ -137,7 +137,7 @@ $SC script steps.txt --in "$S" --save "$S" --in-place --keep-going
 | `edit.separate` / `edit.trim_clip` | `{"tracks":["voice"],"at":{"seconds":30}}` / `{"clip":5,"start":{"seconds":1},"end":{"seconds":20}}` |
 | `edit.move_clips` | `{"clips":[5],"to":{"seconds":4}}` |
 | `edit.fades_create` | `{"clip":5,"side":"out","length":48000,"shape":"linear\|equal power\|s-curve\|exponential\|logarithmic"}` |
-| `edit.strip_silence_preview` | `{"threshold_db":-48,"tracks":["voice"]}` → ranges it would keep |
+| `edit.strip_silence_preview` | `{"threshold_db":-48,"tracks":["voice"]}` → the padded ranges `edit.strip_silence` would find |
 | `clip.gain` | `{"clips":[5],"db":-3}` or `{"clips":[5],"delta_db":1.5}` |
 | `audiosuite.process` | `{"process":"normalize","params":{"target_db":-1},"clips":[5]}` (also `reverse`, `gain`, `time_stretch`, `pitch_shift`, plugin ids) |
 | `mix.volume` / `mix.pan` / `mix.mute` / `mix.solo` | `{"track":"music","db":-12}` / `{"track":"VO","pan":-0.2}` / `{"tracks":["SFX"],"value":true}` |
@@ -153,7 +153,7 @@ $SC script steps.txt --in "$S" --save "$S" --in-place --keep-going
 ## Check your work
 - Session JSON: `$SC run --in "$S" --inspect --compact` (tracks with `volume_db`, `pan`, `inserts` (slot, plugin, bypass), `sends`, `clips`, `automation`; `markers`, `tempo`, `sources[].loaded`).
 - Bounce result: `peak_db`, `true_peak_db`, `lufs` (integrated), `seconds`. Typical targets: -14 LUFS streaming/social, -16 podcast, -23 broadcast; true peak ≤ -1 dBTP.
-- File: `$SC info pod_mix.wav` (rate, channels, depth, length); `session.audio_health` for missing/mismatched audio; `edit.strip_silence_preview` before stripping.
+- File: `$SC info pod_mix.wav` → `format`, `sample_format`, `sample_rate`, `channels`, `frames`, `seconds`, `bwf`; `session.audio_health` for missing/mismatched audio; `edit.strip_silence_preview` before stripping.
 - Listening is not possible headless: compare levels numerically, or bounce short excerpts (`--start/--end`) around edits.
 
 ## MCP server

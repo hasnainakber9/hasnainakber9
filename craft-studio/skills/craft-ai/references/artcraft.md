@@ -27,11 +27,11 @@ builds are signed by "Learning Machines LLC".
 | 2D Canvas | Sketch, lay out references, mask, inpaint; layers, background removal, drawing |
 | 3D Editor | Place subjects and cameras, set camera height and focal length, kitbash 3D asset kits to block a shot, layer backdrops/props in depth |
 | Character posing, identity transfer | Pose a mannequin and camera; the mannequin guides pose and placement of your character; `@Character` references |
-| Image to location / 3D world | World Labs Marble Gaussian-splat worlds; several shots in one consistent room |
+| Image to location, image to 3D world | Put virtual actors in one consistent environment and plan several shots in it; Marble (World Labs) and TripoSplat make Gaussian-splat worlds |
 | Image to 3D mesh | Hunyuan 3D, Tripo3D, Meshy, Rodin; position and frame the object |
 | Image to video | Start/end keyframes, reference images/video/audio where the model allows |
 | Music and sound | Suno (music, remix, sounds, samples), Seed Audio |
-| Other pages | Angles (re-angle a shot), Storyboard, Moodboard, Background change, Video editor, Frame extractor, image/video watermark removers (only for media the user has rights to) |
+| Other pages | Angles (camera-angle edits), Storyboard, Moodboard, Background change, Video editor, Frame extractor, image/video watermark removers (only for media the user has rights to) |
 
 ## Models, providers, accounts
 
@@ -45,8 +45,9 @@ builds are signed by "Learning Machines LLC".
   (which prices even Midjourney 7 and Grok Imagine in credits) are authoritative.
 - **The user's own accounts (desktop).** Grok (Imagine, Video), Midjourney, Sora (Sora 1/2, GPT
   Image 1) and World Labs (Marble): the user signs in inside ArtCraft's login window and ArtCraft
-  keeps that session (cookies or bearer token) in `~/Artcraft/credentials`, shared by both desktop
-  front ends. fal takes the user's own fal API key (image jobs). The pricing page: "You can bring
+  keeps that session (cookies or a bearer token). fal takes the user's own fal API key (image
+  jobs). Midjourney and fal credentials sit in `~/Artcraft/credentials`, shared by both desktop
+  front ends. These jobs bill the user's own provider account. The pricing page: "You can bring
   your own compute and third-party subscriptions." Planned: Kling, Google, Runway, Luma, and
   aggregator subscriptions (OpenArt, Freepik).
 - **Caveat.** The Grok/Midjourney/Sora/World Labs routes drive consumer web accounts (the code has
@@ -121,7 +122,7 @@ create-video|create-audio|library`, `ARTCRAFT_OPEN=settings|midjourney-login` an
 |---|---|---|---|
 | Omni API `/v1/omni_api/*` | API key | Image and video generation, uploads (image/video/audio), job status | Live, documented; the route to use |
 | Omni Gen `/v1/omni_gen/*` | Session cookie; none for `models`/`cost` | Image, video, audio, mesh, splat | The apps' own endpoints; use `models` and `cost` only |
-| MCP sessions `/v1/mcp/session/{create,refresh,revoke,list}` | API key or web session, then an `mcp_session_...` credential | Generation endpoints accept that credential | Routes live since 2026-08, but no MCP server is published in the org and nothing answers at `api.storyteller.ai/mcp`. Do not promise an ArtCraft MCP |
+| MCP sessions `/v1/mcp/session/{create,refresh,revoke,list}` | API key or web session, then an `mcp_session_...` credential | The Omni Gen video endpoint accepts that credential (server tests) | Added 2026-08 and live, but no MCP server is published in the org and nothing answers at `api.storyteller.ai/mcp`. Do not promise an ArtCraft MCP |
 | `craft-ai-artcraft` (Rust crate) | API key | Prompt-only `nano_banana` image, `seedance_2p0` video | For Crafting App developers; not tested against the live service |
 
 ### Omni API recipe
@@ -231,7 +232,8 @@ with that tool uses it. Rust workspace, pre-1.0, MIT OR Apache-2.0; library crat
   builds or assets on the assumption that everything is MIT.
 - `artcraft-services` (backend, web app, website) is under "ArtCraft License (WIP)", a
   fair-source, non-OSI text: free private use; no selling it, no competing product, no stripping
-  community, donation or paid-model links, no use of the name or mascots. It says generated
+  community, donation or paid-model links, no promoting a business with the name, logo or mascots
+  without permission. It says generated
   assets belong to the user; the underlying model providers' own terms may also apply (unverified).
 - `artcraftx`: no licence file. `craft-ai-integrations`: MIT OR Apache-2.0; SAM 3 on Candle is
   Apache-2.0 only (see its NOTICE).
