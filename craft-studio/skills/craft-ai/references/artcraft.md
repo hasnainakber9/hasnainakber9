@@ -149,7 +149,14 @@ curl -s -X POST https://api.storyteller.ai/v1/omni_api/generate/video \
    `/v1/omni_api/generate/image` with `model`, `prompt`, `aspect_ratio`, `resolution`, `quality`,
    `image_batch_count`, `image_urls`; the angle models also take `adjust_horizontal_angle`,
    `adjust_vertical_angle`, `adjust_zoom`. Audio, mesh and splat are only on `/v1/omni_gen/generate/*`
-   (upload inputs first to get media tokens).
+   (upload inputs first to get media tokens). Local files go up as multipart forms:
+
+```bash
+curl -s -H "Authorization: Bearer $ARTCRAFT_API_KEY" -F "uuid_idempotency_token=$(uuidgen)" \
+  -F file=@frame.png https://api.storyteller.ai/v1/omni_api/upload/image
+# {"success":true,"media_file_token":"..."}   (images up to 512 MiB)
+```
+
 3. Poll `GET /v1/omni_api/job_status/job/<token>` (or `/batch?tokens=a&tokens=b`) every ~5 s while
    `state.status.status` is `pending`, `started` or `attempt_failed`. On `complete_success` download
    `state.maybe_result.media_links.cdn_url`; stop on `complete_failure`, `dead`,

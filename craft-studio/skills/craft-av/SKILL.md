@@ -41,7 +41,8 @@ missing because this skill was installed on its own, get the CLI from the app's 
 - **EffectCraft**: designed motion: animated titles, lower thirds, logo stings, shape and text
   animation, compositing effects, renders to video or image sequences, Lottie JSON for apps and web.
 - **SoundCraft**: audio as the product: voice-over cleanup, podcast edits, music mixes, EQ and
-  dynamics, fades, loudness, bounces to WAV or MP3, stems.
+  dynamics, fades, loudness, bounces and stems to WAV, AIFF or FLAC (for MP3 or AAC, encode the
+  bounce with ffmpeg or export it through FilmCraft).
 - **Combine**: EffectCraft renders a title, SoundCraft masters the mix, FilmCraft lays both on
   the timeline and exports. With video-studio: it generates scenes, these apps finish them.
 

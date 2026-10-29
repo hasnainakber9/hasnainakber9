@@ -2,11 +2,11 @@
 
 The storytold org grew out of Storyteller / FakeYou (text-to-speech, voice conversion, virtual
 production), so it holds experiments from 2019-2025 and several forks. None is a maintained
-product or has storytold-built releases (fakeyou-recast has prerelease tags; LiveScan3D and the two
-Runtime* plugins carry their upstream's tags). Reach for one only
-when the job matches closely; prefer the upstream project when the repo is a fork. "Last" is the
-last commit on the default branch, checked 2026-10-29. Licences are as found in the repo root:
-"none" means no licence file, so treat the code as all rights reserved.
+product or has storytold-built releases (fakeyou-recast has prerelease tags; LiveScan3D and the
+two Runtime* plugins carry their upstream's tags). Reach for one only when the job matches
+closely, and prefer the upstream project when the repo is a fork. "Last" is the last commit on
+the default branch, checked 2026-10-29. Licences are as found in the repo root: "none" means no
+licence file, so treat the code as all rights reserved.
 
 | Repo | Group | Last | Licence | Verdict |
 |---|---|---|---|---|

@@ -40,6 +40,7 @@ clap: an unknown or repeated flag, bad JSON or a bad value is a usage error (exi
 | `perf [N\|FILE]` | Engine timing on a synthetic N-entity drawing or on a file |
 
 ## Recipes
+Coordinates are drawing units with y up: millimetres with `--metric`, inches otherwise. `export CADCRAFT_CONFIG_DIR=` (empty) runs without reading or writing the user's settings folder.
 ```bash
 CLI=$(python3 "$CRAFT" ensure cadcraft); mkdir -p out
 # 1. Command-line text, as typed at the prompt. `\n` separates lines; spaces act as Enter.
