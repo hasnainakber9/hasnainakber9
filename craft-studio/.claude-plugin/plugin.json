@@ -1,0 +1,14 @@
+{
+  "name": "craft-studio",
+  "displayName": "Craft Studio",
+  "version": "1.0.0",
+  "description": "Drive the open-source Crafting Apps from ArtCraft (github.com/storytold) headlessly through each app's CLI and MCP server: photo and raw editing, vector, UI and page design, video, motion graphics and audio, CAD, Word, Excel and PowerPoint-style documents and PDFs, plus the ArtCraft AI studio and the org's research repos.",
+  "author": {
+    "name": "Syed Hasnain Akber",
+    "url": "https://github.com/hasnainakber9"
+  },
+  "homepage": "https://github.com/hasnainakber9/hasnainakber9",
+  "repository": "https://github.com/hasnainakber9/hasnainakber9",
+  "license": "MIT",
+  "keywords": ["artcraft", "storytold", "photo-editing", "raw", "vector", "ui-design", "layout", "video-editing", "motion-graphics", "audio", "cad", "docx", "xlsx", "pptx", "pdf", "mcp"]
+}

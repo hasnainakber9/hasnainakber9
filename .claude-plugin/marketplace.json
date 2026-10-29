@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace-manifest.json",
+  "name": "hasnain-tools",
+  "owner": {
+    "name": "Syed Hasnain Akber",
+    "url": "https://github.com/hasnainakber9"
+  },
+  "description": "Claude plugins by Syed Hasnain Akber.",
+  "plugins": [
+    {
+      "name": "craft-studio",
+      "source": "./craft-studio",
+      "description": "Photo, raw, vector, UI, layout, video, motion, audio, CAD, document, spreadsheet, slide and PDF work through the open-source Crafting Apps from ArtCraft (storytold), driven headlessly by their CLIs and MCP servers.",
+      "license": "MIT",
+      "keywords": ["artcraft", "storytold", "design", "photo", "video", "audio", "cad", "office", "pdf", "mcp"]
+    }
+  ]
+}
