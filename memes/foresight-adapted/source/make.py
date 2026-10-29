@@ -108,9 +108,9 @@ def m_dune():
     m |= rectmask(im.size[::-1], [(0, h - 45, 280, h)]) | logomask(im)
     im = inpaint(im, m, 9)
     kw = dict(kind='interb', shadow=True, maxsize=40, spacing=1.18)
-    text(im, (30, 370, 520, 500), "Keep your hand in the box and you'll live to 150.", **kw)
+    text(im, (30, 370, 520, 500), "Keep your hand in the box. It's only history.", **kw)
     text(im, (560, 390, 1066, 490), "What's in the box?", **kw)
-    text(im, (25, 820, 525, 1040), "Every anti-ageing breakthrough of the last ten years. Most of them only worked in mice.", **kw)
+    text(im, (25, 820, 525, 1040), "Summer 1952. Nearly 58,000 American kids catch polio. Pools close. Parents pray for a vaccine.", **kw)
     save(im, '02_whats_in_the_box')
 
 def m_uncanny():
@@ -126,14 +126,14 @@ def m_bush():
     im = load('bush'); h = im.size[1]
     m = textmask(im, [(40, 740, 1076, 870)], thr=180, dil=7) | rectmask(im.size[::-1], [(0, h - 40, 180, h)]) | logomask(im)
     im = inpaint(im, m, 9)
-    text(im, (30, 700, 1046, 860), "SIR, A THIRD COUNTRY HAS GONE MALARIA-FREE IN 2025", stroke='black', maxsize=64)
+    text(im, (30, 700, 1046, 860), "SIR, DOCTORS JUST FIXED A TYPO IN A BABY'S DNA", stroke='black', maxsize=64)
     save(im, '04_bush_whisper')
 
 def m_cursor():
     im = load('cursor'); h = im.size[1]
     m = textmask(im, [(200, 670, 760, 860)], thr=185, dil=7) | logomask(im)
     im = inpaint(im, m, 9)
-    text(im, (120, 640, 860, 880), "PLANETARY DEFENSE AT 3 A.M.: WHERE THE F*** IS THAT ASTEROID?", stroke='black', maxsize=64)
+    text(im, (120, 640, 860, 880), "CAUGHT A 70-METRE ROCKET WITH CHOPSTICKS.\nCAN'T FIND THE CURSOR.", stroke='black', maxsize=64)
     save(im, '05_where_is_the_asteroid')
 
 def m_horse():
@@ -213,8 +213,8 @@ def m_barber():
     m = textmask(im, [(150, 330, 960, 460)], thr=200, dil=6) | rectmask(im.size[::-1], [(0, 672, 1076, 862)]) | logomask(im)
     im = inpaint(im, m, 9)
     kw = dict(kind='interb', stroke='black', spacing=1.05)
-    text(im, (120, 340, 960, 450), "Guys my barber just retired", maxsize=62, **kw)
-    text(im, (30, 680, 1046, 850), "He's 112 and starting a PhD.", maxsize=64, **kw)
+    text(im, (120, 340, 960, 450), "Guys, smallpox is gone", maxsize=62, **kw)
+    text(im, (30, 680, 1046, 850), "It had been with us since the pharaohs.", maxsize=64, **kw)
     save(im, '12_hulk_barber')
 
 def m_tattoo():
@@ -266,8 +266,8 @@ def m_thor():
     m = textmask(im, [(200, 320, 880, 470), (130, 740, 900, h)], thr=210, dil=5) | logomask(im)
     im = inpaint(im, m, 9)
     kw = dict(kind='intersb', shadow=True, spacing=1.1)
-    text(im, (40, 285, 1036, 460), "Fusion scientists in 2022, getting more\nenergy out than the lasers put in", maxsize=46, **kw)
-    text(im, (100, 772, 976, h - 6), "Me, who said fusion was\nalways 30 years away", maxsize=46, **kw)
+    text(im, (40, 285, 1036, 460), "The Montreal Protocol, spending 40 years\nfixing the ozone layer", maxsize=46, **kw)
+    text(im, (100, 772, 976, h - 6), "Me, who used CFC hairspray\nin the '70s", maxsize=46, **kw)
     save(im, '16_thor_fusion')
 
 def m_reaction():
