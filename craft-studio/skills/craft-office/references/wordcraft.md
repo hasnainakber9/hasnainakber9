@@ -13,7 +13,7 @@
 - Editing a PDF: there's no PDF import ("PDF Reflow" is 0%). Use PdfCraft.
 - Pixel-exact Word pagination, or round-tripping complex Word files with charts or SmartArt (charts from Word stay read-only, combo/3D/stock charts show a placeholder), ink or OLE.
 - Writing `.doc`. It is read-only, and Word 6/95 files are refused.
-- Non-Latin text in a source build without craft-fonts (see Get the CLI). Proofing covers only about 10 languages.
+- CJK or Arabic text on a machine with no fonts for those scripts, when the CLI was built from source without craft-fonts (see Get the CLI). With system fonts installed, Japanese, Cyrillic, Arabic and Greek all render. Proofing covers only about 10 languages.
 - Macros: `.docm` keeps them but never runs them. No add-ins, cloud or co-authoring.
 
 ## Files
@@ -24,8 +24,12 @@
 
 ## Get the CLI
 `CLI=$(python3 "$CRAFT" ensure wordcraft)`
-- Every release archive includes the CLI. On Linux it is in `wordcraft-<ver>-linux-<arch>.tar.gz` under `bin/wordcraft-cli` (x86_64, aarch64, riscv64). There is no Linux archive with only the CLI, so the first asset name the helper tries returns a 404 and it falls back to the app tarball. macOS uses `wordcraft-cli-<ver>-macos-universal.zip`, Windows the `wordcraft-<ver>-windows-<arch>-portable.zip`. `SHA256SUMS.txt` is published with each release.
-- Building from source needs Rust 1.95 or newer: `cargo build --release --locked -p wordcraft-cli`. No cargo features are needed, and the CLI pulls in no GUI crates. Setting `CRAFT_FONTS_DIR=<checkout of storytold/craft-fonts>` at build time embeds the Japanese, Chinese and Arabic fallback faces that official releases ship. Without it, those scripts fall back to system fonts. Fonts like Calibri and Cambria are always substituted with system fonts or metric-compatible open fonts.
+- Release assets, taken from the packaging scripts and not checked against a published release:
+  - Linux: `wordcraft-<ver>-linux-<arch>.tar.gz` (x86_64, aarch64, riscv64) has the CLI under `<dir>/bin/wordcraft-cli`. There is no Linux archive with only the CLI.
+  - macOS: `wordcraft-cli-<ver>-macos-universal.zip`.
+  - Windows: `wordcraft-<ver>-windows-<arch>-portable.zip` contains `wordcraft-cli.exe`.
+  - Each release also has `SHA256SUMS.txt`.
+- Building from source needs Rust 1.95 or newer: `cargo build --release --locked -p wordcraft-cli`, about 5 minutes on 4 cores. No cargo features are needed, and the CLI pulls in no GUI crates. The binary links only libc, libm and libgcc_s, so it needs no system libraries. Setting `CRAFT_FONTS_DIR=<checkout of storytold/craft-fonts>` at build time embeds the Japanese, Chinese and Arabic fallback faces that official releases ship. Without it, those scripts fall back to system fonts. Fonts like Calibri and Cambria are always substituted with system fonts or metric-compatible open fonts.
 - Environment variables:
   - `WORDCRAFT_REGION=en-US` or `en-GB`: fixes the paper size for new, HTML, MD and TXT documents, so output is the same on every machine.
   - `WORDCRAFT_PASSWORD`: password for protected files.
@@ -59,6 +63,9 @@ CLI=$(python3 "$CRAFT" ensure wordcraft); export WORDCRAFT_REGION=en-US   # Lett
 "$CLI" convert notes.md notes.docx && "$CLI" convert spec.odt spec.docx && "$CLI" convert memo.docx memo.html
 "$CLI" convert contract.docx redline.pdf --markup
 
+# 1b. Fastest draft: write Markdown and convert (headings, lists and pipe tables become styles, lists and tables)
+"$CLI" convert draft.md draft.docx && "$CLI" convert draft.docx draft.pdf
+
 # 2. Text and structure
 "$CLI" text report.docx > report.txt
 "$CLI" info report.docx                                      # pages, words, comments, trackChanges
@@ -81,10 +88,16 @@ CLI=$(python3 "$CRAFT" ensure wordcraft); export WORDCRAFT_REGION=en-US   # Lett
   --cmd 'select.text={"text":"Governing Law"}' --cmd 'review.newComment={"text":"Confirm the jurisdiction."}' \
   --save contract-reviewed.docx
 "$CLI" convert contract-reviewed.docx contract-reviewed.pdf --markup
-"$CLI" run --file contract-reviewed.docx --cmd 'review.acceptAll={"stopTracking":true}' --save contract-clean.docx
+"$CLI" run --file contract-reviewed.docx --cmd 'review.acceptAll={"stopTracking":true}' \
+  --cmd 'review.deleteComment={"all":true}' --save contract-clean.docx   # acceptAll keeps comments
 
-# 6. Look at a page
+# 6. Look at a page (prints {"bytes","height","path","width"}; scale = px per pt)
 "$CLI" render report.docx page2.png --page 2 --scale 1.5
+
+# 6b. Mail merge: one letter per CSV row, all into one merged document
+"$CLI" run --file letter.docx --cmd 'mailings.recipients={"path":"people.csv"}' \
+  --cmd caret.docStart --cmd 'text.insert={"text":"Dear "}' --cmd 'mailings.insertField={"field":"Name"}' \
+  --cmd 'text.insert={"text":","}' --cmd text.newParagraph --cmd 'mailings.finish={"path":"merged.docx"}'
 ```
 
 7. Build a document from a script. The script is a JSON object; relative `file` and `save` paths resolve against the script's folder, and `-` reads stdin:
@@ -124,7 +137,7 @@ EOF
 | `file.exportPng` / `file.exportPdf` | `{"path":"p.png","page":2,"scale":2}` / `{"path":"o.pdf"}` | |
 | `file.properties` | `{"title":"...","author":"...","keywords":"..."}` | Also `custom: {name: value}`. |
 | `file.setAuthor` | `{"name":"Claude"}` | Author of new revisions and comments. |
-| `text.insert` | `{"text":"a\nb","paragraphs":true,"raw"?:true}` | Types at the caret and replaces the selection. `raw` keeps straight quotes. |
+| `text.insert` | `{"text":"a\nb","paragraphs":true,"raw"?:true}` | Types at the caret and replaces the selection. `paragraphs` makes each line its own paragraph. |
 | `text.newParagraph` / `text.pageBreak` / `text.tab` | `{}` | Enter, page break, Tab (the next cell in a table). |
 | `select.text` | `{"text":"Acme","occurrence":2}` | The n-th match, case-sensitive and within one paragraph. Fails if not found. |
 | `select.all` / `caret.docEnd` / `caret.docStart` | `{}` | |
@@ -133,10 +146,10 @@ EOF
 | `para.set` | `{"props":{"align":"justify","spaceAfter":6,"lineSpacing":{"rule":"multiple","value":1.15}}}` | Also `para.align {"value":"center"}`. |
 | `styles.modify` | `{"style":"Heading1","chr":{"font":"Georgia","size":18},"para":{"spaceBefore":12}}` | `styles.create {"name","basedOn"}`, `styles.list`. |
 | `para.bullets` / `para.numbering` | `{}` / `{"kind":"numbered"}` | `{"off":true}` removes the list. `list.define` builds multilevel lists. |
-| `insert.table` / `insert.spreadsheet` | `{"rows":3,"cols":4}` / `{"csv":"A,B\n1,2"}` | Then `table.style {"style":...}`, `table.look {...}`, `table.repeatHeader`, `table.borders {"kind":"all"}`, `table.sort`, `table.fromText {"separator":"tab"}`. |
+| `insert.table` / `insert.spreadsheet` | `{"rows":3,"cols":4,"style":"TableGrid"}` / `{"csv":"A,B\n1,2"}` | Built-in table styles: `TableGrid`, `PlainTable1`, `GridTable1Light`, `GridTable4Accent{Blue,Orange,Green,Purple}`, `ListTable3Accent{...}`. Any other name is an error; `styles.list` lists them all. Then `table.style`, `table.look {...}`, `table.repeatHeader`, `table.borders {"kind":"all"}`, `table.sort`, `table.fromText {"separator":"tab"}`. |
 | `insert.picture` | `{"path":"logo.png","width":144,"alt":"Logo"}` | Width is in points. |
-| `insert.header` / `insert.footer` / `insert.pageNumber` | `{"text":"ACME"}` / `{"position":"bottom","align":"right","format":"x of y"}` | |
-| `references.toc` | `{"levels":3,"hyperlinks":true}` | Then `references.updateToc`. `references.footnote {"text":"..."}` adds a footnote. |
+| `insert.header` / `insert.footer` / `insert.pageNumber` | `{"text":"ACME"}` / `{"position":"bottom","align":"right","format":"x of y"}` | `insert.header` and `insert.footer` leave the caret in that story, so run `insert.closeHeader` next. `insert.pageNumber` stays in the body. |
+| `references.toc` | `{"levels":3,"hyperlinks":true}` | Then `references.updateToc`. `references.footnote {"text":"..."}` moves the caret into the note, so run `insert.closeHeader` next. |
 | `references.updateFields` | `{"all":true}` | What `convert --update-fields` runs. |
 | `edit.replaceAll` | `{"text":"x","with":"y","matchCase"?,"wholeWord"?,"wildcards"?,"regex"?}` | Returns `{"replaced":n}`. `edit.find` takes the same options. |
 | `review.trackChanges` | `{"value":true}` | Always pass `value`: with no params it toggles. |
@@ -144,7 +157,7 @@ EOF
 | `review.acceptAll` / `review.rejectAll` | `{"stopTracking"?:true}` | Single changes: `review.accept`/`review.reject {"next":true}`. |
 | `layout.orientation` / `layout.margins` / `layout.size` | `{"value":"landscape"}` / `{"preset":"narrow"}` / `{"name":"A4"}` | Also `layout.columns {"count":2}` and `layout.break {"kind":"nextPage"}`. |
 | `design.watermark` | `{"text":"DRAFT"}` | `{"remove":true}` removes it. |
-| `mailings.recipients` / `mailings.insertField` / `mailings.finish` | `{"path":"people.csv"}` / `{"field":"Name"}` / `{"path":"merged.docx"}` | Merge flow (unverified end to end). |
+| `mailings.recipients` / `mailings.insertField` / `mailings.finish` | `{"path":"people.csv"}` / `{"field":"Name"}` / `{"path":"merged.docx"}` | Mail merge: one page per record. Recipients can come from csv, tsv, xlsx or ods. `finish` returns `{"records":n}`. |
 | `document.inspect` / `document.layout` | `{"text":true}` / `{}` | Structure, or per-page summary plus caret. |
 | `view.switchWindows` / `file.closeDocument` | `{"id":2}` | Several open documents: makes one active, or closes it. |
 
@@ -182,7 +195,10 @@ Use the app only when the user wants to watch or keep editing in their open wind
 - `run` honours only the first `--save` flag. For DOCX plus PDF in one run, put both in the script's `"save"` list, or run `convert` afterwards. Every output is checked before anything is written.
 - `--template` takes only `blank|sample|letter|resume|report`. Any other value silently gives a blank document. For a real template use `--file template.docx` or `file.newFromTemplate`.
 - `review.trackChanges` without `{"value":true}` toggles, and so switches tracking off in a document that was saved with it on.
-- `text.insert` turns straight quotes into smart quotes unless `"raw":true`. `select.text` is exact-case and won't match across paragraphs, and a miss aborts the whole run.
+- A multi-character `text.insert` goes in exactly as given. A one-character insert behaves like a keystroke, applying smart quotes and AutoCorrect, unless `"raw":true`. `select.text` is exact-case and won't match across paragraphs, and a miss aborts the run with `select.text: \`x\` not found` (exit 1).
+- Commands work in the story the caret is in. After `insert.header`, `insert.footer` or `references.footnote`/`endnote`, later `select.all`, `select.text`, `text.insert`, `insert.table` and even `caret.docEnd` act inside that header, footer or note. Run `insert.closeHeader` (or `edit.goBack`) to return to the body. Check `story` in the `--print` output: it should be `"body"`.
+- Section breaks (`layout.break {"kind":"nextPage"|"continuous"}`) are refused with "section breaks go in the main text" while the caret is in a table cell or a note. Run `caret.docEnd` from the body first.
+- A page break (`text.pageBreak`, `insert.pageBreak`, `layout.break {"kind":"page"}`) is a character at the start of the next paragraph. A heading typed after it carries that character in its text.
 - Paths inside command params resolve against the working directory, not the script's folder.
 - Paper size follows the locale (`LC_PAPER` or `LANG`). Set `WORDCRAFT_REGION` for repeatable output.
 - `convert x.docx x.png` writes page 1 only. Use `render --page N` for other pages.

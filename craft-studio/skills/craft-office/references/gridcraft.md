@@ -11,7 +11,7 @@
 
 ## Not a fit / known gaps
 - No PNG render in the CLI. A visual check goes through PDF (see Check your work). Window screenshots need the desktop app.
-- Charts in CJK, Arabic or Devanagari, and any non-Latin text in a PDF: the PDF writer uses only the 14 standard fonts.
+- A PDF of non-Latin data. The PDF writer uses only the 14 standard fonts, so cells in Japanese, Cyrillic or Arabic come out blank while `Café` survives. For such data, deliver XLSX, or build the PDF through WordCraft.
 - Big data (around 100 MB XLSX, recalculation of 100k dependents) and Power Query, Power Pivot, connections and refresh. VBA is kept in `.xlsm` but never run.
 - Saving a password-protected workbook: it opens with its password but is saved without one.
 - MCP folder confinement: GridCraft has no root flags (see MCP server).
@@ -22,12 +22,19 @@
   - `.xlsb` and `.ods`: values and cached formula results, no formulas or formatting.
   - Encrypted xlsx (Agile or Standard): pass `password` to `file.open`.
 - **Saves (format from the extension):** xlsx (the default), xlsm and xltm (VBA kept), xltx, csv and tsv (active sheet only), json (GridCraft's own JSON), html (one sheet), pdf.
-- XLSX is the native format. Styles, themes, dynamic-array formulas, tables, conditional formats, validation, notes and threaded comments, hyperlinks, names, outline, print settings, pictures, sparklines and pivots all round-trip. Charts are simplified. Custom XML, external links, connections and OLE objects pass through unchanged. CSV is written as UTF-8 without a BOM, with CRLF line ends. A file opened as CSV keeps its separator.
+- XLSX is the native format. Styles, themes, dynamic-array formulas, tables, conditional formats, validation, notes and threaded comments, hyperlinks, names, outline, print settings, pictures, sparklines and pivots all round-trip. Charts are simplified. Custom XML, external links, connections and OLE objects pass through unchanged.
+- CSV and TSV are written with the displayed values: `"$1,200.00"` and `75.0%`, not 1200 and 0.75. Output is UTF-8 without a BOM, with CRLF line ends. A CSV that is read in gets a sheet named after the file (`sales.csv` becomes sheet `sales`), and numbers and dates in it are parsed, so `00123` becomes 123.
+- Writing `.ods` or `.xls` fails with "supported for import only".
 
 ## Get the CLI
 `G=$(python3 "$CRAFT" ensure gridcraft)`
-- Release assets: Linux `gridcraft-<ver>-linux-<arch>.tar.gz` (the app tarball, with the CLI at `bin/gridcraft-cli`; there is no Linux archive with only the CLI), macOS `gridcraft-cli-<ver>-macos-universal.zip`, Windows `gridcraft-<ver>-windows-<arch>-portable.zip` (includes `gridcraft-cli.exe`), and a FreeBSD x86_64 tarball. `SHA256SUMS.txt` is published with each release.
-- Building from source needs Rust 1.95 or newer: `cargo build --release --locked -p gridcraft-cli`. The CLI depends only on the engine and MCP crates, plus zip and quick-xml for `check`. It needs no GUI crates, cargo features or system libraries. `CRAFT_FONTS_DIR` only affects the desktop UI.
+- Release assets, taken from the packaging scripts and not checked against a published release:
+  - Linux: `gridcraft-<ver>-linux-<arch>.tar.gz` has the CLI under `<dir>/bin/gridcraft-cli`. There is no Linux archive with only the CLI.
+  - macOS: `gridcraft-cli-<ver>-macos-universal.zip`.
+  - Windows: `gridcraft-<ver>-windows-<arch>-portable.zip` contains `gridcraft-cli.exe`.
+  - FreeBSD: an x86_64 tarball.
+  - Each release also has `SHA256SUMS.txt`.
+- Building from source needs Rust 1.95 or newer: `cargo build --release --locked -p gridcraft-cli`. It took about 1.5 minutes here with dependencies already cached. The CLI depends only on the engine and MCP crates, plus zip and quick-xml for `check`. It needs no GUI crates or cargo features, and the binary links only libc, libm and libgcc_s. `CRAFT_FONTS_DIR` only affects the desktop UI.
 - Environment variables:
   - `GRIDCRAFT_CONTROL_TOKEN`: authenticates `mcp --connect` and `send`.
   - `GRIDCRAFT_NO_PREFS`: no saved settings.
@@ -80,15 +87,16 @@ G=$(python3 "$CRAFT" ensure gridcraft)
   --cmd 'home.autofitColumnWidth={"cols":"A:C"}' --cmd 'view.freezeTopRow' \
   --out book.xlsx
 
-# 5. Chart, table, conditional format
-"$G" run --in book.xlsx --quiet \
+# 5. Chart + conditional format (results print as JSON lines without --quiet, e.g. {"chart":1})
+"$G" run --in book.xlsx \
   --cmd 'insert.chart={"range":"A1:B3","type":"column","title":"Monthly costs","at":"E2"}' \
-  --cmd 'insert.table={"range":"A1:C4","style":"TableStyleMedium2","name":"Costs"}' \
   --cmd 'home.conditionalFormat={"range":"B2:B3","rule":{"type":"cellIs","operator":"greaterThan","value":"1000","preset":"lightRedFill"}}' \
-  --out book.xlsx && "$G" info book.xlsx
+  --out book.xlsx && "$G" info book.xlsx      # -> chart ColumnClustered "Monthly costs" at E2, 1 series
+# Excel table: --cmd 'insert.table={"range":"A1:C4","style":"TableStyleMedium2","name":"Costs"}'
 
 # 6. Sort (keys by column letter) and AutoFilter (select inside the data first)
 "$G" run --in sales.xlsx --quiet \
+  --cmd 'sheet.rename={"sheet":0,"name":"Data"}' \
   --cmd 'data.sort={"range":"A1:D200","header":true,"keys":[{"column":"D","order":"desc"},{"column":"A","order":"asc"}]}' \
   --cmd 'selection.set={"range":"A1"}' \
   --cmd 'data.filterBy={"column":"C","custom":{"op":">","value":"1000"}}' \
@@ -97,7 +105,7 @@ G=$(python3 "$CRAFT" ensure gridcraft)
 # 7. CSV <-> XLSX
 "$G" convert data.csv data.xlsx
 "$G" convert book.xlsx sales.csv --sheet Sales
-"$G" run --cmd 'file.open={"path":"ids.csv","csvAsText":true}' --out ids.xlsx --quiet   # keep leading zeros (unverified)
+"$G" run --cmd 'file.open={"path":"ids.csv","csvAsText":true}' --out ids.xlsx --quiet   # every field stays text: keeps 00123
 
 # 8. PDF: page setup, then export the active sheet or all sheets
 "$G" convert book.xlsx summary.pdf --sheet Summary
@@ -105,10 +113,10 @@ G=$(python3 "$CRAFT" ensure gridcraft)
   --cmd 'pageLayout.pageSetup={"orientation":"landscape","fitToPage":true,"fitWidth":1,"fitHeight":0,"titleRows":"1:1","footer":"&CPage &P of &N"}' \
   --cmd 'file.exportPdf={"path":"book.pdf","sheets":"all"}' --out book.xlsx
 
-# 9. Pivot table on a new sheet
-"$G" run --in sales.xlsx --quiet \
+# 9. Pivot table on a new sheet (inserted before the source sheet, report at A3)
+"$G" run --in sales.xlsx \
   --cmd 'insert.pivotTable={"source":"Data!$A$1:$E$500","rows":["Region"],"columns":["Quarter"],"values":[{"field":"Revenue","func":"sum"}]}' \
-  --out sales.xlsx
+  --out sales.xlsx            # result JSON names the new sheet; then: "$G" cat sales.xlsx --sheet <it>
 
 # 10. Formula correctness / fidelity audit of an Excel-saved workbook
 "$G" check book.xlsx --max-report 10
@@ -116,7 +124,7 @@ G=$(python3 "$CRAFT" ensure gridcraft)
 
 ## The command registry
 - Every ribbon and menu action is a command id with JSON params. Most commands act on the current selection when `range` is left out, so always pass `range`. Programmatic calls never open dialogs.
-- To find commands: `"$G" commands --search border` (each id with its params doc), `"$G" commands --json` (an array of `{id, label, menu, shortcut, params}`), `"$G" functions --search lookup`. Over MCP use `list_commands {search}`, and the command `app.commands {search}` does the same.
+- To find commands: `"$G" commands --search border` (each id with its params doc), `"$G" commands --json` (an array of 355 `{id, label, menu, shortcut, params}` entries), `"$G" functions --search lookup`. Over MCP use `list_commands {search}`, and the command `app.commands {search}` does the same.
 - A `--cmd` value, or a line of a `--script` file, is one of `id`, `id={json}`, `id {json}` or `{"command": "id", "params": {...}}`. Blank lines and lines starting with `#` or `//` are skipped. A JSON object with any key other than `command`, `id` or `params` is an error. The first failing step stops the run with `step N (file:line, id): ...` and a non-zero exit.
 ```text
 # build.jsonl  ->  "$G" run --script build.jsonl --out report.xlsx --quiet
@@ -141,7 +149,7 @@ home.bold={"range":"A1:B1"}
 | `home.columnWidth` / `home.rowHeight` / `home.autofitColumnWidth` | `{"cols":"B:D","chars":14}` / `{"rows":"1:1","points":24}` / `{"cols":"A:F"}` | `width` and `height` are in pixels. |
 | `home.insertRows` / `home.deleteRows` / `home.insertColumns` | `{"rows":"3:5"}` / `{"rows":"10:10"}` / `{"cols":"B:C"}` | |
 | `home.conditionalFormat` | `{"range":"C2:C99","rule":{"type":"colorScale"}}` | Rule types: cellIs, expression, containsText, duplicate, top10, dataBar, iconSet... |
-| `home.formatAsTable` / `insert.table` | `{"range":"A1:D20","style":"TableStyleMedium2"}` | Then `table.totalRow {"on":true}`, `table.style`, `table.rename`. |
+| `home.formatAsTable` / `insert.table` | `{"range":"A1:D20","style":"TableStyleMedium2","header":true}` | Always pass `header:true` (see Gotchas). Then `table.totalRow {"on":true}`, `table.style`, `table.rename`. |
 | `insert.chart` | `{"range":"A1:C6","type":"line","subtype":"markers","title":"T","at":"H2"}` | Types: column, bar, line, pie, doughnut, area, scatter, bubble, radar, combo, histogram, waterfall, funnel, treemap, sunburst, boxWhisker, stock. |
 | `chart.set` / `chart.addElement` | `{"chart":id,"legend":"bottom","xTitle":"Month"}` / `{"element":"trendline","type":"linear"}` | Chart ids come from `info --json`. |
 | `insert.pivotTable` / `pivot.addField` / `pivot.refresh` | see recipe 9 / `{"field":"Units","area":"values","func":"sum"}` | `pivot.list` lists pivot tables. |
@@ -149,7 +157,7 @@ home.bold={"range":"A1:B1"}
 | `data.sort` | `{"range":"A1:D99","header":true,"keys":[{"column":"B","order":"desc"}]}` | |
 | `data.filterBy` / `data.clearFilter` | `{"column":"B","values":["North","West"]}` | Also `top {count}`, `custom {op,value}`, `clear`. |
 | `data.removeDuplicates` / `data.textToColumns` | `{"range":"A1:C99","columns":["A"],"header":true}` / `{"range":"A2:A99","delimiters":[","]}` | |
-| `data.validation` | `{"range":"C2:C99","type":"list","formula1":"Yes,No"}` | Exact `formula1` syntax is unverified. |
+| `data.validation` | `{"range":"C2:C99","type":"list","formula1":"Yes,No"}` | A list can be literal (quoted for you) or a range such as `=$H$1:$H$5`. Other types: whole, decimal, date, textLength, custom. |
 | `data.goalSeek` | `{"set":"B5","to":0,"changing":"B2"}` | |
 | `formulas.defineName` / `formulas.calculateNow` | `{"name":"Rate","refersTo":"=Sheet1!$B$1"}` / `{}` | |
 | `view.freezePanes` / `view.freezeTopRow` | `{"cell":"B2"}` / `{}` | |
@@ -162,7 +170,7 @@ home.bold={"range":"A1:B1"}
 - `"$G" info out.xlsx --json` lists `sheets[].usedRange`, `tables`, `charts` (`id`, `kind`, `title`, `at`, `series`), `names`, `selection` and `calcMode`.
 - In the same run, `--print used` or `--print A1:D10`. Use `--cmd 'cell.get={"cell":"B4"}'` (without `--quiet`) for a cell's value, formula, display text and style.
 - Errors appear as `#DIV/0!` in `cat` and as `{"error":"#N/A"}` in JSON. Grep for `#` in `cat` output before delivering.
-- For a visual check, export a PDF and rasterize it with PdfCraft: `P=$(python3 "$CRAFT" ensure pdfcraft); "$P" render out.pdf --page 1 --dpi 110 --out p1.png`, then Read the PNG. Charts and layout show up there.
+- For a visual check, export a PDF and rasterize it with PdfCraft: `P=$(python3 "$CRAFT" ensure pdfcraft); "$G" convert out.xlsx out.pdf; "$P" render out.pdf --page 1 --dpi 80 --out p1.png`, then Read the PNG. `convert` reports the page count. Charts, fills and page breaks show up here, for example a chart that spills onto a second page, or unreadable header text.
 - For workbooks saved by Excel, `"$G" check out.xlsx` compares GridCraft's results with Excel's cached values and round-trips the package.
 
 ## MCP server
@@ -190,10 +198,15 @@ Use the app only when the user wants changes in their open window, a screenshot,
 
 ## Gotchas
 - Pass `range` (or `cell`, `cols`, `rows`) every time. Without it a command acts on the selection, which starts at A1 in a fresh session.
-- `range.setValues` and `write_range` parse strings like typed input using en-US rules, so `"05.04.2026"` becomes a date and `"2.500"` a number. Pass `"parse":false` to keep the text. Text with leading zeros must be quoted or kept as text.
+- `range.setValues` and `write_range` parse strings like typed input using en-US rules: `"05.04.2026"` becomes the date 5/4/2026 (May 4), `"2.500"` becomes 2.5 and `"00123"` becomes 123. Pass `"parse":false` to keep the strings as text.
 - Formulas must use English function names and `,` as the argument separator in every API, whatever the UI language.
-- `.csv`, `.tsv` and `.html` outputs, and `convert ... .pdf`, contain only the active sheet. Choose it with `--sheet`, or with `sheet.activate` in `run`.
+- `.csv`, `.tsv` and `.html` outputs, and `convert ... .pdf`, contain only the active sheet, meaning the one active when the file was saved. Choose it with `--sheet`, or with `sheet.activate` in `run`. CSV gets the displayed text, so set `home.numberFormat {"format":"General"}` first if you need raw numbers.
+- `home.formatAsTable` without `"header":true` guesses whether the first row is a header, as Excel does. If any header cell is blank, it treats the row as data, inserts a `Column1, Column2...` row and shifts the data down one row. Pass `header:true`.
+- A table style (`insert.table`, `home.formatAsTable`) gives the header row white text. If you also fill the header manually with a light colour, the header becomes unreadable. Use one or the other.
+- A chart or range wider than the page spills onto more PDF pages. Use `pageLayout.pageSetup {"orientation":"landscape","fitToPage":true,"fitWidth":1,"fitHeight":0}`.
+- `--help` works only at the top level. `run --help` fails with `unknown option --help`.
 - `.xls`, `.xlsb` and `.ods` inputs lose formatting, and `.xlsb`/`.ods` also lose formulas. Save as `.xlsx` and tell the user.
 - A JSONL script line with an unknown key such as `"args"` is a hard error. It used to be silently ignored.
-- `run` with no `--in` starts from a blank workbook (`Sheet1`), and `--out` saves whichever workbook is active.
+- `run` with no `--in` starts from a blank workbook (`Sheet1`), and `--out` saves whichever workbook is active. If `--out` is given twice, only the last one is written.
+- A sheet's name depends on where it came from: a blank workbook gives `Sheet1`, a CSV gives the file's name. Run `info` first, or address sheets by index (`{"sheet":0}`).
 - The `execute_command` tool description mentions `sheet.insert`, but that id doesn't exist. Use `home.insertSheet`.
