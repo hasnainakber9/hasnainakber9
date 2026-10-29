@@ -103,10 +103,12 @@ for s in 16 32 64 128 256 512; do echo "{\"command\":\"document.export\",\"param
 "$CLI" run --in out/icon.vectorcraft --commands sizes.jsonl
 ```
 ```bash
-# 8. Print PDF: CMYK document with 3 mm bleed, PDF/X-4 with trim marks
+# 8. Print PDF: 85x55 mm CMYK card, 3 mm (8.5 pt) bleed with the background run into it, PDF/X-4 + trim marks
 "$CLI" run --cmd file.new --params '{"width":"85 mm","height":"55 mm","colorMode":"cmyk","bleed":8.5}' \
-  --commands card-art.jsonl \
-  --cmd document.exportPdf --params '{"path":"out/card.pdf","standard":"pdfX4","marks":{"trim":true}}'
+  --cmd shape.rectangle --params '{"x":-8.5,"y":-8.5,"width":257.95,"height":172.92}' \
+  --cmd paint.setFill --params '{"color":{"c":100,"m":60,"y":0,"k":20}}' --cmd paint.setStroke --params '{"none":true}' \
+  --cmd text.create --params '{"x":20,"y":90,"text":"Ada Lovelace","size":16,"font":"Source Sans 3","color":"cmyk 0 0 0 0"}' \
+  --cmd document.exportPdf --params '{"path":"out/card.pdf","standard":"pdfX4","marks":{"trim":true},"bleed":{"useDocument":true}}'
 ```
 
 ## The command registry

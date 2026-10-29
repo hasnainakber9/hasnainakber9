@@ -164,4 +164,4 @@ Only when the user wants to watch the drawing being made. Start the app with `ca
 - `--export` and `convert` images always show **model space**. Plot layouts with `plot`, `exportpdf` or `publish`. A `zoom` or `view.set` step changes the `--export` framing; `--view extents` resets it.
 - An output that is also an input is refused (exit 2) unless you pass `--in-place`. Paths written by `--cmd 'saveas'` or `plot` are not checked.
 - In command-line text, spaces act as Enter except at text prompts. Use JSON `text`/`mtext` for labels instead of typed DTEXT.
-- DWG output goes through a DXF→DWG bridge: verify by reopening, and keep a DXF master. A DWG that has no extension-free name saves as DXF.
+- DWG output goes through a DXF→DWG bridge: verify by reopening, and keep a DXF master. An output path with no extension is written as DXF, and an unknown extension is an error.

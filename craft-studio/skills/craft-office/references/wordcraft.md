@@ -174,7 +174,7 @@ EOF
   - A root left out grants none of its access, so with only a read root nothing can be written.
   - Links are followed, and a refused path is an ordinary tool error.
   - Without any root flag, the server can reach the whole filesystem.
-- Attached to the running app: `"$CLI" mcp --connect 127.0.0.1:7981`. This takes HOST:PORT with a numeric port. The app is started with `wordcraft --control 7981`.
+- Attached to the running app: `"$CLI" mcp --connect 127.0.0.1:7981`. This takes HOST:PORT with a numeric port; a bare `7981` is rejected. The app is started with `wordcraft --control 7981`.
   - The key comes from `WORDCRAFT_CONTROL_KEY`, or from `~/.config/wordcraft/control-key.local-7981` (on macOS, `~/Library/Application Support/WordCraft/`), and is sent only to 127.0.0.1.
   - If the app isn't up yet, the server still starts and retries on each call.
   - `--connect` combined with the root flags or `--author` is an error. Use `file.setAuthor` instead of `--author`.
