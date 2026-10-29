@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+"""NOBODY'S JOB re-edit soundtrack: original score + SFX + dialogue, mixed to the new 119.0 s timeline.
+Dialogue sources: the team's original lines (separated from their mix), Kokoro voices for Odile/Marek/launch,
+and Temi/Rafael lines cloned from the team's own recordings of those characters."""
+import json, subprocess, wave, pathlib, sys
+import numpy as np
+from scipy import signal
+SR = 48000; TOTAL = 119.0; N = int(TOTAL * SR)
+rng = np.random.default_rng(119)
+HERE = pathlib.Path('.')
+# ------------------------------------------------------------------ DSP helpers
+def zeros(): return np.zeros((N, 2), np.float32)
+def secs(x): return int(round(x * SR))
+def bl(kind, f, x, order=2):
+    if kind == "bp": sos = signal.butter(order, [f[0] / (SR / 2), f[1] / (SR / 2)], btype="band", output="sos")
+    else: sos = signal.butter(order, f / (SR / 2), btype=kind, output="sos")
+    return signal.sosfilt(sos, x, axis=0).astype(np.float32)
+def white(n): return rng.standard_normal(n).astype(np.float32)
+def pink(n):
+    w = rng.standard_normal(n); f = np.fft.rfft(w); k = np.arange(len(f)); k[0] = 1; f /= np.sqrt(k); x = np.fft.irfft(f, n); return (x / (np.std(x) + 1e-9)).astype(np.float32)
+def brown(n): x = np.cumsum(rng.standard_normal(n)); x = x - signal.savgol_filter(x, 2001, 1) if n > 2001 else x; return (x / (np.std(x) + 1e-9)).astype(np.float32)
+def pan(x, p):  # p in [-1, 1]
+    a = (p + 1) * np.pi / 4; return np.stack([x * np.cos(a), x * np.sin(a)], axis=1).astype(np.float32)
+def place(buf, x, at, gain=1.0):
+    i = secs(at); x = np.asarray(x, np.float32)
+    if x.ndim == 1: x = np.stack([x, x], 1)
+    if i >= N: return
+    j = min(N, i + len(x)); s0 = max(0, -i)
+    buf[max(0, i):j] += gain * x[s0:j - i]
+def env_adsr(n, a=0.01, d=0.1, s=0.7, r=0.2, hold=None):
+    e = np.ones(n, np.float32); A = secs(a); D = secs(d); R = secs(r)
+    if A: e[:A] = np.linspace(0, 1, A)
+    if D: e[A:A + D] = np.linspace(1, s, len(e[A:A + D]))
+    e[A + D:] = s
+    if R and R < n: e[-R:] *= np.linspace(1, 0, R)
+    return e
+def expdecay(n, tau): return np.exp(-np.arange(n) / (tau * SR)).astype(np.float32)
+def db(x): return 10 ** (x / 20)
+def midi(m): return 440.0 * 2 ** ((m - 69) / 12)
+def fade(x, fi=0.0, fo=0.0):
+    x = x.copy(); a, b = secs(fi), secs(fo)
+    if a: x[:a] *= np.linspace(0, 1, a)[:, None] if x.ndim == 2 else np.linspace(0, 1, a)
+    if b: x[-b:] *= np.linspace(1, 0, b)[:, None] if x.ndim == 2 else np.linspace(1, 0, b)
+    return x
+def reverb_ir(rt60, pre=0.01, bright=0.5, length=None, seed=0):
+    L = secs(length or min(4.0, rt60 * 1.3)); r = np.random.default_rng(seed)
+    t = np.arange(L) / SR; decay = np.exp(-6.9 * t / rt60)
+    irs = []
+    for ch in range(2):
+        n = r.standard_normal(L) * decay
+        n = bl("lp", 2000 + 9000 * bright, n); n[: secs(pre)] = 0
+        for k in range(6):  # a few early reflections
+            n[secs(pre + 0.004 + 0.011 * k + r.uniform(0, 0.006))] += r.uniform(0.3, 0.7) * (0.8 ** k)
+        irs.append(n / np.sqrt(np.sum(n ** 2)))
+    return np.stack(irs, 1).astype(np.float32)
+def convolve(x, ir, wet=0.2):
+    if x.ndim == 1: x = np.stack([x, x], 1)
+    y = np.stack([signal.fftconvolve(x[:, c], ir[:, c])[: len(x)] for c in range(2)], 1)
+    return ((1 - wet) * x + wet * y).astype(np.float32)
+def read_wav(p):
+    with wave.open(str(p)) as w:
+        sr, n, ch = w.getframerate(), w.getnframes(), w.getnchannels(); x = np.frombuffer(w.readframes(n), np.int16).astype(np.float32) / 32768
+    x = x.reshape(-1, ch) if ch > 1 else x
+    if sr != SR:
+        x = signal.resample_poly(x, SR, sr, axis=0).astype(np.float32)
+    return x
+def write_wav(p, x):
+    y = np.clip(x, -1, 1); y = (y * 32767).astype(np.int16)
+    with wave.open(str(p), "wb") as w: w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(y.tobytes())
+def rms_db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+def additive(freq, n, nh=12, rolloff=1.0, detune=0.0, vib=0.0, phase=0.0):
+    t = np.arange(n) / SR; out = np.zeros(n, np.float32)
+    f = freq * (1 + detune) * (1 + vib * np.sin(2 * np.pi * 5.2 * t + phase))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    for h in range(1, nh + 1):
+        if freq * h > 9000: break
+        out += np.sin(h * ph + phase * h).astype(np.float32) / (h ** rolloff)
+    return out
+def pad_chord(notes, dur, bright=0.5):
+    n = secs(dur); x = np.zeros(n, np.float32)
+    for m in notes:
+        for dt in (-0.004, 0.0, 0.0045):
+            x += additive(midi(m), n, nh=10, rolloff=1.25 - 0.3 * bright, detune=dt, phase=rng.uniform(0, 6.28))
+    return x / (len(notes) * 3)
+def strings_chord(notes, dur):
+    n = secs(dur); x = np.zeros(n, np.float32)
+    for m in notes:
+        for dt in (-0.003, 0.003):
+            x += additive(midi(m), n, nh=14, rolloff=0.95, detune=dt, vib=0.004, phase=rng.uniform(0, 6.28))
+    return bl("lp", 4500, x / (len(notes) * 2))
+def bass_note(m, dur):
+    n = secs(dur); t = np.arange(n) / SR; f = midi(m)
+    x = np.sin(2 * np.pi * f * t) + 0.3 * np.sin(4 * np.pi * f * t) + 0.08 * np.sin(6 * np.pi * f * t)
+    return (np.tanh(1.4 * x) * env_adsr(n, 0.006, 0.25, 0.55, 0.15)).astype(np.float32)
+def kick(level=1.0):
+    n = secs(0.35); t = np.arange(n) / SR; f = 45 + 75 * np.exp(-t / 0.03); ph = 2 * np.pi * np.cumsum(f) / SR
+    return (np.sin(ph) * expdecay(n, 0.09) * level).astype(np.float32)
+def shaker(level=1.0):
+    n = secs(0.09); x = bl("bp", (5000, 11000), white(n)) * expdecay(n, 0.025); x[: secs(0.006)] *= np.linspace(0, 1, secs(0.006)); return x * level
+def handdrum(f=190, level=1.0):
+    n = secs(0.4); t = np.arange(n) / SR; fr = f * (1 + 0.25 * np.exp(-t / 0.02)); ph = 2 * np.pi * np.cumsum(fr) / SR
+    return ((np.sin(ph) * expdecay(n, 0.12) + 0.25 * bl("bp", (600, 3000), white(n)) * expdecay(n, 0.01)) * level).astype(np.float32)
+def flute(m, dur):
+    n = secs(dur); x = additive(midi(m), n, nh=5, rolloff=2.2, vib=0.006) + 0.04 * bl("bp", (800, 4000), white(n))
+    return x * env_adsr(n, 0.08, 0.2, 0.75, 0.35)
+
+# ------------------------------------------------------------------ helpers
+def ff(x, af, mono=False):
+    a, b = "_i.wav", "_o.wav"; write_wav(a, x if x.ndim == 2 else np.stack([x, x], 1))
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", a, "-af", af, "-ar", str(SR), "-ac", "2", "-c:a", "pcm_s16le", b], check=True)
+    y = read_wav(b); return y
+def load_any(p):
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(p), "-ar", str(SR), "-ac", "1", "-c:a", "pcm_s16le", "_l.wav"], check=True)
+    return read_wav("_l.wav")
+def trim(x, thr_db=-42, pad=0.04):
+    e = np.abs(x); k = secs(0.01); env = np.convolve(e, np.ones(k) / k, mode="same")
+    idx = np.where(env > db(thr_db))[0]
+    if not len(idx): return x
+    a = max(0, idx[0] - secs(pad)); b = min(len(x), idx[-1] + secs(pad * 2)); return x[a:b]
+def stem(path, a, b):
+    x = load_any(path); return x[secs(a):secs(b)]
+def squelch():
+    n = secs(0.06); return bl("bp", (1200, 4000), white(n)) * expdecay(n, 0.012) * 0.25
+RADIO = "highpass=f=320,lowpass=f=3300,acompressor=threshold=-24dB:ratio=5:attack=3:release=60:makeup=4,asoftclip=type=atan,volume=0.8"
+PHONE = "highpass=f=450,lowpass=f=3600,acompressor=threshold=-24dB:ratio=4:attack=3:release=60:makeup=3,volume=0.85"
+ROOM_IR = reverb_ir(0.55, bright=0.4, seed=3); CTRL_IR = reverb_ir(0.9, bright=0.45, seed=5)
+
+def stretch(x, sp):
+    """slow a clip to speed sp by resampling (pitch drops; fine for roar/hum)"""
+    if abs(sp - 1) < 1e-3: return x
+    return signal.resample_poly(x, int(round(1000 / sp)), 1000, axis=0).astype(np.float32)
+
+EDL = json.load(open("timeline.json"))
+ST = {s["name"]: s["start_f"] / 24 for s in EDL}; DUR = {s["name"]: s["frames"] / 24 for s in EDL}
+# source in-points = the first frame actually used (ffmpeg keeps frames at or after -ss; 24 fps frame grid)
+F = lambda t: round(np.ceil(t * 24 - 1e-6) / 24, 6)
+# measured: when -ss lands between frames, the -r 24 output repeats the first frame, so the effective in-point is
+# one frame earlier than the first decoded frame (verified by frame matching against the original)
+SRC = {"open": (F(0.0), .75), "track": (F(10.045) - 1 / 24, 1), "temi": (F(23.5), 1), "pad": (F(40.045), .5), "launch": (F(42.0), .8),
+       "station": (F(50.045), .9), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(80.045) - 1 / 24, 1), "pass": (F(90.045), .75),
+       "rafback": (F(104.0), 1), "boat": (F(114.0), .3)}
+def T_of(seg, src_t):  # where an original-source moment lands on the new timeline
+    a, sp = SRC[seg]; return ST[seg] + (src_t - a) / sp
+def A(seg, off): return ST[seg] + off    # segment-relative time
+CAP = T_of("station", 67.5)              # the clamp bites (sparks)
+SIL = ST["pass"] + 6.35                  # music cut: the held breath
+RES = ST["pass"] + 10.4                  # "...kilometres" lands, the resolution
+
+VOC = "sep/htdemucs/a44/vocals.wav"; FX = "sep/htdemucs/a44/no_vocals.wav"
+def pick(lid):
+    sel = json.load(open("takes.json")) if pathlib.Path("takes.json").exists() else {}
+    return f"vo/{lid}_t{sel.get(lid, 0)}.wav"
+
+# (time, source, processing, gain_db, label)
+LINES = [
+ (A("track", 1.95), "vo/od1.wav", "ctrl", 0, "ODILE  Two dead objects. Collision course."),
+ (A("track", 4.85), "vo/mk1.wav", "ctrl", 0, "MAREK  Whose are they?"),
+ (A("track", 6.15), "vo/od2.wav", "ctrl", 0, "ODILE  Nobody's. Dead thirty years."),
+ (A("c1", 1.0), "vo/mk2.wav", "ctrl", 0, "MAREK  So whose job is it?"),
+ (A("c1", 4.3), "vo/od3.wav", "phone", 0, "ODILE (phone)  Temi, wake up. Two dead objects, forty hours to impact."),
+ (T_of("temi", 27.45), ("orig", 27.45, 28.95), "room", 2, "TEMI  What time is it?"),
+ (A("temi", 5.55), "vo/od4.wav", "phone", 0, "ODILE (phone)  Time to launch."),
+ (A("pad", 0.25), "vo/lc1.wav", "radio", 0, "LAUNCH  Winds are at the limit. Your call."),
+ (A("pad", 3.15), "rf1", "radio", 0, "RAFAEL  We go. Light it."),
+ (T_of("station", 50.70), ("orig", 50.70, 55.42), "radio", 0, "TUG  Tug control, we have visual contact..."),
+ (T_of("station", 55.40), ("orig", 55.40, 59.90), "radio", 0, "CONTROL  Copy that, manoeuvring thrusters engaged..."),
+ (A("station", 11.1), "tm1", "radio", 0, "TEMI  No docking port. Nothing to grab."),
+ (A("station", 13.5), "rf2", "radio", 0, "RAFAEL  Then we abort."),
+ (A("station", 14.7), "tm2", "radio", 0, "TEMI  No. We grab it anyway."),
+ (CAP + 0.3, "tm3", "radio", 1, "TEMI  We have it."),
+ (T_of("rafael", 69.68), ("orig", 69.68, 74.05), "room", 0, "RAFAEL  We cannot bring it down. Nine tonnes. Not even close."),
+ (A("rafael", 4.25), "tm4", "radio", 0, "TEMI  So we caught it for nothing?"),
+ (A("rafael", 7.0), "vo/od5.wav", "radio", 0, "ODILE  You don't have to bring it down. You have to make it late."),
+ (A("temi2", 0.55), "rf3", "dry", 0, "RAFAEL  Late? How late?"),
+ (A("temi2", 2.2), "vo/od6.wav", "radio", 0, "ODILE  One centimetre a second, twenty hours early, is two kilometres at the crossing."),
+ (T_of("temi2", 86.78), ("orig", 86.78, 88.25), "room", 0, "TEMI  There we go, come on now."),
+ (A("pass", 3.4), "vo/od7.wav", "radio", 0, "ODILE  Closest approach in three... two..."),
+ (A("pass", 8.65), "vo/od8.wav", "radio", 1, "ODILE  Two point one kilometres."),
+ (A("rafback", 0.15), "vo/od9.wav", "phone", 0, "ODILE (phone)  Every space agency on Earth is calling you."),
+ (A("rafback", 2.95), "rf4", "dry", 0, "RAFAEL  Then it's somebody's job now."),
+ (A("boat", 3.2), ("orig", 115.95, 118.35), "outdoor", 0, "BOY  Look, Dad. A shooting star."),
+]
+
+def build_dialogue():
+    buf = np.zeros((N, 2), np.float32); mask = np.zeros(N, np.float32); log = []
+    for t, src, proc, g, label in LINES:
+        if isinstance(src, tuple): x = stem(VOC, src[1], src[2])
+        else:
+            p = src if src.endswith(".wav") else pick(src); x = trim(load_any(p))
+        x = bl("hp", 80, x)
+        if proc == "radio":
+            y = ff(x, RADIO); sq = squelch(); y = np.concatenate([np.stack([sq, sq], 1), y, np.stack([sq * .6, sq * .6], 1)])
+            t -= 0.06
+        elif proc == "phone": y = convolve(ff(x, PHONE), ROOM_IR, wet=0.12)
+        elif proc == "ctrl": y = convolve(x, CTRL_IR, wet=0.10)
+        elif proc == "room": y = convolve(x, ROOM_IR, wet=0.08)
+        elif proc == "outdoor": y = np.stack([x, x], 1)
+        else: y = convolve(x, ROOM_IR, wet=0.06)
+        if y.ndim == 1: y = np.stack([y, y], 1)
+        y = y / (np.sqrt(np.mean(y ** 2)) + 1e-9) * db(-20 + g)
+        place(buf, y, t); a = secs(t); mask[a:a + len(y)] = 1
+        log.append((round(t, 2), round(t + len(y) / SR, 2), label))
+    log.sort()
+    for i in range(1, len(log)):
+        if log[i][0] < log[i - 1][1] - 0.02: print("OVERLAP", log[i - 1], log[i])
+    json.dump(log, open("dialogue_log.json", "w"), indent=1)
+    return buf, mask
+
+# ================================================================== SFX
+def build_fx():
+    fx = np.zeros((N, 2), np.float32)
+    orig = load_any(FX)
+    # the team's own sound effects (launch roar, tug hum, docking clanks, flyby), re-timed to the new cut
+    for seg, a, b, g in [("launch", 42.0, 50.0, 0), ("station", 50.045, 70.0, -2), ("pass", 90.045, 98.0, -4), ("temi2", 82.0, 87.0, -6)]:
+        a0, sp = SRC[seg]; x = stretch(orig[secs(a):secs(b)], sp)
+        x = fade(x, 0.15, 0.4); place(fx, pan(x, 0), T_of(seg, a), db(g))
+    # low wind at the night pad
+    n = secs(DUR["pad"] + 0.6); w = bl("bp", (150, 1400), pink(n)) * (0.6 + 0.4 * np.sin(np.linspace(0, 7, n)) ** 2)
+    place(fx, pan(fade(w, 0.3, 0.6) * 0.06, -0.2), ST["pad"] - 0.2)
+    # phone buzz waking Temi (three pulses)
+    for k in range(3):
+        n = secs(0.38); t = np.arange(n) / SR; bz = np.sign(np.sin(2 * np.pi * 150 * t)) * 0.5 + np.sin(2 * np.pi * 300 * t) * 0.3
+        place(fx, pan(bl("lp", 1800, bz) * env_adsr(n, 0.01, 0.05, 0.8, 0.05) * 0.035, 0.3), ST["c1"] + 2.9 + k * 0.5)
+    # sea and hull creak under the boat
+    n = secs(DUR["boat"] + 1.0); sea = bl("lp", 900, brown(n)) * (0.5 + 0.5 * np.sin(np.linspace(0, 9, n)) ** 2)
+    place(fx, pan(fade(sea, 0.8, 1.0) * 0.07, 0), ST["boat"] - 0.3)
+    # the streak burning up, far away: soft airy whoosh
+    n = secs(4.5); wh = bl("bp", (300, 2500), pink(n)) * np.hanning(n); place(fx, pan(wh * 0.03, -0.4), ST["boat"] + 0.6)
+    return fx
+
+# ================================================================== SCORE (D minor, resolves to D major)
+CH = {"Dm": [50, 53, 57, 62, 65], "Bb": [46, 53, 58, 62, 65], "F": [53, 57, 60, 65, 69], "C": [48, 55, 60, 64, 67],
+      "Gm": [43, 50, 55, 58, 62], "A": [45, 52, 57, 61, 64], "D": [50, 54, 57, 62, 66], "Bm": [47, 54, 59, 62, 66], "G": [43, 50, 55, 59, 62]}
+ROOT = {"Dm": 38, "Bb": 34, "F": 41, "C": 36, "Gm": 31, "A": 33, "D": 38, "Bm": 35, "G": 31}
+def boom(level=1.0):
+    n = secs(3.0); t = np.arange(n) / SR; f = 32 + 40 * np.exp(-t / 0.08); ph = 2 * np.pi * np.cumsum(f) / SR
+    x = np.sin(ph) * expdecay(n, 0.9) + 0.25 * bl("lp", 400, white(n)) * expdecay(n, 0.15)
+    return (np.tanh(1.5 * x) * level).astype(np.float32)
+def riser(dur):
+    n = secs(dur); x = white(n); out = np.zeros(n, np.float32); k = secs(0.05)
+    for i in range(0, n, k):
+        fc = 300 + 5000 * (i / n) ** 2; seg = x[i:i + k]
+        out[i:i + k] = bl("bp", (fc, fc * 1.6), seg) if len(seg) > 10 else 0
+    return out * np.linspace(0, 1, n) ** 2
+def pulse_note(m, dur, cutoff=900):
+    n = secs(dur); t = np.arange(n) / SR; f = midi(m)
+    saw = 2 * (t * f % 1) - 1; return bl("lp", cutoff, saw) * env_adsr(n, 0.004, 0.08, 0.4, 0.05)
+def piano(m, dur=3.0):
+    n = secs(dur); t = np.arange(n) / SR; f = midi(m); x = np.zeros(n, np.float32)
+    for h, a in ((1, 1), (2, .45), (3, .22), (4, .12), (5, .06)): x += a * np.sin(2 * np.pi * f * h * t * (1 + 0.0004 * h * h)) * expdecay(n, 1.6 / h)
+    x[:secs(0.003)] *= np.linspace(0, 1, secs(0.003)); return x * 0.6
+def tick():
+    n = secs(0.05); return bl("bp", (1800, 5000), white(n)) * expdecay(n, 0.008)
+def lane(points):
+    tt = np.arange(N) / SR; xs, ys = zip(*points); return np.interp(tt, xs, ys).astype(np.float32)
+def at(L, t): return float(L[min(N - 1, max(0, secs(t)))])
+
+def build_score():
+    m = np.zeros((N, 2), np.float32)
+    S = ST; E = {k: ST[k] + DUR[k] for k in ST}
+    # --- drone bed (whole film, shaped)
+    Ld = lane([(0, 0), (1.5, .85), (S["c1"], .7), (E["c1"], .45), (S["launch"], .3), (E["launch"], .25), (S["rafael"], .5), (SIL, .6), (SIL + 0.05, 0), (TOTAL, 0)])
+    n = N; t = np.arange(n) / SR
+    dr = (np.sin(2 * np.pi * midi(26) * t) + 0.5 * np.sin(2 * np.pi * midi(38) * t + 0.3 * np.sin(2 * np.pi * 0.07 * t)) + 0.15 * bl("lp", 300, brown(n))) * Ld
+    m += pan(dr.astype(np.float32) * 0.09, 0)
+    air = bl("bp", (5000, 9000), pink(n)) * lane([(0, .5), (S["track"], .3), (S["temi"], .0), (S["station"], .25), (S["rafael"], 0), (S["pass"], .4), (SIL, .4), (SIL + 0.05, 0), (TOTAL, 0)])
+    m += pan(air * 0.01, 0.2)
+    # --- clock ticks: tracking room + Temi waking (the forty hours), and the countdown
+    for t0, t1, bpm in ((S["track"] + 0.5, E["temi"], 80), (S["pass"] + 2.0, SIL, 120)):
+        k = 0
+        while t0 + k * 60 / bpm < t1:
+            tk = t0 + k * 60 / bpm; place(m, pan(tick() * (0.06 if k % 2 == 0 else 0.035), 0.4), tk); k += 1
+    # --- the boom on the first card
+    place(m, pan(boom(0.5), 0), S["c1"])
+    # --- pad tension into the launch, then the launch chords
+    sw = strings_chord([50, 57, 62, 63, 65], DUR["pad"] + 0.5) * np.linspace(0, 1, secs(DUR["pad"] + 0.5)) ** 1.6
+    place(m, pan(sw * 0.28, 0), S["pad"])
+    place(m, pan(riser(DUR["pad"]) * 0.05, 0.1), S["pad"])
+    beat = 60 / 84
+    seq = ["Dm", "Bb", "F", "C"]; tL = S["launch"]
+    for i in range(4):
+        tc = tL + i * 2.5; c = seq[i]
+        place(m, pan(pad_chord(CH[c], 3.4) * env_adsr(secs(3.4), 0.25, 0.2, 0.9, 1.0), 0), tc, 0.30)
+        place(m, pan(strings_chord(CH[c], 3.4) * env_adsr(secs(3.4), 0.4, 0.2, 0.9, 1.0), 0.1), tc, 0.22)
+        place(m, pan(bass_note(ROOT[c], 2.4), 0), tc, 0.30)
+        for k in range(4): place(m, pan(kick(1.0 if k % 2 == 0 else 0.6), 0), tc + k * 0.625, 0.35)
+        for k in (1, 3): place(m, pan(handdrum(110, 1.0), -0.2), tc + k * 0.625 + 0.31, 0.25)
+    place(m, pan(boom(0.45), 0), tL)
+    # --- station: low 8th-note ostinato that builds to the capture
+    ost = [50, 50, 57, 50, 53, 50, 57, 53]; Lo = lane([(S["station"], 0), (S["station"] + 3, .35), (CAP - 7, .45), (CAP - 1.5, .85), (CAP, 1.0), (CAP + 0.3, 0)])
+    tk = S["station"] + 1.0; k = 0
+    while tk < CAP:
+        g = at(Lo, tk); place(m, pan(pulse_note(ost[k % 8] - 12, 0.3, 700 + 900 * g), -0.1), tk, 0.22 * g); tk += beat / 2; k += 1
+    for i, c in enumerate(["Dm", "Dm", "Bb", "Bb", "Gm", "Gm", "A", "A"]):
+        tc = S["station"] + 1.0 + i * (CAP - 1.0 - S["station"] - 1.0) / 8
+        place(m, pan(strings_chord(CH[c], 3.2) * env_adsr(secs(3.2), 0.6, 0.2, 0.9, 0.8), 0.1), tc, 0.12 + 0.02 * i)
+    place(m, pan(riser(3.0) * 0.06, 0), CAP - 3.0)
+    # capture hit
+    place(m, pan(boom(0.55), 0), CAP); place(m, pan(pad_chord(CH["F"], 2.6) * env_adsr(secs(2.6), 0.01, 0.4, 0.6, 1.4), 0), CAP, 0.3)
+    # --- Rafael: the low point, sparse piano
+    for tn, nt in ((S["rafael"] + 0.6, 50), (S["rafael"] + 2.4, 53), (S["rafael"] + 4.4, 46), (S["rafael"] + 6.6, 45), (S["rafael"] + 8.4, 50)):
+        place(m, pan(piano(nt, 3.2), -0.15), tn, 0.16); place(m, pan(piano(nt - 12, 3.2), -0.15), tn, 0.10)
+    place(m, pan(pad_chord(CH["Dm"], DUR["rafael"]) * env_adsr(secs(DUR["rafael"]), 1.5, 0.3, 0.8, 2.0), 0), S["rafael"], 0.12)
+    # "make it late": the idea lands, a lift (Bb -> F)
+    place(m, pan(pad_chord(CH["Bb"], 4.0) * env_adsr(secs(4.0), 1.0, 0.3, 0.9, 1.5), 0), A("rafael", 7.0), 0.16)
+    # --- Temi at the controls: pulse returns, rising; hope on "there we go"
+    tk = S["temi2"] + 0.5; k = 0
+    while tk < S["temi2"] + 6.8:
+        g = 0.3 + 0.5 * (tk - S["temi2"]) / 6.8; place(m, pan(pulse_note([50, 57, 53, 57][k % 4] - 12, 0.28, 800), 0.1), tk, 0.2 * g); tk += beat / 2; k += 1
+    place(m, pan(pad_chord(CH["F"], 4.5) * env_adsr(secs(4.5), 0.3, 0.3, 0.9, 1.8), 0), S["temi2"] + 6.9, 0.2)
+    place(m, pan(strings_chord(CH["C"], 3.5) * env_adsr(secs(3.5), 0.8, 0.3, 0.9, 1.5), 0.1), S["temi2"] + 7.5, 0.16)
+    # --- the pass: heartbeat + riser, hard cut to silence at SIL, then the reveal at RES
+    for k in range(int((SIL - S["pass"] - 1.0) / 0.75)):
+        tk = S["pass"] + 1.0 + k * 0.75; g = 0.4 + 0.6 * k / 8
+        place(m, pan(kick(0.8), 0), tk, 0.30 * min(1, g)); place(m, pan(kick(0.5), 0), tk + 0.2, 0.20 * min(1, g))
+    rz = riser(SIL - (S["pass"] + 1.5)); place(m, pan(rz * 0.10, 0), S["pass"] + 1.5)
+    place(m, pan(strings_chord([50, 51, 57, 62, 63], SIL - S["pass"]) * np.linspace(0, 1, secs(SIL - S["pass"])) ** 2, 0), S["pass"], 0.2)
+    # (nothing between SIL and RES)
+    # --- resolution: D major, the hopeful theme
+    t0 = RES; prog = ["D", "Bm", "G", "A", "D", "Bm", "G", "D"]; bar = 2.9
+    for i, c in enumerate(prog):
+        tc = t0 + i * bar
+        if tc > TOTAL - 0.5: break
+        L = bar + 1.4 if i < len(prog) - 1 else TOTAL - tc
+        place(m, pan(pad_chord(CH[c], L) * env_adsr(secs(L), 0.5 if i else 0.05, 0.3, 0.9, 1.2), 0), tc, 0.26 if i else 0.34)
+        place(m, pan(strings_chord(CH[c], L) * env_adsr(secs(L), 0.8, 0.3, 0.9, 1.2), 0.15), tc, 0.18)
+        place(m, pan(bass_note(ROOT[c], 2.2), 0), tc, 0.18)
+    mel = [(0.0, 74), (0.7, 76), (1.4, 78), (2.9, 81), (4.4, 78), (5.8, 76), (7.2, 74), (8.7, 79), (10.1, 78), (11.6, 76), (13.0, 74),
+           (14.5, 78), (15.9, 81), (17.4, 83), (18.8, 81), (20.3, 78)]
+    for dt, nt in mel:
+        if t0 + 1.2 + dt < ST["title"] - 0.3: place(m, pan(piano(nt, 2.8), 0.2), t0 + 1.2 + dt, 0.11)
+    place(m, pan(boom(0.35), 0), RES)
+    # final chord on the title, everything resolves on D
+    place(m, pan(piano(62, 4.0) + piano(66, 4.0) + piano(69, 4.0) + piano(74, 4.0), 0), ST["title"] + 0.05, 0.10)
+    m = convolve(m, reverb_ir(2.4, bright=0.45, seed=9), wet=0.22)
+    # global fade: start from silence, end clean on the last frame
+    g = lane([(0, 0), (0.8, 1), (TOTAL - 1.6, 1), (TOTAL - 0.05, 0), (TOTAL, 0)])
+    return m * g[:, None]
+
+def sidechain(mask, depth_db=-8, att=0.08, rel=0.35):
+    e = np.convolve(mask, np.ones(secs(att)) / secs(att), mode="same"); e = np.clip(e, 0, 1)
+    k = secs(rel); e = np.maximum(e, np.convolve(e, np.ones(k) / k, mode="same"))
+    return db(depth_db * e).astype(np.float32)
+
+if __name__ == "__main__":
+    dia, mask = build_dialogue(); fx = build_fx(); mus = build_score()
+    duck = sidechain(mask)[:, None]
+    mix = dia * db(0) + fx * db(-3) * (0.6 + 0.4 * duck) + mus * db(0) * duck
+    mix[secs(SIL):secs(RES)] = dia[secs(SIL):secs(RES)] + fx[secs(SIL):secs(RES)] * db(-14)   # the held breath
+    bed = mix - dia
+    np.save("_mask.npy", mask)
+    print("dialogue-region: dia %.1f dB, bed %.1f dB" % (rms_db(dia[mask > 0]), rms_db(bed[mask > 0])))
+    for name, (a, b) in {"opening": (2, 10), "card1": (ST["c1"], ST["temi"]), "launch": (ST["launch"], ST["station"]), "capture": (CAP - 2, CAP + 1),
+                         "rafael": (ST["rafael"] + 4, ST["temi2"]), "countdown": (ST["pass"] + 1, SIL), "resolution": (RES, ST["c2"]), "title": (ST["title"], TOTAL - 1)}.items():
+        print(f"  {name:10s} bed {rms_db(bed[secs(a):secs(b)]):6.1f} dB   total {rms_db(mix[secs(a):secs(b)]):6.1f} dB")
+    write_wav("premix.wav", mix / (np.abs(mix).max() + 1e-9) * 0.7)
+    for name, x in (("dia", dia), ("fx", fx), ("mus", mus)): write_wav(f"stem_{name}.wav", x / (np.abs(x).max() + 1e-9) * 0.7)
+    print("premix written")
