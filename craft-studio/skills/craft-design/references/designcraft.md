@@ -124,7 +124,7 @@ echo 'data.merge {"path": "people.csv"}' | "$CLI" script - --in template.designc
 ```
 
 ## The command registry
-There are 540+ engine commands, plus UI-only commands that run only in the app. `"$CLI" commands table` / `describe table.insert` show them, as do MCP `list_commands {filter, enabledOnly}` and the resource `designcraft://commands`.
+There are 542 engine commands in 0.14.0, plus UI-only commands that run only in the app. `"$CLI" commands table` / `describe table.insert` show them, as do MCP `list_commands {filter, enabledOnly}` and the resource `designcraft://commands`.
 - **Script format:** lines `command.id {json}` (also `command.id={json}` or a bare `command.id`), JSON lines `{"command","params"}`, or a JSON array. `#` and `//` lines are comments. `"$N.path"` is replaced by the value at `path` in step N's result (dot path, e.g. `"$3.ids.0"`); `$last` is the previous step; `"${N.path}"` interpolates inside a string; `$$` is a literal `$`. In text, `\n` starts a new paragraph and `\u2028` is a forced line break.
 - An unknown parameter key is an **error** with a "did you mean" hint. `type.char` and `type.para` take their attributes either under `attrs` or at the top level.
 - Commands act on `ids` when given, otherwise on the selection. Text formatting acts on the selected text, or on every story of the selected text frames.

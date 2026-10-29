@@ -138,7 +138,7 @@ mkdir -p out/carousel   # data.fill does not create "dir"; without it every expo
 ```
 
 ## The command registry
-More than 400 commands. Each menu item, tool and gesture is a command; the UI, CLI, control channel and MCP all run the same ones. `"$CLI" commands --filter layout` prints `id*  Label (shortcut)` and then the params doc (`*` marks an undoable command). `--json` gives `[{id,label,params,menu,shortcut,undoable}]`. MCP: `list_commands {filter}` or the resource `figcraft://command/{id}`.
+615 commands in v0.12.1. Each menu item, tool and gesture is a command; the UI, CLI, control channel and MCP all run the same ones. `"$CLI" commands --filter layout` prints `id*  Label (shortcut)` and then the params doc (`*` marks an undoable command). `--json` gives `[{id,label,params,menu,shortcut,undoable}]`. MCP: `list_commands {filter}` or the resource `figcraft://command/{id}`.
 A **script** is a JSON array of `{"command": id, "params": {...}, "as"?: name}`, or `{"commands": [...]}`, or JSON lines (blank and `//` lines skipped). It runs as one undo step and is all-or-nothing. `{"$ref":"name"}` (or `{"$step":n}`) stands for that step's `id`. Add `"field":"ids/0"` to take another key or path. In a new document the page is id 1, so the first layer is id 2. Commands act on `ids` when given and otherwise on the selection; new layers become the selection.
 
 | Command | Example params |
