@@ -1,7 +1,7 @@
 {
   "name": "craft-studio",
   "displayName": "Craft Studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Drive the open-source Crafting Apps from ArtCraft (github.com/storytold) headlessly through each app's CLI and MCP server: photo and raw editing, vector, UI and page design, video, motion graphics and audio, CAD, Word, Excel and PowerPoint-style documents and PDFs, plus the ArtCraft AI studio and the org's research repos.",
   "author": {
     "name": "Syed Hasnain Akber",

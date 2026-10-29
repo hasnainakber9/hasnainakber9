@@ -27,6 +27,7 @@ tie-breakers below decide. Every app's CLI is installed with `python3 "$CRAFT" e
 | Slide deck built, edited, rendered | DeckCraft | craft-office | PPTX; PDF and PNG out |
 | PDF inspected, searched, split, merged, annotated, filled, redacted, OCR'd | PdfCraft | craft-office | `pdfcraft-cli tools` lists every operation |
 | AI image or video with staged 3D scenes, posed characters | ArtCraft (desktop) | craft-ai | needs the user's desktop and provider accounts |
+| AI video clip from a prompt or image with open models; talking or singing video from a portrait and audio; character animation | Wan2.2 (Wan-Video, not a Crafting App) | craft-ai | `scripts/wan.py`: local NVIDIA GPU (24 GB 5B, 80 GB 14B) or Model Studio API |
 | Gaussian splat viewer on the web; speech/video model training; capture rigs | research repos | craft-ai | see craft-ai's research-repos reference |
 
 ## By input file
@@ -74,6 +75,9 @@ The per-app references list exact formats; check them before promising a format.
 - **FilmCraft or Kdenlive:** a `.kdenlive` project, or a user who edits in Kdenlive, goes to
   Kdenlive; command-driven edits from loose footage go to FilmCraft. Either export can be the
   other's input.
+- **ArtCraft, Wan2.2 or video-studio for AI video:** ArtCraft for its paid frontier models and 3D
+  staging; Wan2.2 for one open-model clip (free on the user's GPU, or Model Studio); video-studio
+  for whole productions (it also runs Wan through ComfyUI).
 - **video-studio:** it leads for making new videos from an idea (narration, HTML motion graphics,
   AI-generated footage, captions, compositing). FilmCraft, EffectCraft and SoundCraft lead for
   editing existing footage, motion-graphics projects and Lottie, and multitrack audio. Chain them:

@@ -61,6 +61,7 @@ the install folder (default `~/.craft-studio`).
 | Slide decks: build, edit, render, PPTX | craft-office | DeckCraft |
 | PDFs: inspect, text, merge/split, pages, forms, comments, redact, OCR | craft-office | PdfCraft |
 | AI images or video with control, 3D splats, speech models, mocap | craft-ai | ArtCraft and research repos |
+| AI video from a prompt or image with open models (local GPU or hosted), talking video from audio | craft-ai | Wan2.2 (Wan-Video) |
 
 Jobs that span apps hand files along: LightCraft develops raws, PhotoCraft composites,
 DesignCraft lays out pages, PdfCraft checks and finishes the PDF. `references/routing.md` has

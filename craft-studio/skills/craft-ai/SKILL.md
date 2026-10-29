@@ -1,20 +1,23 @@
 ---
 name: craft-ai
-description: Plan and run AI image, video, music, 3D mesh and 3D world generation with ArtCraft Studio (github.com/storytold/artcraft), the open-source AI studio for artists, through its hosted Omni API or step-by-step guidance in the desktop app (3D scene staging, character posing, 2D canvas inpainting, camera angles, storyboards), and use the ArtCraft/storytold research repos (Spark Gaussian-splat viewer for three.js, video-model fine-tuning with conditioning, VITS and Tacotron speech training, voice conversion, Kinect and Xsens capture, Unreal and Unity plugins). Use when the user mentions ArtCraft, getartcraft, storytold or FakeYou, wants controllable AI images or video from a staged 3D scene or posed characters, wants model costs in ArtCraft credits, wants to show or embed Gaussian splats on the web, or asks about training video or voice models with those repos.
+description: Plan and run AI image, video, music, 3D mesh and 3D world generation with ArtCraft Studio (github.com/storytold/artcraft) through its hosted Omni API or guided desktop work (3D scene staging, character posing, inpainting, storyboards), and generate video with the open Wan2.2 models (github.com/Wan-Video/Wan2.2) on the user's NVIDIA GPU or through Alibaba Cloud Model Studio - text to video, image to video, a talking or singing video from a portrait and audio, character animation or replacement. Also covers the ArtCraft research repos (Spark Gaussian splats for three.js, video and voice model training, capture rigs, Unreal and Unity plugins). Use when the user mentions ArtCraft, storytold, FakeYou, Wan or Wan2.2, wants an AI video clip from a prompt or image, free or local or open-source video generation, controllable shots from a staged 3D scene, costs in ArtCraft credits, or Gaussian splats on the web.
 license: MIT
-compatibility: The ArtCraft Omni API needs the user's ArtCraft account and API key (paid credits). The desktop app runs on Windows and macOS (Linux from source) and has no CLI or MCP server. Research repos need Python or Node and often a GPU.
+compatibility: The ArtCraft Omni API needs the user's ArtCraft account and API key (paid credits); the desktop app is GUI-only. Wan2.2 locally needs an NVIDIA GPU (24 GB for TI2V-5B, 80 GB for the 14B models) and 34-126 GB of disk; scripts/wan.py sets it up, or uses Model Studio with DASHSCOPE_API_KEY. Research repos need Python or Node.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: "Syed Hasnain Akber"
 ---
 
-# AI studio and research repos: ArtCraft and friends
+# AI studio, open video models and research repos: ArtCraft, Wan2.2 and friends
 
 ArtCraft Studio is ArtCraft's desktop app for AI images and video: compose on a 2D canvas, stage
 scenes in 3D (subjects, cameras, focal length, kitbashed sets, posed mannequins), then generate
 with the model you pick (Nano Banana, GPT Image, FLUX, Seedream, Midjourney, Seedance, Kling, Veo,
 Sora, Wan, MiniMax, Suno, Hunyuan 3D, Marble and more). Unlike the free Crafting Apps it runs on
 paid credits, and it is GUI-only: no CLI, no MCP server, no control channel.
+
+Wan2.2 is the open route: Alibaba's Apache-2.0 video models, run with `generate.py` or Diffusers
+on the user's GPU, or hosted on Model Studio. `scripts/wan.py` checks the machine and drives both.
 
 ## Pick the route
 
@@ -23,7 +26,9 @@ paid credits, and it is GUI-only: no CLI, no MCP server, no control channel.
 | A price before anything else | Cost endpoint (no sign-in): see below |
 | Generated images or video they can describe in words, inputs as URLs or files | **Omni API** with their key, after they approve the spend |
 | Shots staged in 3D, posed characters, masked inpainting, camera-angle edits, world building | **The desktop app**: Claude plans, prepares inputs and writes click-level steps |
-| Open or local models, no account | Not ArtCraft: say so and use another route (e.g. the video-studio skill if installed, or ComfyUI) |
+| A clip from a prompt or an image with open models, free on their own GPU, or no ArtCraft account | **Wan2.2**: `wan.py doctor`, then local `generate` or hosted `api` (below) |
+| A talking or singing video from a portrait and audio; animate a character with a reference video's motion | **Wan2.2** S2V-14B / Animate-14B (80 GB GPU) |
+| A multi-shot production from an idea, with narration and captions | the video-studio skill if installed (it runs Wan through ComfyUI); finish in craft-av |
 | Finishing the results | craft-image (PhotoCraft, LightCraft), craft-av (FilmCraft, EffectCraft, SoundCraft), craft-design |
 | Gaussian splats on a web page, speech or video model training, capture rigs, Unreal/Unity plugins | `references/research-repos.md` |
 
@@ -45,6 +50,22 @@ never print it, log it or write it into a file. Submit with a fresh `idempotency
 job, download the CDN result, and keep a manifest (prompt, model, job token, credits, file). The
 full request shapes, upload flow, polling states and errors are in `references/artcraft.md`.
 
+## Wan2.2: open video models
+
+```bash
+WAN="${CLAUDE_SKILL_DIR}/scripts/wan.py"
+python3 "$WAN" doctor                                     # GPU/VRAM/disk -> route and model that fit
+python3 "$WAN" setup --route official --model ti2v-5B     # venv + repo + flash-attn + 34 GB weights (diffusers route if flash-attn fails)
+python3 "$WAN" generate --prompt "$P" --seconds 5 --out shot.mp4             # 1280x704 24 fps; --image F for image to video
+python3 "$WAN" generate --model s2v-14B --image face.png --audio line.wav --prompt "$P" --out talk.mp4
+python3 "$WAN" api --prompt "$P" --out shot.mp4 --dry-run  # no GPU: Model Studio (paid; quote first, DASHSCOPE_API_KEY)
+```
+
+Local renders take minutes per 5-second clip (TI2V-5B: under 9 min on an RTX 4090, per the Wan team): run them in
+the background and tell the user the expected time. No NVIDIA GPU (Claude cloud sessions, Macs):
+use `api`, wan.video or the Hugging Face Space, never pretend a local run happened. Models, VRAM,
+flags, Animate preprocessing and prompt craft: `references/wan.md`.
+
 ## When the work needs the window
 
 1. Plan the shots: per shot the model, aspect ratio, resolution, duration, references and a
@@ -60,6 +81,8 @@ full request shapes, upload flow, polling states and errors are in `references/a
 
 - Money: no paid generation without the user's explicit go-ahead on the quoted credits; render
   one sample before a batch; never switch models or providers silently after a failure.
+- Wan2.2 is free to run locally but its licence bars harmful or misleading content; hosted Wan runs
+  are paid per second, so quote and ask like any paid call.
 - People: generate or alter a real person's likeness or voice only with their consent; no
   deceptive media of real people or events; label AI media where it is published.
 - Licences: the ArtCraft app code is MIT OR Apache-2.0, but its NOTICE lists bundled assets with
@@ -71,5 +94,7 @@ full request shapes, upload flow, polling states and errors are in `references/a
 
 - `references/artcraft.md`: features, models, accounts, costs, install per OS, the Omni API in
   full, ArtCraft-X, the shared craft-ai-integrations layer, licences.
+- `references/wan.md`: Wan2.2 models, routes by GPU, setup, generate and Diffusers commands, the
+  Model Studio API, Animate and S2V, prompts, what was verified.
 - `references/research-repos.md`: Spark, FineTrainers-Conditioning, cloud-worker, speech repos,
   capture repos and the Unreal/Unity plugins, each with status, licence and how to use it.

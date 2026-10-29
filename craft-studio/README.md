@@ -20,6 +20,7 @@ checks the output and hands you the file.
 | Documents, spreadsheets, slide decks | **WordCraft**, **GridCraft**, **DeckCraft** |
 | PDF inspection, merging, forms, redaction, OCR | **PdfCraft** (Acrobat-style) |
 | AI image/video with control, 3D splats, speech models | **ArtCraft** and the org's research repos |
+| AI video clips from text or an image, talking videos from audio, open models | **Wan2.2** (Wan-Video, local GPU or hosted) |
 
 Each app ships a headless `<app>-cli` with the same engine as the desktop app: hundreds of
 commands, batch runs, convert/render/inspect subcommands and an MCP server. No GPU, display or
@@ -39,7 +40,8 @@ craft-studio/
     │   └── scripts/kden.py    finds or downloads Kdenlive (SHA-256 checked), renders .kdenlive headlessly
     ├── craft-office/   WordCraft, GridCraft, DeckCraft, PdfCraft
     ├── craft-cad/      CADCraft
-    └── craft-ai/       ArtCraft AI studio, Gaussian splats, speech and capture repos
+    └── craft-ai/       ArtCraft AI studio, Wan2.2 video models, Gaussian splats, speech and capture repos
+        └── scripts/wan.py     checks the GPU, sets up Wan2.2 (official or Diffusers), or calls Model Studio
 ```
 
 Every skill has a `references/` folder with a command reference per app, written from each app's
@@ -82,8 +84,11 @@ Every recipe in the skills and references was run against the real CLIs (PhotoCr
 LightCraft 0.15.0, VectorCraft 0.18.0, FigCraft 0.12.1, DesignCraft 0.14.0, EffectCraft 0.18.0,
 FilmCraft 0.14.0, SoundCraft 0.14.0, CADCraft 0.14.0, WordCraft 0.12.0, GridCraft 0.13.0,
 DeckCraft 0.12.0, PdfCraft 0.15.0, plus Kdenlive 26.08.2 and MLT 7.22) and the rendered outputs
-were inspected. The Crafting Apps are alpha to beta software; the skills tell Claude to render
-and check every result, and to say so plainly when a feature is missing.
+were inspected. Wan2.2 needs an NVIDIA GPU, which the build machine lacked, so no full-size model
+was run: the commands its helper builds pass `generate.py`'s own validator, the Diffusers runner
+ran on scaled-down models, and the hosted API was tested against a mock and the live endpoint. The
+Crafting Apps are alpha to beta software; the skills tell Claude to render and check every result,
+and to say so plainly when a feature is missing.
 
 ## Try
 
@@ -93,6 +98,7 @@ and check every result, and to say so plainly when a feature is missing.
 - "Lay out a two-page A4 brochure from this text and these photos, print-ready PDF."
 - "Cut these three clips into a 30-second vertical video with a title card."
 - "Render my Kdenlive project to WebM and tell me if any media is missing."
+- "Turn this product photo into a 5-second vertical clip with a slow push-in."
 - "Convert this DOCX to PDF and show me page 2." / "Fix the formulas in this spreadsheet."
 - "Merge these PDFs, remove page 4 and redact the phone numbers."
 - "Draw a 6 m × 4 m room plan with a door and two windows as DXF and PDF."
@@ -100,7 +106,7 @@ and check every result, and to say so plainly when a feature is missing.
 ## Licences
 
 This plugin is MIT and bundles no app code: the helpers download or build the apps on request. The
-Crafting Apps are MIT OR Apache-2.0; KDE's Kdenlive is GPL-3.0-or-later and MLT LGPL-2.1. The
-ArtCraft name and logos are trademarks of the ArtCraft Team; this plugin is independent and not
-affiliated with ArtCraft, Adobe, Microsoft, Autodesk or Figma (nor with KDE), whose product names
-are used only to describe compatible workflows.
+Crafting Apps are MIT OR Apache-2.0; KDE's Kdenlive is GPL-3.0-or-later and MLT LGPL-2.1; Wan2.2
+is Apache-2.0. The ArtCraft name and logos are trademarks of the ArtCraft Team; this plugin is
+independent and not affiliated with ArtCraft, Adobe, Microsoft, Autodesk or Figma (nor with KDE or
+Alibaba), whose product names are used only to describe compatible workflows.
