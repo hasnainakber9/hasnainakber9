@@ -17,13 +17,16 @@ tagged `v<version>` (for example `v0.17.0`) and carries a `SHA256SUMS.txt` for a
 | macOS (universal) | `<app>-cli-<ver>-macos-universal.zip` | `<app>-cli` (signed and notarized); the app itself is the `.dmg` |
 | Windows x64 / arm64 / x86 | `<app>-<ver>-windows-<arch>-portable.zip` | `<app>-cli.exe` beside `<app>.exe` (static CRT, no installer needed) |
 | Windows installer | `<app>-<ver>-windows-<arch>.msi` | installs both executables |
-| FreeBSD x86_64 (some apps also aarch64) | `<app>-<ver>-freebsd-<arch>.tar.gz` | `bin/<app>-cli`, laid out like `/usr/local` |
+| FreeBSD x86_64 | `<app>-<ver>-freebsd-x86_64.tar.gz` | `bin/<app>-cli`, laid out like `/usr/local` (aarch64 builds are starting to appear) |
 | Web | `<app>-web-<ver>.zip` | no CLI; the whole app as a static WebAssembly site |
 
-The helper picks the right archive for the OS and CPU, checks it against the digest GitHub
-publishes for the asset (or `SHA256SUMS.txt`), extracts only the CLI into `~/.craft-studio/bin`,
-and records what it installed in `~/.craft-studio/installed.json`. It refuses a file it cannot
-verify unless you pass `--no-verify`.
+Every archive unpacks into one top-level folder named like the archive. The helper finds the
+latest release through the GitHub API, or through the release feed the ArtCraft Launcher reads
+(`https://api.storyteller.ai/v1/craft_apps/release_info`, every file with its SHA-256; it does not
+list FigCraft yet), or through the releases page. It picks the right archive for the OS and CPU,
+checks it against the published SHA-256 (the API's asset digest, the feed, or `SHA256SUMS.txt`),
+extracts only the CLI into `~/.craft-studio/bin`, and records what it installed in
+`~/.craft-studio/installed.json`. It refuses a file it cannot verify unless you pass `--no-verify`.
 
 Pin a version with `--version 0.17.0`; reinstall the latest with `--update`; force a route with
 `--from release` or `--from source`.
@@ -45,10 +48,12 @@ for the OS, checks its SHA-256, installs it and keeps every Crafting App updated
 
 ## Building from source
 
-`ensure` does this automatically when downloads fail. By hand:
+`ensure` does this automatically when downloads fail. It builds the latest release tag
+(`git ls-remote --tags`), and the default branch only if the tag does not compile, so the binary
+matches a published release. By hand:
 
 ```bash
-git clone --depth 1 https://github.com/storytold/<app>
+git clone --depth 1 --branch v<ver> https://github.com/storytold/<app>
 cd <app>
 cargo build --release --locked -p <app>-cli      # binary: target/release/<app>-cli
 ```

@@ -1,5 +1,5 @@
 # CADCraft: `cadcraft-cli`
-> Clean-room, pure-Rust reimplementation of AutoCAD-style 2D drafting (the command line with prompts and aliases, object snaps, layers, blocks, dimensions, hatches, paper-space layouts, PLOT). Version 0.14.0 (workspace `Cargo.toml`). Stage **pre-alpha** by its own ROADMAP (reviewed 2026-10-10): 50% of AutoCAD's menu items exist and it is about 38% "ready for real work". The gaps it admits: DWG save drops every object CADCraft doesn't model and has never been checked in AutoCAD. Plots ignore plot styles. Some TRIM/EXTEND/OFFSET options are stubs, and there is no object snap tracking. There is no 3D modelling, SHX fonts are not parsed, and there is no PDF import or raster image attach.
+> Clean-room, pure-Rust reimplementation of AutoCAD-style 2D drafting (the command line with prompts and aliases, object snaps, layers, blocks, dimensions, hatches, paper-space layouts, PLOT). Version 0.14.0 (workspace `Cargo.toml`). Stage **pre-alpha** by its own ROADMAP (reviewed 2026-10-10): 50% of AutoCAD's menu items exist and it is about 38% "ready for real work". The gaps it admits: DWG save drops every object CADCraft doesn't model and has never been checked in AutoCAD. Some TRIM/EXTEND/OFFSET options are stubs, and there is no object snap tracking. Binary `.ctb`/`.stb`/`.pc3` files can't be read, and it can't print to system printers. There is no 3D modelling, SHX fonts are not parsed, and there is no PDF import or raster image attach.
 
 ## Route here when
 - Floor plans, room and furniture layouts, site plans, elevations, sections, mechanical parts, brackets, panels, schematics: anything drawn to real units with dimensions.
@@ -129,13 +129,13 @@ EOF
 | `text` [dt] / `mtext` [t,mt] | `{"at":[0,0],"text":"PLAN","height":5,"justify":"MC"}` / `{"at":[0,0],"text":"Line 1\\PLine 2","height":2.5,"width":80}` |
 | `dimlinear` [dli] / `dimaligned` [dal] | `{"p1":[0,0],"p2":[200,0],"at":[100,-15]}` (`rotation`, `text` optional) |
 | `dimradius` [dra] / `dimdiameter` [ddi] / `dimangular` [dan] | `{"handle":"2A"}` / `{"center":[0,0],"point":[10,0]}` / `{"vertex":[0,0],"p1":[10,0],"p2":[0,10],"at":[8,8]}` |
-| `hatch` [h] | `{"points":[[10,10]],"pattern":"ANSI31","scale":2,"angle":0}`, or `"handles":[...]`. Built in: SOLID, ANSI31-38, LINE, NET, NET3, DOTS, DASH, BRICK, SQUARE, CROSS, EARTH, GRASS, HONEY, ZIGZAG, AR-CONC, AR-SAND |
+| `hatch` [h] | `{"points":[[10,10]],"pattern":"ANSI31","scale":2,"angle":0}` (an internal point), or `{"handles":["2A"],"pattern":"SOLID"}` (closed objects). Built in: SOLID, ANSI31-38, LINE, NET, NET3, DOTS, DASH, BRICK, SQUARE, CROSS, EARTH, GRASS, HONEY, ZIGZAG, AR-CONC, AR-SAND |
 | `linetype` [lt] | `{"load":"DASHED"}`. Load a linetype before a layer uses it. Built in: BORDER, CENTER(2, X2), DASHDOT(2), DASHED(2, X2), DIVIDE, DOT(2), HIDDEN(2, X2), PHANTOM(2), FENCELINE1, ZIGZAG |
 | `layer.new` / `layer.set` / `layer.current` [clayer] | `{"name":"Doors","color":"yellow","linetype":"DASHED","current":true}` / `{"name":"Furniture","frozen":true}` (not the current layer) / `{"name":"0"}` |
 | `properties.set` | `{"handles":["2A"],"layer":"Doors","color":"ByLayer","lineweight":0.35}` |
 | `move` [m] / `copy` [co] | `{"handles":["2A"],"delta":[10,0]}` / `{"handles":["2A"],"delta":[0,500],"count":3}` |
 | `rotate` [ro] / `scale` [sc] / `mirror` [mi] | `{"handles":["2A"],"base":[0,0],"angle":90}` / `{"handles":["2A"],"base":[0,0],"factor":2}` / `{"handles":["2A"],"p1":[0,0],"p2":[0,10],"erase":false}` |
-| `offset` [o] / `trim` [tr] / `extend` [ex] / `fillet` [f] | `{"handle":"2A","distance":5,"side":[0,10]}` / `{"handle":"2B","pick":[50,0]}` / same / `{"h1":"2A","p1":[..],"h2":"2B","p2":[..],"radius":3}` |
+| `offset` [o] / `trim` [tr] and `extend` [ex] / `fillet` [f] | `{"handle":"2A","distance":5,"side":[0,10]}` / `{"handle":"2B","pick":[50,0]}` (pick = the part to cut or extend) / `{"h1":"2A","p1":[50,0],"h2":"2B","p2":[0,50],"radius":3}` |
 | `arrayrect` / `arraypolar` | `{"handles":["2A"],"rows":3,"cols":4,"rowSpacing":50,"colSpacing":60}` / `{"handles":["2A"],"center":[0,0],"count":8}` |
 | `block` [b] / `insert` [i] | `{"name":"CHAIR","base":[0,0],"handles":["2A","2B"]}` / `{"name":"CHAIR","at":[900,0],"rotation":90,"scale":1}` |
 | `select` / `erase` [e] / `explode` [x] / `join` [j] | `{"window":[[0,0],[100,100]]}` / `{"handles":["2A"]}` |
@@ -166,7 +166,7 @@ Only when the user wants to watch the drawing being made. Start the app with `ca
 - `run` with no file starts an **imperial** drawing. Pass `--metric` for mm, and set `units`/`insunits` before relying on plot scales. Text height and DIMSCALE must suit the plot scale (2.5 mm text at 1:50 = 125 units).
 - `--cmd` is `id`, one space, then JSON. Quote the whole value: `--cmd 'circle {"center":[0,0],"radius":5}'`. `--save` and `--export` are single and run after every step.
 - `--export` and `convert` images always show **model space**. Plot layouts with `plot`, `exportpdf` or `publish`. A `zoom` or `view.set` step changes the `--export` framing; `--view extents` resets it.
-- `plot`/`exportpdf` of `"Model"` fit the extents to the sheet unless `"fit":false`, and `scale` only applies then. Layouts plot 1:1 with each viewport at its own `viewport.set` scale. A new drawing's layouts start on ANSI A (Letter) paper, so set `pagesetup {"paper":...}` first.
+- `plot`/`exportpdf` of `"Model"` fit the extents to the sheet unless `"fit":false`, and `scale` only applies then. Layouts plot 1:1 with each viewport at its own `viewport.set` scale. A new drawing's layouts start on ANSI A (Letter) paper, so set `pagesetup {"paper":"A3","landscape":true}` first.
 - Dimension size follows DIMSCALE (or the style's DIMTXT/DIMASZ) when the dimension is made. Set it before `dimlinear`, or the text comes out tiny on large mm drawings.
 - An output that is also an input is refused (exit 2) unless you pass `--in-place`. Paths written by `--cmd 'saveas'` or `plot` are not checked.
 - In command-line text, spaces act as Enter except at text prompts. Use JSON `text`/`mtext` for labels instead of typed DTEXT.

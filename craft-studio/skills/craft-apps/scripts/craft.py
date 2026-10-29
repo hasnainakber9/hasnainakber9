@@ -40,6 +40,7 @@ from typing import Dict, List, NamedTuple, NoReturn, Optional, Tuple
 ORG = "storytold"
 GITHUB_API = os.environ.get("CRAFT_GITHUB_API", "https://api.github.com").rstrip("/")
 GITHUB_WEB = os.environ.get("CRAFT_GITHUB_WEB", "https://github.com").rstrip("/")
+RELEASE_FEED = os.environ.get("CRAFT_RELEASE_FEED", "https://api.storyteller.ai/v1/craft_apps/release_info")
 HOME = Path(os.environ.get("CRAFT_HOME") or Path.home() / ".craft-studio").expanduser()
 BIN = HOME / "bin"
 SRC = HOME / "src"
@@ -264,8 +265,8 @@ def _request(url: str, method: str = "GET", accept: str = "") -> urllib.request.
     return urllib.request.Request(url, method=method, headers=headers)
 
 
-def http_json(url: str) -> dict:
-    with urllib.request.urlopen(_request(url, accept="application/vnd.github+json"), timeout=TIMEOUT) as r:
+def http_json(url: str, accept: str = "application/vnd.github+json") -> dict:
+    with urllib.request.urlopen(_request(url, accept=accept), timeout=TIMEOUT) as r:
         return json.load(r)
 
 
@@ -315,9 +316,14 @@ def asset_names(app: App, version: str, os_name: str, arch: str) -> List[str]:
 
 
 def resolve_release(app: App, version: Optional[str]) -> Tuple[str, Optional[dict]]:
-    """Return (tag, {asset name: (url, sha256 or "")}); the dict is None when only the tag is known."""
+    """Return (tag, {asset name: (url, sha256 or "")}); the dict is None when only the tag is known.
+
+    Asks the GitHub API first, then the release feed the ArtCraft Launcher reads (it lists every
+    file with its SHA-256 and spares the API's rate limit), then the releases page's redirect.
+    """
     tag = f"v{version.lstrip('v')}" if version else None
     api = f"{GITHUB_API}/repos/{ORG}/{app.repo_name}/releases/" + (f"tags/{tag}" if tag else "latest")
+    errors = []
     try:
         data = http_json(api)
         assets = {}
@@ -326,13 +332,20 @@ def resolve_release(app: App, version: Optional[str]) -> Tuple[str, Optional[dic
             assets[a["name"]] = (a["browser_download_url"], digest[7:] if digest.startswith("sha256:") else "")
         return data["tag_name"], assets
     except (urllib.error.URLError, OSError, ValueError, KeyError) as e:
-        api_error = e
+        errors.append(f"GitHub API: {e}")
     if tag:
         return tag, None
     try:
+        release = http_json(RELEASE_FEED, accept="application/json")["release_info"]["apps"][app.key]["latest_release"]
+        return release["tag"], {a["name"]: (a["download_url"], (a.get("sha256") or "").lower())
+                                for a in release.get("assets", [])}
+    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError) as e:
+        errors.append(f"release feed: {e!r}")
+    try:
         final = http_final_url(f"{GITHUB_WEB}/{ORG}/{app.repo_name}/releases/latest")
     except (urllib.error.URLError, OSError) as e:
-        raise InstallError(f"GitHub releases are not reachable from here ({api_error}; {e})")
+        errors.append(f"releases page: {e}")
+        raise InstallError("no release information reachable from here (" + "; ".join(errors) + ")")
     m = re.search(r"/releases/tag/([^/?#]+)", final)
     if not m:
         raise InstallError(f"{app.title} has no published release yet")
@@ -439,15 +452,51 @@ def required_rust(src: Path) -> Tuple[int, ...]:
     return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
 
 
+class BuildError(InstallError):
+    """The compiler, not the setup, failed: another source revision may build."""
+
+
+def latest_tag(app: App, git: str, env: dict) -> Optional[str]:
+    """The newest stable release tag (vX.Y.Z), read with git so it works wherever cloning does."""
+    try:
+        out = subprocess.run([git, "ls-remote", "--tags", "--refs", f"https://github.com/{ORG}/{app.repo_name}"],
+                             capture_output=True, text=True, timeout=120, env=env).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    tags = []
+    for line in out.splitlines():
+        m = re.fullmatch(r"refs/tags/(v(\d+)\.(\d+)\.(\d+))", line.split("\t")[-1].strip())
+        if m:
+            tags.append((tuple(int(g) for g in m.groups()[1:]), m.group(1)))
+    return max(tags)[1] if tags else None
+
+
 def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: bool) -> Path:
+    """Build the requested release, else the latest release tag, else the default branch."""
     git = need("git")
     cargo = need("cargo", RUST_HINT)
+    env = dict(os.environ, GIT_LFS_SKIP_SMUDGE="1", GIT_TERMINAL_PROMPT="0")
+    if version:
+        refs: List[Optional[str]] = [f"v{version.lstrip('v')}"]
+    else:
+        tag = latest_tag(app, git, env)
+        refs = [tag, None] if tag else [None]
+    for i, ref in enumerate(refs):
+        try:
+            return build_ref(app, ref, git, cargo, env, jobs, lto)
+        except BuildError as e:
+            if i + 1 == len(refs):
+                raise
+            log(f"{app.cli} {ref} did not build ({e}); trying the default branch")
+    raise AssertionError("unreachable")
+
+
+def build_ref(app: App, ref: Optional[str], git: str, cargo: str, env: dict,
+              jobs: Optional[int], lto: bool) -> Path:
     SRC.mkdir(parents=True, exist_ok=True)
     src = SRC / app.repo_name
-    ref = f"v{version.lstrip('v')}" if version else None
-    env = dict(os.environ, GIT_LFS_SKIP_SMUDGE="1", GIT_TERMINAL_PROMPT="0")
     if (src / ".git").is_dir():
-        run([git, "-C", src, "fetch", "--depth", "1", "origin", ref or "HEAD"], env=env)
+        run([git, "-C", src, "fetch", "--depth", "1", "origin", f"refs/tags/{ref}" if ref else "HEAD"], env=env)
         run([git, "-C", src, "checkout", "--force", "--detach", "FETCH_HEAD"], env=env)
     else:
         if src.exists():
@@ -468,8 +517,11 @@ def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: b
     cmd = [cargo, "build", "--release", "--locked", "-p", app.cli]
     if jobs:
         cmd += ["-j", str(jobs)]
-    log(f"building {app.cli} from source; the first build takes roughly 5-25 minutes")
-    run(cmd, cwd=src, env=benv)
+    log(f"building {app.cli} {ref or '(default branch)'} from source; a first build takes roughly 5-25 minutes")
+    try:
+        run(cmd, cwd=src, env=benv)
+    except InstallError as e:
+        raise BuildError(str(e)) from e
     built = TARGET / "release" / exe(app.cli)
     if not built.is_file():
         raise InstallError(f"build finished but {built} is missing")
@@ -480,7 +532,7 @@ def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: b
     os.replace(part, dest)
     head = subprocess.run([git, "-C", str(src), "rev-parse", "--short", "HEAD"],
                           capture_output=True, text=True).stdout.strip()
-    record(app, dest, f"source {ref or 'main'}@{head}", cli_version(dest), sha256_of(dest))
+    record(app, dest, f"source {ref or 'default branch'}@{head}", cli_version(dest), sha256_of(dest))
     return dest
 
 
@@ -594,6 +646,7 @@ def cmd_status(args: argparse.Namespace) -> None:
         info["reachable"] = {
             "github_api": reachable(f"{GITHUB_API}/repos/{ORG}/photocraft/releases/latest"),
             "github_releases": reachable(f"{GITHUB_WEB}/{ORG}/photocraft/releases/latest"),
+            "release_feed": reachable(RELEASE_FEED),
             "github_raw": reachable(f"https://raw.githubusercontent.com/{ORG}/photocraft/HEAD/README.md"),
         }
     if args.json:

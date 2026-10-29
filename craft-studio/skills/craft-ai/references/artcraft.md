@@ -187,6 +187,8 @@ the GUI. Claude's part:
    and music) and craft-image (PhotoCraft stills, LightCraft grading and export).
 6. With desktop-control tools and the user's request, operating the app is possible but slow and
    fragile; prefer the API.
+7. No ArtCraft account, or a wish for open or local models: say so and route to a skill built for
+   that (for example video-studio, when installed) instead of forcing ArtCraft.
 
 ## ArtCraft-X (`storytold/artcraftx`)
 

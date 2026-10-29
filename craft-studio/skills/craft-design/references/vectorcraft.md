@@ -19,7 +19,7 @@
 ## Files
 - Native: `.vectorcraft` (documented JSON, optionally gzipped). Template: `.vctemplate`. Legacy `.drawcraft` files still open.
 - Opens (`run --in`, `convert`, `info`, `document.open`): `.vectorcraft .drawcraft .vctemplate .svg .svgz .pdf .ai .ait .eps .epsf .ps .dxf .emf .wmf .png .jpg/.jpeg .gif .webp .tif/.tiff .bmp .tga/.vda/.icb/.vst .psd/.psb` (Photoshop files open as their merged image), plus Affinity `.af .afdesign .afpub` (read only). A PDF or `.ai` opens with every page as an artboard. Files saved with Preserve Editing reopen as the full document.
-- Writes (the extension picks the format): `.vectorcraft .vctemplate .svg .svgz .pdf .ai .ait .eps .dxf .emf .wmf .png .jpg .webp .gif .tiff .bmp .tga .psd`, and `.txt` (the document's text only). The format id `png8` writes an indexed PNG. `vectorcraft-cli --help` ends with the live "Readable formats" and "Writable formats" lists.
+- Writes (the extension picks the format): `.vectorcraft .vctemplate .svg .svgz .pdf .ai .eps .dxf .emf .wmf .png .jpg .webp .gif .tif .bmp .tga .psd`, and `.txt` (the document's text only). `convert` and `run --export` also write a `.ait` template. The format id `png8` writes an indexed PNG. `vectorcraft-cli --help` ends with the live "Readable formats" and "Writable formats" lists.
 
 ## Get the CLI
 `CLI=$(python3 "$CRAFT" ensure vectorcraft)`
@@ -125,7 +125,7 @@ for s in 16 32 64 128 256 512; do echo "{\"command\":\"document.export\",\"param
 | `shape.polygon` / `shape.star` | `{"cx":200,"cy":200,"radius":80,"sides":6}` / `{"cx":200,"cy":200,"radius1":90,"radius2":40,"points":5}` |
 | `shape.line` / `shape.spiral` | `{"x1":0,"y1":0,"x2":100,"y2":0}` / `{"cx":200,"cy":200,"radius":50}` |
 | `path.create` | `{"d":"M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"}` or `{"anchors":[{"x":0,"y":0,"out":[30,0]},{"x":60,"y":40}],"closed":false}` |
-| `paint.setFill` / `paint.setStroke` | `{"color":"#1e88e5"}`, `{"none":true}`, `{"gradient":{"kind":"radial","stops":[...]}}`, `{"swatch":"Brand"}`, `ids` |
+| `paint.setFill` / `paint.setStroke` | `{"color":"#1e88e5"}`, `{"none":true}`, `{"gradient":{"kind":"radial","stops":[{"offset":0,"color":"#ffffff"},{"offset":1,"color":"#000000"}]}}`, `{"swatch":"Brand"}`. Colours can also be `[r,g,b]` (0-1), `{"c":100,"m":60,"y":0,"k":20}` (percent when any value is above 1, else 0-1) or `"cmyk 0 100 100 0"`. Add `ids` to target objects |
 | `stroke.set` | `{"weight":3,"cap":"round","join":"round","dash":[6,4],"align":"inside"}` |
 | `text.create` | `{"x":50,"y":100,"text":"Hello","size":36,"font":"Inter","style":"SemiBold","color":"#111111","justify":"center","area":{"width":300,"height":200}}` |
 | `text.createInPath` | `{"path":"$1.id","mode":"onPath","text":"...","size":18}`. With `"mode":"area"` the text flows inside the shape |
@@ -143,10 +143,10 @@ for s in 16 32 64 128 256 512; do echo "{\"command\":\"document.export\",\"param
 | `effect.apply` | `{"effect":"stylize.dropShadow","params":{"x":4,"y":4,"blur":6}}`; also `stylize.outerGlow`, `blur.gaussian`, `stylize.roundCorners`, `warp.arc`, `distort.roughen`, `threeD.extrude` |
 | `recolor.colors` / `recolor.apply` / `recolor.reduce` | `{}` / `{"map":{"#ff0000":"#0055ff"},"method":"preserveTints"}` / `{"colors":3}` |
 | `imageTrace.make` / `imageTrace.makeAndExpand` | `{"preset":"16 Colors"}` → `{id,paths,anchors,colors}` |
-| `file.place` | `{"path":"photo.jpg","rect":[0,0,300,200]}`. An SVG/PDF/EPS places as editable art |
+| `file.place` | `{"path":"photo.jpg","rect":[0,0,300,200]}` → `{ids}`. A raster stays linked to its file unless you pass `"link":false`. An SVG/PDF/EPS places as editable art |
 | `artboard.new` / `artboard.fitToArt` / `artboard.setProps` | `{"x":700,"y":0,"width":512,"height":512,"name":"Dark"}` / `{}` / `{"index":0,"name":"Front"}` |
 | `graph.create` | `{"type":"column","x":50,"y":50,"width":400,"height":250,"csv":",2024,2025\nQ1,4,6\nQ2,5,8"}` |
-| `document.export` | `{"path":"out/a.png","ppi":300,"background":"white"}`, `{"path":"out/a.svg","outlineText":true}`, `{"path":"out/all.png","useArtboards":true}` |
+| `document.export` | `{"path":"out/a.png","ppi":300,"background":"white"}`, `{"path":"out/a.svg","outlineText":true}`, `{"path":"out/all.png","useArtboards":true}` (one file per artboard, `all-<artboard name>.png`), `{"path":"out/a.pdf","preserveEditing":false}` |
 | `document.exportPdf` / `document.save` | `{"path":"out/a.pdf","standard":"pdfX4","marks":{"trim":true}}` / `{"path":"out/a.vectorcraft"}` |
 
 ## Check your work
@@ -170,5 +170,7 @@ Needed only when the user wants to watch the edits, or for the UI-only tools. St
 - `width` and `height` in `file.new` are points unless given as a string with units (`"210 mm"`). `units` changes only the rulers. `bleed` is in points (3 mm ≈ 8.5).
 - `--scale`, `ppi` and `width` apply only to raster output. In `run`, `--scale` applies to every `--export`.
 - `convert` refuses an OUT equal to IN when reading IN lost something; `--replace-lossy` overrides that. A `.ait` OUT holds every artboard and takes no `--artboard`/`--range`.
-- For handoff to people without your fonts, outline type: `type.createOutlines`, or `--outline-text` for SVG. A PDF embeds the fonts.
+- `run --export x.pdf`, `document.export` and `document.exportPdf` use the "VectorCraft Default" preset, which embeds the native document as a PDF attachment (Preserve Editing). `convert` leaves it out. For a client file, use `convert` or pass `"preserveEditing":false`. Choosing a PDF/X or PDF/A `standard` also turns it off.
+- Style names differ between families: `text.fontList {"family":"Source Sans 3"}` lists `Semibold`, while Inter has `SemiBold`. Check `info` → `fonts` for `substitute` or `missing`.
+- For handoff to people without your fonts, outline type: `type.createOutlines`, or `--outline-text` for SVG. PDFs embed font subsets.
 - With MCP roots, every read (open, place, relink) must be inside a read root and every write inside a write root. Otherwise the call returns an ordinary tool error naming the root.
