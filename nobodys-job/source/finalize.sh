@@ -11,8 +11,8 @@ for pass in 1 2; do
 done
 python3 make_srt.py
 ENC="-c:v libx264 -preset slow -crf 19 -g 48 -pix_fmt yuv420p -color_primaries bt709 -color_trc bt709 -colorspace bt709 -c:a aac -b:a 320k -ar 48000 -movflags +faststart"
-ffmpeg -y -v error -i picture.mp4 -i mix_final.wav -map 0:v -map 1:a $ENC -t 119 Nobodys_Job_master_1080p.mp4
-ffmpeg -y -v error -i picture.mp4 -i mix_final.wav -map 0:v -map 1:a \
+ffmpeg -y -v error -i picture_ov.mp4 -i mix_final.wav -map 0:v -map 1:a $ENC -t 119 Nobodys_Job_master_1080p.mp4
+ffmpeg -y -v error -i picture_ov.mp4 -i mix_final.wav -map 0:v -map 1:a \
   -vf "subtitles=Nobodys_Job.en.srt:force_style='FontName=Inter,FontSize=13,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1.6,Shadow=0.6,MarginV=40'" \
   $ENC -t 119 Nobodys_Job_captioned_1080p.mp4
 for f in Nobodys_Job_master_1080p.mp4 Nobodys_Job_captioned_1080p.mp4; do

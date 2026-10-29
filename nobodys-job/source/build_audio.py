@@ -145,7 +145,7 @@ def T_of(seg, src_t):  # where an original-source moment lands on the new timeli
 def A(seg, off): return ST[seg] + off    # segment-relative time
 CAP = T_of("station", 67.5)              # the clamp bites (sparks)
 SIL = ST["pass"] + 6.35                  # music cut: the held breath
-RES = ST["pass"] + 10.4                  # "...kilometres" lands, the resolution
+RES = ST["pass"] + 8.7                  # "...kilometres" lands, the resolution
 
 VOC = "sep/htdemucs/a44/vocals.wav"; FX = "sep/htdemucs/a44/no_vocals.wav"
 def pick(lid):
@@ -153,32 +153,14 @@ def pick(lid):
     return f"vo/{lid}_t{sel.get(lid, 0)}.wav"
 
 # (time, source, processing, gain_db, label)
-LINES = [
- (A("track", 1.95), "vo/od1.wav", "ctrl", 0, "ODILE  Two dead objects. Collision course."),
- (A("track", 4.85), "vo/mk1.wav", "ctrl", 0, "MAREK  Whose are they?"),
- (A("track", 6.15), "vo/od2.wav", "ctrl", 0, "ODILE  Nobody's. Dead thirty years."),
- (A("c1", 1.0), "vo/mk2.wav", "ctrl", 0, "MAREK  So whose job is it?"),
- (A("c1", 4.3), "vo/od3.wav", "phone", 0, "ODILE (phone)  Temi, wake up. Two dead objects, forty hours to impact."),
+LINES = [   # only the team's own recorded lines, each at its original picture position
+ (T_of("track", 14.08), ("orig", 14.08, 16.25), "ctrl", 0, "We've got movement on sector seven."),
  (T_of("temi", 27.45), ("orig", 27.45, 28.95), "room", 2, "TEMI  What time is it?"),
- (A("temi", 5.55), "vo/od4.wav", "phone", 0, "ODILE (phone)  Time to launch."),
- (A("pad", 0.25), "vo/lc1.wav", "radio", 0, "LAUNCH  Winds are at the limit. Your call."),
- (A("pad", 3.15), "rf1", "radio", 0, "RAFAEL  We go. Light it."),
- (T_of("station", 50.70), ("orig", 50.70, 55.42), "radio", 0, "TUG  Tug control, we have visual contact..."),
- (T_of("station", 55.40), ("orig", 55.40, 59.90), "radio", 0, "CONTROL  Copy that, manoeuvring thrusters engaged..."),
- (A("station", 11.1), "tm1", "radio", 0, "TEMI  No docking port. Nothing to grab."),
- (A("station", 13.5), "rf2", "radio", 0, "RAFAEL  Then we abort."),
- (A("station", 14.7), "tm2", "radio", 0, "TEMI  No. We grab it anyway."),
- (CAP + 0.3, "tm3", "radio", 1, "TEMI  We have it."),
+ (T_of("station", 50.70), ("orig", 50.70, 55.38), "radio", 0, "TUG  Tug control, we have visual contact with the target, initiating docking approach now."),
+ (T_of("station", 55.45), ("orig", 55.45, 59.90), "radio", 0, "CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate."),
  (T_of("rafael", 69.68), ("orig", 69.68, 74.05), "room", 0, "RAFAEL  We cannot bring it down. Nine tonnes. Not even close."),
- (A("rafael", 4.25), "tm4", "radio", 0, "TEMI  So we caught it for nothing?"),
- (A("rafael", 7.0), "vo/od5.wav", "radio", 0, "ODILE  You don't have to bring it down. You have to make it late."),
- (A("temi2", 0.55), "rf3", "dry", 0, "RAFAEL  Late? How late?"),
- (A("temi2", 2.2), "vo/od6.wav", "radio", 0, "ODILE  One centimetre a second, twenty hours early, is two kilometres at the crossing."),
  (T_of("temi2", 86.78), ("orig", 86.78, 88.25), "room", 0, "TEMI  There we go, come on now."),
- (A("pass", 3.4), "vo/od7.wav", "radio", 0, "ODILE  Closest approach in three... two..."),
- (A("pass", 8.65), "vo/od8.wav", "radio", 1, "ODILE  Two point one kilometres."),
- (A("rafback", 0.15), "vo/od9.wav", "phone", 0, "ODILE (phone)  Every space agency on Earth is calling you."),
- (A("rafback", 2.95), "rf4", "dry", 0, "RAFAEL  Then it's somebody's job now."),
+ (T_of("rafback", 105.75), ("orig", 105.75, 108.10), "phone", 0, "CONTROL (phone)  Rafael, this is mission control calling."),
  (A("boat", 3.2), ("orig", 115.95, 118.35), "outdoor", 0, "BOY  Look, Dad. A shooting star."),
 ]
 
@@ -221,7 +203,7 @@ def build_fx():
     # phone buzz waking Temi (three pulses)
     for k in range(3):
         n = secs(0.38); t = np.arange(n) / SR; bz = np.sign(np.sin(2 * np.pi * 150 * t)) * 0.5 + np.sin(2 * np.pi * 300 * t) * 0.3
-        place(fx, pan(bl("lp", 1800, bz) * env_adsr(n, 0.01, 0.05, 0.8, 0.05) * 0.035, 0.3), ST["c1"] + 2.9 + k * 0.5)
+        place(fx, pan(bl("lp", 1800, bz) * env_adsr(n, 0.01, 0.05, 0.8, 0.05) * 0.035, 0.3), ST["temi"] + 0.6 + k * 0.62)
     # sea and hull creak under the boat
     n = secs(DUR["boat"] + 1.0); sea = bl("lp", 900, brown(n)) * (0.5 + 0.5 * np.sin(np.linspace(0, 9, n)) ** 2)
     place(fx, pan(fade(sea, 0.8, 1.0) * 0.07, 0), ST["boat"] - 0.3)

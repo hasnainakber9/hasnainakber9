@@ -1,26 +1,8 @@
-  11.95-  14.74  ODILE  Two dead objects. Collision course.
-  14.85-  16.03  MAREK  Whose are they?
-  16.15-  18.69  ODILE  Nobody's. Dead thirty years.
-  18.88-  20.57  MAREK  So whose job is it?
-  22.18-  26.00  ODILE (phone)  Temi, wake up. Two dead objects, forty hours to impact.
-  26.32-  27.82  TEMI  What time is it?
-  27.93-  29.04  ODILE (phone)  Time to launch.
-  29.07-  31.90  LAUNCH  Winds are at the limit. Your call.
-  31.96-  33.51  RAFAEL  We go. Light it.
-  43.42-  48.26  TUG  Tug control, we have visual contact...
-  48.64-  53.26  CONTROL  Copy that, manoeuvring thrusters engaged...
-  53.83-  55.87  TEMI  No docking port. Nothing to grab.
-  56.23-  57.10  RAFAEL  Then we abort.
-  57.43-  59.69  TEMI  No. We grab it anyway.
-  62.38-  63.20  TEMI  We have it.
-  64.60-  68.97  RAFAEL  We cannot bring it down. Nine tonnes. Not even close.
-  69.15-  71.77  TEMI  So we caught it for nothing?
-  71.90-  75.35  ODILE  You don't have to bring it down. You have to make it late.
-  75.47-  76.55  RAFAEL  Late? How late?
-  77.06-  81.52  ODILE  One centimetre a second, twenty hours early, is two kilometres at the crossing.
-  81.66-  83.13  TEMI  There we go, come on now.
-  88.22-  91.17  ODILE  Closest approach in three... two...
-  93.47-  95.35  ODILE  Two point one kilometres.
-  98.32- 100.81  ODILE (phone)  Every space agency on Earth is calling you.
- 101.12- 102.26  RAFAEL  Then it's somebody's job now.
- 105.95- 108.35  BOY  Look, Dad. A shooting star.
+  13.54-  15.71  We've got movement on sector seven.
+  25.82-  27.32  TEMI  What time is it?
+  42.92-  47.72  TUG  Tug control, we have visual contact with the target, initiating docking approach now.
+  48.19-  52.76  CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate.
+  64.10-  68.47  RAFAEL  We cannot bring it down. Nine tonnes. Not even close.
+  84.66-  86.13  TEMI  There we go, come on now.
+ 102.92- 105.27  CONTROL (phone)  Rafael, this is mission control calling.
+ 108.95- 111.35  BOY  Look, Dad. A shooting star.
