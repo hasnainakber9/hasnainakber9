@@ -605,7 +605,8 @@ def known_locations(app: App) -> List[Path]:
     if os_name == "windows":
         roots = [os.environ.get("ProgramFiles", r"C:\Program Files"), os.environ.get("ProgramFiles(x86)", ""),
                  os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs")]
-        return [Path(r) / app.title / name for r in roots if r]
+        # The MSIs install under ...\Programs\ArtCraft\<App>\; older builds used ...\<App>\.
+        return [Path(r) / sub / name for r in roots if r for sub in (Path("ArtCraft") / app.title, Path(app.title))]
     if os_name == "macos":
         return [Path("/opt/homebrew/bin") / name, Path("/usr/local/bin") / name,
                 Path(f"/Applications/{app.title}.app/Contents/MacOS") / name,

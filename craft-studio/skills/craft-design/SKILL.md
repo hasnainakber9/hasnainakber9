@@ -12,8 +12,8 @@ metadata:
 
 VectorCraft is a clean-room Illustrator, FigCraft a clean-room Figma, DesignCraft a clean-room
 InDesign. Each builds documents from commands (the same registry the UI uses), renders them with
-its own engine, and exports real files. indd-utils reads InDesign `.indd` files and converts them
-to IDML for DesignCraft.
+its own engine, and exports real files. DesignCraft also opens InDesign `.indd` and `.idml` files
+directly; indd-utils (`references/indd-utils.md`) is the standalone INDD-to-IDML converter.
 
 ## Setup
 
@@ -64,7 +64,74 @@ Subcommands, command ids, script formats and recipes: `references/vectorcraft.md
 
 ## Recipes
 
-RECIPES_PLACEHOLDER
+All of these ran against VectorCraft 0.18.0, FigCraft 0.12.1 and DesignCraft 0.14.0, and the
+renders were checked. VectorCraft and FigCraft use points/pixels with y down; DesignCraft rects
+are `[x0, y0, x1, y1]` in points.
+
+```bash
+CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"
+VC=$(python3 "$CRAFT" ensure vectorcraft); export VECTORCRAFT_NO_PREFS=1
+# App icon / logo mark from a JSON Lines script -> native file, SVG, PDF, PNG (--scale = px per pt)
+cat > icon.jsonl <<'EOF'
+{"command":"file.new","params":{"width":512,"height":512,"units":"Pixels","name":"Icon"}}
+{"command":"shape.rectangle","params":{"x":0,"y":0,"width":512,"height":512,"radius":112}}
+{"command":"paint.setFill","params":{"gradient":{"kind":"linear","angle":-45,"stops":[{"offset":0,"color":"#ff7a18"},{"offset":1,"color":"#af002d"}]}}}
+{"command":"paint.setStroke","params":{"none":true}}
+{"command":"shape.star","params":{"cx":256,"cy":266,"radius1":170,"radius2":72,"points":5}}
+{"command":"paint.setFill","params":{"color":"#ffffff"}}
+EOF
+"$VC" run --commands icon.jsonl --export icon.vectorcraft --export icon.svg --export icon.pdf --export icon@2x.png --scale 2
+# Poster type (--params binds to the --cmd before it); conversions; recolor; trace a bitmap
+"$VC" run --cmd file.new --params '{"width":"420 mm","height":"594 mm"}' \
+  --cmd text.create --params '{"x":595,"y":700,"text":"JAZZ NIGHT","size":140,"font":"Inter","style":"SemiBold","color":"#fca311","justify":"center"}' \
+  --export poster.pdf --export poster.png --scale 0.5
+"$VC" convert logo.eps logo.svg; "$VC" convert art.ai art.svg --outline-text
+"$VC" run --in logo.svg --cmd select.all --cmd recolor.apply --params '{"map":{"#e8573f":"#2266aa"}}' --export logo-blue.svg
+"$VC" run --in scan.png --cmd select.all --cmd imageTrace.makeAndExpand --params '{"preset":"Black and White Logo"}' --export traced.svg
+
+FC=$(python3 "$CRAFT" ensure figcraft)
+# A UI card in auto layout. "as" names a step; {"$ref":"card"} is that step's result id.
+cat > card.json <<'JSON'
+[{"command":"node.create","as":"card","params":{"type":"frame","name":"Card","x":0,"y":0,"width":360,"height":100,
+   "props":{"fill":"#FFFFFF","cornerRadius":16,"layout":"vertical","padding":24,"gap":12,"sizingV":"hug",
+            "effects":[{"type":"dropShadow","color":"#0000001F","offset":[0,4],"radius":16}]}}},
+ {"command":"node.create","params":{"type":"text","parent":{"$ref":"card"},"text":"Ada Lovelace","props":{"fontSize":24,"fontStyle":"Bold"}}},
+ {"command":"node.create","as":"btn","params":{"type":"frame","parent":{"$ref":"card"},"name":"Button","height":44,
+   "props":{"fill":"#1F6F5C","cornerRadius":8,"layout":"horizontal","mainAlign":"center","crossAlign":"center","sizingH":"fill"}}},
+ {"command":"node.create","params":{"type":"text","parent":{"$ref":"btn"},"text":"Follow","props":{"fill":"#FFFFFF"}}}]
+JSON
+"$FC" run card.json --out card.figcraft && "$FC" export card.figcraft --node Card -o card@2x.png --scale 2
+# Starter templates: mobile-app landing-page dashboard design-system wireframe-kit social-posts slides icon-set
+echo '[{"command":"file.newFromTemplate","params":{"template":"landing-page","name":"Acme"}}]' > s.json
+"$FC" run s.json --out acme.figcraft && "$FC" render acme.figcraft -o acme.png
+"$FC" export acme.figcraft -o out/ --scale 2       # every top-level frame as PNG; or -o x.svg --node N, -o x.pdf
+
+DC=$(python3 "$CRAFT" ensure designcraft)
+# A print flyer from a script: one `command.id {json}` per line; "$N.path" is step N's result (0-based)
+cat > flyer.dcs <<'DCS'
+file.new {"preset": "A4", "facingPages": false, "margins": 36}
+swatch.create {"name": "Brand", "color": {"c": 80, "m": 20, "y": 65, "k": 30}}
+frame.create {"rect": [36, 36, 559, 140], "content": "text", "text": "Summer Fair", "caret": false}
+type.char {"attrs": {"fontFamily": "Source Sans 3", "fontStyle": "Bold", "size": 54, "fill": "Brand"}}
+frame.create {"rect": [36, 150, 559, 260], "content": "text", "text": "Saturday 12 July\nCity Park, 10am to 4pm", "caret": false}
+type.char {"attrs": {"size": 20, "leading": {"kind": "points", "value": 26}}}
+frame.create {"rect": [36, 280, 559, 700]}
+file.place {"path": "photo.jpg", "frame": "$6.id"}
+links.embed {"asset": "$7.asset"}
+object.fit {"mode": "fillProportionally", "ids": ["$6.id"]}
+DCS
+"$DC" script flyer.dcs --save flyer.designcraft --export flyer.pdf --export flyer.png
+# Print PDF/X-4 with bleed and crop marks (options go before their --export; `script` has no --pdf-options),
+# then validate. Use CMYK swatches for print: RGB fills fail PDF/X-4 validation under the CMYK output intent.
+"$DC" run --in flyer.designcraft --pdf-options '{"standard":"x4","bleed":true,"marks":{"crop":true}}' --export flyer-x4.pdf
+"$DC" validate-pdf flyer-x4.pdf                    # {"valid":true,...}; "x1a" + --standard x1a for PDF/X-1a
+"$DC" run --in client.indd --export client.pdf --scale 1 --all-pages pages/     # InDesign or IDML in; PDF and page PNGs out
+```
+
+`"$VC" commands`, `"$FC" commands --filter autoLayout`, `"$DC" commands frame` and
+`"$DC" describe frame.create` list each app's commands and parameters. Multi-page autoflow,
+paragraph styles, data merge, components and variants, colour variables, print PDFs from
+VectorCraft and FigCraft, and code export are in the references.
 
 ## Design quality
 
