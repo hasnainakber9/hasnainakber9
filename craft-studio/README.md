@@ -11,7 +11,7 @@ checks the output and hands you the file.
 | Raw development, presets, batch export, contact sheets | **LightCraft** (Lightroom-style) |
 | Logos, icons, illustrations, SVG/EPS/PDF artwork | **VectorCraft** (Illustrator-style) |
 | App and web screens, wireframes, prototypes | **FigCraft** (Figma-style) |
-| Brochures, magazines, posters, print PDFs, IDML/INDD | **DesignCraft** + indd-utils (InDesign-style) |
+| Brochures, magazines, posters, print PDFs, IDML/INDD | **DesignCraft** (InDesign-style) |
 | Video cuts, titles, color, export | **FilmCraft** (Premiere-style) |
 | Motion graphics, animated titles, Lottie | **EffectCraft** (After Effects-style) |
 | Audio editing, mixing, podcasts, bounces | **SoundCraft** (Pro Tools-style) |
@@ -66,9 +66,22 @@ python3 craft-studio/skills/craft-apps/scripts/craft.py ensure photocraft  # pat
 python3 craft-studio/skills/craft-apps/scripts/craft.py mcp pdfcraft --root ~/docs --register   # add an MCP server to Claude Code
 ```
 
-Binaries go to `~/.craft-studio/bin` (override with `CRAFT_HOME`). Release downloads take
-seconds. Where GitHub downloads are blocked (Claude Code cloud sessions), the helper builds the
-CLI from source with git and Rust 1.95+, which takes a few minutes per app the first time.
+Binaries go to `~/.craft-studio/bin` (override with `CRAFT_HOME`). The helper reuses a CLI you
+already have (the apps' .deb/.rpm packages, the macOS CLI zip, the Windows portable zip), else
+downloads the latest release for your OS and CPU and checks its SHA-256. It finds releases through
+the GitHub API, the ArtCraft Launcher's release feed, the releases page or the repository's tags,
+so installs take seconds in claude.ai chat, Claude Code cloud sessions and on your own computer.
+Only when no release can be fetched does it build the release tag from source (git and Rust 1.95+,
+a few minutes per app), with the same craft-fonts the releases embed.
+
+## How it was checked
+
+Every recipe in the skills and references was run against the real CLIs (PhotoCraft 0.17.0,
+LightCraft 0.15.0, VectorCraft 0.18.0, FigCraft 0.12.1, DesignCraft 0.14.0, EffectCraft 0.18.0,
+FilmCraft 0.14.0, SoundCraft 0.14.0, CADCraft 0.14.0, WordCraft 0.12.0, GridCraft 0.13.0,
+DeckCraft 0.12.0, PdfCraft 0.15.0) and the rendered outputs were inspected. The apps themselves
+are alpha to beta software; the skills tell Claude to render and check every result, and to say
+so plainly when a feature is missing.
 
 ## Try
 

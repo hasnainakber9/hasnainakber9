@@ -16,7 +16,7 @@ tie-breakers below decide. Every app's CLI is installed with `python3 "$CRAFT" e
 | App/web screens, wireframes, components, prototypes, design system | FigCraft | craft-design | starter templates, auto layout |
 | Social post graphics in several sizes | FigCraft or VectorCraft | craft-design | FigCraft for layout-heavy sets, VectorCraft for illustration |
 | Brochure, flyer, magazine, newsletter, book, menu, certificate, business card | DesignCraft | craft-design | multi-page layout, styles, print PDF |
-| Open an InDesign file | indd-utils → DesignCraft | craft-design | INDD → IDML, then DesignCraft |
+| Open an InDesign file | DesignCraft | craft-design | opens `.indd`/`.indt` directly (converted to IDML in memory); indd-utils' `indd` CLI converts standalone |
 | Edited video: cuts, order, titles, color, audio levels, export | FilmCraft | craft-av | own H.264/HEVC/ProRes/AAC codecs |
 | Animated title, lower third, logo sting, kinetic text, Lottie | EffectCraft | craft-av | keyframes, shape/text layers, effects |
 | Audio edit, mix, master, podcast cleanup, stems, bounce | SoundCraft | craft-av | tracks, plugins, bounce |
@@ -37,14 +37,14 @@ tie-breakers below decide. Every app's CLI is installed with `python3 "$CRAFT" e
 | `.dng` `.cr2` `.cr3` `.nef` `.arw` `.raf` `.orf` `.rw2` and other camera raws | LightCraft |
 | `.svg` `.eps` `.ai` | VectorCraft |
 | `.fig` | FigCraft (best effort) |
-| `.idml` | DesignCraft; `.indd` → indd-utils first |
+| `.idml` `.indd` `.indt` | DesignCraft |
 | `.mp4` `.mov` and other video | FilmCraft |
 | Lottie `.json` | EffectCraft |
 | `.wav` `.mp3` `.flac` `.aiff` `.ogg` | SoundCraft |
 | `.dwg` `.dxf` | CADCraft |
 | `.docx` `.odt` `.rtf` | WordCraft |
 | `.xlsx` `.xls` `.ods` `.csv` | GridCraft |
-| `.pptx` `.odp` | DeckCraft |
+| `.pptx` `.potx` `.ppsx` (not `.ppt` or `.odp`) | DeckCraft |
 | `.pdf` | PdfCraft (or the app that made it, to edit the source instead) |
 
 The per-app references list exact formats; check them before promising a format.
