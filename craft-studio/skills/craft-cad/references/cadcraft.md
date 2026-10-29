@@ -61,15 +61,15 @@ EOF
 "$CLI" run --metric --script-file plate.scr --save out/plate.dwg --export out/plate.pdf
 ```
 ```bash
-# 3. JSON commands (no prompts): layers, closed walls, offset, label. "{last}" = the last handle a --cmd returned.
-"$CLI" run --metric \
+# 3. JSON commands (no prompts): layers, closed walls, inner offset, label, dimension.
+#    "{last}" = the last handle a --cmd returned ({"handle":"100"}). Set DIMSCALE before dimensioning.
+"$CLI" run --metric --cmd 'setvar {"name":"DIMSCALE","value":50}' \
   --cmd 'layer.new {"name":"Walls","color":"red","lineweight":0.5,"current":true}' \
   --cmd 'pline {"vertices":[[0,0],[6000,0],[6000,4000],[0,4000]],"closed":true}' \
   --cmd 'offset {"handle":"{last}","distance":200,"side":[3000,2000]}' \
   --cmd 'layer.new {"name":"Text","color":"white","current":true}' \
   --cmd 'text {"at":[3000,2000],"text":"LIVING 24 m²","height":250,"justify":"MC"}' \
   --cmd 'dimlinear {"p1":[0,0],"p2":[6000,0],"at":[3000,-800]}' \
-  --cmd 'setvar {"name":"DIMSCALE","value":50}' \
   --save out/room.dxf --export out/room.png
 ```
 ```bash
@@ -82,9 +82,10 @@ EOF
 "$CLI" run drawing.dxf --cmd 'saveas {"path":"out/drawing-2013.dwg","version":2013}'   # DXF -> DWG 2013
 ```
 ```bash
-# 5. Plot to PDF on a sheet, to scale (paper: A0-A6, B0-B5, Letter/ANSI A, Legal, Tabloid/ANSI B, ANSI C-E, ARCH A-E)
-"$CLI" run plan.dxf --cmd 'plot {"path":"out/plan-A3.pdf","layout":"Model","paper":"A3","landscape":true,"scale":"1:50","plotArea":"extents"}'
-"$CLI" run plan.dxf --cmd 'plot {"path":"out/plan-fit.pdf","layout":"Model","paper":"A4","landscape":true,"fit":true}'
+# 5. Plot to PDF on a sheet (paper: A0-A6, B0-B5, Letter/ANSI A, Legal, Tabloid/ANSI B, ANSI C-E, ARCH A-E).
+#    Model space FITS the sheet by default: a scale needs "fit":false (1:50 of a mm drawing = 1 mm paper per 50 mm).
+"$CLI" run plan.dxf --cmd 'plot {"path":"out/plan-A3.pdf","layout":"Model","paper":"A3","landscape":true,"fit":false,"scale":"1:50"}'
+"$CLI" run plan.dxf --cmd 'plot {"path":"out/plan-fit.pdf","layout":"Model","paper":"A4","landscape":true}'
 "$CLI" run plan.dxf --cmd 'layout.list'                              # then plot a paper-space layout:
 "$CLI" run plan.dxf --cmd 'pagesetup {"layout":"Layout1","paper":"A1","landscape":true,"plotStyleTable":"monochrome.ctb"}' \
   --cmd 'plot {"path":"out/sheet.pdf","layout":"Layout1"}' --save out/plan-with-setup.dxf
@@ -112,7 +113,7 @@ EOF
 ```
 
 ## The command registry
-- List or search: `"$CLI" commands wall`, or `"$CLI" commands --compact > cmds.json` then filter it. Through MCP: `list_commands {filter}` (also matches aliases) or the resource `cadcraft://commands`.
+- List or search (about 440 commands): `"$CLI" commands dim` (40 matches), or `"$CLI" commands --compact > cmds.json` then filter it. Through MCP: `list_commands {filter}` (also matches aliases) or the resource `cadcraft://commands`.
 - The `params` doc reads `{center, radius} | {center, diameter}` (alternatives separated by `|`, `?` optional, `→` result). `typed:` notes describe the command-line prompts. Handles are hex strings (`"2A"`); points are `[x,y]`.
 - Three ways to drive it: (1) **command-line text** (`--script`, `--script-file`, MCP `command_line`/`script`), as typed at the prompt: names or aliases, `x,y`, `@dx,dy`, `@dist<angle`, keywords, empty = Enter. (2) **JSON** (`--cmd 'id {json}'`, MCP `execute`), which never opens a dialog. (3) **LISP** (`lisp {code}`, `appload {path}`).
 - `{last}` works in any `--cmd` parameter at any depth (for example `"handles":["{last}"]`). It is the last handle an earlier `--cmd` returned (`handle`, `handles`, `viewports`…). Script steps don't set it.
@@ -123,14 +124,16 @@ EOF
 | `pline` [pl] | `{"vertices":[[0,0],{"p":[100,0],"bulge":0.4},[100,50]],"closed":true,"width":0}` |
 | `circle` [c] / `arc` [a] | `{"center":[50,50],"radius":10}` / `{"center":[0,0],"radius":20,"start":0,"end":90}` |
 | `rectang` [rec] / `polygon` [pol] | `{"p1":[0,0],"p2":[200,120],"fillet":5}` / `{"sides":6,"center":[0,0],"radius":25}` |
-| `ellipse` [el] / `spline` | `{"center":[0,0],"major":[40,0],"ratio":0.5}` |
+| `ellipse` [el] / `spline` [spl] | `{"center":[0,0],"major":[40,0],"ratio":0.5}` / `{"fit":[[0,0],[10,5],[20,0]]}` |
 | `text` [dt] / `mtext` [t,mt] | `{"at":[0,0],"text":"PLAN","height":5,"justify":"MC"}` / `{"at":[0,0],"text":"Line 1\\PLine 2","height":2.5,"width":80}` |
 | `dimlinear` [dli] / `dimaligned` [dal] | `{"p1":[0,0],"p2":[200,0],"at":[100,-15]}` (`rotation`, `text` optional) |
 | `dimradius` [dra] / `dimdiameter` [ddi] / `dimangular` [dan] | `{"handle":"2A"}` / `{"center":[0,0],"point":[10,0]}` / `{"vertex":[0,0],"p1":[10,0],"p2":[0,10],"at":[8,8]}` |
 | `hatch` [h] | `{"points":[[10,10]],"pattern":"ANSI31","scale":2,"angle":0}`, or `"handles":[...]`. Built in: SOLID, ANSI31-38, LINE, NET, NET3, DOTS, DASH, BRICK, SQUARE, CROSS, EARTH, GRASS, HONEY, ZIGZAG, AR-CONC, AR-SAND |
-| `layer.new` / `layer.set` / `layer.current` [clayer] | `{"name":"Doors","color":"yellow","linetype":"DASHED","current":true}` / `{"name":"Doors","frozen":true}` / `{"name":"0"}` |
+| `linetype` [lt] | `{"load":"DASHED"}`. Load a linetype before a layer uses it. Built in: BORDER, CENTER(2, X2), DASHDOT(2), DASHED(2, X2), DIVIDE, DOT(2), HIDDEN(2, X2), PHANTOM(2), FENCELINE1, ZIGZAG |
+| `layer.new` / `layer.set` / `layer.current` [clayer] | `{"name":"Doors","color":"yellow","linetype":"DASHED","current":true}` / `{"name":"Furniture","frozen":true}` (not the current layer) / `{"name":"0"}` |
 | `properties.set` | `{"handles":["2A"],"layer":"Doors","color":"ByLayer","lineweight":0.35}` |
-| `move` [m] / `copy` [co] / `rotate` [ro] / `scale` [sc] / `mirror` [mi] | `{"handles":["2A"],"delta":[10,0]}` / `…"count":3` / `{"handles":["2A"],"base":[0,0],"angle":90}` / `…"factor":2` / `{"handles":["2A"],"p1":[0,0],"p2":[0,10]}` |
+| `move` [m] / `copy` [co] | `{"handles":["2A"],"delta":[10,0]}` / `{"handles":["2A"],"delta":[0,500],"count":3}` |
+| `rotate` [ro] / `scale` [sc] / `mirror` [mi] | `{"handles":["2A"],"base":[0,0],"angle":90}` / `{"handles":["2A"],"base":[0,0],"factor":2}` / `{"handles":["2A"],"p1":[0,0],"p2":[0,10],"erase":false}` |
 | `offset` [o] / `trim` [tr] / `extend` [ex] / `fillet` [f] | `{"handle":"2A","distance":5,"side":[0,10]}` / `{"handle":"2B","pick":[50,0]}` / same / `{"h1":"2A","p1":[..],"h2":"2B","p2":[..],"radius":3}` |
 | `arrayrect` / `arraypolar` | `{"handles":["2A"],"rows":3,"cols":4,"rowSpacing":50,"colSpacing":60}` / `{"handles":["2A"],"center":[0,0],"count":8}` |
 | `block` [b] / `insert` [i] | `{"name":"CHAIR","base":[0,0],"handles":["2A","2B"]}` / `{"name":"CHAIR","at":[900,0],"rotation":90,"scale":1}` |
@@ -141,11 +144,11 @@ EOF
 | `saveas` / `export` [exp] / `document.bytes` | `{"path":"a.dwg","version":2018,"binary":false}` / `{"path":"a.svg"}` / `{"format":"dxf"}` → base64 |
 | `drawing.inspect` / `entities` / `texts` / `shapes` / `list` [li] / `area` [aa] / `dist` [di] | `{"entities":true,"limit":50}` / `{"type":"Line","layer":"Walls","window":[[0,0],[10,10]]}` / `{"contains":"room"}` / `{"layer":"Walls"}` / `{"handles":["2A"]}` / `{"handle":"2A"}` / `{"p1":[0,0],"p2":[3,4]}` |
 | `units` [un] / `setvar` [set] / `style` [st] / `dimstyle` [d] | `{"lunits":2,"luprec":0,"insunits":4}` / `{"name":"DIMSCALE","value":50}` / `{"name":"Notes","font":"DejaVu Sans","current":true}` / `{"name":"DS","DIMTXT":2.5,"current":true}` |
-| `purge` [pu] / `audit` / `overkill` | `{}` / `{"fix":true}` |
+| `purge` [pu] / `audit` / `overkill` / `find` | `{}` / `{"fix":true}` / `{}` / `{"find":"OLD","replace":"NEW","matchCase":true}` |
 | `script` [scr] / `lisp` / `appload` | `{"path":"setup.scr"}` / `{"code":"(+ 1 2)"}` / `{"path":"tools.lsp"}` |
 
 ## Check your work
-- Render: `--export out/check.png` (2400×1600, model space) or `convert x.dxf /tmp/check.png --window …`, then Read the PNG. Look at a sheet with `--cmd 'preview {"layout":"Layout1"}'`, which returns `data` as a base64 PNG to decode (`python3 -c 'import json,sys,base64;open("p.png","wb").write(base64.b64decode(json.loads(sys.stdin.readline())["data"]))'`).
+- Render: `--export out/check.png` (2400×1600, model space, the dark CAD background) or `convert x.dxf /tmp/check.png --window …`, then Read the PNG. A `--export`/`convert` PDF is an A4-landscape, fit-to-page, white sheet: fine for a look, not a scaled plot. Look at a sheet with `--cmd 'preview {"layout":"Layout1"}'`, which returns `data` as a base64 PNG to decode (`python3 -c 'import json,sys,base64;open("p.png","wb").write(base64.b64decode(json.loads(sys.stdin.readline())["data"]))'`).
 - Inspect: `"$CLI" info out/x.dxf --compact`. Check `extents` (units sane?), `counts`, `layers` and `layouts`. `--cmd 'drawing.inspect {"entities":true,"limit":100}'` lists handles and geometry.
 - Verify geometry: `shapes` reports perimeter, area, centroid and self-intersections of closed shapes. `loops` finds gaps in LINE/ARC chains. `texts` checks labels. `audit` checks integrity.
 - Reopen what you saved (`info out/x.dwg`). Warnings about objects that were skipped or not drawn go to stderr.
@@ -162,6 +165,8 @@ Only when the user wants to watch the drawing being made. Start the app with `ca
 - `run` with no file starts an **imperial** drawing. Pass `--metric` for mm, and set `units`/`insunits` before relying on plot scales. Text height and DIMSCALE must suit the plot scale (2.5 mm text at 1:50 = 125 units).
 - `--cmd` is `id`, one space, then JSON. Quote the whole value: `--cmd 'circle {"center":[0,0],"radius":5}'`. `--save` and `--export` are single and run after every step.
 - `--export` and `convert` images always show **model space**. Plot layouts with `plot`, `exportpdf` or `publish`. A `zoom` or `view.set` step changes the `--export` framing; `--view extents` resets it.
+- `plot`/`exportpdf` of `"Model"` fit the extents to the sheet unless `"fit":false`, and `scale` only applies then. Layouts plot 1:1 with each viewport at its own `viewport.set` scale. A new drawing's layouts start on ANSI A (Letter) paper, so set `pagesetup {"paper":...}` first.
+- Dimension size follows DIMSCALE (or the style's DIMTXT/DIMASZ) when the dimension is made. Set it before `dimlinear`, or the text comes out tiny on large mm drawings.
 - An output that is also an input is refused (exit 2) unless you pass `--in-place`. Paths written by `--cmd 'saveas'` or `plot` are not checked.
 - In command-line text, spaces act as Enter except at text prompts. Use JSON `text`/`mtext` for labels instead of typed DTEXT.
 - DWG output goes through a DXF→DWG bridge: verify by reopening, and keep a DXF master. An output path with no extension is written as DXF, and an unknown extension is an error.

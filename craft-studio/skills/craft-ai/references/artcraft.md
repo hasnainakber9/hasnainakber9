@@ -112,17 +112,17 @@ git clone --depth 1 https://github.com/storytold/artcraft && cd artcraft
 
 **The desktop app: no.** It is GUI-only: no CLI, no MCP server, no `--control` port (unlike the
 Crafting Apps), no deep links; every action is a Tauri IPC call from its own webview.
-`artcraft-native` reads `ARTCRAFT_SCREENSHOT=<file.png>`, `ARTCRAFT_PAGE=home|create-image|
-create-video|create-audio|library`, `ARTCRAFT_OPEN=settings|midjourney-login` and
-`ARTCRAFT_SCREENSHOT_EXIT=1`, which only take a screenshot of a page.
+`artcraft-native` only takes screenshots for diagnostics: `ARTCRAFT_SCREENSHOT=<file.png>`,
+`ARTCRAFT_PAGE` (`home`, `create-image`, `create-video`, `create-audio`, `library`),
+`ARTCRAFT_OPEN` (`settings`, `midjourney-login`), `ARTCRAFT_SCREENSHOT_EXIT=1`.
 
 **Headless routes (all hit the hosted service and spend the user's credits):**
 
 | Route | Auth | Covers | Status |
 |---|---|---|---|
-| Omni API `/v1/omni_api/*` | API key | Image and video generation, uploads (image/video/audio), job status | Live, documented; the route to use |
-| Omni Gen `/v1/omni_gen/*` | Session cookie; none for `models`/`cost` | Image, video, audio, mesh, splat | The apps' own endpoints; use `models` and `cost` only |
-| MCP sessions `/v1/mcp/session/{create,refresh,revoke,list}` | API key or web session, then an `mcp_session_...` credential | The Omni Gen video endpoint accepts that credential (server tests) | Added 2026-08 and live, but no MCP server is published in the org and nothing answers at `api.storyteller.ai/mcp`. Do not promise an ArtCraft MCP |
+| Omni API `/v1/omni_api/*` | API key | Image and video generation (URL or media-token inputs), uploads (image/video/audio), job status | Live, documented; the route to use |
+| Omni Gen `/v1/omni_gen/*` | `models` and `cost`: none. `generate`: cookie, API key or MCP credential (current server code) | Image, video, audio, mesh, splat; media-token inputs only | The apps' own endpoints, bodies in the Swagger spec; API-key use of audio/mesh/splat untested here |
+| MCP sessions `/v1/mcp/session/{create,refresh,revoke,list}` | API key or web session, then an `mcp_session_...` credential | The Omni Gen generate endpoints accept that credential | Added 2026-08 and live, but no MCP server is published in the org and nothing answers at `api.storyteller.ai/mcp`. Do not promise an ArtCraft MCP |
 | `craft-ai-artcraft` (Rust crate) | API key | Prompt-only `nano_banana` image, `seedance_2p0` video | For Crafting App developers; not tested against the live service |
 
 ### Omni API recipe
@@ -145,10 +145,11 @@ curl -s -X POST https://api.storyteller.ai/v1/omni_api/generate/video \
    Video inputs: `start_frame_image_url`, `end_frame_image_url`, `reference_image_urls`,
    `reference_video_urls` (mp4 only), `reference_audio_urls`, or the matching `*_media_token(s)`
    from `/v1/omni_api/upload/{image,video,audio}` (one form per field, not both); also
-   `negative_prompt`, `generate_audio`, `video_batch_count`. Images: `POST
-   /v1/omni_api/generate/image` with `model`, `prompt`, `aspect_ratio`, `resolution`, `quality`,
+   `negative_prompt`, `generate_audio`, `video_batch_count`. Images: `POST` to
+   `/v1/omni_api/generate/image` with `model`, `prompt`, `aspect_ratio`, `resolution`, `quality`,
    `image_batch_count`, `image_urls`; the angle models also take `adjust_horizontal_angle`,
-   `adjust_vertical_angle`, `adjust_zoom`. Audio, mesh and splat have no API-key route.
+   `adjust_vertical_angle`, `adjust_zoom`. Audio, mesh and splat are only on `/v1/omni_gen/generate/*`
+   (upload inputs first to get media tokens).
 3. Poll `GET /v1/omni_api/job_status/job/<token>` (or `/batch?tokens=a&tokens=b`) every ~5 s while
    `state.status.status` is `pending`, `started` or `attempt_failed`. On `complete_success` download
    `state.maybe_result.media_links.cdn_url`; stop on `complete_failure`, `dead`,
@@ -233,8 +234,8 @@ with that tool uses it. Rust workspace, pre-1.0, MIT OR Apache-2.0; library crat
 - `artcraft-services` (backend, web app, website) is under "ArtCraft License (WIP)", a
   fair-source, non-OSI text: free private use; no selling it, no competing product, no stripping
   community, donation or paid-model links, no promoting a business with the name, logo or mascots
-  without permission. It says generated
-  assets belong to the user; the underlying model providers' own terms may also apply (unverified).
+  without permission. It says generated assets belong to the user; the underlying model
+  providers' own terms may also apply (unverified).
 - `artcraftx`: no licence file. `craft-ai-integrations`: MIT OR Apache-2.0; SAM 3 on Candle is
   Apache-2.0 only (see its NOTICE).
 - Likeness: the FAQ shows how to make photos and videos "of yourself"; for any real person, get

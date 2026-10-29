@@ -13,13 +13,13 @@
 ## Not a fit / known gaps
 - Designed motion graphics (kinetic type, shape animation, Lottie): EffectCraft. Audio post as the product: SoundCraft.
 - Native Premiere `.prproj` can't be opened (bring timelines over as FCP7 XML, AAF or OTIO).
-- Delivery codecs: no WebM/VP9/AV1 export; HEVC export needs a hardware encoder (NVIDIA on Windows/Linux, VideoToolbox on macOS).
+- Delivery codecs: no WebM/VP9/AV1 export; HEVC export only through a hardware encoder (NVIDIA NVENC, or VideoToolbox on macOS).
 - Transcription needs a `whisper` build (not in releases); Auto Reframe and Warp Stabilizer are heuristic/2-D.
-- Camera RAW, E-AC-3, DivX/Xvid/DV AVI not imported; MP3/FLAC/Vorbis decode via symphonia.
+- Not imported: camera RAW, E-AC-3, DivX/Xvid/DV AVI, WMV, PSD; OMF is export-only.
 
 ## Files
 - Project: `.fcproj` (UTF-8 JSON, schema-versioned; media referenced by absolute path, never embedded).
-- Import: MP4/MOV (H.264, HEVC, ProRes, DNxHD/HR, AV1, VP8/VP9, MJPEG, APV), MKV/WebM, AVI, MXF OP1a/OP-Atom, MPEG-TS/PS (AVCHD, DVD), Ogg, MPEG-2; audio WAV/BWF, AIFF, MP3, FLAC, ALAC, AAC, Opus, Vorbis, AC-3, MP2; stills PNG/JPEG/GIF/WebP/TIFF/BMP (animated GIF/APNG/WebP as clips), numbered image sequences; captions `.srt` `.vtt` `.scc`; LUTs `.cube` `.3dl`; FCP7 XML, FCPXML, OTIO, EDL, AAF.
+- Import: MP4/MOV (H.264, HEVC, ProRes, DNxHD/HR, AV1, VP8/VP9, MJPEG, APV), MKV/WebM, AVI, MXF OP1a/OP-Atom, MPEG-TS/PS (AVCHD, DVD), Ogg, MPEG-2; audio WAV/BWF, AIFF, MP3, FLAC, ALAC, AAC, Opus, Vorbis, AC-3, MP2; stills PNG/JPEG/GIF/WebP/TIFF/BMP (animated GIF/APNG/WebP as clips), numbered image sequences; captions `.srt` `.vtt` `.scc` and FCP7 XML, FCPXML, OTIO, EDL, AAF timelines (all through `import`/`file.import`, detected by content); LUTs `.cube` `.3dl` (`lut.import`).
 - Export formats (`format`): `h264` (MP4+AAC) `hevc` `prores` (MOV, 422 HQ default) `dnxhr` `apv` `mjpeg` `mxf-op1a` `mxf-opatom` `png` `tiff` `bmp` `jpg` `tga` `dpx` `exr` `gif` `wav` `aiff` `aac` `flac`. From the extension: `.mp4/.m4v`=h264, `.mov`=prores, `.mxf`=mxf-op1a, `.png`, `.gif`, `.wav`, `.tif/.tiff`, `.bmp`, `.aif/.aiff`, `.m4a/.aac`=aac. Captions export `.srt .vtt .scc` (+ `mcc stl ttml dfxp` via `captions.export`).
 
 ## Get the CLI
@@ -27,7 +27,7 @@
 - Source build needs no system libraries for the CLI (libva is loaded at run time); ALSA/GTK headers are only for the desktop app `filmcraft`. Rust 1.95+.
 - Linux release: the CLI is inside the full app tarball `filmcraft-<v>-linux-<arch>.tar.gz` (`bin/filmcraft-cli`); macOS: `filmcraft-cli-<v>-macos-universal.zip`.
 - Speech-to-text: neither releases nor the helper's build enable it. Build with the cargo feature and point the helper at it:
-  `cargo build --release --locked -p filmcraft-cli --features whisper` then `export FILMCRAFT_CLI=$PWD/target/release/filmcraft-cli`. Models download on request into `<data dir>/models/`.
+  in a filmcraft checkout (after a source install the helper keeps one in `~/.craft-studio/src/filmcraft`) run `cargo build --release --locked -p filmcraft-cli --features whisper`, then `export FILMCRAFT_CLI=$PWD/target/release/filmcraft-cli` (`ensure` returns `$FILMCRAFT_CLI` first). Models download on request (`transcript.downloadModel`, network to Hugging Face) into `<data dir>/models/`.
 - Env: `FILMCRAFT_DATA_DIR` (data dir: user export presets, speech models), `FILMCRAFT_CONTROL_TOKEN` (bridge credential), `CRAFT_FONTS_DIR` (optional build input for Japanese fonts; releases embed it).
 
 ## Subcommands
@@ -133,7 +133,7 @@ $FM --project "$P" --save exec transcript.removeFillers      # also: transcript.
 |---|---|
 | `file.newSequence` | `{"name":"Main","width":1080,"height":1920,"fps":30}` → `{"sequence":id}` |
 | `file.newSequenceFromClip` | `{"items":[2]}` (settings match the clip) |
-| `file.import` | `{"paths":["/abs/a.mp4"],"bin":binId?,"imageSequence":false}` |
+| `file.import` | `{"paths":["/abs/a.mp4","/abs/subs.srt"],"imageSequence":false}` → `{"items":[...],"errors":[]}` |
 | `file.newColorMatte` | `{"color":"#ff0000","seconds":2}` → `{"item":id}` |
 | `timeline.place` | `{"items":[2,3],"track":"V1","seconds":0,"insert":false,"audio":true}` → `{"clips":[...]}` |
 | `timeline.razor` | `{"seconds":12.5,"track":"V1"}` |
@@ -156,7 +156,7 @@ $FM --project "$P" --save exec transcript.removeFillers      # also: transcript.
 | `timeline.setTrack` | `{"track":"A2","volumeDb":-12,"muted":false}` |
 | `captions.newTrack` → `captions.add` | `{"format":"Subtitle"}` → `{"track":"C1","text":"Hello","seconds":1.0,"durationSeconds":3}` |
 | `file.exportMedia` | `{"path":"/abs/o.mp4","format":"h264","width":1280,"height":720,"crf":20,"loudnessLufs":-14,"wait":true}` |
-| `file.exportFrame` | `{"path":"/abs/f.png","time":ticks}` |
+| `file.exportFrame` | `{"path":"/abs/f.png","time":508032000000}` (2 s in ticks) |
 | `file.exportInterchange` | `{"format":"otio","path":"/abs/edit.otio"}` |
 | `tts.create` | `{"text":"Welcome","track":"A3"}` (built-in Basic voices; `tts.voices` lists them) |
 | `edit.undo` / `edit.redo` | `{}` |
@@ -182,6 +182,7 @@ Only needed to show work in the user's open window or drive its UI. `export FILM
 - `--bridge` refuses `--project`/`--demo`; `render` is headless-only (bridge: `render_frame`/`ui_screenshot`).
 - `graphics.newText`: `time` is the start in ticks, `seconds` is the duration (default 5). `timeline.move` takes ticks only.
 - `clip.audioGain` without `mode` is relative (`adjust`). `effects.setParam` by effect id hits the first instance; use the `index` from `effects.apply` for duplicates. A static parameter answers `{"keyframes":0,...}`: that is success.
+- `export`/`file.exportMedia` without a range export the sequence In/Out when marks are set (they are saved in the project), else the whole sequence: pass `--range entire` (or `range=entire`) for the full edit.
 - Missing/offline media renders as placeholder frames and makes `export`/`render` exit 1 (after writing); relink (`media.relink`) or pass `--allow-offline`.
 - Some presets/formats change the extension (APV writes `name.mp4.mov`): use `path` from the result.
 - `export --settings` rejects unknown keys (flat keys like `loudnessLufs` belong to `file.exportMedia`, not inside `settings`).

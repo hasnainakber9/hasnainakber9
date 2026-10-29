@@ -75,7 +75,7 @@ CLI=$(python3 "$CRAFT" ensure deckcraft)
 # 4 Render every slide for review
 "$CLI" render q3.pptx --all --scale 1 shots/          # shots/slide-01.png …
 # 5 Export: PDF, PPTX, handouts or notes pages, animated GIF, JPEG of one slide
-"$CLI" convert q3.deckcraft q3.pptx
+"$CLI" convert q3.pptx q3.deckcraft                  # lossless native copy; convert works either way
 "$CLI" convert q3.pptx q3.pdf
 "$CLI" run --in q3.pptx --export q3-handouts.pdf --export-params '{"layout":"handouts","perPage":3}'   # or {"layout":"notes"}
 "$CLI" run --in q3.pptx --export q3.gif --export-params '{"width":"small","secondsPerSlide":3}'
@@ -94,7 +94,7 @@ printf '# Launch plan\n\n- Goals\n- Owners\n  - Ana: design\n\n# Timeline\n\n- O
 - There is no script file and no `--report`. A batch is repeated `--cmd 'id={json}'` flags on one `run`, executed in order in one session; a command without params is just its id. The first failure stops the run (`deckcraft-cli: invalid parameters for \`slide.new\`: no layout "nope"`, exit 1) and nothing is saved. `--print` echoes each answer as `id → {json}`, such as `shape.insert → {"id":290}` or `text.replace → {"replaced":4}`. Through MCP, `batch {"commands":[{"command":"slide.go","params":{"index":0}}],"keepGoing":false}` returns `[{"command","ok","result"}]`.
 - Coordinates are points with y pointing down. A `rect` is `[x, y, width, height]`. Slide `index` is 0-based. Shape ids resolve on the current slide only. Colours are `#RRGGBB`, `accent1`…`accent6` or `tx1`. In a `body` or `text`, `\n` starts a paragraph and leading `\t` sets the bullet level.
 
-| Command | Example params (all run as written in tests) |
+| Command | Example params (each form ran against 0.12.0) |
 |---|---|
 | `file.new` | `{"theme":"Slate","blank":true}`, `{"template":"Pitch"}`, `{"size":[720,540],"theme":"Paper"}`. Themes: DeckCraft, Harbor, Ember, Meadow, Nocturne, Paper, Coral Reef, Slate. Starters: Briefing, Lesson, Pitch, Field Notes, Quarterly, Evening Talk |
 | `slide.new` | `{"layout":"twoContent","title":"…","body":"Left\n\tsub","at":2}`. Layouts: title, titleAndContent, sectionHeader, twoContent, comparison, titleOnly, blank, contentWithCaption, pictureWithCaption |
@@ -124,7 +124,7 @@ printf '# Launch plan\n\n- Goals\n- Owners\n  - Ana: design\n\n# Timeline\n\n- O
 ## Check your work
 - `"$CLI" render deck.pptx --all --scale 1 shots/` (or `--slide N --scale 1 one.png`), then read the PNGs. Text overflow, overlaps, fallback fonts and the default "Chart Title" all show there.
 - `"$CLI" info deck.pptx | jq '[.slides[] | {index,title,layout,shapes,notes}]'` for structure, and `run --in deck --print --cmd 'slide.inspect={"index":N}'` for every shape's id, box and text.
-- Reopen what you wrote: `info out.pptx` should match what you built. On a damaged input, stderr warns `N slides couldn't be read and left out`.
+- Reopen what you wrote: `info out.pptx` should match what you built. On a damaged input, stderr warns `deckcraft-cli: warning: deck.pptx: 2 slides couldn't be read and left out` (or `… picture or media files couldn't be read`).
 - MCP: `render_slide {"slide":N,"scale":0.5}` returns the PNG inline, and `inspect_slide` returns the shapes.
 
 ## MCP server
@@ -134,11 +134,11 @@ printf '# Launch plan\n\n- Goals\n- Owners\n  - Ana: design\n\n# Timeline\n\n- O
 - 25 tools: `list_commands`, `run_command {command, params}`, `batch`, `new_presentation {theme, blank}`, `open_presentation`, `save_presentation`, `export` (format, slide, all, scale, layout, perPage, dpi, slides, paper, width, secondsPerSlide, loop…), `inspect_document`, `inspect_slide`, `render_slide`, `add_slide`, `go_to_slide`, `add_shape {preset,x,y,w,h,text,fill,line}`, `add_text_box`, `set_text {id,text}`, `insert_picture`, `insert_table {rows,cols,data}`, `insert_chart`, `select`, `pointer`, `select_tool`, `key`, `type_text`. `screenshot` and `call_app` work only with `--connect`. Resources: `deckcraft://document`, `deckcraft://commands`. Protocol 2025-06-18.
 
 ## Live app (control channel)
-Use this only when the user wants to watch or work in the open window. Start the app with `deckcraft --control 7979 [deck.pptx]`, which listens on 127.0.0.1 and speaks JSON lines. Send one request with `"$CLI" app shape.insert '{"preset":"star5","rect":[100,100,200,200]}'` or `"$CLI" app --method ui.screenshot '{"path":"/tmp/shot.png"}'`, or connect MCP with `mcp --connect 7979`. `app` defaults to port 7979; the README examples use 7990.
+Use this only when the user wants to watch or work in the open window. Start the app with `deckcraft --control 7979 [--sample] [deck.pptx]` (or set `DECKCRAFT_CONTROL_PORT=7979`), which listens on 127.0.0.1 and speaks JSON lines. Send one request with `"$CLI" app shape.insert '{"preset":"star5","rect":[100,100,200,200]}'` or `"$CLI" app --method ui.screenshot '{"path":"/tmp/shot.png"}'`, or connect MCP with `mcp --connect 7979`. `app` defaults to port 7979; the README examples use 7990.
 
 ## Gotchas
 - Command params are not validated for unknown keys in `run --cmd` or `run_command`: a misspelled key is silently ignored. MCP tool arguments are strict. Check with `describe ID`, then confirm with `slide.inspect` or a render.
-- Shape ids repeat across slides in decks from other tools (python-pptx numbers 2, 3… on every slide). `text.set {"id":3}` without `slide.go` silently edits slide 0's shape 3, so always `slide.go` first.
+- Shape ids repeat across slides in decks from other tools (python-pptx numbers 2, 3… on every slide). `text.set {"id":3}` without `slide.go` silently rewrites shape 3 of the current slide (slide 0 right after opening: it replaced the title slide's subtitle in a test), so always `slide.go` first.
 - Slide indices are 0-based (`--slide`, `slide.go`, `index`), but `render --all` names files from 1. PdfCraft pages are 1-based.
 - `rect` is `[x, y, w, h]`, while PdfCraft rectangles are `[x0, y0, x1, y1]`.
 - `render` always writes PNG bytes, even to a `.jpg` name. For JPEG use `file.export` or `convert … .jpg`. `convert x.pptx x.png` writes the first slide only.

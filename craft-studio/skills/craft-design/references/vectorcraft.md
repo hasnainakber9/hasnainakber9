@@ -24,7 +24,7 @@
 ## Get the CLI
 `CLI=$(python3 "$CRAFT" ensure vectorcraft)`
 - Releases: the Linux CLI is `bin/vectorcraft-cli` inside `vectorcraft-<v>-linux-<arch>.tar.gz`, built against glibc 2.35. The `.deb` and `.rpm` install it as `/usr/bin/vectorcraft-cli`. macOS has a separate `vectorcraft-cli-<v>-macos-universal.zip`, because the `.app` holds only the desktop app. Windows has `vectorcraft-cli.exe` in the MSI install folder and the `-portable.zip`.
-- Source: Rust 1.95+ and `cargo build --release --locked -p vectorcraft-cli` (pure Rust, no system libraries).
+- Source: Rust 1.95+ and `cargo build --release --locked -p vectorcraft-cli`. It is pure Rust with no system libraries, but cargo must reach github.com for the `storytold/craft-libs` and patched `storytold/egui` git dependencies.
 - Fonts: the default `bundled-fonts` feature compiles in Inter (Regular, Medium, SemiBold), Source Sans 3, Source Serif 4 and JetBrains Mono. Installed system fonts and the desktop app's Fonts folder are used too. Setting `CRAFT_FONTS_DIR=<absolute craft-fonts checkout>` at build time embeds the Japanese faces; release builds always do.
 - Env: `VECTORCRAFT_NO_PREFS=1` reads and writes no preferences, presets or profiles (use it for clean agent runs). `VECTORCRAFT_CONFIG_DIR=DIR` sets an isolated profile. `SOURCE_DATE_EPOCH=<secs>` gives byte-identical PNG/PDF/EPS output; encrypted PDFs still differ between runs.
 
@@ -122,13 +122,13 @@ for s in 16 32 64 128 256 512; do echo "{\"command\":\"document.export\",\"param
 |---|---|
 | `file.new` | `{"width":"210 mm","height":"297 mm","colorMode":"cmyk","bleed":8.5,"artboards":2}` |
 | `shape.rectangle` / `shape.ellipse` | `{"x":10,"y":10,"width":200,"height":120,"radius":12}` → `{id}` |
-| `shape.polygon` / `shape.star` | `{"cx":200,"cy":200,"radius":80,"sides":6}` / `{"cx":..,"cy":..,"radius1":90,"radius2":40,"points":5}` |
-| `shape.line` / `shape.spiral` | `{"x1":0,"y1":0,"x2":100,"y2":0}` / `{"cx":..,"cy":..,"radius":50}` |
+| `shape.polygon` / `shape.star` | `{"cx":200,"cy":200,"radius":80,"sides":6}` / `{"cx":200,"cy":200,"radius1":90,"radius2":40,"points":5}` |
+| `shape.line` / `shape.spiral` | `{"x1":0,"y1":0,"x2":100,"y2":0}` / `{"cx":200,"cy":200,"radius":50}` |
 | `path.create` | `{"d":"M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"}` or `{"anchors":[{"x":0,"y":0,"out":[30,0]},{"x":60,"y":40}],"closed":false}` |
 | `paint.setFill` / `paint.setStroke` | `{"color":"#1e88e5"}`, `{"none":true}`, `{"gradient":{"kind":"radial","stops":[...]}}`, `{"swatch":"Brand"}`, `ids` |
 | `stroke.set` | `{"weight":3,"cap":"round","join":"round","dash":[6,4],"align":"inside"}` |
 | `text.create` | `{"x":50,"y":100,"text":"Hello","size":36,"font":"Inter","style":"SemiBold","color":"#111111","justify":"center","area":{"width":300,"height":200}}` |
-| `text.createInPath` | `{"path":"$1.id","mode":"onPath"|"area","text":"...","size":18}` |
+| `text.createInPath` | `{"path":"$1.id","mode":"onPath","text":"...","size":18}`. With `"mode":"area"` the text flows inside the shape |
 | `text.setStyle` / `text.setRangeStyle` | `{"id":5,"size":24,"tracking":50,"leading":30}` / `{"id":5,"start":0,"end":5,"fill":"#ff0000"}` |
 | `type.createOutlines` | `{}` (selected type → glyph outlines) |
 | `select.all` / `select.set` / `select.none` | `{}` / `{"ids":[3,4]}` |
@@ -138,7 +138,7 @@ for s in 16 32 64 128 256 512; do echo "{\"command\":\"document.export\",\"param
 | `object.move` / `object.rotate` / `object.scale` | `{"dx":10,"dy":0}` / `{"angle":15}` / `{"sx":50}` (all take `ids`, `copy`) |
 | `object.pathfinder.unite` (`minusFront`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop`, `outline`, `minusBack`) | `{"ids":[3,4]}` |
 | `object.path.offsetPath` / `object.path.outlineStroke` | `{"offset":6,"joins":"round"}` / `{}` |
-| `object.clippingMask.make` | `{"ids":[mask,art...]}`: the topmost object clips the others |
+| `object.clippingMask.make` | `{"ids":[3,4,7]}`: the topmost of them in stacking order clips the others → `{id}` |
 | `object.setProps` | `{"id":7,"name":"Logo","opacity":80,"blend":"Multiply"}` |
 | `effect.apply` | `{"effect":"stylize.dropShadow","params":{"x":4,"y":4,"blur":6}}`; also `stylize.outerGlow`, `blur.gaussian`, `stylize.roundCorners`, `warp.arc`, `distort.roughen`, `threeD.extrude` |
 | `recolor.colors` / `recolor.apply` / `recolor.reduce` | `{}` / `{"map":{"#ff0000":"#0055ff"},"method":"preserveTints"}` / `{"colors":3}` |

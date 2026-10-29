@@ -13,11 +13,11 @@
 - Video editing or picture (FilmCraft); motion graphics (EffectCraft).
 - MP3/AAC/Opus delivery: SoundCraft writes WAV/AIFF/FLAC only. Wrap a bounce as AAC with FilmCraft (`filmcraft-cli export out.m4a` on a sequence holding it) or use ffmpeg if installed for MP3.
 - Spectral noise reduction/de-hum: none among the built-in plugins (FilmCraft's Essential Sound has DeNoise/DeHummer).
-- Session exchange with Pro Tools or other DAWs (no AAF/OMF/`.ptx`); third-party plugins: CLAP, VST3 and AU discovery exists but is desktop-oriented.
+- Session exchange with Pro Tools or other DAWs (no AAF/OMF/`.ptx`); no bundled third-party plugins.
 
 ## Files
 - Session: `.scraft` with `Audio Files/` (and `Backups/`) beside it; templates via `session.save_template`; track presets (JSON) via `track.save_preset`.
-- Read: WAV/BWF/RF64, AIFF/AIFC, FLAC, MP3/MP2, Ogg Vorbis, AAC/M4A, ALAC, CAF, audio of MP4/MOV (`.mkv`/`.webm` also tried); any rate/bit depth, resampled to the session rate on import. MIDI `.mid` (`file.import_midi`), movies (`file.import_video`: H.264/ProRes/MJPEG picture track + audio), `.scgrp` clip groups, tracks from other sessions (`file.import_session_data`).
+- Read: WAV/BWF/RF64, AIFF/AIFC, FLAC, MP3/MP2, Ogg Vorbis, AAC/M4A, ALAC, CAF, the audio of MP4/MOV movies (MKV/WebM audio also attempted); any rate/bit depth, resampled to the session rate on import. MIDI `.mid` (`file.import_midi`), movies (`file.import_video`: H.264/ProRes/MJPEG picture track + audio), `.scgrp` clip groups, tracks from other sessions (`file.import_session_data`).
 - Write: WAV/AIFF/FLAC at 16, 24 or 32-bit float (`file.bounce_mix`, `file.bounce_stems`, `file.export_clips`, `convert`); MIDI (`file.export_midi`), MusicXML (`file.export_sibelius`), score SVG (`file.print_score`), session text (`file.export_session_text`).
 
 ## Get the CLI
@@ -92,15 +92,17 @@ $SC run --in "$S" --save "$S" --in-place \
   --cmd 'mix.insert={"track":"Master","plugin":"maximizer","params":{"threshold":-6,"ceiling":-1}}' \
   --bounce "$PWD/pod_mix.wav"
 # → {"path":…,"bytes":…,"seconds":…,"peak_db":…,"lufs":-17.8,"true_peak_db":…}
-# Off target (e.g. -16 LUFS podcast, -14 streaming)? change track/master levels by (target − lufs) dB, bounce again.
+# Off target (-16 LUFS podcast, -14 streaming)? move the source tracks (mix.volume / mix.trim) by (target − lufs) dB and bounce again;
+# a limiter in the chain makes this non-linear, so re-measure.
 
-# 8. Bounce variants: a section, FLAC 16-bit, peak-normalized, stems
+# 8. Bounce variants: a section as FLAC, a 16-bit dithered peak-normalized copy, stems
 $SC run --in "$S" --bounce "$PWD/excerpt.flac" --start 10 --end 40
-$SC run --in "$S" --cmd "file.bounce_mix={\"path\":\"$PWD/mix16.wav\",\"bit_depth\":\"16\",\"normalize\":true}"
-mkdir -p stems && $SC run --in "$S" --cmd "file.bounce_stems={\"dir\":\"$PWD/stems\",\"format\":\"wav\"}"
+$SC run --in "$S" --bounce "$PWD/mix.wav" && $SC convert mix.wav mix_16.wav --bit-depth 16 --normalize
+mkdir -p stems && $SC run --in "$S" --cmd 'edit.select_none={}' \
+  --cmd "file.bounce_stems={\"dir\":\"$PWD/stems\",\"format\":\"wav\"}"
 
-# 9. Music mix from the demo: sends to an aux with a delay
-$SC run --demo --cmd 'mix.volume={"track":"Kick","db":-6}' \
+# 9. Music mix from the demo: sends to an aux with a delay (create the save folder first)
+mkdir -p demo && $SC run --demo --cmd 'mix.volume={"track":"Kick","db":-6}' \
   --cmd 'track.new={"kind":"aux","format":"stereo","name":"Delay"}' \
   --cmd 'track.input={"track":"Delay","input":"DelayBus"}' \
   --cmd 'mix.insert={"track":"Delay","plugin":"mod_delay"}' \
@@ -118,7 +120,7 @@ $SC script steps.txt --in "$S" --save "$S" --in-place --keep-going
 
 ## The command registry
 - ~390 engine commands (+ UI-layer `window.*` ones in the app): `session.* file.* track.* clip.* edit.* mix.* automation.* audiosuite.* event.* markers.* transport.* view.* midi.* video.*`.
-- Discover: `$SC commands bounce`, `$SC describe file.bounce_mix`, `$SC plugins` (ids for `mix.insert`).
+- Discover: `$SC commands bounce`, `$SC describe file.bounce_mix`, `$SC plugins` (ids for `mix.insert`). Installed third-party plug-ins: `engine.clap_plugins` / `engine.vst3_plugins` `{"rescan":true}`; their `id` (`clap:…`, `vst3:…`) also works as `plugin`.
 - Params are JSON objects (`--cmd 'ID={…}'`, `script` lines `ID {…}`); empty params act on the current selection, so set it with `edit.select`. Programmatic calls never open dialogs; everything but queries is undoable (`edit.undo`).
 - Tracks by name or id; clips by id. Positions: samples (integer), `{"seconds":x}`, or strings `"bars_beats:5|1|000"`, `"min_secs:0:12.500"`, `"timecode:00:00:10:00"`, `"samples:48000"`. Ranges: `start`+`end` (or `length`).
 - Built-in plugins: `eq_7band eq_1band compressor expander_gate de_esser maximizer channel_strip room_reverb plate_reverb mod_delay auto_pan chorus flanger phaser ring_mod saturator lofi rectifier subharmonic pitch_shifter time_shift gain trim invert dc_offset_removal signal_generator dither subtractive_synth drum_synth sampler`. Key params: `eq_7band` (`hpf_on hpf_freq low_shelf_gain low_mid_freq/gain/q mid_freq/gain/q high_mid_freq/gain/q high_shelf_gain lpf_on lpf_freq output_gain`), `compressor` (`threshold ratio attack release knee makeup limiter lookahead mix`), `maximizer` (`threshold ceiling release`).
@@ -167,10 +169,10 @@ Only to drive the user's open window or record: `soundcraft --control 7801 [--de
 
 ## Gotchas
 - Each `run` is a new process: nothing persists without `--save`. Saving over the `--in` session needs `--in-place`; `--bounce` may not name the `--in` session or the `--save` file.
-- `--bounce` without `--start/--end` renders the whole session, not the edit selection. Bounces are limited to 4 hours.
+- Sessions save the edit selection and edit mode. `file.bounce_mix`/`file.bounce_stems` (and the MCP `bounce_mix`) without `start`/`end` render the current selection when it is a range: run `edit.select_none` first or pass a range. The `--bounce` flag without `--start/--end` always renders the whole session. Bounces are limited to 4 hours.
 - `mix.insert` params must be numbers: a non-numeric value (e.g. `true`) silently falls back to the default; values clamp to range; unknown ids are errors. Slots are `0..9` or `"a".."j"`.
 - `edit.fades_create` `length` and plain-number positions are samples at the session rate (48000 = 1 s at 48 kHz).
 - Imported files are decoded into memory at the session rate; a session opened with media outside the read roots loads without it (`missing`).
-- `edit.cut` closes the gap only in Shuffle mode; set `edit.mode` explicitly.
+- `edit.cut` closes the gap only in Shuffle mode; set `edit.mode` explicitly (it is saved with the session).
 - `commands`, `plugins`, `parity` and the `.scraft` `info` summary are text (no `--json`).
 - A value flag never takes the next flag as its value: write `--bounce=-x.wav` for names starting with `-`.

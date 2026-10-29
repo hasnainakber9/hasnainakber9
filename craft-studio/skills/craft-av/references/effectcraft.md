@@ -36,7 +36,7 @@ Options anywhere; unknown options are a usage error before anything runs. `--jso
 | Synopsis | Purpose |
 |---|---|
 | `info` | Project items, active comp and its layers (`--json`) |
-| `commands [--filter TEXT] [--enabled]` / `exec --list [--filter T] [--schemas]` | List commands (with JSON Schema per command) |
+| `commands [--filter TEXT] [--enabled] [--schemas]` / `exec --list …` | List commands: id, label, shortcut, params doc (`--schemas` adds each JSON Schema) |
 | `exec <id> [JSON \| --params JSON]` | Run one command; with `--save/--save-as` prints `{"result":…,"saved":path}` |
 | `run <id> [<json>] <id> [<json>] …` / `run --args-file F` | Several commands in one process, in order (file: one argument per line) |
 | `props <comp> <layer> [--flat] [--time S] [--depth N]` | Property tree with paths (flat text list without `--json`) |
@@ -109,9 +109,10 @@ $EC exec essential.exportTemplate "{\"comp\":\"Main\",\"path\":\"$PWD/promo.ecte
 echo '{"Title":"John Smith"}' > v1.json        # control name -> value (media controls take a file path)
 $EC render --template promo.ectemplate --values v1.json --out "$PWD/john.mp4"
 
-# 8. Green-screen key (Keylight; pick a screen pixel in layer space)
-$EC run "$P" --save effect.apply '{"layer":"#1","effect":"Keylight (1.2)"}' \
-  effect.pickColor '{"layer":"#1","effect":1,"param":"screenColour","x":20,"y":20,"average":true}'
+# 8. Green-screen key on a footage layer (Keylight; pick a screen pixel in layer space)
+$EC run "$PWD/key.ecproj" --save effect.apply '{"layer":"#1","effect":"Keylight (1.2)"}' \
+  effect.pickColor '{"layer":"#1","effect":1,"param":"screenColour","x":20,"y":20,"average":true}' \
+  prop.set '{"layer":"#1","path":"effects/#1/screenMatte/clipBlack","value":10}'
 
 # 9. Scripted build with the After Effects scripting model (times are comp seconds)
 cat > build.jsx <<'JS'
