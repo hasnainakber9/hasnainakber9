@@ -60,7 +60,46 @@ the ground truth when anything here disagrees.
 
 ## Recipes
 
-RECIPES_PLACEHOLDER
+All of these ran against the PhotoCraft 0.17.0 and LightCraft 0.15.0 release binaries. In `run`,
+each `--params` JSON object belongs to the `--cmd` before it.
+
+```bash
+CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"; PC=$(python3 "$CRAFT" ensure photocraft)
+"$PC" info photo.psd --compact                                          # size, mode, depth, layer tree, warnings
+"$PC" convert art.psd art.png                                           # flatten / convert by extension
+"$PC" run big.jpg --cmd image.imageSize --params '{"width":1600}' --out web.jpg --quality 85
+# Non-destructive grade kept in a PSD, plus a flat JPEG
+"$PC" run photo.jpg \
+  --cmd layer.newAdjustmentLayer.curves --params '{"points":[[0,0],[64,48],[192,212],[255,255]]}' \
+  --cmd layer.newAdjustmentLayer.vibrance --params '{"vibrance":30,"saturation":0}' \
+  --out graded.psd && "$PC" convert graded.psd graded.jpg --quality 90
+# Auto tone + sharpen (filters need a pixel layer active: run them before adding adjustment/type layers)
+"$PC" run in.jpg --cmd image.autoTone --cmd filter.sharpen.unsharpMask --params '{"amount":120,"radius":1.2,"threshold":2}' --out out.jpg
+# Text watermark (y is the baseline; get width/height from `info` first)
+"$PC" run photo.jpg --cmd type.create --params '{"x":40,"y":1040,"text":"© 2026 Jane Doe","size":28,"color":"#ffffff"}' \
+  --cmd layer.setProps --params '{"opacity":0.6}' --out marked.jpg --quality 90
+# Same edit over a folder (an action list of [id, params] steps)
+printf '%s' '[["image.imageSize",{"width":1200}],["filter.sharpen.unsharpMask",{"amount":80,"radius":0.8}]]' > steps.json
+"$PC" batch --actions steps.json --in ./raw --out ./web --format jpg --quality 85
+
+LC=$(python3 "$CRAFT" ensure lightcraft)
+# Develop one raw: sliders by id (`"$LC" controls` lists them), full size unless --size
+"$LC" render IMG_0412.ARW -o IMG_0412.jpg --set light.exposure=0.5 --set light.shadows=30 \
+  --set light.highlights=-40 --set wb.temp=5600 --size 2048 --quality 88
+# A preset over a whole shoot, exported web-sized with a watermark (options before the first command)
+"$LC" run --import /abs/shoot preset.apply id=lc.warm-glow \
+  app.export dir=/abs/delivery format=jpeg longEdge=2048 quality=85 sharpen=screen conflict=overwrite \
+  'watermark={"text":"© 2026 Jane Doe","size":0.03,"opacity":0.6,"anchor":"bottomRight"}'
+# Contact sheet PDF
+"$LC" run --import /abs/shoot library.selectAll export.contactSheet path=/abs/Contact.pdf paper=a4 columns=4 rows=5 captions=true
+# Look before delivering
+"$LC" run --import /abs/a.jpg develop.auto ui.render path=/abs/check.png size=1200
+```
+
+Gotchas that bite: LightCraft's `app.export` defaults to a 3000 px long edge (`longEdge=0` for
+full size) and acts on the active photo or the selection; `develop.set` acts on the active photo
+only (pass `'ids=[…]'`). PhotoCraft's `batch` is not recursive. Neither app ever overwrites an
+original unless told to (`--in-place`).
 
 ## Limits to be honest about
 
