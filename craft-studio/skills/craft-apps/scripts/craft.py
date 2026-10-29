@@ -58,7 +58,9 @@ class App(NamedTuple):
     title: str
     purpose: str
     formats: str
-    roots: str  # how the MCP server is confined to a folder: "automation", "root", "library" or ""
+    roots: bool        # `mcp` accepts --automation-read-root/--automation-write-root to confine file access
+    attach: str        # `mcp` flag that bridges to the desktop app started with `<app> --control PORT`
+    attach_note: str = ""  # what the bridge needs besides the address
     repo: str = ""
 
     @property
@@ -73,56 +75,56 @@ class App(NamedTuple):
 APPS: Dict[str, App] = {a.key: a for a in [
     App("photocraft", "PhotoCraft",
         "image editing: layers, masks, adjustment layers, retouching, filters, type, PSD",
-        "PSD/PSB, TIFF, PNG, JPEG, WebP, GIF, EXR, HDR, SVG, XCF, KRA, ORA, PDN, Affinity (read)",
-        "automation"),
+        "PSD/PSB, layered TIFF, PNG, JPEG, WebP, GIF, BMP, TGA, EXR, HDR, FITS, SVG; reads XCF, KRA, ORA, PDN, Affinity",
+        True, "--bridge", "the app's control token (PHOTOCRAFT_CONTROL_TOKEN or --control-token-file)"),
     App("lightcraft", "LightCraft",
         "photo library and raw development: cull, develop, mask, batch export, contact sheets, prints",
-        "camera raw (DNG, CR3, NEF, ARW...), JPEG, HEIC, TIFF; exports JPEG/PNG/TIFF/PSD/WebP/AVIF/JXL/DNG",
-        "library"),
+        "camera raw (DNG, CR2/CR3, NEF, ARW, RAF...), JPEG, TIFF, PNG; exports JPEG/PNG/TIFF/PSD/WebP/AVIF/JXL/DNG",
+        False, "--connect"),
     App("vectorcraft", "VectorCraft",
-        "vector illustration: logos, icons, illustrations, typography on paths, print-ready art",
-        "native .vectorcraft, SVG, PDF, EPS, AI (PDF-based), DXF, EMF/WMF, PNG",
-        "automation"),
+        "vector illustration: logos, icons, illustrations, type on paths, tracing, print-ready art",
+        "native .vectorcraft, SVG/SVGZ, PDF, AI, EPS, DXF, EMF/WMF, PNG/JPEG/WebP/TIFF/PSD; reads Affinity",
+        True, "--connect"),
     App("figcraft", "FigCraft",
         "interface design and prototyping: screens, components, auto layout, design systems",
-        "native .figcraft, .fig (best effort), SVG, PNG, PDF",
-        "automation"),
+        "native .figcraft, .fig (best effort); exports PNG, SVG, PDF",
+        True, "--attach"),
     App("designcraft", "DesignCraft",
         "page layout and publishing: brochures, magazines, posters, books, print PDF",
-        "native .designcraft, IDML, PDF (incl. PDF/X), PNG",
-        "automation"),
+        "native .designcraft, IDML; exports PDF (incl. PDF/X) and PNG",
+        True, "--connect"),
     App("effectcraft", "EffectCraft",
         "motion graphics and compositing: keyframes, shape and text layers, effects, Lottie",
-        "native .ecproj, Lottie JSON, MP4, PNG sequences",
-        "automation"),
+        "native .ecproj; renders MP4, MOV (ProRes), WebM, GIF, PNG/EXR sequences; Lottie JSON",
+        True, "--bridge"),
     App("filmcraft", "FilmCraft",
-        "non-linear video editing: cut, trim, titles, color, audio mix, export",
-        "MP4/MOV (H.264, HEVC, ProRes, AAC), WAV, images, native projects",
-        "automation"),
+        "non-linear video editing: cut, trim, titles, color, audio mix, captions, export",
+        "native .fcproj; MP4/MOV/MKV/MXF in; H.264 MP4, ProRes MOV, GIF, stills, WAV/AAC/FLAC, SRT/VTT out",
+        False, "--bridge", "FILMCRAFT_CONTROL_TOKEN set to the same value for the app and the server"),
     App("soundcraft", "SoundCraft",
         "audio recording, editing, mixing and bouncing (a DAW)",
-        "native sessions, WAV, FLAC, MP3, AIFF, OGG, MIDI",
-        "automation"),
+        "native .scraft; reads WAV, AIFF, FLAC, MP3, AAC/M4A, Ogg, ALAC, CAF; writes WAV, AIFF, FLAC; MIDI",
+        True, "--connect"),
     App("cadcraft", "CADCraft",
         "2D CAD drafting: DWG/DXF drawings, floor plans, technical drawings, layouts, plots",
-        "DWG, DXF, SVG, PDF, PNG",
-        "automation"),
+        "DWG, DXF, DWT; exports PDF, SVG, PNG",
+        False, "--connect"),
     App("wordcraft", "WordCraft",
-        "word processing: write, edit and convert documents, track changes, comments",
-        "DOCX, ODT, RTF, HTML, Markdown, TeX, TXT; exports PDF and PNG",
-        "automation"),
+        "word processing: write, edit, review and convert documents",
+        "DOCX, DOC (read), ODT, RTF, HTML, Markdown, TeX, TXT; exports PDF and PNG",
+        True, "--connect", "the app's control key (WORDCRAFT_CONTROL_KEY or its key file)"),
     App("gridcraft", "GridCraft",
         "spreadsheets: formulas, formatting, charts, pivot tables",
-        "XLSX, XLS, ODS, CSV, TSV; exports PDF",
-        "automation"),
+        "XLSX/XLSM, CSV, TSV, JSON, HTML; reads XLS, XLSB, ODS; exports PDF",
+        False, "--connect", "the app's control token (GRIDCRAFT_CONTROL_TOKEN or its token file)"),
     App("deckcraft", "DeckCraft",
         "presentations: build, edit, render and export slide decks",
-        "PPTX, ODP, native .deckcraft; exports PDF and PNG",
-        "automation"),
+        "PPTX/POTX/PPSX, native .deckcraft, Markdown/TXT/RTF outlines; exports PDF, PNG, JPEG, GIF",
+        True, "--connect"),
     App("pdfcraft", "PdfCraft",
         "PDF reading and editing: inspect, text, render, combine, split, pages, forms, comments, redact, OCR",
-        "PDF; renders PNG; extracts text and images",
-        "root"),
+        "PDF; renders PNG/JPEG/TIFF; exports text, DOCX/PPTX/HTML/RTF, form and comment data",
+        True, ""),
 ]}
 
 ALIASES = {
@@ -352,24 +354,42 @@ def resolve_release(app: App, version: Optional[str]) -> Tuple[str, Optional[dic
     return m.group(1), None
 
 
+def pick_member(names_sizes: List[Tuple[str, int]], member_name: str) -> Optional[str]:
+    """The CLI inside an archive. Tarballs also carry a bash completion file with the same name
+    (share/bash-completion/completions/<app>-cli), so prefer bin/, then the biggest match."""
+    matches = [(n, s) for n, s in names_sizes if Path(n).name == member_name]
+    if not matches:
+        return None
+    in_bin = [m for m in matches if Path(m[0]).parent.name == "bin"]
+    return max(in_bin or matches, key=lambda m: m[1])[0]
+
+
 def extract_cli(archive: Path, member_name: str, dest: Path) -> None:
     part = dest.with_name(dest.name + ".part")
     if archive.name.endswith((".tar.gz", ".tgz")):
         with tarfile.open(archive, "r:gz") as tf:
-            member = next((m for m in tf.getmembers() if m.isfile() and Path(m.name).name == member_name), None)
-            if member is None:
+            members = {m.name: m for m in tf.getmembers() if m.isfile()}
+            name = pick_member([(n, m.size) for n, m in members.items()], member_name)
+            if name is None:
                 raise InstallError(f"{member_name} is not in {archive.name}")
-            src = tf.extractfile(member)
+            src = tf.extractfile(members[name])
             assert src is not None
             with src, open(part, "wb") as out:
                 shutil.copyfileobj(src, out)
     else:
         with zipfile.ZipFile(archive) as zf:
-            info = next((i for i in zf.infolist() if not i.is_dir() and Path(i.filename).name == member_name), None)
-            if info is None:
+            infos = {i.filename: i for i in zf.infolist() if not i.is_dir()}
+            name = pick_member([(n, i.file_size) for n, i in infos.items()], member_name)
+            if name is None:
                 raise InstallError(f"{member_name} is not in {archive.name}")
-            with zf.open(info) as src, open(part, "wb") as out:
+            with zf.open(infos[name]) as src, open(part, "wb") as out:
                 shutil.copyfileobj(src, out)
+    with open(part, "rb") as f:
+        head = f.read(4)
+    if head[:2] == b"#!" or not (head.startswith(b"\x7fELF") or head[:2] == b"MZ"
+                                 or head in (b"\xcf\xfa\xed\xfe", b"\xca\xfe\xba\xbe")):
+        part.unlink()
+        raise InstallError(f"{member_name} in {archive.name} is not an executable binary")
     part.chmod(0o755)
     os.replace(part, dest)
 
@@ -471,7 +491,7 @@ def latest_tag(app: App, git: str, env: dict) -> Optional[str]:
     return max(tags)[1] if tags else None
 
 
-def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: bool) -> Path:
+def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: bool, fonts: bool = True) -> Path:
     """Build the requested release, else the latest release tag, else the default branch."""
     git = need("git")
     cargo = need("cargo", RUST_HINT)
@@ -483,7 +503,7 @@ def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: b
         refs = [tag, None] if tag else [None]
     for i, ref in enumerate(refs):
         try:
-            return build_ref(app, ref, git, cargo, env, jobs, lto)
+            return build_ref(app, ref, git, cargo, env, jobs, lto, fonts)
         except BuildError as e:
             if i + 1 == len(refs):
                 raise
@@ -491,8 +511,40 @@ def install_source(app: App, version: Optional[str], jobs: Optional[int], lto: b
     raise AssertionError("unreachable")
 
 
+def craft_fonts(src: Path, git: str, env: dict) -> Optional[Path]:
+    """Check out the craft-fonts commit the app's releases embed, for CRAFT_FONTS_DIR.
+
+    Release builds embed these faces (Japanese, Chinese, Korean, Arabic and Urdu, Hebrew, Thai,
+    Devanagari, and some apps' theme fonts); without them a source build falls back to system fonts.
+    """
+    ref = None
+    for workflow in sorted((src / ".github" / "workflows").glob("*.yml")):
+        m = re.search(r"craft-fonts-ref:\s*([0-9a-f]{40})", workflow.read_text(errors="replace"))
+        if m:
+            ref = m.group(1)
+            break
+    if not ref:
+        return None
+    dest = SRC / f"craft-fonts-{ref[:12]}"
+    with Lock(dest.name):
+        if (dest / "fonts").is_dir():
+            return dest
+        part = dest.with_name(dest.name + ".part")
+        try:
+            if part.exists():
+                shutil.rmtree(part)
+            run([git, "init", "-q", part], env=env)
+            run([git, "-C", part, "fetch", "-q", "--depth", "1", f"https://github.com/{ORG}/craft-fonts", ref], env=env)
+            run([git, "-C", part, "checkout", "-q", "FETCH_HEAD"], env=env)
+            os.replace(part, dest)
+        except (InstallError, OSError) as e:
+            log(f"craft-fonts is unavailable ({e}); building with system fonts only")
+            return None
+    return dest
+
+
 def build_ref(app: App, ref: Optional[str], git: str, cargo: str, env: dict,
-              jobs: Optional[int], lto: bool) -> Path:
+              jobs: Optional[int], lto: bool, fonts: bool) -> Path:
     SRC.mkdir(parents=True, exist_ok=True)
     src = SRC / app.repo_name
     if (src / ".git").is_dir():
@@ -514,6 +566,9 @@ def build_ref(app: App, ref: Optional[str], git: str, cargo: str, env: dict,
     if not lto:
         # The apps release with LTO; a local agent build does not need it and builds much faster.
         benv.update(CARGO_PROFILE_RELEASE_LTO="false", CARGO_PROFILE_RELEASE_CODEGEN_UNITS="16")
+    font_dir = craft_fonts(src, git, env) if fonts and "CRAFT_FONTS_DIR" not in os.environ else None
+    if font_dir:
+        benv["CRAFT_FONTS_DIR"] = str(font_dir)
     cmd = [cargo, "build", "--release", "--locked", "-p", app.cli]
     if jobs:
         cmd += ["-j", str(jobs)]
@@ -691,17 +746,28 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def mcp_args(app: App, root: Optional[str], attach: Optional[str]) -> List[str]:
     if attach:
-        flag = {"photocraft": "--bridge", "figcraft": "--attach", "filmcraft": "--bridge"}.get(app.key, "--connect")
-        return ["mcp", flag, attach]
+        if not app.attach:
+            die(f"{app.title}'s MCP server cannot attach to the app. Drive the window with "
+                f"`{app.key} --control ~/.{app.key}-control.json` and `{app.cli} ui --control FILE ...`.")
+        port = attach.rsplit(":", 1)[-1]
+        if not port.isdigit():
+            die(f"--attach takes PORT or HOST:PORT, not {attach!r}")
+        # FigCraft takes a bare port; every other app takes (or also accepts) HOST:PORT.
+        address = port if app.key == "figcraft" else (attach if ":" in attach else f"127.0.0.1:{port}")
+        note = f"; the bridge needs {app.attach_note}" if app.attach_note else ""
+        log(f"start the app first with `{app.key} --control {port}`{note}")
+        return ["mcp", app.attach, address]
     args = ["mcp"]
     if root:
         root = str(Path(root).expanduser().resolve())
-        if app.roots == "automation":
+        if app.roots:
             args += ["--automation-read-root", root, "--automation-write-root", root]
-        elif app.roots == "root":
-            args += ["--root", root]
-        elif app.roots == "library":
-            args += [root]
+        elif app.key == "lightcraft":
+            args += [root]  # imports the folder's photos; LightCraft has no folder sandbox
+            log("LightCraft imports that folder but cannot be confined to it.")
+        else:
+            log(f"{app.title}'s MCP server has no folder sandbox: it can read and write anything you can. "
+                "Prefer the CLI for one-off jobs, or run the server in a container.")
     return args
 
 

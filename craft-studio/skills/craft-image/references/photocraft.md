@@ -19,12 +19,12 @@
 ## Files
 - Native: `.pcraft`, a lossless zip or folder bundle (zstd tiles plus `manifest.json`). Use it to keep every editable feature.
 - Read and write: PSD, PSB, layered TIFF (`--tiff-layers`), OpenRaster `.ora`, PNG (8/16-bit), JPEG, TIFF (8/16/32f), WebP, GIF, BMP, TGA, ICO, QOI, PNM/PAM/PFM, OpenEXR, Radiance HDR, FITS, DPX, Cineon, DDS, Amiga IFF.
-- Write only: PDF (one flattened page at the print size), AVIF (only in builds with the `avif` feature).
+- Write only: PDF (one flattened page at the print size). AVIF output needs a source build with the codecs `avif` feature; the release binary fails with "AVIF cannot be written in this build".
 - Read only: Paint.NET `.pdn`, GIMP `.xcf`, Krita `.kra`/`.krz`, Affinity `.af`/`.afdesign`/`.afphoto`/`.afpub`, SVG (opens as shape layers), DICOM, camera raws (DNG, CR2, NEF, ARW, RAF and others), and HEIC/HEIF (official builds, or `--features heif`).
 - Lossy and limited targets: JPEG, WebP and the other 8-bit formats reduce 16/32-bit data and print a warning. GIF and animated WebP keep only the first frame. CMYK written to an RGB-only format is converted naively.
 
 ## Get the CLI
-`CLI=$(python3 "$CRAFT" ensure photocraft)`
+`CLI=$(python3 "$CRAFT" ensure photocraft)`. Sanity-check it with `"$CLI" --version`, which must print `photocraft-cli 0.17.0 (…)`. If that prints nothing, the installer extracted `share/bash-completion/completions/photocraft-cli` from the tarball instead of `bin/photocraft-cli`.
 - Release assets: the Linux `photocraft-<ver>-linux-<arch>.tar.gz` holds `bin/photocraft-cli`. The `.deb` and `.rpm` packages install `/usr/bin/photocraft-cli`. The macOS CLI is the separate `photocraft-cli-<ver>-macos-universal.zip`, because the `.app` holds only the desktop app. Release builds include HEIF.
 - Source build: `cargo build --release --locked -p photocraft-cli` needs Rust 1.95 or newer.
   - Add `--features heif` for HEIC input. Without it, a HEIC file is recognised but fails with "unsupported".
@@ -53,6 +53,7 @@ Export flags shared by `convert`, `run` and `batch`:
 | `serve` | `serve [--port N [--control-token-file F]] [--automation-read-root DIR] [--automation-write-root DIR]` | A long-lived headless session answering JSON lines on stdio, or on 127.0.0.1:N with a token |
 
 ## Recipes
+All of these ran cleanly against the 0.17.0 release binary.
 ```bash
 CLI=$(python3 "$CRAFT" ensure photocraft)
 
@@ -88,11 +89,12 @@ CLI=$(python3 "$CRAFT" ensure photocraft)
 "$CLI" run photo.jpg --cmd file.placeEmbedded --params '{"path":"/abs/logo.png","scale":25,"center":[1700,980]}' \
   --cmd layer.setProps --params '{"opacity":0.5}' --out marked.png
 
-# 6. Batch a folder with an action list (steps: [id, params] pairs, {"command","params"} objects or bare ids)
+# 6. Batch a folder with an action list (steps: [id, params] pairs, {"command","params"} objects or bare ids).
+#    Put filters before any new adjustment or type layer: filters need a pixel layer to be active.
 cat > grade.json <<'EOF'
 [["image.imageSize",{"width":1200}],
- ["layer.newAdjustmentLayer.hueSaturation",{"saturation":15}],
- ["filter.sharpen.unsharpMask",{"amount":80,"radius":0.8}]]
+ ["filter.sharpen.unsharpMask",{"amount":80,"radius":0.8}],
+ ["layer.newAdjustmentLayer.hueSaturation",{"saturation":15}]]
 EOF
 "$CLI" batch --actions grade.json --in ./raw --out ./web --format jpg --quality 85
 # Renamed outputs ({name} {serial} {date}). Engine quality is 0..12 here. --new only satisfies run's file-or-new rule.
@@ -115,7 +117,7 @@ EOF
 ```
 
 ## The command registry
-- Every menu item, tool and dialog is one of 500+ commands (`group.sub.name` ids).
+- Every menu item, tool and dialog is a command; 0.17.0 has 945 of them, with `group.sub.name` ids.
 - `"$CLI" commands --filter blur` prints `id  label  menu`. `"$CLI" commands --json --filter type.` prints `[{id,label,menu,shortcut,params,enabled,disabledReason,needsDocument,keywords?}]`.
 - `params` is a prose doc, not a schema: `"radius":0.1..1000=1` means a range with a default; `px`, `%` and `deg` are units; `?` marks an optional key.
 - Filters validate their keys and ranges. Many other commands silently ignore an unknown key, so check the result rather than trusting silence.

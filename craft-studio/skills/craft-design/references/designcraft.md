@@ -59,6 +59,7 @@ frame.create {"rect": [36, 150, 559, 260], "content": "text", "text": "Saturday 
 type.char {"attrs": {"size": 20, "leading": {"kind": "points", "value": 26}}}
 frame.create {"rect": [36, 280, 559, 700]}
 file.place {"path": "photo.jpg", "frame": "$6.id"}
+links.embed {"asset": "$7.asset"}
 object.fit {"mode": "fillProportionally", "ids": ["$6.id"]}
 DCS
 "$CLI" script flyer.dcs --save out/flyer.designcraft --export out/flyer.pdf --export out/flyer.png
@@ -106,8 +107,18 @@ DCS
 # 7. Other exports
 "$CLI" run --in doc.designcraft --export out/doc.epub --export out/doc.pptx --export out/doc.html
 echo 'file.package {"dir": "out/pkg", "pdf": true}' | "$CLI" script - --in doc.designcraft
-# 8. Data merge (the template needs placeholders: data.source.select, data.placeholder.add; see `describe`)
-echo 'data.merge {"path": "people.csv", "records": "range", "range": "1-20"}' | "$CLI" script - --in template.designcraft --save out/merged.designcraft
+# 8. Data merge: placeholders go in at byte offset "at" (insert the later one first) and show as <<Field>>
+printf 'Name,City\nAda,London\nGrace,Arlington\n' > people.csv
+cat > tmpl.dcs <<'DCS'
+file.new {"preset": "Postcard", "facingPages": false, "margins": 18}
+data.source.select {"path": "people.csv", "name": "people.csv"}
+frame.create {"rect": [18, 18, 414, 120], "content": "text", "text": "Dear , greetings from ."}
+data.placeholder.add {"field": "City", "story": "$2.story", "at": 22}
+data.placeholder.add {"field": "Name", "story": "$2.story", "at": 5}
+DCS
+"$CLI" script tmpl.dcs --save template.designcraft
+echo 'data.merge {"path": "people.csv"}' | "$CLI" script - --in template.designcraft --save out/merged.designcraft
+# -> a NEW document, one page per record; "records":"range","range":"1-2" must stay within the data
 # 9. One-off command with an inline result (a failing --cmd stops the run)
 "$CLI" run --cmd 'frame.create={"rect":[72,72,300,200],"content":"text","text":"Hello"}' --cmd 'story.get={"story":"$0.story"}' --export out/hello.pdf
 ```
@@ -172,4 +183,5 @@ Use it only to work in the user's open window. Start `designcraft --control 7979
 - `run`: options apply to the exports after them, and a trailing `--page`/`--scale`/`--pdf-options` is an error. Without `--in` or `--sample`, the first `--cmd` creates a default document. `run` and `script` have no root flags; only `mcp` is confinable.
 - `script` and MCP `batch` are not transactional: earlier steps stay applied after a failure. `--keep-going` records errors and runs every step.
 - Text from `file.place` goes into the text caret or the selected text/unassigned frame first. Only when neither exists does it make a new frame from `page`/`rect`, so run `edit.deselectAll` beforehand. `autoflow` adds pages; check `overset` and `pagesAdded` in the result. Hyphenation is on by default (`type.para {"attrs":{"hyphenate":false}}`).
+- Placed images are **linked**, not embedded. A relative `path` is stored as given and later resolved against the saved document's folder, so it shows up as `missingLink` after a save elsewhere. Use absolute paths, or run `links.embed {"asset": "$N.asset"}` (the asset id comes from the `file.place` result).
 - The default font is Source Serif 4. A missing font draws in a fallback, so check `font.list` / `preflight.run`.
