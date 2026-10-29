@@ -1,19 +1,21 @@
 ---
 name: craft-av
-description: Edit video, build motion graphics and mix audio with the open-source FilmCraft (Premiere-style), EffectCraft (After Effects-style) and SoundCraft (Pro Tools-style), driven headlessly by their command-line tools. Use whenever the user wants to cut, trim, join, reorder or reframe clips, add titles or captions, color-grade, balance audio and export MP4 or MOV; make animated titles, lower thirds, logo animations, kinetic type, keyframed motion graphics, compositing effects or Lottie animations; or record, edit, clean up, mix, master, normalize or bounce audio, voice-overs, podcasts and music sessions. When a brand-new video must be generated from an idea, narration or AI footage, video-studio leads and these apps do the editing, motion and audio finishing.
+description: Edit video, build motion graphics and mix audio with the open-source FilmCraft (Premiere-style), EffectCraft (After Effects-style) and SoundCraft (Pro Tools-style), driven headlessly by their command-line tools, and with KDE's Kdenlive editor. Use whenever the user wants to cut, trim, join, reorder or reframe clips, add titles or captions, color-grade, balance audio and export MP4, MOV, WebM or GIF; render, check or build a Kdenlive (.kdenlive) or MLT project; make animated titles, lower thirds, logo animations, kinetic type, keyframed motion graphics, compositing effects or Lottie animations; or record, edit, clean up, mix, master, normalize or bounce audio, voice-overs, podcasts and music sessions. When a brand-new video must be generated from an idea, narration or AI footage, video-studio leads and these apps do the editing, motion and audio finishing.
 license: MIT
-compatibility: Uses the craft-apps skill's helper (Python 3.8+) to download or build filmcraft-cli, effectcraft-cli and soundcraft-cli. No GPU, display or API keys needed; ffmpeg is handy for probing results.
+compatibility: Uses the craft-apps skill's helper (Python 3.8+) to download or build filmcraft-cli, effectcraft-cli and soundcraft-cli, and scripts/kden.py to find or download Kdenlive (AppImage on Linux x86_64). No GPU, display or API keys needed; ffmpeg is handy for probing results.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: "Syed Hasnain Akber"
 ---
 
-# Video, motion graphics and audio: FilmCraft, EffectCraft, SoundCraft
+# Video, motion graphics and audio: FilmCraft, EffectCraft, SoundCraft, Kdenlive
 
 FilmCraft is a clean-room Premiere Pro with its own H.264, HEVC, ProRes and AAC codecs and exact
 integer frame math. EffectCraft is a clean-room After Effects: compositions, layers, keyframes,
 effects, rendering and Lottie export. SoundCraft is a clean-room Pro Tools: tracks, clips,
 plugins, mixing and bouncing. All three expose every action as a command for their CLIs.
+Kdenlive is KDE's mature open-source editor on the MLT framework: it renders `.kdenlive` projects
+headlessly, and MLT's `melt` assembles and renders quick cuts from the shell.
 
 ## Setup
 
@@ -26,6 +28,7 @@ CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"
 FM=$(python3 "$CRAFT" ensure filmcraft)      # filmcraft-cli; installs it on first use
 EC=$(python3 "$CRAFT" ensure effectcraft)    # effectcraft-cli
 SC=$(python3 "$CRAFT" ensure soundcraft)     # soundcraft-cli
+KD="${CLAUDE_SKILL_DIR}/scripts/kden.py"      # Kdenlive: python3 "$KD" ensure | render | check | presets
 ```
 
 The first `ensure` downloads the release build in seconds, or compiles it from source where
@@ -43,6 +46,9 @@ missing because this skill was installed on its own, get the CLI from the app's 
 - **SoundCraft**: audio as the product: voice-over cleanup, podcast edits, music mixes, EQ and
   dynamics, fades, loudness, bounces and stems to WAV, AIFF or FLAC (for MP3 or AAC, encode the
   bounce with ffmpeg or export it through FilmCraft).
+- **Kdenlive**: the user's `.kdenlive` projects (render, check missing media, change profile or
+  preset), an editable project in a mature editor, WebM/AV1/GIF/alpha/FFV1/DVD presets, and
+  quick `melt` cuts with dissolves and a music bed. No command registry: projects are MLT XML.
 - **Combine**: EffectCraft renders a title, SoundCraft masters the mix, FilmCraft lays both on
   the timeline and exports. With video-studio: it generates scenes, these apps finish them.
 
@@ -60,12 +66,13 @@ missing because this skill was installed on its own, get the CLI from the app's 
    music or footage.
 
 Subcommands, command ids and recipes: `references/filmcraft.md`, `references/effectcraft.md`,
-`references/soundcraft.md`. Each CLI's `--help` and command listing are the ground truth when
+`references/soundcraft.md`, `references/kdenlive.md`. Each CLI's `--help` and command listing are the ground truth when
 anything here disagrees.
 
 ## Recipes
 
-All of these ran against FilmCraft 0.14.0, EffectCraft 0.18.0 and SoundCraft 0.14.0; exports were
+All of these ran against FilmCraft 0.14.0, EffectCraft 0.18.0, SoundCraft 0.14.0, Kdenlive 26.08.2
+and MLT 7.22; exports were
 probed with ffprobe and loudness-measured. Every CLI call is a new process: save (`--save`,
 `--save-as`) or the edit is lost, and read ids from each command's JSON result.
 
@@ -109,14 +116,24 @@ SC=$(python3 "$CRAFT" ensure soundcraft); S=$PWD/pod/Pod.scraft
   --cmd 'mix.insert={"track":"Mix Bus","plugin":"maximizer","params":{"threshold":-6,"ceiling":-1.5}}' \
   --bounce "$PWD/mix.wav"                                               # reply has lufs and true_peak_db
 "$SC" convert mix.wav mix_16.wav --bit-depth 16                         # dithered 16-bit copy
+
+KD="${CLAUDE_SKILL_DIR}/scripts/kden.py"                                 # installs Kdenlive on first use
+python3 "$KD" check project.kdenlive                                    # profile + missing media (exit 3)
+python3 "$KD" render project.kdenlive out.mp4                           # MP4-H264/AAC, JSON probe of the result
+python3 "$KD" render project.kdenlive out.webm --preset "WebM-VP9/Opus (libre)" --profile atsc_1080p_30
+melt -profile atsc_1080p_30 a.mp4 in=0 out=119 b.mp4 in=0 out=119 -mix 15 -mixer luma -mixer mix:-1 \
+  -audio-track music.wav in=0 out=224 -transition mix:-1 always_active=1 a_track=0 b_track=1 sum=1 \
+  -consumer xml:cut.mlt                                                 # A, 15-frame dissolve, B, music
+melt cut.mlt -consumer avformat:cut.mp4 vcodec=libx264 crf=20 acodec=aac ab=160k
 ```
 
 Gotchas that bite: FilmCraft ripple edits need sync lock off on unrelated tracks (or razor every
 track first); 720p clips sit small in a 1080p sequence until `clip.fitToFrame`. EffectCraft
 keyframe times are layer seconds. SoundCraft writes WAV/AIFF/FLAC only (ffmpeg for MP3), a
 `-1` maximizer ceiling measured about −0.8 dBTP so use −1.5 for a −1 dBTP target, and bounces
-without `--start/--end` render the whole session. Listening isn't possible headless: judge by the
-numbers and by stills.
+without `--start/--end` render the whole session. Kdenlive won't overwrite an output (`--force`),
+and `.kdenlive` files go through `kden.py render`, never plain `melt` (wrong size and length).
+Listening isn't possible headless: judge by the numbers and by stills.
 
 ## Rules
 

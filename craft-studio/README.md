@@ -15,6 +15,7 @@ checks the output and hands you the file.
 | Video cuts, titles, color, export | **FilmCraft** (Premiere-style) |
 | Motion graphics, animated titles, Lottie | **EffectCraft** (After Effects-style) |
 | Audio editing, mixing, podcasts, bounces | **SoundCraft** (Pro Tools-style) |
+| Kdenlive projects rendered headlessly, WebM/GIF/alpha exports, quick MLT cuts | **Kdenlive** (KDE's editor) |
 | DWG/DXF drawings, floor plans, plots | **CADCraft** (AutoCAD-style) |
 | Documents, spreadsheets, slide decks | **WordCraft**, **GridCraft**, **DeckCraft** |
 | PDF inspection, merging, forms, redaction, OCR | **PdfCraft** (Acrobat-style) |
@@ -34,7 +35,8 @@ craft-studio/
     │   └── scripts/craft.py   finds, downloads (SHA-256 checked) or builds each app's CLI
     ├── craft-image/    PhotoCraft, LightCraft
     ├── craft-design/   VectorCraft, FigCraft, DesignCraft, indd-utils
-    ├── craft-av/       FilmCraft, EffectCraft, SoundCraft
+    ├── craft-av/       FilmCraft, EffectCraft, SoundCraft, Kdenlive
+    │   └── scripts/kden.py    finds or downloads Kdenlive (SHA-256 checked), renders .kdenlive headlessly
     ├── craft-office/   WordCraft, GridCraft, DeckCraft, PdfCraft
     ├── craft-cad/      CADCraft
     └── craft-ai/       ArtCraft AI studio, Gaussian splats, speech and capture repos
@@ -79,9 +81,9 @@ a few minutes per app), with the same craft-fonts the releases embed.
 Every recipe in the skills and references was run against the real CLIs (PhotoCraft 0.17.0,
 LightCraft 0.15.0, VectorCraft 0.18.0, FigCraft 0.12.1, DesignCraft 0.14.0, EffectCraft 0.18.0,
 FilmCraft 0.14.0, SoundCraft 0.14.0, CADCraft 0.14.0, WordCraft 0.12.0, GridCraft 0.13.0,
-DeckCraft 0.12.0, PdfCraft 0.15.0) and the rendered outputs were inspected. The apps themselves
-are alpha to beta software; the skills tell Claude to render and check every result, and to say
-so plainly when a feature is missing.
+DeckCraft 0.12.0, PdfCraft 0.15.0, plus Kdenlive 26.08.2 and MLT 7.22) and the rendered outputs
+were inspected. The Crafting Apps are alpha to beta software; the skills tell Claude to render
+and check every result, and to say so plainly when a feature is missing.
 
 ## Try
 
@@ -90,13 +92,15 @@ so plainly when a feature is missing.
 - "Make a flat vector logo for 'Young Shapers' and give me SVG and PNG."
 - "Lay out a two-page A4 brochure from this text and these photos, print-ready PDF."
 - "Cut these three clips into a 30-second vertical video with a title card."
+- "Render my Kdenlive project to WebM and tell me if any media is missing."
 - "Convert this DOCX to PDF and show me page 2." / "Fix the formulas in this spreadsheet."
 - "Merge these PDFs, remove page 4 and redact the phone numbers."
 - "Draw a 6 m × 4 m room plan with a door and two windows as DXF and PDF."
 
 ## Licences
 
-This plugin is MIT and bundles no app code: the helper downloads or builds the apps on request.
-The Crafting Apps are MIT OR Apache-2.0. The ArtCraft name and logos are trademarks of the
-ArtCraft Team; this plugin is independent and not affiliated with ArtCraft, Adobe, Microsoft,
-Autodesk or Figma, whose product names are used only to describe compatible workflows.
+This plugin is MIT and bundles no app code: the helpers download or build the apps on request. The
+Crafting Apps are MIT OR Apache-2.0; KDE's Kdenlive is GPL-3.0-or-later and MLT LGPL-2.1. The
+ArtCraft name and logos are trademarks of the ArtCraft Team; this plugin is independent and not
+affiliated with ArtCraft, Adobe, Microsoft, Autodesk or Figma (nor with KDE), whose product names
+are used only to describe compatible workflows.

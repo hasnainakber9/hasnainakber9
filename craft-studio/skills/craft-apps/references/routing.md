@@ -20,6 +20,7 @@ tie-breakers below decide. Every app's CLI is installed with `python3 "$CRAFT" e
 | Edited video: cuts, order, titles, color, audio levels, export | FilmCraft | craft-av | own H.264/HEVC/ProRes/AAC codecs |
 | Animated title, lower third, logo sting, kinetic text, Lottie | EffectCraft | craft-av | keyframes, shape/text layers, effects |
 | Audio edit, mix, master, podcast cleanup, stems, bounce | SoundCraft | craft-av | tracks, plugins, bounce |
+| Rendered or checked Kdenlive project; WebM, AV1, GIF, alpha or FFV1 render; quick cut with dissolves | Kdenlive (KDE, not a Crafting App) | craft-av | `scripts/kden.py`; `melt` for shell-built MLT edits |
 | Floor plan, technical drawing, DWG/DXF edit or conversion, plot | CADCraft | craft-cad | AutoCAD-style command line, layouts, PLOT to PDF |
 | Word document written, edited, reviewed or converted | WordCraft | craft-office | DOCX/ODT/RTF/HTML/MD/TeX; PDF and PNG out |
 | Spreadsheet built, recalculated, formatted, charted | GridCraft | craft-office | formula engine evaluates results |
@@ -39,6 +40,7 @@ tie-breakers below decide. Every app's CLI is installed with `python3 "$CRAFT" e
 | `.fig` | FigCraft (best effort) |
 | `.idml` `.indd` `.indt` | DesignCraft |
 | `.mp4` `.mov` and other video | FilmCraft |
+| `.kdenlive` `.mlt` | Kdenlive (`kden.py render`) / `melt` |
 | Lottie `.json` | EffectCraft |
 | `.wav` `.mp3` `.flac` `.aiff` `.ogg` | SoundCraft |
 | `.dwg` `.dxf` | CADCraft |
@@ -69,6 +71,9 @@ The per-app references list exact formats; check them before promising a format.
   comments or tracked changes must survive the edit, and for any visual check of an office file.
   Use the python skills when the CLI cannot be installed here, or for bulk generation a library
   does in one call; then render the result with the Craft app to check it if it is available.
+- **FilmCraft or Kdenlive:** a `.kdenlive` project, or a user who edits in Kdenlive, goes to
+  Kdenlive; command-driven edits from loose footage go to FilmCraft. Either export can be the
+  other's input.
 - **video-studio:** it leads for making new videos from an idea (narration, HTML motion graphics,
   AI-generated footage, captions, compositing). FilmCraft, EffectCraft and SoundCraft lead for
   editing existing footage, motion-graphics projects and Lottie, and multitrack audio. Chain them:

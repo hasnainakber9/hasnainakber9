@@ -54,6 +54,7 @@ the install folder (default `~/.craft-studio`).
 | Cut, trim and assemble video, titles, color, audio levels, export | craft-av | FilmCraft |
 | Motion graphics, animated titles, lower thirds, compositing, Lottie | craft-av | EffectCraft |
 | Record, edit, mix and master audio, podcasts, bounce | craft-av | SoundCraft |
+| Render or check a .kdenlive project; WebM/GIF/alpha renders; quick melt cuts | craft-av | Kdenlive (KDE) |
 | DWG/DXF drawings, floor plans, technical drawings, plotting | craft-cad | CADCraft |
 | Word documents: write, edit, convert, review, track changes | craft-office | WordCraft |
 | Spreadsheets: formulas, tables, formatting, charts, CSV/XLSX | craft-office | GridCraft |
