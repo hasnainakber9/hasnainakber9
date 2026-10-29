@@ -65,7 +65,58 @@ anything here disagrees.
 
 ## Recipes
 
-RECIPES_PLACEHOLDER
+All of these ran against FilmCraft 0.14.0, EffectCraft 0.18.0 and SoundCraft 0.14.0; exports were
+probed with ffprobe and loudness-measured. Every CLI call is a new process: save (`--save`,
+`--save-as`) or the edit is lost, and read ids from each command's JSON result.
+
+```bash
+CRAFT="${CLAUDE_SKILL_DIR}/../craft-apps/scripts/craft.py"
+FM=$(python3 "$CRAFT" ensure filmcraft); P=$PWD/edit.fcproj
+"$FM" exec file.newSequence name=Main width=1920 height=1080 fps=30 --save-as "$P"
+"$FM" --project "$P" --save import a.mp4 b.mp4 music.wav                # {"items":[8,9,10],...}: use these ids
+"$FM" --project "$P" --save exec timeline.place '{"items":[8,9],"track":"V1","seconds":0}'   # -> clip ids
+"$FM" --project "$P" --save exec timeline.place '{"item":10,"track":"A2","seconds":0}'
+"$FM" --project "$P" inspect sequence --compact                        # clips, frames, effects
+"$FM" --project "$P" --save exec graphics.newText '{"text":"Launch Day","size":120,"position":[960,900],"time":0,"seconds":4}'
+"$FM" --project "$P" render --seconds 3 --out still.png --scale 0.5     # look at a frame
+"$FM" --project "$P" exec file.exportMedia path=$PWD/out.mp4 format=h264 width=1280 height=720 crf=20 loudnessLufs=-14
+"$FM" --project "$P" export full.mp4 --range entire                     # --range entire: ignore saved In/Out marks
+
+EC=$(python3 "$CRAFT" ensure effectcraft); E=$PWD/promo.ecproj           # without --empty you get the demo project
+"$EC" run --empty --save-as "$E" \
+  comp.new '{"name":"Main","width":1920,"height":1080,"frameRate":30,"duration":6,"background":"#101820"}' \
+  layer.newText '{"text":"Launch Day","name":"Title","size":140,"fill":"#ffffff","position":[960,540]}' \
+  layer.newShape '{"kind":"rect","name":"Bar","size":[900,12],"position":[960,640],"fill":"#e63946"}'
+"$EC" run "$E" --save \
+  prop.addKey '{"layer":"Title","path":"transform/position","time":0,"value":[960,700]}' \
+  prop.addKey '{"layer":"Title","path":"transform/position","time":0.8,"value":[960,540]}' \
+  prop.addKey '{"layer":"Title","path":"transform/opacity","time":0,"value":0}' \
+  prop.addKey '{"layer":"Title","path":"transform/opacity","time":0.6,"value":100}' \
+  keys.select '{"keys":[{"layer":"Title","path":"transform/position","time":0},{"layer":"Title","path":"transform/position","time":0.8}]}' \
+  keys.easyEase '{}'
+"$EC" render-frame "$E" --comp Main --time 0.8 --max-side 960 --out f.png  # look mid-animation
+"$EC" render "$E" --comp Main --out "$PWD/promo.mp4"                     # .mov --prores 4444 --channels rgba for alpha
+"$EC" exec file.exportLottie "{\"comp\":\"Main\",\"path\":\"$PWD/main.json\"}" "$E" --json   # read "warnings"
+
+SC=$(python3 "$CRAFT" ensure soundcraft); S=$PWD/pod/Pod.scraft
+"$SC" run --cmd 'session.new={"name":"Pod","sample_rate":48000}' \
+  --cmd "file.import_audio={\"path\":\"$PWD/voice.wav\"}" --cmd "file.import_audio={\"path\":\"$PWD/music.mp3\"}" --save "$S"
+"$SC" run --in "$S" --save "$S" --in-place \
+  --cmd 'mix.insert={"track":"voice","plugin":"eq_7band","params":{"hpf_on":1,"hpf_freq":80}}' \
+  --cmd 'mix.insert={"track":"voice","plugin":"compressor","params":{"threshold":-20,"ratio":3,"makeup":4}}' \
+  --cmd 'mix.volume={"track":"music","db":-16}'
+"$SC" run --in "$S" --cmd 'track.new={"kind":"master","name":"Mix Bus"}' \
+  --cmd 'mix.insert={"track":"Mix Bus","plugin":"maximizer","params":{"threshold":-6,"ceiling":-1.5}}' \
+  --bounce "$PWD/mix.wav"                                               # reply has lufs and true_peak_db
+"$SC" convert mix.wav mix_16.wav --bit-depth 16                         # dithered 16-bit copy
+```
+
+Gotchas that bite: FilmCraft ripple edits need sync lock off on unrelated tracks (or razor every
+track first); 720p clips sit small in a 1080p sequence until `clip.fitToFrame`. EffectCraft
+keyframe times are layer seconds. SoundCraft writes WAV/AIFF/FLAC only (ffmpeg for MP3), a
+`-1` maximizer ceiling measured about −0.8 dBTP so use −1.5 for a −1 dBTP target, and bounces
+without `--start/--end` render the whole session. Listening isn't possible headless: judge by the
+numbers and by stills.
 
 ## Rules
 

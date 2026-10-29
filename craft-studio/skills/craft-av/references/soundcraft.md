@@ -46,24 +46,26 @@ ENGINE flags (run/script): `--in S.scraft` | `--demo` (alias `--sample`); `--bou
 
 ## Recipes
 ```bash
-CRAFT=...; SC=$(python3 "$CRAFT" ensure soundcraft); S=$PWD/pod/Pod.scraft; mkdir -p "$PWD/pod"
+CRAFT=...; SC=$(python3 "$CRAFT" ensure soundcraft); S=$PWD/pod/Pod.scraft   # --save creates pod/
 # 1. Inspect and convert files
 $SC info voice.wav
 $SC convert voice.wav voice_44k16.wav --bit-depth 16 --rate 44100      # dithers when depth drops
-$SC convert take.wav take.flac --normalize                              # peak -0.1 dBFS
+$SC convert voice.wav voice_norm.flac --normalize                      # peak -0.1 dBFS (measured)
 
 # 2. New session, import to tracks (one track per file, named after the file stem), save
 $SC run --cmd 'session.new={"name":"Pod","sample_rate":48000}' \
   --cmd "file.import_audio={\"path\":\"$PWD/voice.wav\"}" \
   --cmd "file.import_audio={\"path\":\"$PWD/music.mp3\",\"at\":{\"seconds\":0}}" \
   --save "$S"
-# prints: file.import_audio: {"imported":[{"track":2,"clip":3,"source":1,"frames":…,"channels":…}]}
+# prints: file.import_audio: {"imported":[{"channels":1,"clip":3,"frames":1920000,"source":1,"track":2}]}
+#         file.import_audio: {"imported":[{"channels":2,"clip":6,…,"track":5}]}   (MP3 resampled to 48 kHz)
+#         {"audio_files_written":2,"path":…}   (copies land in pod/Audio Files/)
 
 # 3. Clip gain, fades (length in samples), faders, pan (re-save over --in needs --in-place)
 $SC run --in "$S" --save "$S" --in-place \
   --cmd 'clip.gain={"clips":[3],"db":-2}' \
-  --cmd 'edit.fades_create={"clip":5,"side":"in","length":96000,"shape":"s-curve"}' \
-  --cmd 'edit.fades_create={"clip":5,"side":"out","length":144000,"shape":"equal power"}' \
+  --cmd 'edit.fades_create={"clip":6,"side":"in","length":96000,"shape":"s-curve"}' \
+  --cmd 'edit.fades_create={"clip":6,"side":"out","length":144000,"shape":"equal power"}' \
   --cmd 'mix.volume={"track":"music","db":-16}' \
   --cmd 'mix.pan={"track":"voice","pan":0}'
 
@@ -86,23 +88,24 @@ $SC run --in "$S" --save "$S" --in-place \
 $SC run --in "$S" --save "$S" --in-place \
   --cmd 'automation.write_range={"track":"music","param":"volume","start":{"seconds":5},"end":{"seconds":95},"value":-26}'
 
-# 7. Master fader limiter, then bounce and read the loudness report
+# 7. Master fader with a maximizer (threshold = input drive), then bounce and read the loudness report
 $SC run --in "$S" --save "$S" --in-place \
-  --cmd 'track.new={"kind":"master","name":"Master"}' \
-  --cmd 'mix.insert={"track":"Master","plugin":"maximizer","params":{"threshold":-6,"ceiling":-1}}' \
+  --cmd 'track.new={"kind":"master","name":"Mix Bus"}' \
+  --cmd 'mix.insert={"track":"Mix Bus","plugin":"maximizer","params":{"threshold":-6,"ceiling":-1}}' \
   --bounce "$PWD/pod_mix.wav"
-# → {"path":…,"bytes":…,"seconds":…,"peak_db":…,"lufs":-17.8,"true_peak_db":…}
+# → {"bytes":11520104,"lufs":-14.73,"path":…,"peak_db":-7.50,"seconds":40.0,"true_peak_db":-7.50}
+#   (-20.7 LUFS without it; ffmpeg ebur128 agrees to 0.1 LU). Bounces take well under a second.
 # Off target (-16 LUFS podcast, -14 streaming)? move the source tracks (mix.volume / mix.trim) by (target − lufs) dB and bounce again;
 # a limiter in the chain makes this non-linear, so re-measure.
 
 # 8. Bounce variants: a section as FLAC, a 16-bit dithered peak-normalized copy, stems
 $SC run --in "$S" --bounce "$PWD/excerpt.flac" --start 10 --end 40
 $SC run --in "$S" --bounce "$PWD/mix.wav" && $SC convert mix.wav mix_16.wav --bit-depth 16 --normalize
-mkdir -p stems && $SC run --in "$S" --cmd 'edit.select_none={}' \
-  --cmd "file.bounce_stems={\"dir\":\"$PWD/stems\",\"format\":\"wav\"}"
+$SC run --in "$S" --cmd 'edit.select_none={}' \
+  --cmd "file.bounce_stems={\"dir\":\"$PWD/stems\",\"format\":\"wav\"}"   # stems/Pod - voice.wav, Pod - music.wav
 
-# 9. Music mix from the demo: sends to an aux with a delay (create the save folder first)
-mkdir -p demo && $SC run --demo --cmd 'mix.volume={"track":"Kick","db":-6}' \
+# 9. Music mix from the demo: an aux with a delay fed by a send (track.input creates the bus)
+$SC run --demo --cmd 'mix.volume={"track":"Kick","db":-6}' \
   --cmd 'track.new={"kind":"aux","format":"stereo","name":"Delay"}' \
   --cmd 'track.input={"track":"Delay","input":"DelayBus"}' \
   --cmd 'mix.insert={"track":"Delay","plugin":"mod_delay"}' \
@@ -150,7 +153,7 @@ $SC script steps.txt --in "$S" --save "$S" --in-place --keep-going
 | `file.bounce_mix` | `{"path":"/abs/m.flac","bit_depth":"24","start":{"seconds":0},"end":{"seconds":60},"normalize":false,"dither":true}` |
 | `file.bounce_stems` / `file.export_clips` | `{"dir":"/abs/stems","format":"wav"}` / `{"dir":"/abs/clips"}` |
 | `session.inspect` / `session.audio_health` | `{"detail":"full"}` / `{}` |
-| `edit.undo` / `edit.redo` | `{}` |
+| `edit.undo` / `edit.redo` | `{}` (history lives in one process: same `run`/`script` or MCP session) |
 
 ## Check your work
 - Session JSON: `$SC run --in "$S" --inspect --compact` (tracks with `volume_db`, `pan`, `inserts` (slot, plugin, bypass), `sends`, `clips`, `automation`; `markers`, `tempo`, `sources[].loaded`).
@@ -162,15 +165,17 @@ $SC script steps.txt --in "$S" --save "$S" --in-place --keep-going
 - Headless: `soundcraft-cli mcp [--demo]` (no window, no audio device).
 - Folder sandbox: `--automation-read-root DIR` / `--automation-write-root DIR` (each repeatable; folders must exist; a kind left out grants none of that access; refused paths are ordinary tool errors).
 - Bridge to the desktop app: `soundcraft-cli mcp --connect 7801` (port or `host:port`); conflicts with `--demo` and the root flags (the app itself is not confined).
-- Tools: `list_commands {filter?}`, `execute {command, params}`, `batch {calls:[{command,params}], keep_going?}` (≤1000), `inspect_session {detail?}`, `new_session {name?, sample_rate?, template?}`, `open_session {path}` (returns `missing`), `save_session {path?, replace?}`, `import_audio {path, track?, at?}`, `bounce_mix {path, format?, bit_depth?, start?, end?, normalize?}`, `parity`; app only: `screenshot`, `ui_inspect`, `ui_set`, `menu_invoke`, `click`, `drag`, `key`. Resources `soundcraft://session`, `soundcraft://commands`.
+- Tools (17, verified): `list_commands {filter?}`, `execute {command, params}`, `batch {calls:[{command,params}], keep_going?}` (≤1000), `inspect_session {detail?}`, `new_session {name?, sample_rate?, template?}`, `open_session {path}` (returns `missing`), `save_session {path?, replace?}`, `import_audio {path, track?, at?}`, `bounce_mix {path, format?, bit_depth?, start?, end?, normalize?}`, `parity`; app only: `screenshot`, `ui_inspect`, `ui_set`, `menu_invoke`, `click`, `drag`, `key`. Resources `soundcraft://session`, `soundcraft://commands`.
 
 ## Live app (control channel)
-Only to drive the user's open window or record: `soundcraft --control 7801 [--demo] [--no-audio]` (`--control 0` picks a free port and prints `SOUNDCRAFT_CONTROL_PORT=…`), then `$SC app --port 7801 transport.play`, `$SC app --port 7801 ui.screenshot '{"path":"/tmp/s.png"}'`, or `mcp --connect 7801`. JSON lines on 127.0.0.1, no authentication.
+Only to drive the user's open window or record: `soundcraft --control 7801 [--demo] [--no-audio]` (`--control 0` picks a free port and prints `SOUNDCRAFT_CONTROL_PORT=…`), then `$SC app --port 7801 transport.play`, `$SC app --port 7801 ui.screenshot '{"path":"/tmp/s.png"}'`, or `mcp --connect 7801`. JSON lines on 127.0.0.1, no authentication. (unverified: no desktop app here)
 
 ## Gotchas
 - Each `run` is a new process: nothing persists without `--save`. Saving over the `--in` session needs `--in-place`; `--bounce` may not name the `--in` session or the `--save` file.
 - Sessions save the edit selection and edit mode. `file.bounce_mix`/`file.bounce_stems` (and the MCP `bounce_mix`) without `start`/`end` render the current selection when it is a range: run `edit.select_none` first or pass a range. The `--bounce` flag without `--start/--end` always renders the whole session. Bounces are limited to 4 hours.
 - `mix.insert` params must be numbers: a non-numeric value (e.g. `true`) silently falls back to the default; values clamp to range; unknown ids are errors. Slots are `0..9` or `"a".."j"`.
+- A new track named `Master` becomes `Master 1` (then `"track":"Master"` fails); pick another name. Other names are kept as given.
+- The maximizer's `ceiling` bounds sample peaks: driven hard (threshold -16) it held -1.0 dBFS while true peak read -0.83 dBTP, so use a ceiling near -1.5 for a -1 dBTP target.
 - `edit.fades_create` `length` and plain-number positions are samples at the session rate (48000 = 1 s at 48 kHz).
 - Imported files are decoded into memory at the session rate; a session opened with media outside the read roots loads without it (`missing`).
 - `edit.cut` closes the gap only in Shuffle mode; set `edit.mode` explicitly (it is saved with the session).
