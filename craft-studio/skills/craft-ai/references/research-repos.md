@@ -48,20 +48,23 @@ commits. ArtCraft itself depends on the upstream npm package (`@sparkjsdev/spark
 ## Video models
 
 **FineTrainers-Conditioning**: a fork of `finetrainers` (formerly cogvideox-factory) for LoRA and
-full fine-tuning of video models with Diffusers. Main is the upstream snapshot of 2025-01-14 (LTX-Video,
-HunyuanVideo, CogVideoX text-to-video). storytold's own work is on WIP branches
+full fine-tuning of video models with Diffusers. Main is the upstream snapshot of 2025-01-14
+(LTX-Video, HunyuanVideo, CogVideoX text-to-video). storytold's own work is on WIP branches
 (`feature/condition_patchify`, `feature/cross_attn_patchify`, `feature/simple-condition`,
 Feb 2025) adding conditioning adapters; the last commit message on one is a TODO about a bug.
 - Use it only to study those conditioning experiments; for training, use upstream finetrainers
   or another maintained trainer, which cover newer models (unverified).
-- Use: `pip install -r requirements.txt` and `pip install git+https://github.com/huggingface/diffusers`;
-  PyTorch 2.5.1+ (older versions can produce black videos); data from
-  `huggingface-cli download --repo-type dataset Wild-Heart/Disney-VideoGeneration-Dataset
-  --local-dir video-dataset-disney`; then `accelerate launch --config_file
-  accelerate_configs/uncompiled_2.yaml --gpu_ids 0 train.py --model_name ltx_video
-  --pretrained_model_name_or_path Lightricks/LTX-Video --data_root <dir> --training_type lora ...`
-  (full flag list in the README). Minimum LoRA VRAM: LTX-Video 11 GB, CogVideoX-5b 21 GB,
-  HunyuanVideo 42 GB.
+- Minimum LoRA VRAM: LTX-Video 11 GB, CogVideoX-5b 21 GB, HunyuanVideo 42 GB. PyTorch 2.5.1+
+  (older versions can produce black videos). Steps from the README (full flags there):
+
+```bash
+pip install -r requirements.txt && pip install git+https://github.com/huggingface/diffusers
+huggingface-cli download --repo-type dataset Wild-Heart/Disney-VideoGeneration-Dataset --local-dir video-dataset-disney
+accelerate launch --config_file accelerate_configs/uncompiled_2.yaml --gpu_ids 0 train.py \
+  --model_name ltx_video --pretrained_model_name_or_path Lightricks/LTX-Video \
+  --data_root video-dataset-disney --caption_column prompts.txt --video_column videos.txt \
+  --training_type lora --output_dir out/ltxv   # plus the README's optimizer/training flags
+```
 
 **cloud-worker** (Aug 2026): scripts and notes for running the open-weights MiniMax H3 video model
 (stereo audio, 24 fps, 5-15 s) in ComfyUI on a RunPod B200: text, image and reference-to-video
@@ -90,12 +93,16 @@ attention, TinyBERT context, TorchMoji emotion, ARPA phonemizer) with gradient a
 8-bit optimizer, so fine-tuning fits 11-14 GB of VRAM (Colab). Exports TorchScript.
 - Use it for a single-speaker English voice on a small GPU. The newer models vendored in
   storyteller-ml (F5-TTS, StyleTTS2, GPT-SoVITS) work from short samples (unverified here).
-- Use: install `requirements.txt` (and `apt-get install espeak`); train
-  `python train.py -c ./configs/ljs_li44_tmbert_ft_small_s1_arpa.json -m "train/MyVoice" -p pt_hanashi`
-  (`-p` warm-starts from a pretrained model you must supply; `--use-latest` saves disk); export
-  `python export_ts.py --checkpoint G_latest.pth --device cpu --config <cfg> --out-path voice.pt
-  --test-string "Hello"`; synthesize `python infer_ts.py --out-path res --device cpu --config <cfg>
-  --checkpoint voice.pt --text "Hello"` (export and inference device must match).
+- Use (`-p` warm-starts from a pretrained model you must supply; `--use-latest` saves disk; the
+  export and inference device must match):
+
+```bash
+pip install -r requirements.txt; sudo apt-get install espeak
+CFG=./configs/ljs_li44_tmbert_ft_small_s1_arpa.json
+python train.py -c $CFG -m "train/MyVoice" -p pt_hanashi
+python export_ts.py --checkpoint G_latest.pth --device cpu --config $CFG --out-path voice.pt --test-string "Hello"
+python infer_ts.py --out-path res --device cpu --config $CFG --checkpoint voice.pt --text "Hello"
+```
 
 **torchscript-models** (README title "jit-models"): notes and harnesses for turning PyTorch TTS
 models (glow-tts, multi-speaker glow-tts, HiFi-GAN, MelGAN) into TorchScript for Rust/libtorch,
@@ -110,9 +117,9 @@ the CUDA toolkit and a GPU driver; models come from Nextcloud and Google Drive l
 the `.recast` model and `hifigan-jit.pt`, pick audio devices, record or press realtime.
 
 **realtime-voice-conversion** (archived, 2020): a Rust audio I/O binary that streams microphone
-audio over protobuf/ZeroMQ to a Python CycleGAN-VC sidecar (`CUDA_VISIBLE_DEVICES=1
-./sidecar.py`). The README measured 4.4-6 s of latency. For voice conversion today, start from
-RVC v2 or seed-vc (vendored in storyteller-ml; install from upstream).
+audio over protobuf/ZeroMQ to a Python CycleGAN-VC sidecar (run `./sidecar.py`, optionally with
+`CUDA_VISIBLE_DEVICES=1`). The README measured 4.4-6 s of latency. For voice conversion today,
+start from RVC v2 or seed-vc (vendored in storyteller-ml; install from upstream).
 
 ## Volumetric capture and motion capture
 

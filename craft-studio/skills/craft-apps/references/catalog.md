@@ -143,11 +143,12 @@ Code is MIT OR Apache-2.0; every font is OFL-1.1.
 
 ### craft-i18n
 
-Shared translations: `locales/<locale>/common.tsv` and `<app>.tsv`, one `context<TAB>English<TAB>
-translation` row each. Same optional-input pattern as craft-fonts: `CRAFT_I18N_DIR=<absolute
-path>` embeds the catalogs; without it the app is English-only. An app pins its commit in
-`craft-i18n.rev`; release builds then check out that SHA and set `CRAFT_I18N_REQUIRED=1`, which
-fails only on a missing or broken checkout, never on missing translations. Lookup code (fallback
+Shared translations: `locales/<locale>/common.tsv` and `<app>.tsv`, one row per string
+(`context<TAB>English<TAB>translation`). Same optional-input pattern as craft-fonts:
+`CRAFT_I18N_DIR=<absolute path>` embeds the catalogs; without it the app is English-only. An
+app pins its commit in `craft-i18n.rev`; release builds then check out that SHA and set
+`CRAFT_I18N_REQUIRED=1`, which fails only on a missing or broken checkout, never on missing
+translations. Lookup code (fallback
 `pt-br` to `pt` to English, plurals) is the `craft-i18n` crate in craft-libs. To help translate:
 edit the TSV in a pull request (`tools/new_locale.py <code> "<Name>" <apps>` starts a language),
 translate from the English meaning only (clean-room rule), and credit yourself in ATTRIBUTION.md,
@@ -171,7 +172,7 @@ app tarball `*-<ver>-linux-<arch>.tar.gz` beside any `-cli-` or `-server-` tarba
 |---|---|---|
 | Linux x86_64, aarch64, riscv64 | `<app>-<ver>-linux-<arch>.tar.gz` | `<app>-<ver>-linux-<arch>/bin/<app>-cli` (top folder, then an FHS tree) |
 | Linux, PdfCraft only | `pdfcraft-cli-<ver>-linux-<arch>.tar.gz` | `pdfcraft-cli-<ver>-linux-<arch>/pdfcraft-cli` |
-| Linux, FigCraft | `figcraft-server-<ver>-linux-<arch>.tar.gz` | A server build; its packaging ships `figcraft-cli` in the main tarball only once that crate exists |
+| Linux, FigCraft only | `figcraft-server-<ver>-linux-<arch>.tar.gz` | No CLI: the self-hosted collaboration server (systemd units, Caddy and nginx configs). FigCraft's main tarball has `bin/figcraft-cli` as usual |
 | macOS universal | `<app>-cli-<ver>-macos-universal.zip` | `<app>-cli-<ver>-macos-universal/<app>-cli`; signed, notarized but not stapled. The app is `<app>-<ver>-macos-universal.dmg` |
 | Windows x64, x86, arm64 | `<app>-<ver>-windows-<arch>-portable.zip` | `<app>-<ver>-windows-<arch>-portable/<app>-cli.exe` beside `<app>.exe`; the `.msi` installs both |
 | FreeBSD | `<app>-<ver>-freebsd-<arch>.tar.gz` | `.../bin/<app>-cli` (every app has its own FreeBSD script) |
@@ -210,10 +211,10 @@ GitHub issues; craft-ai-integrations asks for private security reports through G
   "Storyteller Studio"; FineTrainers-Conditioning's README is upstream finetrainers (renamed from
   cogvideox-factory).
 - **Forks:** 14 by history: egui and winit (pinned by every app), winprint.rs (patched, used by
-  craft-libs' `craft-print`), spark,
-  FineTrainers-Conditioning, LiveScan3D, Azure-Kinect-Sample-for-Unity, RuntimeAudioImporter,
-  RuntimeFilesDownloader, UnrealZeroMQ, k4a-sys-temp, UE4-OSC, irsa-manager,
-  terraform-aws-observability-accelerator (vits-finetuning looks like one too).
+  craft-libs' `craft-print`), spark, FineTrainers-Conditioning, LiveScan3D,
+  Azure-Kinect-Sample-for-Unity, RuntimeAudioImporter, RuntimeFilesDownloader, UnrealZeroMQ,
+  k4a-sys-temp, UE4-OSC, irsa-manager, terraform-aws-observability-accelerator (vits-finetuning
+  looks like one too).
 - **Licences differ:** artcraft is MIT OR Apache-2.0 but artcraft-services is the fair-source
   "ArtCraft License (WIP)"; artcraftx and most legacy repos have no licence file. ArtCraft's NOTICE
   and StreamTwo include third-party game assets (Nintendo sound effects, Zelda maps) that no
