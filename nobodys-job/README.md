@@ -1,54 +1,71 @@
-# NOBODY'S JOB: final cut
+# NOBODY'S JOB: final cut (v5)
 
-A 119.0-second re-edit of the team's cut (`nobodys_job_final.mp4`). Every shot comes from the team's footage; no new footage was generated.
+A 1:44 re-cut of the team's film (`nobodys_job_final.mp4`). It follows the team's re-cut plan: a faster start, a clear ending, real numbers on screen, and a title that changes from NOBODY'S JOB to SOMEBODY'S JOB.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `Nobodys_Job_master_1080p.mp4` | Submission master: 1920×1080, 24 fps, H.264, stereo AAC 48 kHz, −14 LUFS, true peak −1.4 dBTP, exactly 119.0 s |
-| `Nobodys_Job_captioned_1080p.mp4` | Same film with English captions burned in, for social feeds that autoplay muted |
-| `Nobodys_Job.en.srt` | Caption file to upload alongside the master |
-| `Nobodys_Job_thumbnail.jpg` | 1920×1080 thumbnail |
-| `source/` | Edit list, picture and sound build scripts, cards, and the timing of every line |
+| `Nobodys_Job_captioned_1080p.mp4` | **Submission version.** English captions burned in, large enough for phones and kept above the bottom 15% of the frame |
+| `Nobodys_Job_master_1080p.mp4` | Same film without captions: 1920×1080, 24 fps, H.264, stereo AAC 48 kHz, −14 LUFS |
+| `Nobodys_Job.en.srt` | Caption file, for platforms that take one alongside the clean master |
+| `Nobodys_Job_thumbnail.jpg` | 1920×1080 thumbnail: Odile at the radar, "MAKE IT LATE." |
+| `Nobodys_Job_vertical_9x16.mp4` | Optional 37.6-second vertical short (1080×1920) for Reels, Shorts and TikTok, usable as a separate entry. It runs from "We cannot bring it down" through MAKE IT LATE, the push and the near miss, then cuts to the title change. The story beats are repeated large under the picture so they read at phone size |
+| `source/` | Edit list, picture and sound build scripts, cards (`cards5/`), the Higgsfield still (`hf/`), and the timing of every line. The scripts expect the team's cut as `orig.mp4` and its Demucs stems next to them |
 
-## What changed from the team's cut
+## The cut, shot by shot
 
-**Story**
-- The narrator is gone. The film opens on silent space.
-- The "contract" line is gone, both times it played.
-- New dialogue sets up the title ("Whose are they?" / "Nobody's. Dead thirty years." / "So whose job is it?"). It also carries both twists: "No docking port. Nothing to grab." / "We grab it anyway." and "You don't have to bring it down. You have to make it late."
-- The climax is a countdown, a hard cut to silence, then "Two point one kilometres."
+| Time | Shot | On screen |
+|---|---|---|
+| 0:00 | Dead rocket stages and a satellite above Earth | "40,000 tracked objects in orbit. 11,000 still work. / Nobody has to clean up the rest." |
+| 0:06 | Tracking room: Odile, then Marek | lower third "Orbital traffic control" |
+| 0:12 | Card | "Two of them are about to collide. A dead 9-tonne rocket stage and a dead satellite, 840 km up. Nobody is required to move either one." |
+| 0:17 | Temi wakes on the beanbag | "Temi · tug operator / 40 hours to impact" |
+| 0:22 | Launch | "Rapid-response launch / 31 hours to impact" |
+| 0:30 | The tug approaches and clamps on | the two radio calls |
+| 0:44 | Rafael: "We cannot bring it down. Nine tonnes. Not even close." | the music drops out; a held beat |
+| 0:50 | Card | "You can't bring it down. But you can make it late." |
+| 0:54 | Temi at the controls | "The push / 1 cm/s, 20 hours early" |
+| 1:01 | The near miss (the team's "20 hours later" label) | "Closest approach", silence, then "Miss distance: 2.1 km" as the music swells |
+| 1:14 | Rafael watching, then the phone call | |
+| 1:22 | **New shot:** the tug fires its engine to bring the dead module down | "Six months later / The tug came back for it." |
+| 1:26 | The boat: "Look, Dad. A shooting star." | the falling star is the dead module, brought down on purpose |
+| 1:32 | Card | "Dead satellites belong to whoever launched them. Forever. No treaty says anyone has to clean them up." |
+| 1:36 | Card | "In 2024, a spacecraft called ADRAS-J flew within 15 metres of a dead rocket stage. The next one is being built to catch it and bring it down." |
+| 1:40 | Title | NOBODY'S JOB, then NOBODY'S is struck out and SOMEBODY'S appears above it |
 
-**Picture**
-- **One Rafael.** The grey-haired man in the navy sweater is the only Rafael whose face is seen. The bearded hoodie shot, the launch-pad facepalm and the glasses close-up are cut. In the last scene he is seen only from behind.
-- **Planets removed.** The "Six months later" text is now a lower third over the boat.
-- **Burned-in text avoided.** The cut uses no shot that has the old burned-in captions, except the team's "20 HOURS LATER" label, which stays.
-- **Full-screen cards** on black: "There are 40,000 tracked objects above us. Most of them are dead.", "Somebody has to take out the trash." and the title.
-- **Opening and boat trimmed** to their usable parts. The opening drops the space-shuttle frames, and the boat stops before the fireball reaches the boat.
-- **Upscaled** from 720p to 1080p. Five shots (opening, pad, launch, station, pass) are motion-interpolated slow motion, which gives the edit varied rhythm instead of a cut every 10 seconds.
-- **Flash frames removed.** Each cut point was moved one frame past the shot change.
+## Where it departs from the plan, and why
 
-**Sound (v2, rebuilt after review)**
-- **Only the team's own recorded voices are used.** There are no generated, cloned or replacement voices. The 8 lines are: "We've got movement on sector seven", "What time is it?", the two tug and control radio calls, "We cannot bring it down…", "There we go, come on now", "Rafael, this is mission control calling" and "Look, Dad. A shooting star."
-- **Each line plays exactly where it was in the team's cut.** None overlap. Lip sync is measured within 1 ms on the three on-camera lines.
-- **On-screen text carries the story beats:**
-  - full-screen cards: "Two are about to collide. Nobody owns either one." and "You can't bring it down. But you can make it late."
-  - lower thirds: 40 / 31 hours to impact, "One centimetre per second. Twenty hours early.", "Closest approach" and "Miss distance: 2.1 km"
-- **Original score**, synthesised in code. It cuts to silence at the closest approach and resolves when the miss distance appears.
-- **The team's own sound effects** (launch roar, tug, flyby) are re-timed to the new cut.
+- **The ending uses text and one new shot, not new dialogue.** Both ending options in the plan needed new voice lines ("Two stars." / "They missed."). The team rejected generated voices, so the film keeps only the cast's own recordings. The new tug shot plus "The tug came back for it." makes the boat's "shooting star" read as the dead object coming down on purpose.
+- **Temi is labelled "tug operator", not "on-call analyst".** She flies the tug in the film.
+- **The collision is "a dead rocket stage and a dead satellite".** The plan's "active satellite" would contradict the story, where both objects are dead.
+- **The launch stays.** It is labelled "Rapid-response launch / 31 hours to impact". The pad shot before it was cut instead. Rapid response is real: the US Space Force's VICTUS NOX satellite launched 27 hours after the launch order (September 2023).
 
-**v3 fixes (after the team's review)**
-- **Marek's line is back.** "What's the trajectory change?" uses his own recording at its original timing, so his mouth no longer moves with no voice.
-- **The tracking room now cuts like normal two-person coverage.** Her line plays on the wide. His line plays on a tighter single of him looking down at the console, cropped from the same plate, so he no longer reads as leaning into her face. The tighter frame also hides the old burned-in caption.
-- **Rafael's close-up is moved 3 frames (0.125 s) earlier.** On "We cannot bring it down… nine tonnes" his mouth was leading his voice. "Not even close" is on the next shot and was already in sync, so it is unchanged.
-- **Captions no longer overlap.**
+## The one new shot
 
-- **Temi's control-room shot now ends as her lips close after "There we go, come on now".** In the team's footage she breaks into a wide, moving grin right after the line, which read as more talking with no sound. Her voice itself was already in sync. The 1.7 seconds saved go to the slow-motion pass shot, so the countdown builds longer. The film is still exactly 119.0 s.
+The "six months later" shot (1:22) is a still made with Higgsfield (GPT Image 2, 2 credits) from the team's own docking frame. It keeps the same tug, module and lighting, and adds an engine burn, a lower orbit and the first glow of re-entry. The edit animates it with a slow push-in, a flickering engine plume and a re-entry glow that grows. It then goes through the same 720p-to-1080p chain as the team's footage, so it matches their shots. Higgsfield's video models would not run on the account's free plan ("requires basic plan or higher"). No plan or credits were bought.
+
+## Sound
+
+- **Only the team's own recorded voices.** There are nine lines, each at its original picture position. None overlap. Lip sync was checked by frame matching on every on-camera line.
+- **Original score**, synthesised in code:
+  - The score drops out on "not even close" and comes back with the "make it late" card.
+  - It cuts to silence as the two objects converge, and swells in D major with "Miss distance".
+  - On the title, a marker stroke crosses out NOBODY'S, and the score resolves on SOMEBODY'S.
+- **The team's own sound effects** (launch, tug, docking, flyby) are re-timed to the new cut.
+- **Loudness:** −14 LUFS integrated, true peak below −1 dBTP.
+
+## Carried over from earlier rounds
+
+- One Rafael whose face is seen (the grey-haired man in the navy sweater). The other Rafael appears only from behind.
+- Marek's line plays on a tighter single cropped from the same plate, so he no longer leans into Odile's face.
+- Rafael's close-up line is moved 3 frames earlier to match his mouth.
+- No shot carries the team's old burned-in captions, except the "20 HOURS LATER" label. The "closest approach" label now waits until that label has gone.
+- Each cut sits one frame past the shot change, so there are no flash frames.
 
 ## Known limits
 
-- **The docking target looks like a space station,** not a rocket stage. The text cards don't say what the objects are, so nothing contradicts the picture.
+- **The docking target looks like a space station,** not a rocket stage. The cards say what the objects are; the picture can't.
 - **The score is functional, not composed.** A composer pass would lift it.
 
 Not published or submitted. Waiting for the owner's approval.

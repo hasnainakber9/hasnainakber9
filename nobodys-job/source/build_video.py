@@ -2,9 +2,8 @@ import subprocess, sys, os, json
 from edl import resolve
 FPS = 24
 segs = resolve()
-# quantise to frames; title absorbs rounding so total = 119.0 s exactly
+# quantise each segment to whole frames; the running time is whatever they add up to
 frames = [round(s["dur"] * FPS) for s in segs]
-frames[-1] = int(119 * FPS) - sum(frames[:-1])
 os.makedirs("vseg", exist_ok=True)
 t = 0; tl = []
 only = sys.argv[1:]
@@ -19,6 +18,8 @@ for s, n in zip(segs, frames):
         vf = "format=yuv420p"
         if s.get("fadeout"): vf += f",fade=t=out:st={n/FPS - s['fadeout']:.3f}:d={s['fadeout']}"
         cmd = ["ffmpeg", "-y", "-v", "error", "-loop", "1", "-r", "24", "-i", s["img"], "-vf", vf] + enc
+    elif s["kind"] == "file":   # pre-rendered 1920x1080 24 fps insert (deorbit shot, title change)
+        cmd = ["ffmpeg", "-y", "-v", "error", "-i", s["file"], "-vf", "format=yuv420p"] + enc
     else:
         sp = s["sp"]
         f = []

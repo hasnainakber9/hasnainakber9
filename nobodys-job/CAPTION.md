@@ -6,7 +6,7 @@
 
 Two dead objects. Same orbit. Forty hours to impact. And no one whose job it is to stop them.
 
-Every number in this film is real. About 40,000 objects are tracked in Earth orbit; only 11,000 still work (ESA, 2025). The villain, a nine-tonne dead rocket stage at 840 km, tops the peer-reviewed list of the most dangerous debris in orbit. Under the Outer Space Treaty that junk belongs to its launcher forever, and no law makes anyone clean it up.
+Every number in this film is real. About 40,000 objects are tracked in Earth orbit; only 11,000 still work (ESA, 2025). The villain, a nine-tonne dead rocket stage at 840 km, tops the peer-reviewed list of the most dangerous debris in orbit. Under the Outer Space Treaty that junk belongs to its launcher forever, and no treaty makes anyone clean it up.
 
 The twist is physics: a push of one centimetre per second, twenty hours early, moves an object about two kilometres. You don't have to bring it down. You have to make it late.
 
@@ -18,7 +18,7 @@ Somebody is starting the job. In 2024 Astroscale flew within 15 metres of a dead
 
 ## Short caption (X / Instagram, under 280 characters)
 
-40,000 tracked objects orbit Earth. Only 11,000 work. The rest belong to whoever launched them, forever, and no law says anyone has to clean them up. NOBODY'S JOB (1:59): the day somebody decided it was theirs. Every number in it is real. #xhopememeprize
+40,000 tracked objects orbit Earth. Only 11,000 work. The rest belong to whoever launched them, forever, and no treaty says anyone has to clean them up. NOBODY'S JOB (1:44): the day somebody decided it was theirs. Every number in it is real. #xhopememeprize
 
 ---
 
@@ -30,7 +30,8 @@ Somebody is starting the job. In 2024 Astroscale flew within 15 metres of a dead
 - McKnight, D. et al., "Identifying the 50 statistically-most-concerning derelict objects in LEO", *Acta Astronautica*, 2021: the list is dominated by SL-16 (Zenit) rocket bodies of about 9 tonnes at roughly 840 km.
 - Outer Space Treaty (1967), Article VIII: ownership of objects launched into space is not affected by their presence in space. Liability Convention (1972).
 - Clohessy–Wiltshire relative-motion equations: an along-track velocity change Δv produces a secular along-track drift of about 3·Δv·t. For Δv = 1 cm/s and t = 20 h: 3 × 0.01 m/s × 72,000 s ≈ 2.2 km.
-- Astroscale, ADRAS-J mission (2024): rendezvous and fly-around of an H-IIA upper stage (about 11 m, about 3 tonnes); ADRAS-J2 planned to remove it. https://aviationweek.com/aerospace/commercial-space/astroscale-spacecraft-rendezvous-derelict-upper-stage
+- Astroscale, ADRAS-J mission (2024): rendezvous and fly-around of an H-IIA upper stage (about 11 m, about 3 tonnes), closest approach about 15 m on 30 November 2024; ADRAS-J2 is being built to capture and remove it. https://aviationweek.com/aerospace/commercial-space/astroscale-spacecraft-rendezvous-derelict-upper-stage
+- US Space Force, VICTUS NOX (14 September 2023): the satellite launched 27 hours after the launch order, the basis for the film's "rapid-response launch" label.
 - ESA / ClearSpace-1 contract (€86 million) for the first active debris removal mission. https://www.esa.int/kids/en/news/ESA_gives_go-ahead_for_the_world_s_first_space_junk_removal_mission
 - ESA Zero Debris Charter (2023). US FCC five-year post-mission disposal rule (adopted September 2022).
 
