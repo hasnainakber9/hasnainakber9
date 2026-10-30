@@ -38,6 +38,12 @@ A 119.0-second re-edit of the team's cut (`nobodys_job_final.mp4`). Every shot c
 - **Original score**, synthesised in code. It cuts to silence at the closest approach and resolves when the miss distance appears.
 - **The team's own sound effects** (launch roar, tug, flyby) are re-timed to the new cut.
 
+**v3 fixes (after the team's review)**
+- **Marek's line is back.** "What's the trajectory change?" uses his own recording at its original timing, so his mouth no longer moves with no voice.
+- **The tracking room now cuts like normal two-person coverage.** Her line plays on the wide. His line plays on a tighter single of him looking down at the console, cropped from the same plate, so he no longer reads as leaning into her face. The tighter frame also hides the old burned-in caption.
+- **Rafael's close-up is moved 3 frames (0.125 s) earlier.** On "We cannot bring it down… nine tonnes" his mouth was leading his voice. "Not even close" is on the next shot and was already in sync, so it is unchanged.
+- **Captions no longer overlap.**
+
 ## Known limits
 
 - **The docking target looks like a space station,** not a rocket stage. The text cards don't say what the objects are, so nothing contradicts the picture.

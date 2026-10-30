@@ -25,7 +25,11 @@ for s, n in zip(segs, frames):
         if sp < 0.999:
             f.append(f"setpts={1/sp:.6f}*PTS")
             f.append("minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1")
-        f.append("scale=1920:1080:flags=lanczos,unsharp=5:5:0.45:5:5:0.0")
+        if s.get("crop"):  # punch-in single from the 720p plate: crop, then a touch more sharpening and fine grain
+            f.append(f"crop={s['crop']}")
+            f.append("scale=1920:1080:flags=lanczos,unsharp=5:5:0.6:5:5:0.0,noise=alls=4:allf=t")
+        else:
+            f.append("scale=1920:1080:flags=lanczos,unsharp=5:5:0.45:5:5:0.0")
         if s.get("fadein"): f.append(f"fade=t=in:st=0:d={s['fadein']}")
         chain = ",".join(f)
         inputs = ["-ss", f"{s['a']:.3f}", "-t", f"{s['b']-s['a']+0.2:.3f}", "-i", "orig.mp4"]

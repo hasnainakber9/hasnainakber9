@@ -137,7 +137,7 @@ ST = {s["name"]: s["start_f"] / 24 for s in EDL}; DUR = {s["name"]: s["frames"] 
 F = lambda t: round(np.ceil(t * 24 - 1e-6) / 24, 6)
 # measured: when -ss lands between frames, the -r 24 output repeats the first frame, so the effective in-point is
 # one frame earlier than the first decoded frame (verified by frame matching against the original)
-SRC = {"open": (F(0.0), .75), "track": (F(10.045) - 1 / 24, 1), "temi": (F(23.5), 1), "pad": (F(40.045), .5), "launch": (F(42.0), .8),
+SRC = {"open": (F(0.0), .75), "trackA": (F(10.045) - 1 / 24, 1), "trackB": (16.916667, 1), "temi": (F(23.5), 1), "pad": (F(40.045), .5), "launch": (F(42.0), .8),
        "station": (F(50.045), .9), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(80.045) - 1 / 24, 1), "pass": (F(90.045), .75),
        "rafback": (F(104.0), 1), "boat": (F(114.0), .3)}
 def T_of(seg, src_t):  # where an original-source moment lands on the new timeline
@@ -154,11 +154,13 @@ def pick(lid):
 
 # (time, source, processing, gain_db, label)
 LINES = [   # only the team's own recorded lines, each at its original picture position
- (T_of("track", 14.08), ("orig", 14.08, 16.25), "ctrl", 0, "We've got movement on sector seven."),
+ (T_of("trackA", 14.08), ("orig", 14.08, 16.25), "ctrl", 0, "ODILE  We've got movement on sector seven."),
+ (T_of("trackB", 17.00), ("orig", 17.00, 18.66), "ctrl", 0, "MAREK  What's the trajectory change?"),
  (T_of("temi", 27.45), ("orig", 27.45, 28.95), "room", 2, "TEMI  What time is it?"),
  (T_of("station", 50.70), ("orig", 50.70, 55.38), "radio", 0, "TUG  Tug control, we have visual contact with the target, initiating docking approach now."),
  (T_of("station", 55.45), ("orig", 55.45, 59.90), "radio", 0, "CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate."),
- (T_of("rafael", 69.68), ("orig", 69.68, 74.05), "room", 0, "RAFAEL  We cannot bring it down. Nine tonnes. Not even close."),
+ # measured: in the close-up his mouth leads the voice by ~3 frames; "not even close" (next shot) is already in sync
+ (T_of("rafael", 69.68), ("orig", 69.68, 74.05), "room", 0, "RAFAEL  We cannot bring it down. Nine tonnes. Not even close.", {"split_src": 73.10, "shift_a": -0.125}),
  (T_of("temi2", 86.78), ("orig", 86.78, 88.25), "room", 0, "TEMI  There we go, come on now."),
  (T_of("rafback", 105.75), ("orig", 105.75, 108.10), "phone", 0, "CONTROL (phone)  Rafael, this is mission control calling."),
  (A("boat", 3.2), ("orig", 115.95, 118.35), "outdoor", 0, "BOY  Look, Dad. A shooting star."),
@@ -166,7 +168,8 @@ LINES = [   # only the team's own recorded lines, each at its original picture p
 
 def build_dialogue():
     buf = np.zeros((N, 2), np.float32); mask = np.zeros(N, np.float32); log = []
-    for t, src, proc, g, label in LINES:
+    for t, src, proc, g, label, *opt in LINES:
+        opt = opt[0] if opt else {}
         if isinstance(src, tuple): x = stem(VOC, src[1], src[2])
         else:
             p = src if src.endswith(".wav") else pick(src); x = trim(load_any(p))
@@ -181,6 +184,14 @@ def build_dialogue():
         else: y = convolve(x, ROOM_IR, wet=0.06)
         if y.ndim == 1: y = np.stack([y, y], 1)
         y = y / (np.sqrt(np.mean(y ** 2)) + 1e-9) * db(-20 + g)
+        if opt.get("split_src"):
+            k = secs(opt["split_src"] - src[1]); fa = secs(0.01)
+            ya, yb = y[:k].copy(), y[k:].copy(); ya[-fa:] *= np.linspace(1, 0, fa)[:, None]; yb[:fa] *= np.linspace(0, 1, fa)[:, None]
+            ta = t + opt["shift_a"]; tb = t + k / SR
+            place(buf, ya, ta); mask[secs(ta):secs(ta) + len(ya)] = 1
+            place(buf, yb, tb); mask[secs(tb):secs(tb) + len(yb)] = 1
+            log.append((round(ta, 2), round(tb + len(yb) / SR, 2), label))
+            continue
         place(buf, y, t); a = secs(t); mask[a:a + len(y)] = 1
         log.append((round(t, 2), round(t + len(y) / SR, 2), label))
     log.sort()
@@ -246,10 +257,10 @@ def build_score():
     n = N; t = np.arange(n) / SR
     dr = (np.sin(2 * np.pi * midi(26) * t) + 0.5 * np.sin(2 * np.pi * midi(38) * t + 0.3 * np.sin(2 * np.pi * 0.07 * t)) + 0.15 * bl("lp", 300, brown(n))) * Ld
     m += pan(dr.astype(np.float32) * 0.09, 0)
-    air = bl("bp", (5000, 9000), pink(n)) * lane([(0, .5), (S["track"], .3), (S["temi"], .0), (S["station"], .25), (S["rafael"], 0), (S["pass"], .4), (SIL, .4), (SIL + 0.05, 0), (TOTAL, 0)])
+    air = bl("bp", (5000, 9000), pink(n)) * lane([(0, .5), (S["trackA"], .3), (S["temi"], .0), (S["station"], .25), (S["rafael"], 0), (S["pass"], .4), (SIL, .4), (SIL + 0.05, 0), (TOTAL, 0)])
     m += pan(air * 0.01, 0.2)
     # --- clock ticks: tracking room + Temi waking (the forty hours), and the countdown
-    for t0, t1, bpm in ((S["track"] + 0.5, E["temi"], 80), (S["pass"] + 2.0, SIL, 120)):
+    for t0, t1, bpm in ((S["trackA"] + 0.5, E["temi"], 80), (S["pass"] + 2.0, SIL, 120)):
         k = 0
         while t0 + k * 60 / bpm < t1:
             tk = t0 + k * 60 / bpm; place(m, pan(tick() * (0.06 if k % 2 == 0 else 0.035), 0.4), tk); k += 1

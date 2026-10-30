@@ -2,8 +2,9 @@
 SEGS = [
  ("black", "black", 0, 0, 1, 1.5, {}),
  ("open", "src", 0.0, 6.0, 0.75, None, {"fadein": 1.5}),
- ("track", "src", 10.045, 17.9, 1.0, None, {}),
- ("c1", "card", 0, 0, 1, 4.5, {"img": "cards/c1.png"}),
+ ("trackA", "src", 10.045, 16.25, 1.0, None, {}),
+ ("trackB", "src", 16.9157, 18.70, 1.0, None, {"crop": "720:405:470:0"}),
+ ("c1", "card", 0, 0, 1, 4.375, {"img": "cards/c1.png"}),
  ("temi", "src", 23.5, 30.0, 1.0, None, {}),
  ("pad", "src", 40.045, 42.0, 0.5, None, {"lower": ("cards/l31.png", 0.4, 99)}),
  ("launch", "src", 42.0, 50.0, 0.8, None, {}),

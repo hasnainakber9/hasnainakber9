@@ -1,8 +1,9 @@
-  13.54-  15.71  We've got movement on sector seven.
+  13.54-  15.71  ODILE  We've got movement on sector seven.
+  15.79-  17.45  MAREK  What's the trajectory change?
   25.82-  27.32  TEMI  What time is it?
   42.92-  47.72  TUG  Tug control, we have visual contact with the target, initiating docking approach now.
   48.19-  52.76  CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate.
-  64.10-  68.47  RAFAEL  We cannot bring it down. Nine tonnes. Not even close.
+  63.97-  68.47  RAFAEL  We cannot bring it down. Nine tonnes. Not even close.
   84.66-  86.13  TEMI  There we go, come on now.
  102.92- 105.27  CONTROL (phone)  Rafael, this is mission control calling.
  108.95- 111.35  BOY  Look, Dad. A shooting star.
