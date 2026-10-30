@@ -1,16 +1,16 @@
 # NOBODY'S JOB: submission caption
 
-## Submission caption (under 150 words)
+## Submission caption (150 words; add #xhopememeprize when posting)
 
-**NOBODY'S JOB** (1:59)
+**NOBODY'S JOB**
 
 Two dead objects. Same orbit. Forty hours to impact. And no one whose job it is to stop them.
 
-Every number in this film is real. About 40,000 objects are tracked in Earth orbit; only 11,000 still work (ESA, 2025). Its villain, a nine-tonne dead rocket stage at 840 km, matches the real objects topping the peer-reviewed list of the most dangerous debris in orbit. Under the Outer Space Treaty, that junk belongs to whoever launched it forever, and no law makes anyone clean it up.
+Every number in this film is real. About 40,000 objects are tracked in Earth orbit; only 11,000 still work (ESA, 2025). The villain, a nine-tonne dead rocket stage at 840 km, tops the peer-reviewed list of the most dangerous debris in orbit. Under the Outer Space Treaty that junk belongs to its launcher forever, and no law makes anyone clean it up.
 
 The twist is physics: a push of one centimetre per second, twenty hours early, moves an object about two kilometres. You don't have to bring it down. You have to make it late.
 
-And somebody is starting the job. In 2024 Astroscale flew to within 15 metres of a dead rocket stage; its next mission will catch one. The sky is a commons. We're learning to keep it clean.
+Somebody is starting the job. In 2024 Astroscale flew within 15 metres of a dead rocket stage; its next mission will catch one. The sky is a commons. We're learning to keep it clean.
 
 #xhopememeprize
 
