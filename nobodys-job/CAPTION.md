@@ -1,26 +1,18 @@
 # NOBODY'S JOB: submission caption
 
-## Full caption (about 421 words)
+## Submission caption (under 150 words)
 
 **NOBODY'S JOB** (1:59)
 
 Two dead objects. Same orbit. Forty hours to impact. And no one whose job it is to stop them.
 
-Everything in this film is true except the ending. Here is the data behind it.
+Every number in this film is real. About 40,000 objects are tracked in Earth orbit; only 11,000 still work (ESA, 2025). Its villain, a nine-tonne dead rocket stage at 840 km, matches the real objects topping the peer-reviewed list of the most dangerous debris in orbit. Under the Outer Space Treaty, that junk belongs to whoever launched it forever, and no law makes anyone clean it up.
 
-**The problem.** About 40,000 objects are tracked in Earth orbit. Only about 11,000 are working satellites; the rest are dead (ESA Space Environment Report 2025). Below the tracking limit sit an estimated 1.2 million fragments between 1 and 10 cm, each carrying the energy of a hand grenade at orbital speed. In 2009 a dead Russian satellite and a working Iridium satellite collided at 789 km and left more than 2,000 tracked fragments. The film's villain, a nine-tonne dead rocket stage at 840 km, is not invented: the peer-reviewed list of the 50 most dangerous objects in orbit (McKnight et al., 2021) is dominated by nine-tonne Zenit stages parked at exactly that height.
+The twist is physics: a push of one centimetre per second, twenty hours early, moves an object about two kilometres. You don't have to bring it down. You have to make it late.
 
-**"Nobody's" is a legal fact.** Under Article VIII of the Outer Space Treaty, a dead satellite belongs to the country that launched it, forever. Nobody else may remove it without consent, and no treaty obliges the owner to clean it up.
+And somebody is starting the job. In 2024 Astroscale flew to within 15 metres of a dead rocket stage; its next mission will catch one. The sky is a commons. We're learning to keep it clean.
 
-**The twist is physics.** You can't drag nine tonnes out of orbit with a small tug, and you don't have to. A push of one centimetre per second changes the object's orbital period slightly, and that drift grows to about three times the push multiplied by the time. Twenty hours later, the object is about two kilometres from where it would have been. The film's miss distance, 2.1 km, comes from that calculation.
-
-**Somebody is starting to do the job.** In 2024 Astroscale's ADRAS-J spacecraft rendezvoused with a dead three-tonne rocket stage, closing to about 15 metres; its successor is being built to grab it and bring it down. ESA has contracted the first agency-funded removal mission. The US FCC now requires satellites in low orbit to come down within five years of retirement. ESA's Zero Debris Charter commits its signatories to leaving no new debris in valuable orbits by 2030.
-
-**Why this is hope.** Orbital debris is the clearest test of whether we can look after something no one owns. For sixty years the answer was "nobody's job." The tugs are flying, the rules are changing, and the first dead stage is about to be caught. The sky is a commons. We're learning to keep it clean.
-
-Made by a small team with AI tools. No real agency, company or flag appears. Every character is fictional.
-
-#xhopememeprize #ExistentialHope #SpaceDebris
+#xhopememeprize
 
 ---
 
