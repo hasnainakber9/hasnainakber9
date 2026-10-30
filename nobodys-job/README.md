@@ -44,6 +44,8 @@ A 119.0-second re-edit of the team's cut (`nobodys_job_final.mp4`). Every shot c
 - **Rafael's close-up is moved 3 frames (0.125 s) earlier.** On "We cannot bring it down… nine tonnes" his mouth was leading his voice. "Not even close" is on the next shot and was already in sync, so it is unchanged.
 - **Captions no longer overlap.**
 
+- **Temi's control-room shot now ends as her lips close after "There we go, come on now".** In the team's footage she breaks into a wide, moving grin right after the line, which read as more talking with no sound. Her voice itself was already in sync. The 1.7 seconds saved go to the slow-motion pass shot, so the countdown builds longer. The film is still exactly 119.0 s.
+
 ## Known limits
 
 - **The docking target looks like a space station,** not a rocket stage. The text cards don't say what the objects are, so nothing contradicts the picture.

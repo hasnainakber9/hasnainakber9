@@ -138,14 +138,14 @@ F = lambda t: round(np.ceil(t * 24 - 1e-6) / 24, 6)
 # measured: when -ss lands between frames, the -r 24 output repeats the first frame, so the effective in-point is
 # one frame earlier than the first decoded frame (verified by frame matching against the original)
 SRC = {"open": (F(0.0), .75), "trackA": (F(10.045) - 1 / 24, 1), "trackB": (16.916667, 1), "temi": (F(23.5), 1), "pad": (F(40.045), .5), "launch": (F(42.0), .8),
-       "station": (F(50.045), .9), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(80.045) - 1 / 24, 1), "pass": (F(90.045), .75),
+       "station": (F(50.045), .9), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(80.045) - 1 / 24, 1), "pass": (F(90.045), .6655),
        "rafback": (F(104.0), 1), "boat": (F(114.0), .3)}
 def T_of(seg, src_t):  # where an original-source moment lands on the new timeline
     a, sp = SRC[seg]; return ST[seg] + (src_t - a) / sp
 def A(seg, off): return ST[seg] + off    # segment-relative time
 CAP = T_of("station", 67.5)              # the clamp bites (sparks)
-SIL = ST["pass"] + 6.35                  # music cut: the held breath
-RES = ST["pass"] + 8.7                  # "...kilometres" lands, the resolution
+SIL = ST["pass"] + 6.8                  # music cut: the held breath
+RES = ST["pass"] + 9.6                  # "...kilometres" lands, the resolution
 
 VOC = "sep/htdemucs/a44/vocals.wav"; FX = "sep/htdemucs/a44/no_vocals.wav"
 def pick(lid):
