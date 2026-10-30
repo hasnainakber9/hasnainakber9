@@ -1,36 +1,26 @@
 # NOBODY'S JOB: submission caption
 
-## Full caption (LinkedIn, YouTube description, the prize form)
+## Full caption (about 421 words)
 
 **NOBODY'S JOB** (1:59)
 
 Two dead objects. Same orbit. Forty hours to impact. And no one whose job it is to stop them.
 
-Everything in this film is already true, except the ending. Here is the data behind it.
+Everything in this film is true except the ending. Here is the data behind it.
 
-**The problem is real.**
-- About 40,000 objects are tracked in Earth orbit. Only about 11,000 are working satellites. Roughly seven in ten are dead: spent rocket stages, dead satellites and fragments. (ESA Space Environment Report 2025)
-- Below the tracking limit it gets worse: an estimated 1.2 million pieces between 1 and 10 cm, and over 130 million between 1 mm and 1 cm. At orbital speed, a 1 cm bolt carries the energy of a hand grenade. (ESA MASTER model)
-- On 10 February 2009, a dead Russian satellite and a working Iridium phone satellite hit each other at 789 km, the first accidental collision between two intact satellites. It produced more than 2,000 tracked fragments, many of which are still up there. In 1978, Donald Kessler showed that enough collisions like this could feed on themselves, each one making the next more likely.
-- The film's villain, a nine-tonne dead rocket stage at 840 km, isn't invented. The peer-reviewed list of the 50 most dangerous objects in orbit (McKnight et al., *Acta Astronautica*, 2021) is dominated by dead Zenit upper stages of about nine tonnes, parked around 840 km, where the air is too thin to bring them down for centuries.
+**The problem.** About 40,000 objects are tracked in Earth orbit. Only about 11,000 are working satellites; the rest are dead (ESA Space Environment Report 2025). Below the tracking limit sit an estimated 1.2 million fragments between 1 and 10 cm, each carrying the energy of a hand grenade at orbital speed. In 2009 a dead Russian satellite and a working Iridium satellite collided at 789 km and left more than 2,000 tracked fragments. The film's villain, a nine-tonne dead rocket stage at 840 km, is not invented: the peer-reviewed list of the 50 most dangerous objects in orbit (McKnight et al., 2021) is dominated by nine-tonne Zenit stages parked at exactly that height.
 
-**"Nobody's" is a legal fact, not a metaphor.**
-Under Article VIII of the 1967 Outer Space Treaty, a dead satellite still belongs to the country that launched it, forever. No other nation or company may legally remove it without that country's consent, and no treaty obliges the owner to clean it up. The 1972 Liability Convention makes the launching state pay *if* its junk destroys something. Nothing makes anyone take out the trash.
+**"Nobody's" is a legal fact.** Under Article VIII of the Outer Space Treaty, a dead satellite belongs to the country that launched it, forever. Nobody else may remove it without consent, and no treaty obliges the owner to clean it up.
 
-**The twist is physics, not magic.**
-You can't drag nine tonnes out of orbit with a small tug. You don't have to. A push of one centimetre per second changes an object's orbital period by a fraction of a second, and in low orbit that drift adds up to about three times the push multiplied by the time. Twenty hours later, the object is about two kilometres from where it would have been. The miss distance in the film, 2.1 km, comes from that calculation. The idea has a name: just-in-time collision avoidance.
+**The twist is physics.** You can't drag nine tonnes out of orbit with a small tug, and you don't have to. A push of one centimetre per second changes the object's orbital period slightly, and that drift grows to about three times the push multiplied by the time. Twenty hours later, the object is about two kilometres from where it would have been. The film's miss distance, 2.1 km, comes from that calculation.
 
-**Somebody is starting to do the job.**
-- In 2024, Astroscale's ADRAS-J spacecraft rendezvoused with a dead H-IIA rocket stage, 11 m long and about three tonnes, closing to within about 15 m: the first commercial inspection of a piece of real debris. Its successor, ADRAS-J2, is being built to grab that same stage and bring it down.
-- ESA has contracted ClearSpace to capture and deorbit a piece of debris, the first removal mission ever paid for by a space agency.
-- ESA's Zero Debris Charter (2023) commits its signatories to leave no new debris in valuable orbits by 2030. The US FCC now requires satellites in low orbit to come down within five years of ending their mission, not 25.
+**Somebody is starting to do the job.** In 2024 Astroscale's ADRAS-J spacecraft rendezvoused with a dead three-tonne rocket stage, closing to about 15 metres; its successor is being built to grab it and bring it down. ESA has contracted the first agency-funded removal mission. The US FCC now requires satellites in low orbit to come down within five years of retirement. ESA's Zero Debris Charter commits its signatories to leaving no new debris in valuable orbits by 2030.
 
-**Why this is hope.**
-Orbital debris is the clearest test of whether nine billion people can look after something no one owns. For sixty years the answer was "nobody's job." The tugs are flying, the rules are changing, and the first dead stage is about to be caught. The sky is a commons. We're learning to keep it clean.
+**Why this is hope.** Orbital debris is the clearest test of whether we can look after something no one owns. For sixty years the answer was "nobody's job." The tugs are flying, the rules are changing, and the first dead stage is about to be caught. The sky is a commons. We're learning to keep it clean.
 
-Made by a small team with AI tools. No real agency, company or flag appears in the film. Every character is fictional.
+Made by a small team with AI tools. No real agency, company or flag appears. Every character is fictional.
 
-#xhopememeprize #ExistentialHope #SpaceDebris #OrbitalDebris #Kessler #ActiveDebrisRemoval #ZeroDebris
+#xhopememeprize #ExistentialHope #SpaceDebris
 
 ---
 
