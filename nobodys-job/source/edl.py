@@ -5,7 +5,7 @@ SEGS = [
  ("open", "src", 0.0, 4.4, 0.8, None, {"fadein": 0.6}),
  ("trackA", "src", 12.0, 16.25, 1.0, None, {}),
  ("trackB", "src", 16.9157, 18.70, 1.0, None, {"crop": "720:405:470:0"}),
- ("c1", "card", 0, 0, 1, 4.5, {"img": "cards5/c1.png"}),
+ ("c1", "file", 0, 0, 1, 2.75, {"file": "vseg/c1_trailer_src.mp4"}),
  ("temi", "src", 24.5, 30.0, 1.0, None, {}),
  ("launch", "src", 42.0, 48.4, 0.8, None, {}),
  ("station", "src", 50.045, 60.0, 1.0, None, {}),
@@ -23,6 +23,9 @@ SEGS = [
 ]
 # beats inside the near-miss shot, seconds after the pass segment starts (pass in-point 90.083, speed 0.75):
 # the team's "20 HOURS LATER" leaves at src 93.1; the objects converge by src 96.5; the sun glint marks the pass at src 98.6
+# trailer-style titles: (start, end, text, colour) in seconds from the start of their segment; the soundtrack hits on each start
+OPEN_BEATS = [(0.5, 2.1, "40,000 TRACKED OBJECTS IN ORBIT.", "w"), (2.1, 3.7, "ONLY 11,000 WORK NOW.", "w"), (3.7, 5.4, "NOBODY HAS TO CLEAN UP THE REST.", "o")]
+C1_BEATS = [(0.0, 1.25, "TWO DEAD ONES", "w"), (1.25, 2.75, "ARE ABOUT TO COLLIDE.", "w")]
 PASS_MARKS = {"close_on": 4.3, "sil": 8.6, "res": 11.35}
 FPS = 24
 def resolve():

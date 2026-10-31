@@ -4,7 +4,9 @@ import json, subprocess
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 FPS = 24
 TL = {s["name"]: s for s in json.load(open("timeline.json"))}
-A0, A1 = 1044, 1838                                        # 43.5 s (Rafael's line starts) .. 76.58 s (end of MISS DISTANCE)
+from edl import PASS_MARKS as _PM
+A0 = TL["rafael"]["start_f"] - 12                          # half a second before Rafael's shot: his line starts over the tug
+A1 = round((TL["pass"]["start_f"] / FPS + _PM["res"] + 4.7) * FPS)   # until MISS DISTANCE has been read
 B0 = TL["title"]["start_f"]; B1 = B0 + TL["title"]["frames"]
 dur_a, dur_b = (A1 - A0) / FPS, (B1 - B0) / FPS; total = dur_a + dur_b
 W, H, VY = 1080, 1920, 656                                 # the 16:9 film sits in a 1080x608 band at y=656

@@ -4,7 +4,7 @@ Dialogue: only the team's own recorded lines (separated from their mix), each at
 import json, subprocess, wave, pathlib, sys
 import numpy as np
 from scipy import signal
-from edl import PASS_MARKS as PM
+from edl import PASS_MARKS as PM, OPEN_BEATS, C1_BEATS
 SR = 48000
 EDL = json.load(open("timeline.json"))
 TOTAL = sum(s["frames"] for s in EDL) / 24; N = int(round(TOTAL * SR))
@@ -252,6 +252,37 @@ def riser(dur):
         fc = 300 + 5000 * (i / n) ** 2; seg = x[i:i + k]
         out[i:i + k] = bl("bp", (fc, fc * 1.6), seg) if len(seg) > 10 else 0
     return out * np.linspace(0, 1, n) ** 2
+def trailer_hit(big=False):
+    """trailer impact: a pitched sub drop, a body thump and an inharmonic metal ring; big adds a brass-like braam"""
+    n = secs(4.2 if big else 2.6); t = np.arange(n) / SR
+    f = 34 + 70 * np.exp(-t / 0.045); sub = np.sin(2 * np.pi * np.cumsum(f) / SR) * expdecay(n, 0.95 if big else 0.5)
+    thump = bl("lp", 700, white(n)) * expdecay(n, 0.05) * 0.6
+    metal = np.zeros(n, np.float32)
+    for k, fr in enumerate((173, 289, 431, 577, 741, 1093, 1499)):
+        metal += np.sin(2 * np.pi * fr * t + rng.uniform(0, 6.28)).astype(np.float32) * expdecay(n, (1.3 if big else 0.8) / (1 + 0.35 * k)) / (1 + 0.5 * k)
+    x = sub + thump + bl("bp", (120, 4000), metal) * 0.35
+    if big:
+        br = np.zeros(n, np.float32)
+        for mm, dt in ((26, -0.003), (26, 0.003), (38, -0.002), (38, 0.002), (45, 0.0)):
+            fr = midi(mm) * (1 + dt); br += (2 * (t * fr % 1) - 1).astype(np.float32)
+        x += bl("lp", 520, br / 5) * env_adsr(n, 0.03, 0.4, 0.6, 2.2) * 0.8
+    return np.tanh(1.3 * x).astype(np.float32)
+def reverse_swell(dur=0.4):
+    """noise that sucks in toward the hit (ends at full level)"""
+    n = secs(dur); return (bl("bp", (300, 6000), white(n)) * np.linspace(0, 1, n) ** 3).astype(np.float32)
+def tremolo_cluster(notes, dur, rate=11.0):
+    """high string cluster bowed in tremolo: the suspense layer"""
+    n = secs(dur); t = np.arange(n) / SR; x = np.zeros(n, np.float32)
+    for mm in notes:
+        for dt in (-0.003, 0.003): x += additive(midi(mm), n, nh=10, rolloff=1.0, detune=dt, vib=0.003, phase=rng.uniform(0, 6.28))
+    return bl("lp", 6000, x / (2 * len(notes))) * (0.55 + 0.45 * np.sin(2 * np.pi * rate * t)).astype(np.float32)
+def accel_times(t0, t1, b0, b1):
+    """beat times from t0 to t1 with the tempo rising linearly from b0 to b1 bpm"""
+    out, t, ph, dt = [], t0, 0.0, 0.001
+    while t < t1:
+        if ph >= len(out): out.append(t)
+        ph += (b0 + (b1 - b0) * (t - t0) / (t1 - t0)) / 60 * dt; t += dt
+    return out
 def pulse_note(m, dur, cutoff=900):
     n = secs(dur); t = np.arange(n) / SR; f = midi(m)
     saw = 2 * (t * f % 1) - 1; return bl("lp", cutoff, saw) * env_adsr(n, 0.004, 0.08, 0.4, 0.05)
@@ -269,20 +300,36 @@ def build_score():
     m = np.zeros((N, 2), np.float32)
     S = ST; E = {k: ST[k] + DUR[k] for k in ST}
     # --- drone bed (whole film, shaped)
-    Ld = lane([(0, 0), (0.6, .85), (S["c1"], .7), (E["c1"], .45), (S["launch"], .3), (E["launch"], .25), (S["rafael"], .5), (NEC, .5), (NEC + 0.35, 0),
-               (S["clate"], 0), (S["clate"] + 1.0, .45), (SIL, .6), (SIL + 0.05, 0), (TOTAL, 0)])
+    SUCK = S["c1"] - 0.3                   # everything but the reverse swell stops here: the held breath before the card hits
+    Ld = lane([(0, 0), (0.5, 0), (1.6, .55), (S["trackA"], .7), (SUCK, 1.0), (S["c1"], .85), (E["c1"], .55), (S["temi"] + 3, .4), (S["launch"], .3), (E["launch"], .25),
+               (S["rafael"], .5), (NEC, .5), (NEC + 0.35, 0), (S["clate"], 0), (S["clate"] + 1.0, .45), (SIL, .6), (SIL + 0.05, 0), (TOTAL, 0)])
     n = N; t = np.arange(n) / SR
     dr = (np.sin(2 * np.pi * midi(26) * t) + 0.5 * np.sin(2 * np.pi * midi(38) * t + 0.3 * np.sin(2 * np.pi * 0.07 * t)) + 0.15 * bl("lp", 300, brown(n))) * Ld
     m += pan(dr.astype(np.float32) * 0.09, 0)
     air = bl("bp", (5000, 9000), pink(n)) * lane([(0, .5), (S["trackA"], .3), (S["temi"], .0), (S["station"], .25), (S["rafael"], 0), (S["pass"], .4), (SIL, .4), (SIL + 0.05, 0), (TOTAL, 0)])
     m += pan(air * 0.01, 0.2)
-    # --- clock ticks: tracking room + Temi waking (the forty hours), and the countdown
-    for t0, t1, bpm in ((S["trackA"] + 0.5, E["temi"], 80), (S["pass"] + 2.0, SIL, 120)):
+    # --- the opening builds: a dissonant string tremolo swells under the titles, then a low pulse and the clock
+    #     speed up through the tracking room until everything stops a breath before the card hits
+    tr0 = S["open"] + OPEN_BEATS[0][0] + 0.4
+    L = SUCK - tr0; place(m, pan(tremolo_cluster([74, 75, 81], L) * np.linspace(0.25, 1, secs(L)) ** 1.5, 0.15), tr0, 0.13)
+    for k, tk in enumerate(accel_times(S["open"] + OPEN_BEATS[1][0], SUCK, 96, 168)):
+        g = 0.35 + 0.65 * (tk - S["open"]) / (SUCK - S["open"])
+        place(m, pan(pulse_note([38, 38, 45, 38][k % 4], 0.22, 500 + 700 * g), -0.1), tk, 0.24 * g)
+    for k, tk in enumerate(accel_times(S["trackA"] + 0.3, SUCK, 84, 168)):
+        place(m, pan(tick() * (0.06 if k % 2 == 0 else 0.035), 0.4), tk)
+    # --- clock ticks: Temi waking (the forty hours, steady again), and the countdown
+    for t0, t1, bpm in ((S["temi"] + 0.4, E["temi"], 80), (S["pass"] + 2.0, SIL, 120)):
         k = 0
         while t0 + k * 60 / bpm < t1:
             tk = t0 + k * 60 / bpm; place(m, pan(tick() * (0.06 if k % 2 == 0 else 0.035), 0.4), tk); k += 1
-    # --- the boom on the first card
-    place(m, pan(boom(0.5), 0), S["c1"])
+    # --- trailer impacts on every title phrase, each pulled in by a reverse swell (own bus, added after the main reverb)
+    hits = np.zeros((N, 2), np.float32)
+    for seg, beats, lv in (("open", OPEN_BEATS, (0.30, 0.36, 0.44)), ("c1", C1_BEATS, (0.50, 0.66))):
+        for (a, b, txt, ck), level in zip(beats, lv):
+            th = S[seg] + a; big = seg == "c1" and a > 0
+            sw = 0.3 if seg == "c1" and a == 0 else 0.4
+            place(hits, pan(reverse_swell(sw) * (0.16 if seg == "c1" else 0.10), 0), th - sw)
+            place(hits, pan(trailer_hit(big) * level, 0), th)
     # --- tension on the pad until the engines light, then the launch chords
     pre = IGN - S["launch"]
     sw = strings_chord([50, 57, 62, 63, 65], pre + 0.5) * np.linspace(0, 1, secs(pre + 0.5)) ** 1.6
@@ -352,6 +399,9 @@ def build_score():
     place(m, pan(bass_note(ROOT["D"], 2.6), 0), REVEAL, 0.2)
     place(m, pan(piano(62, 4.0) + piano(66, 4.0) + piano(69, 4.0) + piano(74, 4.0), 0), REVEAL, 0.12)
     m = convolve(m, reverb_ir(2.4, bright=0.45, seed=9), wet=0.22)
+    # the held breath: the score (reverb tail included) cuts out 0.3 s before the card; only the swell pulls into the hit
+    m *= lane([(0, 1), (SUCK - 0.03, 1), (SUCK, 0), (S["c1"] - 0.005, 0), (S["c1"], 1), (TOTAL, 1)])[:, None]
+    m += convolve(hits, reverb_ir(3.2, bright=0.4, seed=11), wet=0.3)
     # global fade: start from silence, end clean on the last frame
     g = lane([(0, 0), (0.8, 1), (TOTAL - 1.6, 1), (TOTAL - 0.05, 0), (TOTAL, 0)])
     return m * g[:, None]
@@ -372,10 +422,12 @@ if __name__ == "__main__":
     np.save("_mask.npy", mask)
     print("dialogue-region: dia %.1f dB, bed %.1f dB" % (rms_db(dia[mask > 0]), rms_db(bed[mask > 0])))
     print("marks: IGN %.2f CAP %.2f NEC %.2f SIL %.2f RES %.2f STRIKE %.2f REVEAL %.2f TOTAL %.3f" % (IGN, CAP, NEC, SIL, RES, STRIKE, REVEAL, TOTAL))
-    for name, (a, b) in {"opening": (1, ST["trackA"]), "card1": (ST["c1"], ST["temi"]), "launch": (ST["launch"], ST["station"]), "capture": (CAP - 2, CAP + 1),
+    print("dialogue peak %.1f dB" % (20 * np.log10(np.abs(dia).max() + 1e-9)))
+    for name, (a, b) in {"opening": (1, ST["trackA"]), "tracking-room": (ST["trackA"], ST["c1"] - 0.3), "card1": (ST["c1"], ST["temi"]), "launch": (ST["launch"], ST["station"]), "capture": (CAP - 2, CAP + 1),
                          "not-even-close": (NEC + 1.0, ST["clate"]), "make-it-late": (ST["clate"], ST["temi2"]), "countdown": (ST["pass"] + 1, SIL),
                          "held-breath": (SIL + 0.1, RES), "resolution": (RES, ST["cardA"]), "title": (ST["title"], TOTAL - 1)}.items():
-        print(f"  {name:10s} bed {rms_db(bed[secs(a):secs(b)]):6.1f} dB   total {rms_db(mix[secs(a):secs(b)]):6.1f} dB")
+        seg = mix[secs(a):secs(b)]
+        print(f"  {name:14s} bed {rms_db(bed[secs(a):secs(b)]):6.1f} dB   total {rms_db(seg):6.1f} dB   peak {20 * np.log10(np.abs(seg).max() + 1e-9):6.1f} dB")
     write_wav("premix.wav", mix / (np.abs(mix).max() + 1e-9) * 0.7)
     for name, x in (("dia", dia), ("fx", fx), ("mus", mus)): write_wav(f"stem_{name}.wav", x / (np.abs(x).max() + 1e-9) * 0.7)
     print("premix written")
