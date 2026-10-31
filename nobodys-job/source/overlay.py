@@ -7,10 +7,11 @@ NF = sum(s['frames'] for s in TL)
 E = {k: ST[k] + DU[k] for k in ST}
 P = ST["pass"]
 OV = [("cards5/ltrack.png", ST["trackA"] + 0.3, ST["trackA"] + 3.6),
+      ("cards5/l20.png", P, P + 4.05),
       ("cards5/l40.png", ST["temi"] + 0.4, E["temi"] - 0.3),
       ("cards5/l31.png", ST["launch"] + 0.3, ST["launch"] + 3.8),
       ("cards5/lpush.png", ST["temi2"] + 0.8, ST["temi2"] + 5.0),
-      ("cards5/lclose.png", P + PM["close_on"], P + PM["sil"]),
+      ("cards5/lclose.png", P + PM["close_on"], P + PM["res"] - 0.15),
       ("cards5/lmiss.png", P + PM["res"], P + PM["res"] + 4.6),
       ("cards5/l6m.png", ST["deorbit"] + 0.35, E["deorbit"] - 0.15)]
 # animated trailer-style titles (alpha video layers), each starting with its segment

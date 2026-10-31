@@ -4,7 +4,7 @@ Dialogue: only the team's own recorded lines (separated from their mix), each at
 import json, subprocess, wave, pathlib, sys
 import numpy as np
 from scipy import signal
-from edl import PASS_MARKS as PM, OPEN_BEATS, C1_BEATS
+from edl import PASS_MARKS as PM, OPEN_BEATS, C1_BEATS, CLATE_BEATS
 SR = 48000
 EDL = json.load(open("timeline.json"))
 TOTAL = sum(s["frames"] for s in EDL) / 24; N = int(round(TOTAL * SR))
@@ -139,7 +139,7 @@ F = lambda t: round(np.ceil(t * 24 - 1e-6) / 24, 6)
 # measured: when -ss lands between frames, the -r 24 output repeats the first frame, so the effective in-point is
 # one frame earlier than the first decoded frame (verified by frame matching against the original)
 SRC = {"open": (F(0.0), .8), "trackA": (F(12.0), 1), "trackB": (16.916667, 1), "temi": (F(24.5), 1), "launch": (F(42.0), .8),
-       "station": (F(50.045) - 1 / 24, 1), "dock": (F(66.0), 1), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(81.5), 1),
+       "station": (F(50.045) - 1 / 24, 1), "dock": (F(66.875), 1), "rafael": (F(70.045) - 1 / 24, 1), "temi2": (F(81.5), 1),
        "pass": (F(90.045), .75), "rafback": (F(100.045) - 1 / 24, 1), "boat": (F(114.0), .35)}
 def T_of(seg, src_t):  # where an original-source moment lands on the new timeline
     a, sp = SRC[seg]; return ST[seg] + (src_t - a) / sp
@@ -162,9 +162,9 @@ LINES = [   # only the team's own recorded lines, each at its original picture p
  (T_of("trackA", 14.08), ("orig", 14.08, 16.25), "ctrl", 0, "ODILE  We've got movement on sector seven."),
  (T_of("trackB", 17.00), ("orig", 17.00, 18.66), "ctrl", 0, "MAREK  What's the trajectory change?"),
  (T_of("temi", 27.45), ("orig", 27.45, 28.95), "room", 2, "TEMI  What time is it?"),
- (T_of("station", 50.70), ("orig", 50.70, 55.38), "radio", 0, "TUG  Tug control, we have visual contact with the target, initiating docking approach now."),
+ (T_of("station", 50.70), ("orig", 50.70, 55.38), "radio", -2, "TUG  Tug control, we have visual contact with the target, initiating docking approach now."),
  # the reply waits a beat after the tug's squelch tail (radio, exterior shots: no lips to follow)
- (T_of("station", 55.45) + 0.15, ("orig", 55.45, 59.90), "radio", 0, "CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate."),
+ (T_of("station", 55.45) + 0.15, ("orig", 55.45, 59.90), "radio", -2, "CONTROL  Copy that, manoeuvring thrusters engaged, monitoring rotation rate."),
  # measured: in the close-up his mouth leads the voice by ~3 frames; "not even close" (next shot) is already in sync
  (T_of("rafael", 69.68), ("orig", 69.68, 74.05), "room", 0, "RAFAEL  We cannot bring it down. Nine tonnes. Not even close.", {"split_src": 73.10, "shift_a": -0.125}),
  (T_of("temi2", 86.78), ("orig", 86.78, 88.25), "room", 0, "TEMI  There we go, come on now."),
@@ -211,7 +211,7 @@ def build_fx():
     fx = np.zeros((N, 2), np.float32)
     orig = load_any(FX)
     # the team's own sound effects (launch roar, tug hum, docking clanks, flyby), re-timed to the new cut
-    for seg, a, b, g in [("launch", 42.0, 48.4, 0), ("station", 50.045, 60.0, -2), ("dock", 66.0, 70.0, -2), ("pass", 90.045, 98.0, -4), ("temi2", 82.0, 87.0, -6)]:
+    for seg, a, b, g in [("launch", 42.0, 48.4, -1.5), ("station", 50.045, 60.0, -4.5), ("dock", 66.875, 70.0, -2), ("pass", 90.045, 98.0, -4), ("temi2", 82.0, 87.0, -6)]:
         a0, sp = SRC[seg]; x = stretch(orig[secs(a):secs(b)], sp)
         x = fade(x, 0.15, 0.4); place(fx, pan(x, 0), T_of(seg, a), db(g))
     # phone buzz waking Temi (three pulses)
@@ -302,7 +302,7 @@ def build_score():
     # --- drone bed (whole film, shaped)
     SUCK = S["c1"] - 0.3                   # everything but the reverse swell stops here: the held breath before the card hits
     Ld = lane([(0, 0), (0.5, 0), (1.6, .55), (S["trackA"], .7), (SUCK, 1.0), (S["c1"], .85), (E["c1"], .55), (S["temi"] + 3, .4), (S["launch"], .3), (E["launch"], .25),
-               (S["rafael"], .5), (NEC, .5), (NEC + 0.35, 0), (S["clate"], 0), (S["clate"] + 1.0, .45), (SIL, .6), (SIL + 0.05, 0), (TOTAL, 0)])
+               (S["rafael"], .5), (NEC, .5), (NEC + 0.35, 0), (S["clate"] + CLATE_BEATS[1][0], 0), (S["clate"] + CLATE_BEATS[1][0] + 1.0, .45), (SIL, .6), (SIL + 0.05, 0), (TOTAL, 0)])
     n = N; t = np.arange(n) / SR
     dr = (np.sin(2 * np.pi * midi(26) * t) + 0.5 * np.sin(2 * np.pi * midi(38) * t + 0.3 * np.sin(2 * np.pi * 0.07 * t)) + 0.15 * bl("lp", 300, brown(n))) * Ld
     m += pan(dr.astype(np.float32) * 0.09, 0)
@@ -324,7 +324,7 @@ def build_score():
             tk = t0 + k * 60 / bpm; place(m, pan(tick() * (0.06 if k % 2 == 0 else 0.035), 0.4), tk); k += 1
     # --- trailer impacts on every title phrase, each pulled in by a reverse swell (own bus, added after the main reverb)
     hits = np.zeros((N, 2), np.float32)
-    for seg, beats, lv in (("open", OPEN_BEATS, (0.30, 0.36, 0.44)), ("c1", C1_BEATS, (0.50, 0.66))):
+    for seg, beats, lv in (("open", OPEN_BEATS, (0.32, 0.40, 0.48)), ("c1", C1_BEATS, (0.44, 0.58))):
         for (a, b, txt, ck), level in zip(beats, lv):
             th = S[seg] + a; big = seg == "c1" and a > 0
             sw = 0.3 if seg == "c1" and a == 0 else 0.4
@@ -361,8 +361,10 @@ def build_score():
         place(m, pan(piano(nt, 3.2), -0.15), tn, 0.16); place(m, pan(piano(nt - 12, 3.2), -0.15), tn, 0.10)
     place(m, pan(pad_chord(CH["Dm"], NEC - S["rafael"] + 0.4) * env_adsr(secs(NEC - S["rafael"] + 0.4), 1.2, 0.3, 0.8, 0.3), 0), S["rafael"], 0.12)
     # "make it late": the idea lands with the card, a lift (Bb -> F) and three rising piano notes
-    place(m, pan(pad_chord(CH["Bb"], 4.0) * env_adsr(secs(4.0), 0.5, 0.3, 0.9, 1.5), 0), S["clate"], 0.16)
-    for k, nt in enumerate((62, 65, 69)): place(m, pan(piano(nt, 2.6), 0.15), S["clate"] + 0.35 + 0.55 * k, 0.11)
+    LATE = S["clate"] + CLATE_BEATS[1][0]   # "BUT YOU CAN MAKE IT LATE." lands
+    place(m, pan(pad_chord(CH["Bb"], 4.0) * env_adsr(secs(4.0), 0.3, 0.3, 0.9, 1.5), 0), LATE, 0.18)
+    for k, nt in enumerate((62, 65, 69)): place(m, pan(piano(nt, 2.6), 0.15), LATE + 0.2 + 0.45 * k, 0.12)
+    place(hits, pan(reverse_swell(0.35) * 0.08, 0), LATE - 0.35); place(hits, pan(trailer_hit(False) * 0.30, 0), LATE)
     # --- Temi at the controls: pulse returns, rising; hope on "there we go"
     THERE = T_of("temi2", 86.78)
     tk = S["temi2"] + 0.4; k = 0
@@ -370,13 +372,25 @@ def build_score():
         g = 0.3 + 0.5 * (tk - S["temi2"]) / (THERE - S["temi2"]); place(m, pan(pulse_note([50, 57, 53, 57][k % 4] - 12, 0.28, 800), 0.1), tk, 0.2 * g); tk += beat / 2; k += 1
     place(m, pan(pad_chord(CH["F"], 4.5) * env_adsr(secs(4.5), 0.3, 0.3, 0.9, 1.8), 0), THERE, 0.2)
     place(m, pan(strings_chord(CH["C"], 3.5) * env_adsr(secs(3.5), 0.8, 0.3, 0.9, 1.5), 0.1), THERE + 0.6, 0.16)
-    # --- the pass: heartbeat + riser, hard cut to silence at SIL, then the reveal at RES
-    for k in range(int((SIL - S["pass"] - 1.0) / 0.75)):
-        tk = S["pass"] + 1.0 + k * 0.75; g = 0.4 + 0.6 * k / 8
-        place(m, pan(kick(0.8), 0), tk, 0.30 * min(1, g)); place(m, pan(kick(0.5), 0), tk + 0.2, 0.20 * min(1, g))
-    rz = riser(SIL - (S["pass"] + 1.5)); place(m, pan(rz * 0.10, 0), S["pass"] + 1.5)
-    place(m, pan(strings_chord([50, 51, 57, 62, 63], SIL - S["pass"]) * np.linspace(0, 1, secs(SIL - S["pass"])) ** 2, 0), S["pass"], 0.2)
-    # (nothing between SIL and RES)
+    # --- the pass: the heartbeat speeds up, strings and a tremolo climb, a riser pulls everything into one PEAK impact
+    #     as the two objects pass closest ("CLOSEST APPROACH" lands on it); its tail rings out until MISS DISTANCE at RES
+    PEAK = SIL
+    for k, tk in enumerate(accel_times(S["pass"] + 0.8, PEAK - 0.4, 72, 152)):
+        g = 0.4 + 0.6 * (tk - S["pass"]) / (PEAK - S["pass"])
+        place(m, pan(kick(0.8), 0), tk, 0.30 * g); place(m, pan(kick(0.5), 0), tk + 0.17, 0.20 * g)
+    rz = riser(PEAK - (S["pass"] + 1.5)); place(m, pan(rz * 0.14, 0), S["pass"] + 1.5)
+    place(m, pan(strings_chord([50, 51, 57, 62, 63], PEAK - S["pass"]) * np.linspace(0, 1, secs(PEAK - S["pass"])) ** 2, 0), S["pass"], 0.24)
+    L = PEAK - (S["pass"] + 2.5)
+    place(m, pan(tremolo_cluster([74, 75, 81, 86], L) * np.linspace(0, 1, secs(L)) ** 2, 0.15), S["pass"] + 2.5, 0.15)
+    place(hits, pan(reverse_swell(0.6) * 0.22, 0), PEAK - 0.6)
+    place(hits, pan(trailer_hit(True) * 0.55, 0), PEAK); place(hits, pan(boom(0.45), 0), PEAK)
+    nc = secs(3.6); place(hits, pan(bl("hp", 2500, white(nc)) * expdecay(nc, 0.9) * 0.095, 0.2), PEAK)     # crash
+    st = strings_chord([62, 63, 69, 74, 75], 2.6) * env_adsr(secs(2.6), 0.01, 0.25, 0.6, 1.6)               # high string stab
+    place(hits, pan(st, 0.1), PEAK, 0.38)
+    nb = secs(4.0); tb = np.arange(nb) / SR; brm = np.zeros(nb, np.float32)                          # dissonant braam: D, A, E-flat
+    for mm, dt in ((38, -0.003), (38, 0.003), (45, 0.0), (51, -0.002), (51, 0.002)):
+        fr = midi(mm) * (1 + dt); brm += (2 * (tb * fr % 1) - 1).astype(np.float32)
+    place(hits, pan(bl("lp", 1600, brm / 5) * env_adsr(nb, 0.02, 0.5, 0.7, 3.0), 0), PEAK, 0.68)
     # --- resolution: D major, the hopeful theme; bars fitted so the last cadence (G A -> D) lands on the title reveal
     t0 = RES; nb = max(4, round((REVEAL - t0) / 2.9)); bar = (REVEAL - t0) / nb
     prog = (["D", "Bm", "G", "A"] * 4)[:nb - 2] + ["G", "A"]
@@ -400,7 +414,7 @@ def build_score():
     place(m, pan(piano(62, 4.0) + piano(66, 4.0) + piano(69, 4.0) + piano(74, 4.0), 0), REVEAL, 0.12)
     m = convolve(m, reverb_ir(2.4, bright=0.45, seed=9), wet=0.22)
     # the held breath: the score (reverb tail included) cuts out 0.3 s before the card; only the swell pulls into the hit
-    m *= lane([(0, 1), (SUCK - 0.03, 1), (SUCK, 0), (S["c1"] - 0.005, 0), (S["c1"], 1), (TOTAL, 1)])[:, None]
+    m *= lane([(0, 1), (SUCK - 0.03, 1), (SUCK, 0), (S["c1"] - 0.005, 0), (S["c1"], 1), (SIL - 0.02, 1), (SIL, 0), (RES - 0.02, 0), (RES, 1), (TOTAL, 1)])[:, None]
     m += convolve(hits, reverb_ir(3.2, bright=0.4, seed=11), wet=0.3)
     # global fade: start from silence, end clean on the last frame
     g = lane([(0, 0), (0.8, 1), (TOTAL - 1.6, 1), (TOTAL - 0.05, 0), (TOTAL, 0)])
@@ -417,14 +431,15 @@ if __name__ == "__main__":
     mus *= lane([(0, 1), (NEC, 1), (NEC + 0.45, 0), (ST["clate"] - 0.02, 0), (ST["clate"], 1), (TOTAL, 1)])[:, None]
     duck = sidechain(mask)[:, None]
     mix = dia * db(0) + fx * db(-3) * (0.6 + 0.4 * duck) + mus * db(0) * duck
-    mix[secs(SIL):secs(RES)] = dia[secs(SIL):secs(RES)] + fx[secs(SIL):secs(RES)] * db(-14)   # the held breath
+    a_, b_ = secs(SIL), secs(RES)   # the held breath: dialogue, the flyby far down, and the peak ringing out
+    mix[a_:b_] = dia[a_:b_] + fx[a_:b_] * db(-14) + mus[a_:b_]
     bed = mix - dia
     np.save("_mask.npy", mask)
     print("dialogue-region: dia %.1f dB, bed %.1f dB" % (rms_db(dia[mask > 0]), rms_db(bed[mask > 0])))
     print("marks: IGN %.2f CAP %.2f NEC %.2f SIL %.2f RES %.2f STRIKE %.2f REVEAL %.2f TOTAL %.3f" % (IGN, CAP, NEC, SIL, RES, STRIKE, REVEAL, TOTAL))
     print("dialogue peak %.1f dB" % (20 * np.log10(np.abs(dia).max() + 1e-9)))
     for name, (a, b) in {"opening": (1, ST["trackA"]), "tracking-room": (ST["trackA"], ST["c1"] - 0.3), "card1": (ST["c1"], ST["temi"]), "launch": (ST["launch"], ST["station"]), "capture": (CAP - 2, CAP + 1),
-                         "not-even-close": (NEC + 1.0, ST["clate"]), "make-it-late": (ST["clate"], ST["temi2"]), "countdown": (ST["pass"] + 1, SIL),
+                         "not-even-close": (NEC + 1.0, ST["clate"]), "make-it-late": (ST["clate"], ST["temi2"]), "countdown": (ST["pass"] + 1, SIL), "peak": (SIL - 0.05, SIL + 1.5),
                          "held-breath": (SIL + 0.1, RES), "resolution": (RES, ST["cardA"]), "title": (ST["title"], TOTAL - 1)}.items():
         seg = mix[secs(a):secs(b)]
         print(f"  {name:14s} bed {rms_db(bed[secs(a):secs(b)]):6.1f} dB   total {rms_db(seg):6.1f} dB   peak {20 * np.log10(np.abs(seg).max() + 1e-9):6.1f} dB")

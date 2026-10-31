@@ -41,7 +41,7 @@ ass += [f"Dialogue: 0,{ass_t(a + 0.0)},{ass_t(b)},Cap,,0,0,0,,{t}" for a, b, t i
 # the film's lower-thirds are too small at phone width: repeat the story beats large in the caption zone
 from edl import PASS_MARKS as PM
 P = TL["pass"]["start_f"] / FPS; T2 = TL["temi2"]["start_f"] / FPS; o = A0 / FPS
-beats = [(T2 + 0.8, T2 + 5.0, "Beat", "THE PUSH:\\N1 CM/S, 20 HOURS EARLY"), (P + PM["close_on"], P + PM["sil"], "Beat", "CLOSEST APPROACH"),
+beats = [(T2 + 0.8, T2 + 5.0, "Beat", "THE PUSH:\\N1 CM/S, 20 HOURS EARLY"), (P + PM["close_on"], P + PM["res"] - 0.15, "Beat", "CLOSEST APPROACH"),
          (P + PM["res"], P + PM["res"] + 4.6, "Hit", "MISS DISTANCE:\\N2.1 KM")]
 ass += [f"Dialogue: 1,{ass_t(a - o)},{ass_t(min(b - o, dur_a))},{st},,0,0,0,,{{\\fad(250,250)}}{t}" for a, b, st, t in beats]
 open("qa/v5/vertical.ass", "w").write("\n".join(ass) + "\n")

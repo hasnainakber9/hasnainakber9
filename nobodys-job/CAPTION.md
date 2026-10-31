@@ -18,7 +18,7 @@ Somebody is starting the job. In 2024 Astroscale flew within 15 metres of a dead
 
 ## Short caption (X / Instagram, under 280 characters)
 
-40,000 tracked objects orbit Earth. Only 11,000 work. The rest belong to whoever launched them, forever, and no treaty says anyone has to clean them up. NOBODY'S JOB (1:42): the day somebody decided it was theirs. Every number in it is real. #xhopememeprize
+40,000 tracked objects orbit Earth. Only 11,000 work. The rest belong to whoever launched them, forever, and no treaty says anyone has to clean them up. NOBODY'S JOB (1:50): the day somebody decided it was theirs. Every number in it is real. #xhopememeprize
 
 ---
 

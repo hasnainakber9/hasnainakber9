@@ -23,6 +23,8 @@ for s, n in zip(segs, frames):
     else:
         sp = s["sp"]
         f = []
+        if s.get("delogo"):   # erase a burned-in label: (x, y, w, h) in the 720p source, until t_end seconds into the clip
+            x, y, w, h, te = s["delogo"]; f.append(f"delogo=x={x}:y={y}:w={w}:h={h}:enable='lt(t,{te})'")
         if sp < 0.999:
             f.append(f"setpts={1/sp:.6f}*PTS")
             f.append("minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1")

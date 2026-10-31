@@ -1,38 +1,38 @@
 1
-00:00:08,140 --> 00:00:10,250
+00:00:14,640 --> 00:00:16,750
 We've got movement on sector seven.
 
 2
-00:00:10,390 --> 00:00:12,000
+00:00:16,890 --> 00:00:18,500
 What's the trajectory change?
 
 3
-00:00:17,800 --> 00:00:19,490
+00:00:24,300 --> 00:00:25,990
 What time is it?
 
 4
-00:00:28,950 --> 00:00:33,800
+00:00:35,450 --> 00:00:40,300
 Tug control, we have visual contact with
 the target, initiating docking approach now.
 
 5
-00:00:33,850 --> 00:00:38,610
+00:00:40,350 --> 00:00:45,110
 Copy that, manoeuvring thrusters
 engaged, monitoring rotation rate.
 
 6
-00:00:41,820 --> 00:00:46,510
+00:00:47,450 --> 00:00:52,130
 We cannot bring it down.
 Nine tonnes. Not even close.
 
 7
-00:00:57,300 --> 00:00:58,750
+00:01:03,260 --> 00:01:04,708
 There we go, come on now.
 
 8
-00:01:17,850 --> 00:01:20,390
+00:01:23,810 --> 00:01:26,350
 Rafael, this is mission control calling.
 
 9
-00:01:27,020 --> 00:01:29,610
+00:01:32,980 --> 00:01:35,570
 Look, Dad. A shooting star.

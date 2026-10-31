@@ -37,13 +37,18 @@ def shadowed(layer_draw_fn):
     out = Image.new("RGBA", (W, H), (0, 0, 0, 0)); out.alpha_composite(sh, (2, 3)); out.alpha_composite(fg)
     return out
 
-def lower(name, label, main, label_col=ORANGE):
+def lower(name, label, main, label_col=ORANGE, plate=False):
     """two-line lower-third, bottom-left, kept clear of the caption zone (captions sit above y~905)"""
     fl, fm = font(INTER_B, 28), font(INTER_XB, 48)
     def fn(d):
         if label: draw_tracked(d, (74, 918 - fl.getbbox("HX")[1]), label, fl, label_col + (255,), 3)
         d.text((72, 958 - fm.getbbox("HX")[1]), main, font=fm, fill=WHITE + (255,))
-    shadowed(fn).save(f"cards5/{name}.png")
+    out = shadowed(fn)
+    if plate:   # soft dark plate behind the text
+        pa = Image.new("L", (W, H), 0); ImageDraw.Draw(pa).rectangle((20, 896, 640, 1030), fill=165)
+        pl = Image.new("RGBA", (W, H), (0, 0, 0, 0)); pl.putalpha(pa.filter(ImageFilter.GaussianBlur(22)))
+        pl.alpha_composite(out); out = pl
+    out.save(f"cards5/{name}.png")
 
 def top_overlay(name, l1, l2):
     """centred two-line statement over the opening space shot, on a soft top gradient"""
@@ -61,6 +66,7 @@ lower("ltrack", "", "ORBITAL TRAFFIC CONTROL")
 lower("l40", "TEMI  ·  TUG OPERATOR", "40 HOURS TO IMPACT")
 lower("l31", "RAPID-RESPONSE LAUNCH", "31 HOURS TO IMPACT")
 lower("lpush", "THE PUSH", "1 CM/S, 20 HOURS EARLY")
+lower("l20", "", "20 HOURS LATER", plate=True)
 lower("lclose", "", "CLOSEST APPROACH")
 lower("lmiss", "", "MISS DISTANCE: 2.1 KM")
 lower("l6m", "SIX MONTHS LATER", "THE TUG CAME BACK FOR IT.")
