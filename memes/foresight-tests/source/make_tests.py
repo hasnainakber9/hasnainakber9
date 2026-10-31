@@ -9,7 +9,7 @@ import composite as C
 MEMES = [
     dict(name="04_load_shedding_test", title="4. THE LOAD-SHEDDING TEST", a="raw/power_2026.png", b="raw/power_2040.png",
          ya="2026", yb="2040", quote=["“Ammi, what was", "load-shedding?”"], ay=(0.5, 0.5)),
-    dict(name="05_november_test", title="5. THE NOVEMBER TEST", a="raw/smog_2026.png", b="raw/smog_2045.png",
+    dict(name="05_november_test", title="THE NOVEMBER TEST", a="raw/smog_2026.png", b="raw/smog_2045_v2.png",
          ya="2026", yb="2045", quote=["“November is just", "a month again.”"], ay=(0.55, 0.55)),
     dict(name="06_tooth_fairy_test", title="6. THE TOOTH FAIRY TEST", a="raw/tooth_2026.png", b="raw/tooth_2050.png",
          ya="2026", yb="2050", quote=["“Wait... they DRILLED", "holes in your teeth?”"], ay=(0.45, 0.45)),

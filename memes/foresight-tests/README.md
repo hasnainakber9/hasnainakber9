@@ -1,6 +1,6 @@
 # THE ___ TEST: five new memes, plus captions for three GIFs
 
-These five memes continue "3. THE TURTLE TEST" in the same layout: a header, a 2026 panel, a future panel and a quote. Each panel is a Higgsfield GPT Image 2 still (2 credits each, 20 credits in all). Each future panel was made as an edit of its 2026 panel, so the place, the people and the camera angle carry across. The compositor is the Turtle Test's own (`good-food-no-dead-ends/memes/composite.py`), driven by `source/make_tests.py`.
+These five memes continue "3. THE TURTLE TEST" in the same layout (THE NOVEMBER TEST carries no number, so it can stand alone): a header, a 2026 panel, a future panel and a quote. Each panel is a Higgsfield GPT Image 2 still (2 credits each, 20 credits in all). Each future panel was made as an edit of its 2026 panel, so the place, the people and the camera angle carry across. The compositor is the Turtle Test's own (`good-food-no-dead-ends/memes/composite.py`), driven by `source/make_tests.py`.
 
 Every caption ends with #xhopememeprize, and every number is sourced at the bottom of this file.
 
@@ -14,7 +14,7 @@ Every caption ends with #xhopememeprize, and every number is sourced at the bott
 > Load-shedding won't end with a speech. It'll end one rooftop at a time.
 > #xhopememeprize #solar #Pakistan #loadshedding #energy
 
-## 5. THE NOVEMBER TEST (`05_november_test`)
+## THE NOVEMBER TEST (`05_november_test`)
 **Quote:** "November is just a month again."
 
 **Caption:**
