@@ -1,6 +1,6 @@
 # Eight memes, eight art forms
 
-Each meme uses a different medium: a sketchbook page, a linocut print, cross-stitch, a 1930s travel poster, a hand-drawn cartoon in the style of the team's lab-mouse meme, 8-bit pixel art, Pakistani truck art and a Mughal miniature.
+Each meme uses a different medium: a sketchbook page, a linocut print, cross-stitch, a 1930s silkscreen travel poster, a hand-drawn cartoon, 8-bit pixel art, Pakistani truck art and a postage stamp with Mughal miniature artwork.
 
 `00_contact_sheet.jpg` shows all eight together.
 
@@ -11,11 +11,11 @@ Every caption ends with #xhopememeprize. Every number is sourced at the bottom o
 | 1 | `01_sketchbook_things_grandpa_had_to_worry_about.jpg` | Sketchbook page | THINGS GRANDPA HAD TO WORRY ABOUT |
 | 2 | `02_linocut_we_bottled_a_star.jpg` | Linocut print | WE BOTTLED A STAR |
 | 3 | `03_cross_stitch_bless_this_solar_roof.jpg` | Cross-stitch sampler | BLESS THIS SOLAR ROOF |
-| 4 | `04_travel_poster_see_the_milky_way.jpg` | Vintage travel poster | SEE THE MILKY WAY / FROM YOUR OWN BACKYARD |
-| 5 | `05_cartoon_factory_reset.jpg` | Hand-drawn cartoon | FACTORY RESET |
+| 4 | `04_travel_poster_see_the_milky_way.jpg` | 1930s silkscreen travel poster | SEE THE MILKY WAY / FROM YOUR OWN BACKYARD |
+| 5 | `05_cartoon_factory_reset.jpg` | Hand-drawn cartoon (a grandmother, a scientist and the OSK machine) | FACTORY RESET |
 | 6 | `06_pixel_boss_rush.png` / `.gif` / `.mp4` | 8-bit pixel art | HUMANITY VS DISEASE: BOSS RUSH |
 | 7 | `07_truck_art_maa_ki_dua_saaf_hawa.jpg` | Pakistani truck art | MAA KI DUA, SAAF HAWA |
-| 8 | `08_miniature_the_last_polio_drop.jpg` | Mughal miniature | THE LAST POLIO DROP / PAKISTAN, 20__ |
+| 8 | `08_stamp_the_last_polio_drop.jpg` | Postage stamp on a postcard, Mughal miniature artwork | THE LAST POLIO DROP / PAKISTAN, 20__, postmarked LAHORE 20__ |
 
 ---
 
@@ -36,7 +36,7 @@ Every caption ends with #xhopememeprize. Every number is sourced at the bottom o
 > In 2024 alone, Pakistan imported about 17 GW of solar panels, five times what it bought in 2022. Families didn't wait for the grid. They put it on the roof.
 > #xhopememeprize #solar #crossstitch #embroidery #Pakistan
 
-## 4. Vintage travel poster: SEE THE MILKY WAY FROM YOUR OWN BACKYARD
+## 4. 1930s silkscreen travel poster: SEE THE MILKY WAY FROM YOUR OWN BACKYARD
 > Old travel posters sold faraway wonders. This one sells the wonder right over your house.
 > More than a third of humanity can no longer see the Milky Way from home, including nearly 80% of North Americans. It doesn't have to stay that way. Flagstaff, Arizona passed its first outdoor-lighting rule in 1958, and in 2001 it became the world's first International Dark Sky City.
 > Warm lights, pointed down, switched off when nobody needs them.
@@ -66,21 +66,22 @@ The GIF and MP4 loop the blinking pointer, the flickering last bits of HP and "I
 > In November 2024, Lahore's air quality index passed 1,000. Anything over 300 counts as hazardous. Electric trucks, cleaner fuel and fields that aren't burned can make the new slogan come true.
 > #xhopememeprize #truckart #Lahore #cleanair #Pakistan
 
-## 8. Mughal miniature: THE LAST POLIO DROP / PAKISTAN, 20__
+## 8. Postage stamp: THE LAST POLIO DROP / PAKISTAN, 20__
+> A commemorative stamp for a day that hasn't happened yet.
 > Pakistan and Afghanistan are the last two countries where wild polio still spreads. For decades, Pakistan's vaccinators have gone door to door with two drops of vaccine for every child.
 > It can be done. In 2021, Pakistan recorded just one case. It climbed to 74 in 2024, then fell to 31 in 2025.
-> One day, a vaccinator will give the last drop. This is how history should paint them.
-> Fill in the year.
-> #xhopememeprize #polio #EndPolio #Pakistan #miniaturepainting
+> One day, a vaccinator will give the last drop, and this stamp gets its postmark. Fill in the year.
+> #xhopememeprize #polio #EndPolio #Pakistan #stamps
 
 ---
 
 ## How they were made
 
-- **Pieces 1–5, 7 and 8** are Higgsfield GPT Image 2 stills, made at 2k on the team's free plan. Each cost 2 credits, 14 in all, leaving 5.05. The prompts are in `source/prompts.md`. Every word in them was checked for spelling.
-- **The Mughal miniature's lettering** was set in code (`source/make_miniature.py`, Cinzel font), not by the model. The model was asked to leave both panels empty, so the text is spelled exactly.
+- **Pieces 1–5 and 7, and the stamp's artwork,** are Higgsfield GPT Image 2 stills, made at 2k on the team's free plan at 2 credits each. The poster and the cartoon were each made a second time, on request: the poster as a tighter, flatter silkscreen, and the cartoon with new, original characters. In all, 18 credits were used and 1.05 are left. The prompts are in `source/prompts.md`. Every word in the images was checked for spelling.
+- **The cartoon's grandmother** came out with a bindi, which was painted out in code. She now reads as any South Asian grandmother, which suits a Pakistani audience.
+- **The stamp is built in code.** The lettering in the miniature's two panels is set by `source/make_miniature.py` in the Cinzel font, not by the model, so it is spelled exactly. Then `source/make_stamp.py` adds the perforations, the "Rs 2" value, the postcard and the "LAHORE 20__ PAKISTAN" postmark, which uses DejaVu Sans Bold.
 - **The 8-bit piece** was built pixel by pixel (`source/make_pixel.py`, Press Start 2P font). No AI was used, and every number on it comes from the sources below.
-- Both fonts are under the SIL Open Font License, from [Google Fonts](https://github.com/google/fonts). They are in `source/fonts/` with their licences. `source/raw/miniature_polio.jpg` is the miniature before lettering.
+- Both fonts are under the SIL Open Font License, from [Google Fonts](https://github.com/google/fonts). They are in `source/fonts/` with their licences. `source/raw/` holds the miniature before and after lettering.
 
 **Before posting:** seven of the eight pieces are AI-generated images. If the prize rules or a platform ask about AI use, say so.
 
