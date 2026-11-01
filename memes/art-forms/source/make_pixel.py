@@ -178,18 +178,8 @@ def upscale(img):
     return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
 
 if __name__ == "__main__":
-    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "out")
+    # The still. The animated MP4 and GIF are made by make_pixel_anim.py.
+    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..")
     os.makedirs(out, exist_ok=True)
-    frames = [upscale(frame(t)) for t in range(8)]
-    still = upscale(frame(0))
-    still.save(os.path.join(out, "06_pixel_boss_rush.png"))
-    frames[0].save(os.path.join(out, "06_pixel_boss_rush.gif"), save_all=True, append_images=frames[1:],
-                   duration=250, loop=0, optimize=False, disposal=1)
-    tmp = os.path.join(out, "_frames"); os.makedirs(tmp, exist_ok=True)
-    for i, f in enumerate(frames): f.save(os.path.join(tmp, f"f{i:02d}.png"))
-    # 8-second MP4 (the 2-second loop four times) for platforms that do not take GIFs
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", "3", "-framerate", "4",
-                    "-i", os.path.join(tmp, "f%02d.png"), "-vf", "fps=24,format=yuv420p",
-                    "-c:v", "libx264", "-crf", "16", "-preset", "slow", "-movflags", "+faststart",
-                    os.path.join(out, "06_pixel_boss_rush.mp4")], check=True)
+    upscale(frame(0)).save(os.path.join(out, "06_pixel_boss_rush.png"))
     print("ok")

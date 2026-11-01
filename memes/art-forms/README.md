@@ -58,7 +58,13 @@ Every caption ends with #xhopememeprize. Every number is sourced at the bottom o
 > The bosses can be beaten. Insert coin to continue.
 > #xhopememeprize #globalhealth #pixelart #retrogaming
 
-The GIF and MP4 loop the blinking pointer, the flickering last bits of HP and "INSERT COIN". Instagram does not take GIFs, so post the MP4 there.
+**The animated version** (`06_pixel_boss_rush.mp4` with sound, `06_pixel_boss_rush.gif` silent and looping) runs 5 seconds:
+- The bosses enter one by one, flash as they take hits, and their HP drains.
+- Smallpox and rinderpest explode into "K.O.", and Guinea worm and polio are left with a flickering sliver.
+- Malaria shakes off the hits and keeps 70% HP.
+- "INSERT COIN TO CONTINUE" blinks, to a coin chime and a hopeful 8-bit arpeggio.
+
+The first frame is the title card, so it works as the preview. Instagram does not take GIFs, so post the MP4 there. The PNG is the still.
 
 ## 7. Pakistani truck art: MAA KI DUA, SAAF HAWA
 > For generations, Pakistan's trucks have carried the same blessing: "Maa ki dua, jannat ki hawa." A mother's prayer is a breeze from heaven.
@@ -80,7 +86,7 @@ The GIF and MP4 loop the blinking pointer, the flickering last bits of HP and "I
 - **Pieces 1–5 and 7, and the stamp's artwork,** are Higgsfield GPT Image 2 stills, made at 2k on the team's free plan at 2 credits each. The poster and the cartoon were each made a second time, on request: the poster as a tighter, flatter silkscreen, and the cartoon with new, original characters. In all, 18 credits were used and 1.05 are left. The prompts are in `source/prompts.md`. Every word in the images was checked for spelling.
 - **The cartoon's grandmother** came out with a bindi, which was painted out in code. She now reads as any South Asian grandmother, which suits a Pakistani audience.
 - **The stamp is built in code.** The lettering in the miniature's two panels is set by `source/make_miniature.py` in the Cinzel font, not by the model, so it is spelled exactly. Then `source/make_stamp.py` adds the perforations, the "Rs 2" value, the postcard and the "LAHORE 20__ PAKISTAN" postmark, which uses DejaVu Sans Bold.
-- **The 8-bit piece** was built pixel by pixel (`source/make_pixel.py`, Press Start 2P font). No AI was used, and every number on it comes from the sources below.
+- **The 8-bit piece** was built pixel by pixel (`source/make_pixel.py`, Press Start 2P font). `source/make_pixel_anim.py` animates it at 25 fps and synthesizes the sound from square, triangle and noise waves, at −14 LUFS. No AI was used, and every number on it comes from the sources below.
 - Both fonts are under the SIL Open Font License, from [Google Fonts](https://github.com/google/fonts). They are in `source/fonts/` with their licences. `source/raw/` holds the miniature before and after lettering.
 
 **Before posting:** seven of the eight pieces are AI-generated images. If the prize rules or a platform ask about AI use, say so.
