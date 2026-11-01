@@ -23,8 +23,8 @@ module.exports = function guide(theme) {
     table(widths, head, rows) {
       kids.push(new Table({ width: { size: widths.reduce((a, b) => a + b, 0), type: WidthType.DXA }, columnWidths: widths,
         borders: { top: bd, bottom: bd, left: bd, right: bd, insideHorizontal: bd, insideVertical: bd },
-        rows: [new TableRow({ tableHeader: true, children: head.map((h, i) => cell(h, widths[i], { head: true })) }),
-          ...rows.map((r, k) => new TableRow({ children: r.map((c, i) => cell(c, widths[i], { fill: k % 2 ? PAPER : 'FFFFFF' })) }))] }));
+        rows: [new TableRow({ tableHeader: true, cantSplit: true, children: head.map((h, i) => cell(h, widths[i], { head: true })) }),
+          ...rows.map((r, k) => new TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, widths[i], { fill: k % 2 ? PAPER : 'FFFFFF' })) }))] }));
       kids.push(P('', { after: 60 }));
     },
     script(rows) { api.table([700, 700, 1400, 3300, 2500, 1500], ['IN', 'OUT', 'Speaker', 'Line', 'ON SCREEN', 'AFTER'], rows); },
