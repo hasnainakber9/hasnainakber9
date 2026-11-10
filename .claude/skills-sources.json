@@ -367,7 +367,7 @@
  "wireframe-portal-title": "ai-agents/hyperframes/registry/blocks/wireframe-portal-title",
  "scrapling-official": "ai-agents/Scrapling/agent-skill/Scrapling-Skill",
  "agent-reach": "ai-agents/Agent-Reach/agent_reach/skill",
- "career-ops": "ai-agents/career-ops/.antigravitycli/skills/career-ops",
+ "career-ops": "ai-agents/career-ops/.agents/skills/career-ops",
  "shaders": "media/shaders/skills/shaders",
  "voicestudio": "media/VoiceStudio/skills/voicestudio",
  "azure-openai-to-responses": "ai-agents/ai-agents-for-beginners/.agents/skills/azure-openai-to-responses",
