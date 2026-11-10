@@ -1,0 +1,8 @@
+{
+  "name": "repo-library",
+  "version": "0.1.0",
+  "description": "Reference skills for 46 open-source repos (dev tools, learning, AI, media, SaaS). Tells Claude when each repo helps and how to fetch and use it.",
+  "author": {
+    "name": "hasnainakber9"
+  }
+}
