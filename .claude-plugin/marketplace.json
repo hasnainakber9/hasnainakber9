@@ -1,0 +1,11 @@
+{
+  "name": "hasnain-plugins",
+  "owner": { "name": "hasnainakber9" },
+  "plugins": [
+    {
+      "name": "repo-library",
+      "source": "./plugins/repo-library",
+      "description": "Reference skills for 46 open-source repos: when each helps and how to fetch and use it."
+    }
+  ]
+}
