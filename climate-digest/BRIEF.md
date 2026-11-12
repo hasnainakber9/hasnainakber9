@@ -72,8 +72,9 @@ Global papers stay in scope.
 11. **Email** the issue to the user's own Gmail address with the Gmail connector:
     subject `Climate Data Science Shortlist: <date>`. Put the issue converted to simple HTML
     (h1/h2/h3, p, ul/li, a, b, pre for code) in `htmlBody`, and a plain-text version with
-    no markdown symbols in `body`. Never write the email address into the repo. If Gmail
-    fails, say so in the chat reply.
+    no markdown symbols in `body`. Never write the email address into the repo. If no Gmail
+    tool is available (fresh scheduled sessions have no connectors), skip this step: a
+    follow-up task two hours later emails the committed issue from a session that has Gmail.
 12. Post the full issue as the chat reply.
 
 ## Sources
@@ -208,3 +209,11 @@ settings, never from chat and never stored in the repo. Names are listed in
 `tools/check_access.py`: `CDSAPI_URL`/`CDSAPI_KEY`, `EARTHDATA_USERNAME`/`EARTHDATA_PASSWORD`,
 `EE_PROJECT`/`EE_SERVICE_ACCOUNT_KEY`. ERA5 is also usable with no login through public
 ARCO-ERA5 on Google Cloud Storage.
+
+## Feedback log
+
+Lasting preferences from the user, newest first. The weekly run applies them.
+
+- 2026-11-12: Initial setup. Newcomer framing; HKH/northern Pakistan focus; status line spec;
+  opportunities tracker with drafts (user submits); breaking-change alerts; venue-quality flags;
+  starter code with each research target; email delivery.
