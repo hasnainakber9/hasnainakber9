@@ -92,7 +92,12 @@ if not (sa and proj):
     line("Google Earth Engine", "MISSING", "set EE_PROJECT and EE_SERVICE_ACCOUNT_KEY (optional service)")
 else:
     try:
-        info = json.loads(sa)
+        try:
+            info = json.loads(sa)
+        except json.JSONDecodeError:  # also accept base64 of the JSON key
+            import base64
+            sa = base64.b64decode(sa).decode()
+            info = json.loads(sa)
         try:
             import ee  # type: ignore
         except ImportError:
