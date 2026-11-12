@@ -55,7 +55,9 @@ Global papers stay in scope.
    `climate-digest/harvest/<date>.md`: ENSO numbers, software and product version
    changes, ECMWF forum notices, and ranked literature candidates. Candidates are
    leads only; the keyword score is crude.
-3. Run `python3 climate-digest/tools/check_access.py`. Mention any credential that is
+3. Install clients (the container may be fresh): `pip install -q cdsapi earthaccess` and
+   `pip install -q --ignore-installed httplib2 earthengine-api`. Then run
+   `python3 climate-digest/tools/check_access.py`. Mention any credential that is
    MISSING or INVALID in one line at the end of the issue (never print secret values).
 4. Read earlier issues (`climate-digest/20*.md`) and `climate-digest/archive/prior-coverage.md`.
    **Never repeat an item** unless there is a material update; label those "(update)".
