@@ -1,0 +1,13 @@
+test,season,irrigated,enso_season,diff,ci_lo,ci_hi,p_boot
+"r(ONI,NDVI): rainfed minus irrigated",rabi,plains_irr,NDJ,-0.1384,-0.5156,0.1996,0.4648
+"r(ONI,NDVI): rainfed minus irrigated",rabi,punjab_irr,NDJ,-0.1523,-0.5161,0.1749,0.3860
+"r(ONI,NDVI): rainfed minus irrigated",rabi,sindh_irr,NDJ,-0.0267,-0.4789,0.4235,0.9508
+"r(precip,NDVI): rainfed minus irrigated",rabi,plains_irr,,0.1101,-0.0680,0.1679,0.2720
+"r(precip,NDVI): rainfed minus irrigated",rabi,punjab_irr,,0.1119,-0.0930,0.1973,0.3480
+"r(precip,NDVI): rainfed minus irrigated",rabi,sindh_irr,,0.3532,0.0637,0.4834,0.0164
+"r(ONI,NDVI): rainfed minus irrigated",kharif,plains_irr,JAS,0.0633,-0.2045,0.3388,0.7748
+"r(ONI,NDVI): rainfed minus irrigated",kharif,punjab_irr,JAS,0.1073,-0.1414,0.3613,0.5132
+"r(ONI,NDVI): rainfed minus irrigated",kharif,sindh_irr,JAS,-0.1478,-0.6428,0.3807,0.5428
+"r(precip,NDVI): rainfed minus irrigated",kharif,plains_irr,,-0.1210,-0.5626,0.2080,0.4852
+"r(precip,NDVI): rainfed minus irrigated",kharif,punjab_irr,,-0.1840,-0.6631,0.0783,0.1928
+"r(precip,NDVI): rainfed minus irrigated",kharif,sindh_irr,,0.2497,-0.4881,0.8171,0.6368

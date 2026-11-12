@@ -1,0 +1,70 @@
+rabi El Nino years: [np.int64(2003), np.int64(2005), np.int64(2007), np.int64(2010), np.int64(2015), np.int64(2016), np.int64(2019), np.int64(2020), np.int64(2024)] La Nina years: [np.int64(2001), np.int64(2006), np.int64(2008), np.int64(2009), np.int64(2011), np.int64(2012), np.int64(2018), np.int64(2021), np.int64(2022), np.int64(2023)]
+kharif El Nino years: [np.int64(2002), np.int64(2004), np.int64(2009), np.int64(2015), np.int64(2023)] La Nina years: [np.int64(2007), np.int64(2010), np.int64(2011), np.int64(2022)]
+
+Strongest ONI correlations (|r| top 15):
+         region  season       var  lag  ...  ci_hi  p_neff   n_eff  q_fdr
+255          gb  kharif      ndvi    3  ...  0.817   0.000  25.000  0.073
+256          gb  kharif      ndvi    4  ...  0.847   0.001  25.000  0.073
+257          gb  kharif      ndvi    5  ...  0.838   0.001  24.935  0.110
+258          gb  kharif      ndvi    6  ...  0.816   0.002  24.540  0.132
+166   sindh_irr  kharif  era5_t2m    5  ...  0.758   0.003  24.107  0.132
+38   plains_irr  kharif    chirps    3  ... -0.260   0.003  25.000  0.132
+254          gb  kharif      ndvi    2  ...  0.801   0.003  25.000  0.132
+165   sindh_irr  kharif  era5_t2m    4  ...  0.746   0.004  24.088  0.147
+35   plains_irr  kharif    chirps    0  ... -0.238   0.005  24.631  0.165
+186    pothohar    rabi   era5_tp    4  ...  0.798   0.007  24.021  0.167
+37   plains_irr  kharif    chirps    2  ... -0.171   0.007  24.515  0.167
+94   punjab_irr  kharif    chirps    3  ... -0.196   0.007  24.978  0.167
+185    pothohar    rabi   era5_tp    3  ...  0.806   0.008  23.815  0.167
+36   plains_irr  kharif    chirps    1  ... -0.178   0.008  24.441  0.167
+91   punjab_irr  kharif    chirps    0  ... -0.143   0.009  25.000  0.167
+
+[15 rows x 11 columns]
+ONI: 280 tests; nominal p<0.05: 48 (expected by chance ~14); FDR q<0.10: 2
+RONI: 280 tests; nominal p<0.05: 54 (expected by chance ~14); FDR q<0.10: 3
+
+Damping:
+                                        test  season  ...  ci_hi p_boot
+0      r(ONI,NDVI): rainfed minus irrigated    rabi  ...  0.200  0.465
+1      r(ONI,NDVI): rainfed minus irrigated    rabi  ...  0.175  0.386
+2      r(ONI,NDVI): rainfed minus irrigated    rabi  ...  0.424  0.951
+3   r(precip,NDVI): rainfed minus irrigated    rabi  ...  0.168  0.272
+4   r(precip,NDVI): rainfed minus irrigated    rabi  ...  0.197  0.348
+5   r(precip,NDVI): rainfed minus irrigated    rabi  ...  0.483  0.016
+6      r(ONI,NDVI): rainfed minus irrigated  kharif  ...  0.339  0.775
+7      r(ONI,NDVI): rainfed minus irrigated  kharif  ...  0.361  0.513
+8      r(ONI,NDVI): rainfed minus irrigated  kharif  ...  0.381  0.543
+9   r(precip,NDVI): rainfed minus irrigated  kharif  ...  0.208  0.485
+10  r(precip,NDVI): rainfed minus irrigated  kharif  ...  0.078  0.193
+11  r(precip,NDVI): rainfed minus irrigated  kharif  ...  0.817  0.637
+
+[12 rows x 8 columns]
+
+NDVI-precip coupling:
+    season      region  r_ndvi_precip  ci_lo  ci_hi  p_neff   n_eff
+0    rabi  plains_irr          0.688  0.518  0.807   0.000  24.389
+1    rabi  punjab_irr          0.686  0.521  0.810   0.000  24.418
+2    rabi   sindh_irr          0.445  0.193  0.652   0.028  24.345
+3    rabi    pothohar          0.798  0.553  0.891   0.000  25.000
+4    rabi          gb          0.226 -0.126  0.591   0.278  24.981
+5  kharif  plains_irr          0.563  0.225  0.801   0.003  25.000
+6  kharif  punjab_irr          0.626  0.388  0.819   0.001  24.619
+7  kharif   sindh_irr          0.192 -0.346  0.807   0.365  24.234
+8  kharif    pothohar          0.442 -0.038  0.773   0.028  24.640
+9  kharif          gb          0.490  0.080  0.760   0.016  23.615
+
+Key effects:
+         region  season      var  lag enso_season      r  r_ci_lo  r_ci_hi  p_neff  q_fdr  slope_per_degC  slope_ci_lo  slope_ci_hi  clim_mean  slope_pct_of_mean  r_loo_min  r_loo_max
+0   plains_irr    rabi     ndvi    2         NDJ  0.472    0.207    0.741   0.019  0.210           0.012        0.004        0.023      0.548              2.137      0.403      0.566
+1     pothohar    rabi     ndvi    2         NDJ  0.333   -0.115    0.725   0.104  0.290           0.016       -0.005        0.034      0.423              3.767      0.273      0.492
+2    sindh_irr    rabi     ndvi    2         NDJ  0.360    0.080    0.682   0.081  0.283           0.007        0.001        0.014      0.437              1.539      0.319      0.498
+3   plains_irr    rabi   chirps    3         NDJ  0.370    0.094    0.679   0.068  0.283           7.808        1.251       18.644     71.496             10.922      0.330      0.456
+4     pothohar    rabi   chirps    3         NDJ  0.383    0.132    0.672   0.059  0.283          26.177        6.366       54.396    252.709             10.359      0.349      0.464
+5           gb    rabi   chirps    3         NDJ  0.275   -0.035    0.617   0.184  0.358          10.246       -1.206       23.321    194.072              5.279      0.241      0.442
+6           gb    rabi  era5_tp    3         NDJ  0.345    0.150    0.574   0.091  0.283          27.157       10.506       48.436    497.878              5.455      0.306      0.450
+7   plains_irr  kharif   chirps    1         JAS -0.524   -0.774   -0.178   0.008  0.167         -33.476      -63.729       -9.060    244.935            -13.667     -0.619     -0.426
+8     pothohar  kharif   chirps    1         JAS -0.340   -0.680   -0.046   0.105  0.290         -52.530     -136.520       -5.496    684.772             -7.671     -0.437     -0.279
+9   plains_irr  kharif     ndvi    0         JAS -0.370   -0.561   -0.143   0.069  0.283          -0.014       -0.026       -0.004      0.504             -2.738     -0.439     -0.276
+10    pothohar  kharif     ndvi    0         JAS -0.307   -0.627    0.040   0.140  0.319          -0.014       -0.037        0.002      0.476             -3.028     -0.380     -0.191
+11          gb  kharif     ndvi    6         DJF  0.586    0.342    0.816   0.002  0.132           0.007        0.003        0.012      0.351              1.997      0.522      0.631
+12          gb  kharif     ndvi    3         MAM  0.660    0.519    0.817   0.000  0.073           0.015        0.010        0.023      0.351              4.294      0.600      0.694
