@@ -1,0 +1,39 @@
+{
+  "name": "morpho-liquidator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "scan": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx src/main.ts",
+    "scan:once": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx src/main.ts --once",
+    "evaluate": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx scripts/evaluate-position.ts",
+    "gate": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx scripts/gate-report.ts",
+    "refresh-markets": "tsx scripts/refresh-markets.ts",
+    "refresh-svr-feeds": "tsx scripts/refresh-svr-feeds.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:fork": "vitest run tests/fork",
+    "check": "pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "viem": "^2.57.19",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@foundry-rs/anvil": "^1.7.1",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@foundry-rs/anvil"
+    ]
+  },
+  "description": "Fail-closed Morpho Blue liquidation scanner for Base (research phase; no execution)."
+}

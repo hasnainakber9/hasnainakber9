@@ -1,0 +1,78 @@
+{
+  "chainId": 8453,
+  "live_execution_enabled": false,
+  "risk": {
+    "maxRiskPerTradeUsd": 1000,
+    "lossLimitUsd": 2000,
+    "manualApprovalRequired": true,
+    "maxLiveTrades": 1
+  },
+  "rpc": {
+    "maxRequestsPerSecond": 8,
+    "timeoutMs": 15000,
+    "maxRetries": 4,
+    "backoffBaseMs": 300,
+    "backoffMaxMs": 8000,
+    "breakerFailureThreshold": 6,
+    "breakerCooldownMs": 30000,
+    "multicallBatchCalls": 400,
+    "pinLagBlocks": 2,
+    "maxBlockAgeSec": 60
+  },
+  "discovery": {
+    "apiUrl": "https://api.morpho.org/graphql",
+    "intervalMs": 60000,
+    "maxAgeMs": 300000,
+    "pageSize": 500,
+    "maxPages": 20,
+    "timeoutMs": 20000
+  },
+  "scanner": {
+    "pollIntervalMs": 10000,
+    "researchBandHf": "1.05",
+    "nearThresholdHf": "1.02",
+    "bandHysteresisBps": 10,
+    "watchlistGraceCycles": 30,
+    "minDebtUsd": 50,
+    "maxLoopBackoffMs": 120000
+  },
+  "economics": {
+    "sizeLadderUsd": [1000, 5000, 10000],
+    "slippageBufferBps": 50,
+    "priceMoveBufferBps": 30,
+    "gasUnits": 700000,
+    "gasPriceMultiplier": 3,
+    "l1TxSizeBytes": 1500,
+    "minNetProfitUsd": 2,
+    "quoteTtlMs": 60000,
+    "hypotheticalTtlMs": 600000,
+    "maxQuotedPerCycle": 60,
+    "quoteCacheTtlMs": 8000,
+    "thinLiquidityBps": 1500,
+    "cycleBudgetMs": 20000,
+    "priceTtlMs": 60000,
+    "rejectSvrFlagged": true,
+    "rejectUnclassifiedOracle": true,
+    "persistenceCycles": 2,
+    "stablecoins": {
+      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913": 1
+    },
+    "hubTokens": [
+      "0x4200000000000000000000000000000000000006",
+      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
+    ],
+    "feeTiers": [100, 500, 3000, 10000]
+  },
+  "alerts": {
+    "cooldownMs": 900000,
+    "webhookTimeoutMs": 8000
+  },
+  "health": {
+    "port": 0,
+    "maxCycleAgeMs": 120000
+  },
+  "storage": {
+    "dataDir": "./data"
+  }
+}
