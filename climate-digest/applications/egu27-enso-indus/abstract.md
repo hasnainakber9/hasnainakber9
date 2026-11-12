@@ -27,7 +27,7 @@ plains monsoon rainfall correlated with July–September ONI at r = −0.52 [−
 °C. We found no evidence that irrigation damps the signal: ENSO–NDVI correlations in irrigated and
 rainfed cropland did not differ (Rabi difference −0.14 [−0.52, 0.20]), although n = 25 seasons limits
 power. The most robust result came from Gilgit-Baltistan, where July–August NDVI followed spring ONI
-(r = 0.66 [0.52, 0.82]; the only signal surviving false-discovery-rate correction with both indices).
+(r = 0.66 [0.52, 0.82]; the only signal surviving false-discovery-rate correction at q < 0.10 with both indices).
 
 These exploratory results suggest that ENSO-based seasonal outlooks carry information for both
 cropland and mountain vegetation in Pakistan, and motivate district-level panel analyses linking
