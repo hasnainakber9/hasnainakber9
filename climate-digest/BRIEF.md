@@ -5,15 +5,19 @@ follows it. Edit it to change the focus; the next run picks up the change.
 
 ## Who this is for
 
-An **early-career researcher moving into climate data science**: MS Business
-Analytics student, strong in Python/pandas, no prior earth-science degree.
-Aims: build skills and a portfolio, publish a first paper, and get into a
-funded master's or PhD. So every issue should:
+An **applied econometrician and M&E professional moving into climate data science**:
+BS International Relations, MS Business Analytics (award pending), strong in R/Stata panel
+methods (fixed effects, System GMM) and working Python, with fieldwork roots in
+**Gilgit-Baltistan and Chitral**. No natural-science degree. Full profile:
+`climate-digest/profile/PROFILE.md`. Aims: build climate-data skills and a portfolio, publish
+a first climate paper, and get into a funded master's or PhD. So every issue should:
 
-- explain jargon in a few words the first time it appears;
+- explain physical-science jargon in a few words the first time it appears;
 - prefer items you can learn from and reproduce over frontier-only results;
-- make the **next research target** doable for a newcomer on a laptop or free cloud tier
-  in 2–6 weeks, ideally leading to a conference abstract or short paper.
+- make the **next research target** play to the panel/causal-inference strength (e.g. district or
+  household panels of climate shocks → crops/NDVI → livelihoods/migration in Pakistan), doable on a
+  laptop or free cloud tier in 2–6 weeks, ideally leading to a conference abstract or short paper;
+- Python is fine for the data side; starter code may hand off to R/Stata for the econometrics.
 
 ## Focus areas (priority order)
 
@@ -189,7 +193,10 @@ with travel support, data challenges, and small grants open to Pakistani applica
   `climate-digest/applications/<slug>/`: a requirements checklist, plus a draft abstract,
   statement of purpose or motivation letter as relevant, built from the user's real background.
   **Never invent experience, grades or publications.** Mark the places that need the user's
-  input as `[[TODO: …]]`. If `climate-digest/profile/` has a CV, use it.
+  input as `[[TODO: …]]`. Use `climate-digest/profile/PROFILE.md` (the full CVs are in the
+  user's Google Drive; read them there when needed, but never commit contact details).
+- Before drafting, search Gmail for `subject:"ApplicationsLab pack"` to avoid duplicating
+  the user's existing application packs.
 - **Never submit anything, create accounts, or pay fees.** The user submits.
 
 ## Credentials (for data access)

@@ -42,7 +42,15 @@ else:
         r = requests.get(f"{url.rstrip('/')}/retrieve/v1/jobs", params={"limit": 1},
                          headers={**UA, "PRIVATE-TOKEN": key.split(":")[-1]}, timeout=30)
         if r.status_code == 200:
-            line("CDS (ERA5)", "OK", "token accepted. Accept each dataset's licence once on its CDS page.")
+            lic = requests.get(f"{url.rstrip('/')}/profiles/v1/account/licences",
+                               headers={**UA, "PRIVATE-TOKEN": key.split(":")[-1]}, timeout=30)
+            ids = {x["id"] for x in lic.json().get("licences", [])} if lic.ok else set()
+            if any("cc-by" in i or "copernicus-products" in i for i in ids):
+                line("CDS (ERA5)", "OK", "token valid; ERA5 licence (CC-BY) accepted")
+            else:
+                line("CDS (ERA5)", "LICENCE", "token valid but ERA5 licence not accepted: open "
+                     "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means"
+                     "?tab=download#manage-licences and click Accept")
         else:
             line("CDS (ERA5)", "INVALID", f"HTTP {r.status_code}; regenerate the token on your CDS profile page")
     except Exception as e:  # noqa: BLE001
@@ -56,7 +64,23 @@ else:
     try:
         r = requests.get("https://urs.earthdata.nasa.gov/api/users/tokens", auth=(u, p), headers=UA, timeout=30)
         if r.status_code == 200:
-            line("NASA Earthdata", "OK", "login works. Approve 'NASA GESDISC DATA ARCHIVE' under Applications once.")
+            # Probe a real GES DISC file: needs the GES DISC app approved/EULA accepted.
+            class EDSession(requests.Session):
+                def rebuild_auth(self, prepared, response):  # keep auth only for the Earthdata login host
+                    if "urs.earthdata.nasa.gov" not in prepared.url:
+                        prepared.headers.pop("Authorization", None)
+            s = EDSession()
+            s.auth = (u, p)
+            s.headers.update(UA)
+            probe = ("https://data.gesdisc.earthdata.nasa.gov/data/GPM_L3/GPM_3IMERGM.07/2025/"
+                     "3B-MO.MS.MRG.3IMERG.20250101-S000000-E235959.01.V07B.HDF5")
+            d = s.get(probe, headers={"Range": "bytes=0-7"}, timeout=60)
+            if d.status_code in (200, 206) and d.content[:4] == b"\x89HDF":
+                line("NASA Earthdata", "OK", "login works; GES DISC (IMERG) download allowed")
+            else:
+                line("NASA Earthdata", "EULA", "login works but GES DISC not authorized: open "
+                     "https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ "
+                     "and click Authorize")
         else:
             line("NASA Earthdata", "INVALID", f"HTTP {r.status_code}; check username/password")
     except Exception as e:  # noqa: BLE001

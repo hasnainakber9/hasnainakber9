@@ -9,8 +9,10 @@ materials in `applications/<slug>/` (statements of purpose, abstracts, CV tailor
 email drafts). **You submit** each one yourself, because forms need your accounts,
 signature, documents and fees. Nothing is submitted on your behalf.
 
-Profile used for eligibility: MS Business Analytics student, Pakistan-based, moving
-into climate data science. Python; no prior earth-science degree.
+Profile used for eligibility: see `profile/PROFILE.md`. In short: BS International Relations
+plus MS Business Analytics (exams done, **award pending**), M&E professional, panel econometrics
+(R/Stata) plus Python, Pakistan-based with Gilgit-Baltistan roots, **no natural-science degree**.
+Re-check eligibility rules that need a final degree certificate or that restrict second master's degrees.
 
 Status key: 🔎 found · ✍️ drafting · 📤 ready for you to submit · ✅ submitted · ❌ skipped/closed
 
