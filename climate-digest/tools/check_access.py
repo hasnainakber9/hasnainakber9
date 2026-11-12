@@ -87,29 +87,24 @@ else:
         line("NASA Earthdata", "ERROR", type(e).__name__)
 
 # --- Google Earth Engine ----------------------------------------------------
-sa, proj = os.environ.get("EE_SERVICE_ACCOUNT_KEY"), os.environ.get("EE_PROJECT")
-if not (sa and proj):
-    line("Google Earth Engine", "MISSING", "set EE_PROJECT and EE_SERVICE_ACCOUNT_KEY (optional service)")
-else:
-    try:
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ee_auth  # noqa: E402
+
+proj = os.environ.get("EE_PROJECT")
+try:
+    raw, info = ee_auth.load_key()
+    if not (raw and proj):
+        line("Google Earth Engine", "MISSING", "set EE_PROJECT and EE_SERVICE_ACCOUNT_KEY "
+                                                "(or EE_SERVICE_ACCOUNT_KEY_1, _2, ... if the field truncates)")
+    else:
         try:
-            info = json.loads(sa)
-        except json.JSONDecodeError:  # also accept base64 of the JSON key
-            import base64
-            sa = base64.b64decode(sa).decode()
-            info = json.loads(sa)
-        try:
-            import ee  # type: ignore
-        except ImportError:
-            line("Google Earth Engine", "PARTIAL", f"key parses ({info.get('client_email')}); "
-                                                   "pip install earthengine-api to test login")
-        else:
-            creds = ee.ServiceAccountCredentials(info["client_email"], key_data=sa)
-            ee.Initialize(creds, project=proj)
+            ee = ee_auth.init()
             ee.Number(1).getInfo()
             line("Google Earth Engine", "OK", f"initialized as {info['client_email']}")
-    except Exception as e:  # noqa: BLE001
-        line("Google Earth Engine", "INVALID", f"{type(e).__name__}: {str(e)[:120]}")
+        except ImportError:
+            line("Google Earth Engine", "PARTIAL", "key parses; pip install earthengine-api to test login")
+except Exception as e:  # noqa: BLE001
+    line("Google Earth Engine", "INVALID", f"{type(e).__name__}: {str(e)[:200]}")
 
 # --- Keyless sources (sanity) ----------------------------------------------
 try:
