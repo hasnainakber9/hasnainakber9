@@ -1,0 +1,9 @@
+link_id,unit,link,x,y,r,ci_low,ci_high,n_years,years,ci_excludes_zero
+gb_oni_mam_scf_spring,Gilgit-Baltistan,Spring El Niño (Mar–May ONI) → spring snow cover (Mar–May),oni_mam,scf_spring,0.397,0.178,0.615,26,2001–2026,True
+gb_oni_ndj_scf_winter,Gilgit-Baltistan,Winter El Niño (Nov–Jan ONI) → winter snow cover (Nov–Mar),oni_ndj,scf_winter,0.308,-0.151,0.635,26,2001–2026,False
+gb_scf_spring_ndvi_jja,Gilgit-Baltistan,Spring snow cover → summer greenness (Jul–Aug NDVI),scf_spring,ndvi_jja,0.477,0.217,0.702,26,2001–2026,True
+gb_oni_mam_ndvi_jja,Gilgit-Baltistan,Spring El Niño (Mar–May ONI) → summer greenness,oni_mam,ndvi_jja,0.627,0.428,0.789,26,2001–2026,True
+ch_oni_mam_scf_spring,Chitral,Spring El Niño (Mar–May ONI) → spring snow cover (Mar–May),oni_mam,scf_spring,0.341,0.069,0.622,26,2001–2026,True
+ch_oni_ndj_scf_winter,Chitral,Winter El Niño (Nov–Jan ONI) → winter snow cover (Nov–Mar),oni_ndj,scf_winter,0.393,-0.013,0.642,26,2001–2026,False
+ch_scf_spring_ndvi_jja,Chitral,Spring snow cover → summer greenness (Jul–Aug NDVI),scf_spring,ndvi_jja,0.592,0.283,0.851,26,2001–2026,True
+ch_oni_mam_ndvi_jja,Chitral,Spring El Niño (Mar–May ONI) → summer greenness,oni_mam,ndvi_jja,0.594,0.479,0.742,26,2001–2026,True

@@ -1,0 +1,13 @@
+unit,scf_to_date,window,latest_composite,clim_mean,clim_sd,clim_min,clim_max,rank_low_to_high,n_years,anom_pp,z,water_year,status
+Gilgit-Baltistan,79.67,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,67.74,7.53,54.30,79.82,25,25,11.93,1.58,2026-27,Well above normal
+Chitral,80.94,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,69.61,9.15,53.68,91.85,25,25,11.33,1.24,2026-27,Well above normal
+Astore,79.78,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,59.84,15.31,30.31,86.81,25,25,19.94,1.30,2026-27,Well above normal
+Diamer,67.59,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,41.96,9.87,24.34,63.00,26,25,25.63,2.60,2026-27,Well above normal
+Ghanche,81.53,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,65.87,7.28,51.64,74.34,26,25,15.66,2.15,2026-27,Well above normal
+Ghizer,75.68,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,70.96,9.34,57.24,89.25,17,25,4.72,0.50,2026-27,Above normal
+Gilgit,64.41,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,49.95,8.41,33.14,64.58,25,25,14.46,1.72,2026-27,Well above normal
+Hunza,92.89,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,86.62,3.35,78.81,91.53,26,25,6.27,1.87,2026-27,Well above normal
+Kharmang,70.02,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,50.44,12.94,25.40,67.71,26,25,19.58,1.51,2026-27,Well above normal
+Nagar,83.05,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,76.51,3.99,67.16,82.49,26,25,6.54,1.64,2026-27,Well above normal
+Shigar,85.34,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,79.12,4.67,68.70,85.53,25,25,6.22,1.33,2026-27,Well above normal
+Skardu,73.84,1 Oct - 01 Nov (8-day composites starting in window),2026-11-01,56.81,15.56,22.35,78.36,23,25,17.03,1.09,2026-27,Well above normal

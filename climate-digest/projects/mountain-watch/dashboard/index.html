@@ -1,0 +1,494 @@
+<meta name="dash-one-writer">
+<style>
+  .mw { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+  .mw h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+  .mw h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
+  .mw p { margin: 0; max-width: 68ch; line-height: 1.5; }
+  .mw-sub { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); }
+  .mw-take { font-size: var(--cds-font-size-heading); line-height: 1.45; max-width: 60ch; }
+  .mw-take b { font-variant-numeric: tabular-nums; }
+  .mw-head { display: grid; gap: var(--cds-gap-sm); }
+  .mw-sec { display: grid; gap: var(--cds-gap-md); min-width: 0; }
+  .mw-note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); max-width: 72ch; line-height: 1.5; }
+  .mw-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--cds-gap-md); }
+  .mw-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-xs); min-width: 0; }
+  .mw-card-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); letter-spacing: .02em; }
+  .mw-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 2.4rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .mw-cmp { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+  .mw-pill { justify-self: start; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+  .mw-pill[data-tone="high"] { color: var(--color-ok); }
+  .mw-pill[data-tone="low"] { color: var(--color-warn); }
+  .mw-pill[data-tone="mid"] { color: var(--color-fg-muted); }
+  .mw-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--cds-gap-lg); align-items: start; }
+  .mw-chart { position: relative; min-height: 260px; min-width: 0; }
+  .mw-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .mw-chart .tick text, .mw-axis-label { fill: var(--cds-text-secondary); font-size: var(--cds-font-size-caption); font-family: var(--font-anthropic-sans); }
+  .mw-chart .domain, .mw-chart .tick line { stroke: var(--cds-chart-axis); }
+  .mw-grid line { stroke: var(--cds-chart-grid); }
+  .mw-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 6px 10px; font-size: var(--cds-font-size-caption); line-height: 1.4; white-space: nowrap; z-index: 2; }
+  .mw-tip b { font-variant-numeric: tabular-nums; }
+  .mw-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); align-items: center; }
+  .mw-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+  .mw-tablewrap { overflow-x: auto; }
+  .mw table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
+  .mw th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); }
+  .mw td { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); }
+  .mw td.num, .mw th.num { text-align: right; }
+  .mw-row-ctl { display: flex; gap: var(--cds-gap-sm); align-items: center; flex-wrap: wrap; }
+  .mw details { border-top: 1px solid var(--color-border-line); padding-top: var(--cds-pad-md); }
+  .mw summary { cursor: pointer; font-weight: var(--cds-font-weight-medium); }
+  .mw details ul { margin: var(--cds-gap-sm) 0 0; padding-left: 1.2em; display: grid; gap: var(--cds-gap-xs); max-width: 72ch; line-height: 1.5; }
+  [data-dash-source-state=refreshing] { opacity: .5; }
+</style>
+
+<div class="mw">
+  <header class="mw-head" id="top">
+    <h1>Mountain Watch</h1>
+    <p class="mw-sub">Gilgit-Baltistan and Chitral, Pakistan. Satellite snow cover, summer greenness and high-altitude lakes.</p>
+    <p class="mw-take" id="takeaway">Snow cover across Gilgit-Baltistan this season (<span data-draw="window">—</span>) is <b data-draw="gb-anom" data-source="season_now" data-field="anom_pp" data-where="unit=Gilgit-Baltistan">—</b> percentage points <span data-draw="gb-dir">—</span> the 2001–2025 normal for the same dates: the <b data-draw="gb-place" data-source="place_now" data-field="place_from_top" data-where="unit=Gilgit-Baltistan">—</b> highest of <b data-draw="gb-seasons" data-source="place_now" data-field="seasons" data-where="unit=Gilgit-Baltistan">—</b> winters in the MODIS record, during an El Niño with the latest ONI at <b data-draw="oni-now" data-source="oni_recent" data-field="anom">—</b> °C (<span data-draw="oni-season">—</span>).</p>
+  </header>
+
+  <section class="mw-sec" id="this-winter">
+    <h2>This winter so far</h2>
+    <div class="mw-tiles">
+      <div class="mw-card" id="tile-gb">
+        <span class="mw-card-label">Gilgit-Baltistan · snow-covered share of land</span>
+        <span class="mw-big" data-draw="tile-gb-val" data-source="season_now" data-field="scf_to_date" data-where="unit=Gilgit-Baltistan">—</span>
+        <span class="mw-cmp">Normal for these dates <span data-draw="tile-gb-norm" data-source="season_now" data-field="clim_mean" data-where="unit=Gilgit-Baltistan">—</span></span>
+        <span class="mw-pill" data-draw="tile-gb-status" data-source="season_now" data-field="status" data-where="unit=Gilgit-Baltistan">—</span>
+      </div>
+      <div class="mw-card" id="tile-chitral">
+        <span class="mw-card-label">Chitral · snow-covered share of land</span>
+        <span class="mw-big" data-draw="tile-ch-val" data-source="season_now" data-field="scf_to_date" data-where="unit=Chitral">—</span>
+        <span class="mw-cmp">Normal for these dates <span data-draw="tile-ch-norm" data-source="season_now" data-field="clim_mean" data-where="unit=Chitral">—</span></span>
+        <span class="mw-pill" data-draw="tile-ch-status" data-source="season_now" data-field="status" data-where="unit=Chitral">—</span>
+      </div>
+      <div class="mw-card" id="tile-records">
+        <span class="mw-card-label">Districts at a record high for these dates</span>
+        <span class="mw-big" data-draw="records-n" data-source="record_count">—</span>
+        <span class="mw-cmp" data-draw="records-names" data-source="records">—</span>
+      </div>
+    </div>
+    <p class="mw-note">Snow-covered share: of the land the satellite could see through clouds, the percentage classed as snow in MODIS 8-day composites. Each winter is compared over the same calendar window.</p>
+
+    <div class="mw-two">
+      <div class="mw-sec" id="district-map">
+        <h2>Snow anomaly by district</h2>
+        <div class="mw-chart" data-draw="map" data-source="season_now units_geo"></div>
+        <div class="mw-legend" id="map-legend">
+          <span><i class="mw-sw" data-draw="sw-more"></i>More snow than normal</span>
+          <span><i class="mw-sw" data-draw="sw-less"></i>Less snow than normal</span>
+          <span>Shade shows standard deviations from the 2001–2025 normal</span>
+        </div>
+      </div>
+      <div class="mw-sec" id="district-table">
+        <h2>Districts ranked by anomaly</h2>
+        <div class="mw-tablewrap">
+          <table data-source="season_now" data-row-key="unit">
+            <thead><tr>
+              <th data-field="unit">Area</th>
+              <th class="num" data-field="scf_to_date">This season %</th>
+              <th class="num" data-field="clim_mean">Normal %</th>
+              <th class="num" data-field="anom_pp">Difference (pts)</th>
+              <th data-field="status">Status</th>
+            </tr></thead>
+            <tbody data-draw="district-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mw-sec" id="history">
+    <div class="mw-row-ctl">
+      <h2>Same dates, every winter since 2001</h2>
+      <select class="dash-select" id="unit-select" aria-label="Area" data-draw="unit-select" data-source="season_now"></select>
+    </div>
+    <div class="mw-chart" data-draw="history" data-source="snow_history season_now"></div>
+    <p class="mw-note">Bars: snow-covered share over the same window in each winter. The line marks the 2001–2025 normal. The current winter is highlighted.</p>
+  </section>
+
+  <section class="mw-sec" id="why">
+    <h2>Why winter snow matters for summer</h2>
+    <p>In both regions, El Niño springs tend to bring more snow, and snowier springs are followed by greener summers. This is the likely route behind the link between El Niño and summer greenness in Gilgit-Baltistan.</p>
+    <div class="mw-two">
+      <div class="mw-sec" id="scatter">
+        <div class="mw-chart" data-draw="scatter" data-source="yearly"></div>
+        <div class="mw-legend">
+          <span><i class="mw-sw" data-draw="sw-nino"></i>Spring ONI ≥ +0.5 (El Niño-like)</span>
+          <span><i class="mw-sw" data-draw="sw-nina"></i>Spring ONI ≤ −0.5 (La Niña-like)</span>
+          <span><i class="mw-sw" data-draw="sw-neutral"></i>Neutral</span>
+        </div>
+        <p class="mw-note">Gilgit-Baltistan, one dot per year: spring (Mar–May) snow-covered share against July–August NDVI over vegetated land.</p>
+      </div>
+      <div class="mw-sec" id="links">
+        <div class="mw-tablewrap">
+          <table data-source="links" data-row-key="link_id">
+            <thead><tr>
+              <th data-field="unit">Region</th>
+              <th data-field="link">Relationship</th>
+              <th class="num" data-field="r">r</th>
+              <th class="num" data-field="ci_low">95% CI low</th>
+              <th class="num" data-field="ci_high">95% CI high</th>
+            </tr></thead>
+            <tbody data-draw="link-rows"></tbody>
+          </table>
+        </div>
+        <p class="mw-note">r is the correlation of year-to-year changes after removing each series' linear trend (2001–2026). The interval comes from a block bootstrap; when it excludes zero the row is shown in full colour. With 26 years these are associations, not proof of cause.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mw-sec" id="lakes">
+    <h2>High-altitude lakes are growing</h2>
+    <p>Share of the region's all-time lake footprint above 3,500 m that was under water each year. Lakes fed by glacier melt are what glacial-lake outburst floods (GLOFs) come from. The trend is <b data-draw="lake-trend" data-source="lakes" data-field="trend_pp_per_decade" data-row="0">—</b> percentage points per decade (95% interval ±<span data-draw="lake-ci" data-source="lakes" data-field="trend_ci95_pp_per_decade" data-row="0">—</span>, allowing for year-to-year persistence) over <span data-draw="lake-years" data-source="lakes" data-field="trend_years" data-row="0">—</span>.</p>
+    <div class="mw-chart" data-draw="lakes" data-source="lakes"></div>
+    <p class="mw-note">Only years when at least 60% of the lake footprint was cloud- and snow-free are plotted; 1984–1987 had no Landsat coverage here. Source: JRC Global Surface Water v1.4 (Landsat, 30 m), which ends in 2021.</p>
+  </section>
+
+  <details id="method">
+    <summary>Data, definitions and caveats</summary>
+    <ul>
+      <li>Snow: MODIS Terra MOD10A2 v061 maximum snow extent (8-day, 500 m), via Google Earth Engine. Cloud, night and undecided pixels are left out, so cloud mistaken for snow can inflate autumn values.</li>
+      <li>Greenness: MODIS MOD13A3 v061 monthly NDVI, good-quality pixels, over land classed as vegetated in most years (MCD12Q1).</li>
+      <li>El Niño index: NOAA CPC Oceanic Niño Index (ONI), 3-month means of Niño-3.4 sea-surface temperature anomalies.</li>
+      <li>Lakes: JRC Global Surface Water v1.4 yearly history above 3,500 m (NASADEM elevation).</li>
+      <li>Boundaries: geoBoundaries v6.0.0 (Gilgit-Baltistan ADM1, its 10 districts and Chitral ADM2).</li>
+      <li>Normal: the 2001–2025 mean for the same calendar window. Status: Well above normal at +1 standard deviation or more, Above normal at +0.5, and the same thresholds below.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+  // Shared helpers (no writes outside drawings)
+  window.mw = {
+    num: (v) => (v === null || v === undefined || v === '' ? NaN : +v),
+    pct: d3.format('.0f'),
+    one: d3.format('.1f'),
+    signed: d3.format('+.1f'),
+    two: d3.format('.2f'),
+    ord: (n) => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); },
+    tip(el) {
+      let t = el.querySelector(':scope > .mw-tip');
+      if (!t) { t = document.createElement('div'); t.className = 'mw-tip'; t.hidden = true; el.appendChild(t); }
+      return {
+        show(evt, lines) {
+          t.replaceChildren(...lines.map(([k, v]) => { const d = document.createElement('div'); if (k) { d.append(k + ' '); } const b = document.createElement('b'); b.textContent = v; d.append(b); return d; }));
+          t.hidden = false;
+          const r = el.getBoundingClientRect(), p = evt.touches ? evt.touches[0] : evt;
+          let x = p.clientX - r.left + 12, y = p.clientY - r.top + 12;
+          const w = t.offsetWidth, h = t.offsetHeight;
+          if (x + w > r.width) x = Math.max(0, p.clientX - r.left - w - 12);
+          if (y + h > r.height) y = Math.max(0, p.clientY - r.top - h - 12);
+          t.style.left = x + 'px'; t.style.top = y + 'px';
+        },
+        hide() { t.hidden = true; },
+      };
+    },
+    unit: 'Gilgit-Baltistan',
+    row(id, unit) {
+      const d = dash.data(id);
+      if (d.status !== 'ok') return null;
+      return d.data.find((r) => r.unit === unit) || null;
+    },
+    setText(el, v) { el.textContent = v; },
+    placeholder(el, msg) {
+      const p = document.createElement('p'); p.className = 'mw-note'; p.textContent = msg; el.replaceChildren(p);
+    },
+    fill(z) {
+      if (!isFinite(z)) return 'var(--color-panel)';
+      const k = Math.min(1, Math.abs(z) / 2.5) * 85 + 10;
+      const c = z >= 0 ? dash.colors[0] : dash.colors[1];
+      return `color-mix(in srgb, ${c} ${k.toFixed(0)}%, var(--color-panel))`;
+    },
+  };
+
+  dash.calc('place_now', {
+    title: 'Rank of this season',
+    description: 'Where this season falls among the 2001–2025 winters plus this one, counting from the snowiest.',
+    inputs: ['season_now'],
+    fn: (season_now) => season_now.map((r) => ({
+      unit: r.unit,
+      place_from_top: (+r.n_years + 2) - (+r.rank_low_to_high),
+      seasons: +r.n_years + 1,
+    })),
+  });
+
+  dash.calc('records', {
+    title: 'Districts at a record high',
+    description: 'Gilgit-Baltistan districts and Chitral whose snow cover for these dates is higher than in every 2001–2025 winter.',
+    inputs: ['season_now'],
+    fn: (season_now) => season_now
+      .filter((r) => r.unit !== 'Gilgit-Baltistan' && +r.rank_low_to_high === +r.n_years + 1)
+      .map((r) => ({ unit: r.unit, scf_to_date: +r.scf_to_date, previous_max: +r.clim_max })),
+  });
+
+  dash.calc('record_count', {
+    title: 'Number of areas at a record high',
+    description: 'How many districts (and Chitral) have more snow cover for these dates than in any 2001–2025 winter.',
+    inputs: ['records'],
+    fn: (records) => records.length,
+  });
+</script>
+
+<script>
+  const row = mw.row, setText = mw.setText;
+
+  dash.draw('window', (el) => {
+    const r = row('season_now', 'Gilgit-Baltistan');
+    if (!r) return setText(el, '—');
+    const end = d3.utcParse('%Y-%m-%d')(r.latest_composite);
+    setText(el, '1 October to ' + d3.utcFormat('%-d %B %Y')(d3.utcDay.offset(end, 7)));
+  });
+  dash.draw('gb-anom', (el) => { const r = row('season_now', 'Gilgit-Baltistan'); setText(el, r ? mw.one(Math.abs(+r.anom_pp)) : '—'); });
+  dash.draw('gb-dir', (el) => { const r = row('season_now', 'Gilgit-Baltistan'); setText(el, r ? (+r.anom_pp >= 0 ? 'above' : 'below') : '—'); });
+  dash.draw('gb-place', (el) => {
+    const d = dash.data('place_now');
+    const r = d.status === 'ok' && d.data ? d.data.find((x) => x.unit === 'Gilgit-Baltistan') : null;
+    setText(el, r ? (r.place_from_top === 1 ? '1st (a record)' : mw.ord(r.place_from_top)) : '—');
+  });
+  dash.draw('gb-seasons', (el) => {
+    const d = dash.data('place_now');
+    const r = d.status === 'ok' && d.data ? d.data.find((x) => x.unit === 'Gilgit-Baltistan') : null;
+    setText(el, r ? String(r.seasons) : '—');
+  });
+  dash.draw('oni-now', (el) => {
+    const d = dash.data('oni_recent');
+    if (d.status !== 'ok' || !d.data.length) return setText(el, '—');
+    setText(el, d3.format('+.2f')(+d.data[d.data.length - 1].anom));
+    el.setAttribute('data-row', String(d.data.length - 1));
+  });
+  dash.draw('oni-season', (el) => {
+    const d = dash.data('oni_recent');
+    if (d.status !== 'ok' || !d.data.length) return setText(el, '—');
+    const r = d.data[d.data.length - 1];
+    const names = { DJF: 'Dec–Feb', JFM: 'Jan–Mar', FMA: 'Feb–Apr', MAM: 'Mar–May', AMJ: 'Apr–Jun', MJJ: 'May–Jul', JJA: 'Jun–Aug', JAS: 'Jul–Sep', ASO: 'Aug–Oct', SON: 'Sep–Nov', OND: 'Oct–Dec', NDJ: 'Nov–Jan' };
+    setText(el, (names[r.season] || r.season) + ' ' + r.year);
+  });
+
+  const tile = (unit, field, fmt) => (el) => { const r = row('season_now', unit); setText(el, r ? fmt(r[field]) : '—'); };
+  const pctFmt = (v) => mw.pct(+v) + '%';
+  dash.draw('tile-gb-val', tile('Gilgit-Baltistan', 'scf_to_date', pctFmt));
+  dash.draw('tile-gb-norm', tile('Gilgit-Baltistan', 'clim_mean', pctFmt));
+  dash.draw('tile-ch-val', tile('Chitral', 'scf_to_date', pctFmt));
+  dash.draw('tile-ch-norm', tile('Chitral', 'clim_mean', pctFmt));
+  const pill = (unit) => (el) => {
+    const r = row('season_now', unit);
+    if (!r) { el.textContent = '—'; el.removeAttribute('data-tone'); return; }
+    el.textContent = r.status;
+    el.setAttribute('data-tone', +r.z >= 0.5 ? 'high' : +r.z <= -0.5 ? 'low' : 'mid');
+  };
+  dash.draw('tile-gb-status', pill('Gilgit-Baltistan'));
+  dash.draw('tile-ch-status', pill('Chitral'));
+  dash.draw('records-n', (el) => { const d = dash.data('record_count'); setText(el, d.status === 'ok' && d.data !== null ? String(d.data) : '—'); });
+  dash.draw('records-names', (el) => {
+    const d = dash.data('records');
+    if (d.status !== 'ok' || !d.data) return setText(el, '—');
+    setText(el, d.data.length ? d.data.map((r) => r.unit).join(', ') : 'None this season');
+  });
+
+  dash.draw('sw-more', (el) => { el.style.background = mw.fill(2); });
+  dash.draw('sw-less', (el) => { el.style.background = mw.fill(-2); });
+  dash.draw('sw-nino', (el) => { el.style.background = dash.colors[0]; });
+  dash.draw('sw-nina', (el) => { el.style.background = dash.colors[1]; });
+  dash.draw('sw-neutral', (el) => { el.style.background = 'var(--cds-chart-muted)'; });
+
+  // District table
+  dash.draw('district-rows', (tb) => {
+    const d = dash.data('season_now');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    const rows = d.data.slice().sort((a, b) => (+b.anom_pp) - (+a.anom_pp));
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr');
+      const cells = [
+        [r.unit, ''], [mw.one(+r.scf_to_date), 'num'], [mw.one(+r.clim_mean), 'num'], [mw.signed(+r.anom_pp), 'num'], [r.status, ''],
+      ];
+      cells.forEach(([v, c]) => { const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td); });
+      if (r.unit === 'Gilgit-Baltistan' || r.unit === 'Chitral') tr.style.fontWeight = 'var(--cds-font-weight-medium)';
+      return tr;
+    }));
+  });
+
+  // Area select for history chart
+  dash.draw('unit-select', (sel) => {
+    const d = dash.data('season_now');
+    const units = d.status === 'ok' ? d.data.map((r) => r.unit) : ['Gilgit-Baltistan'];
+    const order = ['Gilgit-Baltistan', 'Chitral', ...units.filter((u) => u !== 'Gilgit-Baltistan' && u !== 'Chitral').sort()];
+    sel.replaceChildren(...order.map((u) => new Option(u, u)));
+    sel.value = mw.unit;
+    sel.onchange = () => { mw.unit = sel.value; dash.draw('history'); };
+  });
+</script>
+
+<script>
+  // Map
+  dash.draw('map', (el) => {
+    const s = dash.data('season_now'), g = dash.data('units_geo');
+    if (s.status === 'error' || g.status === 'error') return mw.placeholder(el, 'Failed to load');
+    if (s.status !== 'ok' || g.status !== 'ok') { el.replaceChildren(); return; }
+    const byUnit = new Map(s.data.map((r) => [r.unit, r]));
+    const geo = g.data;
+    const feats = (geo.features || []).filter((f) => f.properties.unit !== 'Gilgit-Baltistan');
+    const W = Math.max(280, el.clientWidth), H = Math.round(W * 0.78);
+    const fc = { type: 'FeatureCollection', features: feats };
+    const proj = d3.geoMercator().fitSize([W, H], fc);
+    const path = d3.geoPath(proj);
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Map of Gilgit-Baltistan districts and Chitral shaded by how far this season\'s snow cover is from normal');
+    const tip = mw.tip(el);
+    svg.append('g').selectAll('path').data(feats).join('path')
+      .attr('d', path)
+      .style('fill', (f) => mw.fill(+(byUnit.get(f.properties.unit) || {}).z))
+      .style('stroke', 'var(--color-bg)').style('stroke-width', 1.2)
+      .attr('data-source', 'season_now').attr('data-field', 'z')
+      .attr('data-where', (f) => 'unit=' + encodeURIComponent(f.properties.unit))
+      .on('pointermove', (evt, f) => {
+        const r = byUnit.get(f.properties.unit); if (!r) return;
+        tip.show(evt, [[f.properties.unit, ''], ['This season', mw.one(+r.scf_to_date) + '%'], ['Normal', mw.one(+r.clim_mean) + '%'], ['Difference', mw.signed(+r.anom_pp) + ' pts'], ['', r.status]]);
+      })
+      .on('pointerleave', () => tip.hide());
+    svg.append('g').selectAll('text').data(feats).join('text')
+      .attr('transform', (f) => `translate(${path.centroid(f)})`)
+      .attr('text-anchor', 'middle').attr('dy', '0.35em')
+      .style('font-size', 'var(--cds-font-size-caption)').style('fill', 'var(--color-fg)')
+      .style('paint-order', 'stroke').style('stroke', 'var(--color-panel)').style('stroke-width', 3)
+      .style('pointer-events', 'none')
+      .text((f) => f.properties.unit);
+    const old = el.querySelector(':scope > svg'); if (old) old.remove();
+    el.prepend(svg.node());
+  });
+
+  // History bars
+  dash.draw('history', (el) => {
+    const h = dash.data('snow_history'), s = dash.data('season_now');
+    if (h.status === 'error') return mw.placeholder(el, 'Failed to load');
+    if (h.status !== 'ok' || s.status !== 'ok') { el.replaceChildren(); return; }
+    const unit = mw.unit;
+    const rows = h.data.filter((r) => r.unit === unit).map((r) => ({ wy: +r.water_year, v: +r.scf_to_date }));
+    const norm = s.data.find((r) => r.unit === unit);
+    const last = d3.max(rows, (r) => r.wy);
+    const W = Math.max(300, el.clientWidth), H = 260, m = { t: 12, r: 12, b: 28, l: 36 };
+    const x = d3.scaleBand().domain(rows.map((r) => r.wy)).range([m.l, W - m.r]).padding(0.18);
+    const y = d3.scaleLinear().domain([0, 100]).range([H - m.b, m.t]);
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', `Snow-covered share for the same dates each winter since 2001 in ${unit}`);
+    svg.append('g').attr('class', 'mw-grid').attr('transform', `translate(${m.l},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat('')).call((g) => g.select('.domain').remove());
+    const tip = mw.tip(el);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', (r) => x(r.wy)).attr('width', x.bandwidth())
+      .attr('y', (r) => y(r.v)).attr('height', (r) => y(0) - y(r.v)).attr('rx', 2)
+      .style('fill', (r) => r.wy === last ? dash.colors[0] : 'var(--cds-chart-muted)')
+      .attr('data-source', 'snow_history').attr('data-field', 'scf_to_date')
+      .attr('data-where', (r) => `unit=${encodeURIComponent(unit)}&water_year=${r.wy}`)
+      .on('pointermove', (evt, r) => tip.show(evt, [[`Winter ${r.wy - 1}–${String(r.wy).slice(2)}`, ''], ['Snow-covered', mw.one(r.v) + '%']]))
+      .on('pointerleave', () => tip.hide());
+    if (norm) {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(+norm.clim_mean)).attr('y2', y(+norm.clim_mean))
+        .style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '4 3').style('stroke-width', 1.5);
+      svg.append('text').attr('x', W - m.r).attr('y', y(+norm.clim_mean) - 5).attr('text-anchor', 'end').attr('class', 'mw-axis-label')
+        .text('Normal ' + mw.one(+norm.clim_mean) + '%');
+    }
+    const step = W < 520 ? 5 : 2;
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`)
+      .call(d3.axisBottom(x).tickValues(x.domain().filter((d) => (d - 2001) % step === 0 || d === last)).tickFormat((d) => `${d - 1}–${String(d).slice(2)}`).tickSizeOuter(0));
+    svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat((d) => d + '%')).call((g) => g.select('.domain').remove());
+    const old = el.querySelector(':scope > svg'); if (old) old.remove();
+    el.prepend(svg.node());
+  });
+</script>
+
+<script>
+  // Scatter: spring snow vs summer NDVI (GB)
+  dash.draw('scatter', (el) => {
+    const d = dash.data('yearly');
+    if (d.status === 'error') return mw.placeholder(el, 'Failed to load');
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const rows = d.data.map((r) => ({ year: +r.year, sn: mw.num(r.scf_spring), nd: mw.num(r.ndvi_jja), oni: mw.num(r.oni_mam) }))
+      .filter((r) => isFinite(r.sn) && isFinite(r.nd));
+    const W = Math.max(280, el.clientWidth), H = 280, m = { t: 12, r: 14, b: 40, l: 48 };
+    const x = d3.scaleLinear().domain(d3.extent(rows, (r) => r.sn)).nice().range([m.l, W - m.r]);
+    const y = d3.scaleLinear().domain(d3.extent(rows, (r) => r.nd)).nice().range([H - m.b, m.t]);
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Scatter of spring snow cover against summer greenness in Gilgit-Baltistan, one dot per year');
+    svg.append('g').attr('class', 'mw-grid').attr('transform', `translate(${m.l},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat('')).call((g) => g.select('.domain').remove());
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(W < 420 ? 4 : 6).tickFormat((v) => v + '%'));
+    svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2f'))).call((g) => g.select('.domain').remove());
+    svg.append('text').attr('class', 'mw-axis-label').attr('x', (m.l + W - m.r) / 2).attr('y', H - 6).attr('text-anchor', 'middle').text('Spring (Mar–May) snow-covered share');
+    svg.append('text').attr('class', 'mw-axis-label').attr('transform', `translate(12,${(m.t + H - m.b) / 2}) rotate(-90)`).attr('text-anchor', 'middle').text('Jul–Aug NDVI');
+    const color = (o) => o >= 0.5 ? dash.colors[0] : o <= -0.5 ? dash.colors[1] : 'var(--cds-chart-muted)';
+    const tip = mw.tip(el);
+    svg.append('g').selectAll('circle').data(rows).join('circle')
+      .attr('cx', (r) => x(r.sn)).attr('cy', (r) => y(r.nd)).attr('r', 5.5)
+      .style('fill', (r) => color(r.oni)).style('stroke', 'var(--color-bg)').style('stroke-width', 1)
+      .attr('data-source', 'yearly').attr('data-field', 'ndvi_jja').attr('data-where', (r) => 'year=' + r.year)
+      .on('pointermove', (evt, r) => tip.show(evt, [[String(r.year), ''], ['Spring snow', mw.one(r.sn) + '%'], ['Summer NDVI', d3.format('.3f')(r.nd)], ['Spring ONI', d3.format('+.1f')(r.oni)]]))
+      .on('pointerleave', () => tip.hide());
+    const lastR = rows[rows.length - 1];
+    if (lastR) svg.append('text').attr('class', 'mw-axis-label').attr('x', x(lastR.sn) + 8).attr('y', y(lastR.nd) + 4).text(String(lastR.year));
+    const old = el.querySelector(':scope > svg'); if (old) old.remove();
+    el.prepend(svg.node());
+  });
+
+  // Links table
+  dash.draw('link-rows', (tb) => {
+    const d = dash.data('links');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    tb.replaceChildren(...d.data.map((r) => {
+      const tr = document.createElement('tr');
+      const strong = String(r.ci_excludes_zero) === 'True';
+      [[r.unit, ''], [r.link, ''], [mw.two(+r.r), 'num'], [mw.two(+r.ci_low), 'num'], [mw.two(+r.ci_high), 'num']].forEach(([v, c]) => {
+        const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td);
+      });
+      if (!strong) tr.style.color = 'var(--color-fg-muted)';
+      return tr;
+    }));
+  });
+
+  // Lakes
+  const setText = mw.setText;
+  dash.draw('lake-trend', (el) => {
+    const d = dash.data('lakes');
+    if (d.status !== 'ok' || !d.data.length) return setText(el, '—');
+    setText(el, d3.format('+.1f')(+d.data[0].trend_pp_per_decade));
+  });
+  dash.draw('lake-ci', (el) => {
+    const d = dash.data('lakes');
+    setText(el, d.status === 'ok' && d.data.length ? d3.format('.1f')(+d.data[0].trend_ci95_pp_per_decade) : '—');
+  });
+  dash.draw('lake-years', (el) => {
+    const d = dash.data('lakes');
+    setText(el, d.status === 'ok' && d.data.length ? d.data[0].trend_years : '—');
+  });
+  dash.draw('lakes', (el) => {
+    const d = dash.data('lakes');
+    if (d.status === 'error') return mw.placeholder(el, 'Failed to load');
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const rows = d.data.filter((r) => String(r.usable) === 'True').map((r) => ({ year: +r.year, v: +r.water_share, cov: +r.coverage }));
+    const W = Math.max(300, el.clientWidth), H = 240, m = { t: 12, r: 16, b: 28, l: 40 };
+    const x = d3.scaleLinear().domain(d3.extent(rows, (r) => r.year)).range([m.l, W - m.r]);
+    const y = d3.scaleLinear().domain([d3.min(rows, (r) => r.v) - 3, d3.max(rows, (r) => r.v) + 3]).nice().range([H - m.b, m.t]);
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Line chart of the share of the high-altitude lake footprint under water each year');
+    svg.append('g').attr('class', 'mw-grid').attr('transform', `translate(${m.l},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat('')).call((g) => g.select('.domain').remove());
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(W < 420 ? 4 : 8).tickFormat(d3.format('d')).tickSizeOuter(0));
+    svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat((v) => v + '%')).call((g) => g.select('.domain').remove());
+    const tr = +d.data[0].trend_pp_per_decade / 10;
+    const xm = d3.mean(rows, (r) => r.year), ym = d3.mean(rows, (r) => r.v);
+    const x0 = d3.min(rows, (r) => r.year), x1 = d3.max(rows, (r) => r.year);
+    svg.append('line').attr('x1', x(x0)).attr('x2', x(x1)).attr('y1', y(ym + tr * (x0 - xm))).attr('y2', y(ym + tr * (x1 - xm)))
+      .style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '4 3').style('stroke-width', 1.5);
+    svg.append('path').datum(rows).attr('d', d3.line().x((r) => x(r.year)).y((r) => y(r.v)))
+      .style('fill', 'none').style('stroke', dash.colors[0]).style('stroke-width', 2);
+    const tip = mw.tip(el);
+    svg.append('g').selectAll('circle').data(rows).join('circle')
+      .attr('cx', (r) => x(r.year)).attr('cy', (r) => y(r.v)).attr('r', 3.5).style('fill', dash.colors[0])
+      .attr('data-source', 'lakes').attr('data-field', 'water_share').attr('data-where', (r) => 'year=' + r.year)
+      .on('pointermove', (evt, r) => tip.show(evt, [[String(r.year), ''], ['Under water', mw.one(r.v) + '%'], ['Footprint seen', mw.pct(r.cov * 100) + '%']]))
+      .on('pointerleave', () => tip.hide());
+    const old = el.querySelector(':scope > svg'); if (old) old.remove();
+    el.prepend(svg.node());
+  });
+</script>
