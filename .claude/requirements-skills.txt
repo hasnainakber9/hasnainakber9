@@ -1,0 +1,13 @@
+# Libraries used by the project skills in .claude/skills/
+# time-series-toolkit
+statsmodels
+pmdarima
+sktime
+darts
+stumpy
+pyod
+neuralforecast
+# olostep-batch-scraping
+olostep
+requests
+tqdm
