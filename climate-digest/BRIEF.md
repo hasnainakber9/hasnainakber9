@@ -50,6 +50,10 @@ Global papers stay in scope.
 
 ## Weekly pipeline (follow in order)
 
+Run everything in the user's main chat session. **Do not open new sessions.** The user wants
+one conversation.
+
+
 1. `git pull` on the working branch.
 2. Run `python3 climate-digest/tools/harvest.py`, which takes about a minute. Read
    `climate-digest/harvest/<date>.md`: ENSO numbers, software and product version
@@ -72,9 +76,8 @@ Global papers stay in scope.
 11. **Email** the issue to the user's own Gmail address with the Gmail connector:
     subject `Climate Data Science Shortlist: <date>`. Put the issue converted to simple HTML
     (h1/h2/h3, p, ul/li, a, b, pre for code) in `htmlBody`, and a plain-text version with
-    no markdown symbols in `body`. Never write the email address into the repo. If no Gmail
-    tool is available (fresh scheduled sessions have no connectors), skip this step: a
-    follow-up task two hours later emails the committed issue from a session that has Gmail.
+    no markdown symbols in `body`. Never write the email address into the repo. The run happens in the
+    user's main chat session, which has Gmail; if sending fails, say so in the reply.
 12. Post the full issue as the chat reply.
 
 ## Sources
@@ -214,6 +217,7 @@ ARCO-ERA5 on Google Cloud Storage.
 
 Lasting preferences from the user, newest first. The weekly run applies them.
 
+- 2026-11-12: Keep all work in the one main chat; never spawn new sessions.
 - 2026-11-12: Initial setup. Newcomer framing; HKH/northern Pakistan focus; status line spec;
   opportunities tracker with drafts (user submits); breaking-change alerts; venue-quality flags;
   starter code with each research target; email delivery.
