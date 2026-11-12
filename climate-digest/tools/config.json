@@ -1,0 +1,97 @@
+{
+  "window_days": 7,
+  "user_agent": "climate-digest-harvester/1.0 (research literature monitor)",
+
+  "topics": {
+    "era5_reanalysis": {
+      "weight": 3,
+      "terms": ["ERA5", "ERA5-Land", "reanalysis", "MERRA-2", "JRA-3Q", "ERA6"]
+    },
+    "satellite_precipitation": {
+      "weight": 3,
+      "terms": ["IMERG", "GPM precipitation", "CHIRPS", "PERSIANN", "GSMaP", "MSWEP", "CMORPH",
+                "satellite precipitation", "satellite rainfall", "precipitation product", "gauge merging"]
+    },
+    "xarray_workflows": {
+      "weight": 2,
+      "terms": ["xarray", "Zarr", "Pangeo", "Dask", "analysis-ready cloud-optimized", "Icechunk",
+                "Kerchunk", "VirtualiZarr", "earthkit", "cloud-native geospatial"]
+    },
+    "remote_sensing_vegetation": {
+      "weight": 2,
+      "terms": ["NDVI", "EVI", "kNDVI", "solar-induced fluorescence", "SIF", "MODIS vegetation", "Sentinel-2",
+                "Landsat", "SMAP soil moisture", "leaf area index", "vegetation resilience", "crop mapping",
+                "GRACE", "evapotranspiration"]
+    },
+    "enso_vegetation_agriculture": {
+      "weight": 4,
+      "terms": ["ENSO", "El Niño", "El Nino", "La Niña", "La Nina", "Indian Ocean Dipole", "teleconnection"],
+      "require_any": ["vegetation", "NDVI", "crop", "yield", "agricultur", "drought", "food", "rainfall",
+                      "precipitation", "monsoon", "productivity"]
+    },
+    "agri_drought_data": {
+      "weight": 2,
+      "terms": ["crop yield", "SPEI", "SPI drought", "agricultural drought", "flash drought", "heat stress",
+                "irrigation", "food security", "yield anomaly"]
+    },
+    "climate_migration_livelihoods": {
+      "weight": 3,
+      "terms": ["climate migration", "climate-induced migration", "environmental migration", "displacement",
+                "climate mobility", "livelihood", "climate shocks household"],
+      "require_any": ["climate", "drought", "flood", "heat", "rainfall", "disaster", "environment"]
+    },
+    "methods_teleconnection_stats": {
+      "weight": 1,
+      "terms": ["field significance", "false discovery rate", "composite analysis", "causal discovery",
+                "panel regression", "lagged correlation", "attribution"]
+    }
+  },
+
+  "region_boost": {
+    "weight": 3,
+    "terms": ["Pakistan", "Indus", "Himalaya", "Hindu Kush", "HKH", "Karakoram", "Gilgit", "Punjab", "Sindh",
+              "Balochistan", "Khyber", "South Asia", "Indian monsoon", "South Asian monsoon", "Tibetan Plateau",
+              "Upper Indus", "Afghanistan", "northwest India"]
+  },
+
+  "crossref_queries": [
+    "ERA5 precipitation", "ERA5 validation", "ERA5-Land", "satellite precipitation evaluation", "IMERG",
+    "CHIRPS rainfall", "ENSO vegetation", "El Nino crop yield", "ENSO agriculture", "NDVI drought",
+    "Pakistan climate", "Indus basin", "Hindu Kush Himalaya", "South Asian monsoon", "climate migration",
+    "xarray", "Zarr cloud climate data", "remote sensing crop", "soil moisture satellite agriculture",
+    "Indian Ocean Dipole rainfall", "heatwave Pakistan", "flood Pakistan"
+  ],
+
+  "datacite_arxiv_queries": [
+    "ERA5", "reanalysis precipitation", "satellite precipitation", "IMERG", "ENSO", "El Nino",
+    "NDVI", "crop yield climate", "xarray", "Zarr", "remote sensing agriculture", "South Asia monsoon",
+    "Pakistan", "climate migration", "drought vegetation", "soil moisture"
+  ],
+
+  "zenodo_queries": [
+    "ERA5", "IMERG", "CHIRPS", "precipitation dataset", "NDVI", "Pakistan climate", "Indus",
+    "ENSO", "crop yield dataset", "Himalaya"
+  ],
+
+  "pypi_packages": [
+    "xarray", "dask", "zarr", "icechunk", "virtualizarr", "kerchunk", "xclim", "xesmf", "flox",
+    "cf-xarray", "rioxarray", "geopandas", "odc-stac", "pystac-client", "earthkit-data",
+    "cdsapi", "ecmwf-datastores-client", "earthaccess", "earthengine-api", "xee", "gcsfs",
+    "netCDF4", "h5netcdf", "regionmask", "xskillscore", "climpred"
+  ],
+
+  "cmr_products": [
+    {"short_name": "GPM_3IMERGDF", "label": "IMERG Final daily"},
+    {"short_name": "GPM_3IMERGHH", "label": "IMERG Final half-hourly"},
+    {"short_name": "GPM_3IMERGM", "label": "IMERG Final monthly"},
+    {"short_name": "SPL3SMP_E", "label": "SMAP L3 enhanced soil moisture"},
+    {"short_name": "MOD13A2", "label": "MODIS Terra NDVI/EVI 1 km 16-day"},
+    {"short_name": "MOD13Q1", "label": "MODIS Terra NDVI/EVI 250 m 16-day"},
+    {"short_name": "VNP13A1", "label": "VIIRS NDVI/EVI 500 m"},
+    {"short_name": "GLDAS_NOAH025_M", "label": "GLDAS Noah monthly"}
+  ],
+
+  "ecmwf_forum_categories": {"5": "announcements", "13": "datasets-and-usage", "9": "access-and-login"},
+  "ecmwf_forum_keywords": ["ERA5", "CDS", "cdsapi", "API", "outage", "deprecat", "migration", "new version",
+                           "decommission", "change", "ERA6", "ARCO", "token"]
+}
