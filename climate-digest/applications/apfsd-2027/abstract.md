@@ -1,0 +1,12 @@
+# Where the Evidence Goes Cold: A Scoping Review of Gendered Harms in Pakistan's Climate Displacement, from Monsoon Floods to Mountain Winters
+
+**Name and affiliation:** Syed Hasnain Akber, Young Shapers (youth-led climate and civic initiative, Gilgit-Baltistan and Chitral), Pakistan
+
+## Introduction
+Pakistan's 2022 floods displaced millions. UN agencies warned of rising gender-based violence, child marriage and unmet maternal needs, and studies documented menstrual hardship in relief camps. Yet attention has centred on lowland summer floods. In Pakistan's high mountains, glacial-lake floods and harsh winters meet menstrual stigma, and little is known about these communities. Nepal's chhaupadi deaths from cold and smoke show how lethal that combination can be. This review maps what is known and unknown about harassment, gender-based violence and menstrual health in Pakistan's climate displacement, to inform SDGs 5, 3, 13 and 10.
+
+## Methodology
+A rapid scoping review was conducted in November 2026. Twenty-two structured Crossref queries (2010–2026) returned 1,320 records (1,265 unique). Titles and abstracts were screened against three criteria: a climate hazard or displacement, a gendered harm, and a Pakistan setting. Targeted searches added grey literature: UN situation reports, a national human-rights commission assessment, ICIMOD and university outputs. Each included item was coded by hazard, region, season, harm domain (gender-based violence and harassment, menstrual health, maternal health, exclusion) and evidence type. Documented chhaupadi deaths in Nepal served as a comparative reference for cold-season menstrual risk.
+
+## Findings, Outcomes and Implications
+Twenty-six items met the criteria. Seventeen concerned the 2010 and 2022 summer monsoon floods, mainly in Sindh and southern Punjab. Four examined glacial hazards in Gilgit-Baltistan and Chitral; none of these addressed menstrual health or harassment. No item examined winter, cold or seasonal timing. Three of eight menstrual-health items were commentaries or letters. Direct documentation of harassment came from a single human-rights rapid assessment, the only source on transgender survivors; violence in camps otherwise appeared as risk statements in UN situation reports. Gender-responsive climate action must fund youth-led research on cold-season displacement, menstrual safety and camp harassment in mountain communities.
