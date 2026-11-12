@@ -68,6 +68,11 @@ one conversation.
 5. Fill gaps with web and paper search: journals not well covered by Crossref keyword
    queries, regional sources, opportunities, and the seasonal outlooks below.
 6. Open and verify every item you include: working link, date, and the claims you state.
+6b. **Mountain Watch refresh**, at https://claude.ai/artifact/QfsA2Enstp1NuCEXN6kXXt (skip if Earth Engine is MISSING):
+    - In `climate-digest/projects/mountain-watch/`, run `python3 extract_ee.py todate && python3 analyze.py`.
+    - Upload `out/season_now.csv` and `out/season_to_date_history.csv` as assets.
+    - `update` the `season_now` and `snow_history` datasets with the new `source.url`, `updated` and `edit`.
+    - Use the "this winter so far" numbers in the climate context line for northern Pakistan.
 7. Write the issue (format below) to `climate-digest/<YYYY-MM-DD>.md`.
 8. Update `climate-digest/opportunities.md` (see "Opportunities" below).
 9. Record included items: `python3 climate-digest/tools/mark_seen.py "<doi>|<title>" ...`
