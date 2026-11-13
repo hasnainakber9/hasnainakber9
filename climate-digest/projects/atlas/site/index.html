@@ -160,7 +160,7 @@
       <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
       <li><b>Exposed and far:</b> two hours’ walk or more from care, and living with 30 or more freezing nights a year, 30 or more hot days a year, or on land that has flooded.</li>
       <li><b>Unstudied:</b> for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</li>
-      <li><b>Districts:</b> second administrative level from geoBoundaries v6.0.0, worked out the same way as provinces. Research counts are not made for districts. Some district names have lost their accented letters in the source and show a “?”.</li>
+      <li><b>Districts:</b> 49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</li>
       <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at world scale. They are still counted in the totals and the list.</li>
       <li><b>Borders and names:</b> geoBoundaries v6.0.0. They are a data source, not a position on any disputed territory.</li>
       <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
@@ -488,7 +488,7 @@
       featById = new Map(feats.map((f) => [f.properties.id, f]));
       const nd = Object.keys(meta.districts || {}).length;
       $('tot-fem').textContent = fmtBig(meta.totals.fem); $('built').textContent = meta.built;
-      $('n-dc').textContent = nd ? `${nd} ${nd === 1 ? 'country' : 'countries'} so far` : 'more countries on the way';
+      $('n-dc').textContent = nd ? `${nd} ${nd === 1 ? 'country' : 'countries'}` : 'more countries on the way';
       $('status').hidden = true;
       buildLayers(); buildCountryPicker(); setup(); refresh();
       new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) setup(); }).observe(canvas);

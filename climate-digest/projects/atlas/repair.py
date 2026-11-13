@@ -2,7 +2,7 @@
 
 The Earth Engine copy of geoBoundaries lost accented letters ("Op?ina Mljet"), and the 1.5 km simplification in
 extract.py drops districts smaller than that. For every country with either problem this downloads the country's
-simplified ADM2 GeoJSON from geoBoundaries (same shapeIDs) and writes
+simplified ADM2 GeoJSON from geoBoundaries release 6.0.0 (same shapeIDs) and writes
 
   data/adm2_names.json            {shapeID: original name}, only where the Earth Engine name is garbled
   data/shapes2/<ISO3>.json        missing outlines appended (coordinates rounded to 4 decimals)
@@ -13,6 +13,7 @@ import collections, csv, gzip, json, os, sys, time, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = lambda *p: os.path.join(HERE, "data", *p)
 API = "https://www.geoboundaries.org/api/current/gbOpen/{}/ADM2/"
+V6 = "https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/v6.0.0/releaseData/gbOpen/{iso}/ADM2/geoBoundaries-{iso}-ADM2_simplified.geojson"
 os.makedirs(D("gb_cache"), exist_ok=True)
 
 
@@ -35,11 +36,14 @@ def original(iso):
     path = D("gb_cache", iso + ".json.gz")
     if os.path.exists(path):
         return json.load(gzip.open(path, "rt"))
-    meta = json.loads(get(API.format(iso)))
-    url = meta.get("simplifiedGeometryGeoJSON") or meta["gjDownloadURL"]
-    # the files are in Git LFS: github.com/<repo>/raw/<hash>/<path> is served from media.githubusercontent.com
-    url = url.replace("https://github.com/wmgeolab/geoBoundaries/raw/", "https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/")
-    g = json.loads(get(url))
+    # Earth Engine holds release 6.0.0, so that tag has the same shapeIDs; the files are in Git LFS, served from media.githubusercontent.com
+    try:
+        g = json.loads(get(V6.format(iso=iso), tries=2))
+    except Exception:
+        meta = json.loads(get(API.format(iso)))                 # country changed since: fall back to the current release
+        url = meta.get("simplifiedGeometryGeoJSON") or meta["gjDownloadURL"]
+        url = url.replace("https://github.com/wmgeolab/geoBoundaries/raw/", "https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/")
+        g = json.loads(get(url))
     json.dump(g, gzip.open(path, "wt"))
     return g
 

@@ -4,7 +4,7 @@ Live map: https://claude.ai/artifact/81JW693JEEk7wcUk5Sjrh1
 
 A global map of where women and girls aged 10–49 live with freezing nights, extreme heat, floods and long walks
 to health care, and of where published research has and has not looked. Every first-level administrative unit
-(province or state) on Earth, with second-level units (districts) added country by country.
+(province or state) on Earth, and second-level units (districts) for 196 countries.
 
 ## Layers
 | Layer | Definition | Source |
@@ -24,13 +24,14 @@ Boundaries: geoBoundaries v6.0.0, ADM1 and ADM2.
 python3 extract.py ADM1 stats      # provinces: Earth Engine, resumable -> data/adm1_v2.csv
 python3 extract.py ADM2 stats      # districts: same, about 49,600 units -> data/adm2_raw.csv
 python3 extract.py ADM2 shapes     # simplified district outlines -> data/shapes2/<ISO3>.json
+python3 repair.py                  # district names and missing outlines from geoBoundaries v6.0.0 -> data/adm2_names.json
 python3 research.py                # Europe PMC counts per country and province -> data/research.csv
 python3 build.py                   # -> site/atlas.json, site/adm1.json, site/d/<ISO3>.json
 ```
 `FIRST=PAK,BGD` runs those countries first; `ONLY=PAK` runs one country; `THREADS=5` sets parallel requests.
 `site/index.html` is the map page (d3 on canvas). It loads `atlas.json` and `adm1.json`, then one `d/<ISO3>.json`
 when a country's districts are opened. District outlines and page files are rebuilt from the scripts and are not
-kept in git (`data/shapes2/`, `site/d/`).
+kept in git (`data/shapes2/`, `site/d/`); the district statistics are kept as `data/adm2_raw.csv.gz`.
 
 Province outlines (`data/shapes/`) and the first heat, cold and care results (`data/adm1_raw.csv`) came from an
 earlier version of the extractor; `adm1_v2.csv` supersedes the statistics.
@@ -61,6 +62,11 @@ low estimate; the published estimate for all people from the same database, with
   literature. The map marks them "too few to tell".
 - 17 countries have no such study at country level (among them Venezuela, Liberia, Belarus, Turkmenistan).
 
+**Districts.** 49,616 second-level units computed with no failures; 49,488 in 196 countries have women and girls
+living in them and are on the map. Largest numbers on flooded land: Sirajganj (Bangladesh) 888,000, Darbhanga
+(India) 704,000, Sunamganj 640,000, Brahmanbaria 628,000, Sylhet 534,000. Highest shares: districts of the Mekong
+delta in Vietnam (Tan Hiep 99%, Cai Nuoc 98%, Dam Doi 95%). Pakistan: Jacobabad and Jafarabad 41%, Badin 34%.
+
 ## Why the flood layer is filtered
 The raw Global Flood Database maps mistake terrain, cloud and building shadow for water: unfiltered, Andorra came
 out 16% flooded and Hong Kong 27%. Requiring 3+ days under water and a height of less than 10 m above the nearest
@@ -81,10 +87,15 @@ Some false alarms remain near coasts, where tidal flats and persistent cloud sha
   science, reports and local-language work are undercounted, and papers are not read. 185 provinces with generic
   names ("Central", "Northern") are not searched. Treat "none found" as a lead to check, not a finding.
 - Names: garbled accents in the Earth Engine copy of geoBoundaries are repaired in `build.py`; 157 province names
-  are repaired by hand (`data/name_fixes.json`). District names are not hand-checked.
+  are repaired by hand (`data/name_fixes.json`). District names that lost letters (2,256) are restored from the
+  geoBoundaries v6.0.0 files by `repair.py`, and 80 by hand (`data/adm2_name_fixes.json`: Malta, Montenegro, which
+  have no file in that release). Names stay as the source spells them, so Ukraine, Tunisia and Taiwan are in local
+  script. 34 districts have no name in the source (Japan 25, Turkmenistan 8, China 1).
+- 33 very small districts (Malta 14, Marshall Islands 12, Nauru 7) have data but no outline. Countries with no
+  second level in geoBoundaries (and 19 disputed areas) have provinces only.
 - Antarctica is left out. About 125 very small islands and city districts have data but no outline at world scale.
 
 ## Earth Engine quota
 The project is on the Community tier (150 EECU-hours a month). The two global runs on 13 Nov 2026 used it up, so
 the project is in restricted mode (few parallel requests) until 1 December. The district run works in that mode
-but takes hours; keep `THREADS` at 6 or below.
+but took about three hours at `THREADS=5`; keep it at 6 or below.
