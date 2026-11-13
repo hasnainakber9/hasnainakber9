@@ -4,6 +4,8 @@
 import csv, glob, json, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 names = json.load(open(os.path.join(HERE, "data", "countries.json")))
+# geoBoundaries' Earth Engine copy lost accented letters in some names ("Bih?r"); repaired by hand.
+fixes = json.load(open(os.path.join(HERE, "data", "name_fixes.json")))
 rows = {}
 for r in csv.DictReader(open(os.path.join(HERE, "data", "adm1_raw.csv"))):
     rows[r["shapeID"]] = r
@@ -14,7 +16,7 @@ for sid, r in rows.items():
     if fem < 1:
         continue
     k = fem / v if v > 0 else 0            # scale shares measured on valid pixels up to the whole unit
-    u = {"id": sid, "n": r["shapeName"], "c": r["shapeGroup"], "cn": names.get(r["shapeGroup"], r["shapeGroup"]),
+    u = {"id": sid, "n": fixes.get(r["shapeGroup"] + "|" + r["shapeName"], r["shapeName"]), "c": r["shapeGroup"], "cn": names.get(r["shapeGroup"], r["shapeGroup"]),
          "fem": round(fem), "women": round(f("women")), "girls": round(f("girls")),
          "cov": round(100 * v / fem, 1),
          "frost": round(f("fem_x_frost") / v, 1) if v else None, "hot": round(f("fem_x_hot") / v, 1) if v else None}
