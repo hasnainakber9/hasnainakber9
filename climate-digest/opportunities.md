@@ -16,7 +16,7 @@ Re-check eligibility rules that need a final degree certificate or that restrict
 
 Status key: 🔎 found · ✍️ drafting · 📤 ready for you to submit · ✅ submitted · ❌ skipped/closed
 
-## Open (sorted by deadline). Last full check: 12 Nov 2026
+## Open (sorted by deadline). Last full check: 12 Nov 2026 · weekly scan 13 Nov 2026 (no new verified openings)
 
 | Deadline | Opportunity | Type | Funding | Eligibility notes | Fit | Status | Link |
 |---|---|---|---|---|---|---|---|

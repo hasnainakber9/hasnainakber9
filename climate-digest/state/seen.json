@@ -1,9 +1,24 @@
 {
- "ids": [],
+ "ids": [
+  "10.1029/2026gl125547",
+  "10.1038/s41612-026-01518-1",
+  "10.21203/rs.3.rs-11445767/v1",
+  "10.22541/essoar.15011926/v1",
+  "10.31223/x5f52x",
+  "10.5281/zenodo.24113364",
+  "10.5281/zenodo.24142260",
+  "10.5281/zenodo.24150570",
+  "10.5281/zenodo.24150823"
+ ],
  "titles": [
   "a hybrid ice hydrometeor retrieval algorithm for submillimeter wave radiometers",
   "a neural network based observation operator for the assimilation of microwave satellite observations with ldas monde",
+  "anixn drought intelligence explorer drought intelligence explorer v1 0 0 initial public release",
+  "csiro unseen ceaa pakistan floods seasonal timescale case study",
+  "csiro unseen ceaa pakistan floods short timescale case study",
+  "drought intelligence explorer a 45 year district level dataset of ten drought indicators for india and an open analytical platform",
   "enhancing hydrological representation of the brahmaputra basin through terrestrial water storage and surface soil moisture data assimilation",
+  "evaluation of gridded data sets for representing precipitation event properties across 20 u s gulf coast locations",
   "evaluation of turbulent flux parameterizations over a continental glacier on the tibetan plateau",
   "first year of meteosat third generation lightning imager observations",
   "high resolution above ground biomass mapping of the alps using satellite embeddings and gedi",
@@ -15,7 +30,11 @@
   "multi timescale evaluation of satellite precipitation products using 15 minute gauge observations in complex terrain ethiopia",
   "oceantracker 0 5 fast adaptable lagrangian particle tracking",
   "polar front jet regulates tropical sea surface temperature impacts on south china extreme precipitation",
+  "precipitation and surface snow in carra2 a first pan arctic assessment",
+  "replication package groundwater depletion drought and agricultural production global gridded and country panels",
   "robustness of spaceborne ground radar reflectivity comparisons to conditioning coordinate and observational support",
+  "spatio temporal assessment of glacier changes 1990 2025 and their relationship with climate variability in the tirich mir region hindu kush pakistan",
+  "tracing vegetation stress from space isoprene emissions capture the spatiotemporal footprint of el ni o",
   "widespread reversal of vegetation resilience in permafrost ecosystems"
  ]
 }
