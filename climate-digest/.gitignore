@@ -1,3 +1,4 @@
 harvest/*.json
 __pycache__/
 projects/mountain-watch/store/
+projects/mountain-watch/data/*.log
