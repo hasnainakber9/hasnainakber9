@@ -100,7 +100,7 @@ Gilgit-Baltistan 16%, Balochistan 23%. China's 15 million are mostly dim hill vi
 **Fighting.** Nigeria 28 million, Mexico 24, Pakistan 22 (Khyber Pakhtunkhwa 77%, Balochistan 59%, Sindh 53%),
 Ethiopia 21.
 
-**Not asked.** Of 133 low- and middle-income countries scored, 8 have no recent answer to any of the four
+**Not asked.** Of 130 low- and middle-income countries scored, 8 have no recent answer to any of the four
 questions (largest: Syria), 18 to three (Iran, Sudan, Malaysia, Venezuela, Ukraine) and 10 to two (Brazil, Mexico).
 1,348 provinces carry results from a DHS survey.
 
