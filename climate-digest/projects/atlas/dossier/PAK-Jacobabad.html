@@ -1,0 +1,108 @@
+<title>Jacobabad District Brief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a single-column brief. Name and people first, one sentence of findings, the table of layers, then what
+     surveys say and what nobody has measured. Same tokens as the Atlas of the Uncounted map. */
+  :root {
+    --bg: #eef1ef; --panel: #fbfcfb; --ink: #17212a; --muted: #586671; --line: #cdd5d4; --accent: #0e5a68; --bar: #0e5a68; --track: #dfe5e4; --mark: #17212a;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a; --accent: #6fc3d1; --bar: #6fc3d1; --track: #2a343b; --mark: #e8eef0; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a; --accent: #6fc3d1; --bar: #6fc3d1; --track: #2a343b; --mark: #e8eef0; color-scheme: dark; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+  .eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.05; margin: 0; }
+  h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; text-wrap: balance; }
+  p { margin: 0; max-width: 68ch; }
+  header { display: grid; gap: 8px; }
+  .people { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .lead { font-size: 1.1rem; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 9px 10px 9px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  thead th { border-top: 0; font-family: var(--mono); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  tbody th { font-weight: 600; }
+  .what { display: block; font-weight: 400; color: var(--muted); font-size: 0.84rem; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  thead .num { text-align: right; }
+  .bar { display: block; position: relative; height: 6px; background: var(--track); border-radius: 3px; margin-top: 6px; min-width: 90px; }
+  .bar i { display: block; height: 100%; background: var(--bar); border-radius: 3px; }
+  .bar b { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--mark); }
+  dl { margin: 0; display: grid; grid-template-columns: minmax(50%, 1fr) auto; gap: 6px 14px; font-size: 0.92rem; }
+  dt { color: var(--muted); } dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .note, li { color: var(--muted); font-size: 0.88rem; }
+  ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 72ch; }
+  li b { color: var(--ink); font-weight: 600; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
+  .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .key i { width: 22px; height: 6px; background: var(--bar); border-radius: 3px; } .key b { width: 2px; height: 12px; background: var(--mark); }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">District brief · Atlas of the Uncounted · draft</p>
+    <h1>Jacobabad</h1>
+    <p>Sindh, Pakistan</p>
+    <p class="people">137,267 women aged 15–49 · 26,710 girls aged 10–14</p>
+  </header>
+  <p class="lead">Of Pakistan's 126 districts, Jacobabad ranks joint 1st for extreme heat (100%); 2nd for flood of 2022 (31%); 7th for flooded land, 2000–2018 (18%); 11th for dark at night (39%). About 186 days a year reach 35 °C or more, and radar saw 42% of the district's land under water in 2022.</p>
+  <section>
+    <h2>Where women and girls here stand, layer by layer</h2>
+    <div class="key"><span><i></i>share in Jacobabad</span><span><b></b>share across Pakistan</span></div>
+    <div class="scroll"><table>
+      <thead><tr><th scope="col">Layer</th><th scope="col" class="num">Share here</th><th scope="col" class="num">Women and girls</th><th scope="col" class="num">Pakistan</th><th scope="col" class="num">Rank, worst first</th></tr></thead>
+      <tbody><tr><th scope="row">Extreme heat<span class="what">90 or more days a year at 35 °C or hotter</span></th>
+<td class="num">100%<span class="bar"><i style="width:100.0%"></i><b style="left:57.7%" title="Pakistan: 58%"></b></span></td>
+<td class="num">164,000</td><td class="num">58%</td>
+<td class="num">joint 1st of 126</td></tr><tr><th scope="row">Freezing nights<span class="what">30 or more freezing nights a year</span></th>
+<td class="num">0%<span class="bar"><i style="width:0.0%"></i><b style="left:4.6%" title="Pakistan: 4.6%"></b></span></td>
+<td class="num">0</td><td class="num">4.6%</td>
+<td class="num">—</td></tr><tr><th scope="row">Flooded land, 2000–2018<span class="what">on land satellites saw under water for three days or more</span></th>
+<td class="num">18%<span class="bar"><i style="width:18.4%"></i><b style="left:2.1%" title="Pakistan: 2.1%"></b></span></td>
+<td class="num">30,000</td><td class="num">2.1%</td>
+<td class="num">7th of 126</td></tr><tr><th scope="row">Flood of 2022<span class="what">on land radar saw under water, August–September 2022</span></th>
+<td class="num">31%<span class="bar"><i style="width:30.8%"></i><b style="left:1.3%" title="Pakistan: 1.3%"></b></span></td>
+<td class="num">51,000</td><td class="num">1.3%</td>
+<td class="num">2nd of 126</td></tr><tr><th scope="row">Failed rains<span class="what">in rain-fed farming areas where the rains failed in 2+ of the last 10 years</span></th>
+<td class="num">0%<span class="bar"><i style="width:0.0%"></i><b style="left:0.0%" title="Pakistan: 0%"></b></span></td>
+<td class="num">0</td><td class="num">0%</td>
+<td class="num">—</td></tr><tr><th scope="row">Far from care on foot<span class="what">two hours&#x27; walk or more from a health facility</span></th>
+<td class="num">89%<span class="bar"><i style="width:88.7%"></i><b style="left:32.1%" title="Pakistan: 32%"></b></span></td>
+<td class="num">145,000</td><td class="num">32%</td>
+<td class="num">17th of 126</td></tr><tr><th scope="row">Far from care by vehicle<span class="what">an hour or more from a health facility by motor vehicle</span></th>
+<td class="num">10%<span class="bar"><i style="width:10.5%"></i><b style="left:4.1%" title="Pakistan: 4.1%"></b></span></td>
+<td class="num">17,000</td><td class="num">4.1%</td>
+<td class="num">36th of 126</td></tr><tr><th scope="row">Dark at night<span class="what">in settled places where satellites see almost no light</span></th>
+<td class="num">39%<span class="bar"><i style="width:38.6%"></i><b style="left:5.5%" title="Pakistan: 5.5%"></b></span></td>
+<td class="num">63,000</td><td class="num">5.5%</td>
+<td class="num">11th of 126</td></tr><tr><th scope="row">Near heavy fighting<span class="what">within 50 km of a place where organised violence killed 25+ people, 2021–2025</span></th>
+<td class="num">0%<span class="bar"><i style="width:0.0%"></i><b style="left:28.9%" title="Pakistan: 29%"></b></span></td>
+<td class="num">0</td><td class="num">29%</td>
+<td class="num">—</td></tr><tr><th scope="row">Exposed and far<span class="what">two hours&#x27; walk from care, with freezing nights, heat or flooding</span></th>
+<td class="num">89%<span class="bar"><i style="width:88.7%"></i><b style="left:29.1%" title="Pakistan: 29%"></b></span></td>
+<td class="num">145,000</td><td class="num">29%</td>
+<td class="num">15th of 126</td></tr></tbody>
+    </table></div>
+    <p class="note">Shares are of women and girls aged 10–49 living in the district. Rank is among 126 districts of Pakistan with 5,000 or more. These are estimates of exposure from satellite and population data, not counts of people harmed.</p>
+  </section>
+  <section><h2>What surveys found in Sindh</h2>
+<p class="note">The latest survey that reports by province (DHS 2017-18). There is no survey figure for the district itself.</p>
+<dl><dt>Women 20–24 married before 18</dt><dd>21%</dd><dt>Births at home</dt><dd>28%</dd><dt>Women reporting violence by a partner in the past year</dt><dd>10%</dd></dl></section>
+  <section><h2>How much research and surveying reaches here</h2><dl>
+<dt>Studies on women and girls naming Sindh</dt><dd>434</dd>
+<dt>Of those, also on a climate hazard</dt><dd>12</dd>
+<dt>Menstruation last asked nationally</dt><dd>2020</dd>
+<dt>Partner violence</dt><dd>WHO estimate 13%</dd>
+</dl><p class="note">Research counts are for the province, from one health and life-science index (Europe PMC, 2010–2026), by name matching. No study or survey count exists for the district.</p></section>
+  <section>
+    <h2>Read with care</h2>
+    <ul><li><b>Flooded land, 2000–2018.</b> The record ends in 2018 and misses floods under cloud.</li><li><b>Flood of 2022.</b> Where water stood, not everyone the flood affected.</li><li><b>Far from care on foot.</b> The source map of health facilities has gaps, so this can be overstated. Check against the district health office&#x27;s facility list before quoting it.</li><li><b>Dark at night.</b> Measures light, not grid connections.</li><li><b>Exposed and far.</b> Inherits the gaps in the facility map.</li><li><b>People.</b> Population is LandScan 2024; the split by age and sex is from the 2010 census round.</li>
+    <li><b>Boundaries.</b> geoBoundaries v6.0.0, which may not match the district's current official outline.</li></ul>
+    <p class="note">Sources: LandScan, GPWv4, MODIS, ERA5-Land, Global Flood Database, Sentinel-1, CHIRPS, Malaria Atlas Project, VIIRS, UCDP, DHS, UNICEF, WHO, Europe PMC. Built 2026-11-13.</p>
+  </section>
+</div>

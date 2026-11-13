@@ -84,7 +84,7 @@ low estimate; the published estimate for all people from the same database, with
 **Districts.** 49,616 second-level units computed with no failures; 49,488 in 196 countries have women and girls
 living in them and are on the map. Largest numbers on flooded land: Sirajganj (Bangladesh) 888,000, Darbhanga
 (India) 704,000, Sunamganj 640,000, Brahmanbaria 628,000, Sylhet 534,000. Highest shares: districts of the Mekong
-delta in Vietnam (Tan Hiep 99%, Cai Nuoc 98%, Dam Doi 95%). Pakistan: Jacobabad and Jafarabad 41%, Badin 34%.
+delta in Vietnam (Tan Hiep 99%, Cai Nuoc 98%, Dam Doi 95%). Pakistan: Jafarabad 29%, Badin 25%, Mirpurkhas 23%, Sanghar 23%; Jacobabad 18%.
 
 **Districts, second set.** All 49,616 districts computed with no failures; district sums match province sums to
 within 0.3% on every layer. Largest numbers: near fighting, Karachi (0.93 million women and girls) and Dhaka;
@@ -108,6 +108,12 @@ Ethiopia 21.
 **Not asked.** Of 130 low- and middle-income countries scored, 8 have no recent answer to any of the four
 questions (largest: Syria), 18 to three (Iran, Sudan, Malaysia, Venezuela, Ukraine) and 10 to two (Brazil, Mexico).
 1,348 provinces carry results from a DHS survey.
+
+## District brief
+`python3 dossier.py PAK Jacobabad` writes `dossier/PAK-Jacobabad.html`: a one-page brief for one district with every
+layer, its rank among the country's districts, the province's survey results and the caveats that apply. First draft
+published at https://claude.ai/artifact/75bvnBwv9VyK3Su6pHuK1p. It is the first piece of a possible paid tier; before
+any paid use, check every source licence (the Global Flood Database and the Earth Engine tier are non-commercial).
 
 ## Why the flood layer is filtered
 The raw Global Flood Database maps mistake terrain, cloud and building shadow for water: unfiltered, Andorra came
