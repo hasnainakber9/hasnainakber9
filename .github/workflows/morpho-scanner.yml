@@ -4,10 +4,16 @@ name: Morpho scanner
 #
 # A job may run for at most 6 hours, so the scanner runs as back-to-back jobs:
 #   - each job scans for MAX_RUNTIME_MIN and then stops cleanly;
-#   - the schedule fires every 2 hours, and `concurrency` makes that run wait
-#     behind the one in progress, so a successor is always queued and starts
-#     the moment the current job ends (about a minute of blind time);
+#   - each job queues its own successor as its first act. `concurrency` makes
+#     the successor wait behind the job in progress, so it starts the moment
+#     that job ends, however it ends (about a minute of blind time);
+#   - the schedule is only a watchdog that restarts the chain if it ever
+#     breaks. GitHub's schedule is best-effort and can skip slots for hours,
+#     so nothing here depends on it;
 #   - scanner state (SQLite) travels from job to job in the Actions cache.
+#
+# To stop the chain, disable this workflow: a queued run that finds it
+# disabled cancels itself.
 #
 # The scanner only reads public chain data. It holds no key and cannot trade.
 # When the 7-day gate window completes, the last job opens an issue with the
@@ -81,6 +87,35 @@ jobs:
           # Never an exact hit: the newest saved state is picked by prefix.
           key: morpho-scanner-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: morpho-scanner-state-
+
+      - name: Queue the next run
+        if: env.LIVE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          # Disabling the workflow is the off switch: a queued run stops here.
+          state=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/morpho-scanner.yml" --jq '.state' || echo active)
+          if [ "$state" != "active" ]; then
+            echo "::notice::workflow is $state; cancelling this run"
+            gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || true
+            sleep 120
+            exit 1
+          fi
+
+          # Queue a successor unless one is already waiting. It sits behind this
+          # run in the concurrency group and starts when this run ends.
+          waiting=0
+          for status in queued pending waiting requested; do
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow morpho-scanner.yml \
+              --status "$status" --json databaseId --jq 'length' || echo 0)
+            waiting=$((waiting + n))
+          done
+          echo "runs already waiting: $waiting"
+          if [ "$waiting" = "0" ]; then
+            gh workflow run morpho-scanner.yml --repo "$GITHUB_REPOSITORY" --ref "${DEFAULT_BRANCH:-main}" \
+              || echo "::warning::could not queue the next run; the schedule is the only fallback"
+          fi
 
       - name: Scan
         env:
