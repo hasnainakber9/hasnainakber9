@@ -86,6 +86,11 @@ living in them and are on the map. Largest numbers on flooded land: Sirajganj (B
 (India) 704,000, Sunamganj 640,000, Brahmanbaria 628,000, Sylhet 534,000. Highest shares: districts of the Mekong
 delta in Vietnam (Tan Hiep 99%, Cai Nuoc 98%, Dam Doi 95%). Pakistan: Jacobabad and Jafarabad 41%, Badin 34%.
 
+**Districts, second set.** All 49,616 districts computed with no failures; district sums match province sums to
+within 0.3% on every layer. Largest numbers: near fighting, Karachi (0.93 million women and girls) and Dhaka;
+failed rains, Nellore, Anantapur and Kadapa in Andhra Pradesh; darkness, West and East Gojam in Ethiopia; far by
+vehicle, Tharparkar. In Pakistan the darkest districts are Awaran 74%, Ziarat 69%, Barkhan 69%, South Waziristan 62%.
+
 **Pakistan 2022.** Radar puts 0.97 million women and girls on land that stood under water: Qambar Shahdadkot 35%,
 Jacobabad 31%, Dadu 29%, Jafarabad 28%, Jhal Magsi 28%. This is where water stood, a small part of the 33 million
 people the flood affected.
