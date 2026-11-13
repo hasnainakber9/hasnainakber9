@@ -1,0 +1,366 @@
+<title>Atlas of the Uncounted</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a map-first working surface. Layer switches on top carry the global numbers; the map sits left,
+     the selected place and a ranked list sit right; method notes close the page. */
+  :root {
+    --bg: #eef1ef; --panel: #fbfcfb; --ink: #17212a; --muted: #586671; --line: #cdd5d4;
+    --sea: #dfe7e8; --nodata: #d3d9d8; --accent: #0e5a68; --focus: #0e5a68;
+    --ramp-lo: #f2f4ef; --cold: #1c4b8a; --heat: #b3361c; --care: #6a2c7b; --both: #7b1f3f;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
+      --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
+      --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --care: #d592ea; --both: #ff86a8;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
+    --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
+    --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --care: #d592ea; --both: #ff86a8;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 22px; }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  .head { display: grid; gap: 10px; }
+  .lede { font-size: 1.08rem; max-width: 62ch; }
+  .lede b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.86rem; }
+
+  .layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .layer { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; min-width: 0; align-content: start; }
+  .layer:hover { border-color: var(--muted); }
+  .layer[aria-pressed="true"] { border-color: var(--lc); box-shadow: inset 0 -3px 0 var(--lc); }
+  .layer:focus-visible, .seg button:focus-visible, .zoom button:focus-visible, .rank button:focus-visible, #search:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .layer-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lc); flex: none; }
+  .layer-num { font-family: var(--mono); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .layer-def { color: var(--muted); font-size: 0.84rem; }
+
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .mapbox { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; min-width: 0; }
+  #map { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; touch-action: none; cursor: grab; }
+  @media (max-width: 560px) { #map { aspect-ratio: 4 / 3; } }
+  .maptools { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
+  .seg button, .zoom button { font: inherit; font-size: 0.84rem; color: var(--ink); background: transparent; border: 0; padding: 6px 10px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+  .zoom { position: absolute; top: 10px; right: 10px; display: grid; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
+  .zoom button { font-family: var(--mono); font-size: 1rem; padding: 4px 10px; }
+  .zoom button + button { border-top: 1px solid var(--line); }
+  .legend { position: absolute; left: 10px; bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; max-width: calc(100% - 20px); }
+  .legend-title { font-size: 0.8rem; color: var(--muted); }
+  .swatches { display: flex; gap: 2px; }
+  .swatches span { display: grid; gap: 3px; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: center; }
+  .swatches i { display: block; width: 44px; height: 10px; border-radius: 2px; }
+  @media (max-width: 560px) { .swatches i { width: 34px; } }
+  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 0.84rem; line-height: 1.35; white-space: nowrap; box-shadow: 0 4px 14px rgb(0 0 0 / 0.18); }
+  .tip b { font-family: var(--mono); font-weight: 500; }
+  .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 16px; text-align: center; }
+
+  .side { display: grid; gap: 16px; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+  .place-name { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.15; overflow-wrap: anywhere; }
+  dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; font-size: 0.9rem; }
+  dt { color: var(--muted); } dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .rank button { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer;
+    display: grid; grid-template-columns: 1.6em minmax(0, 1fr) auto; gap: 8px; text-align: left; align-items: baseline; }
+  .rank button:hover { background: var(--bg); }
+  .rank .i { color: var(--muted); font-family: var(--mono); font-size: 0.8rem; }
+  .rank .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank .v { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  #search { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%; box-sizing: border-box; }
+  details { border-top: 1px solid var(--line); padding-top: 14px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details ul { margin: 10px 0 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 78ch; }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <h1>Atlas of the Uncounted</h1>
+    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with freezing nights, extreme heat and long walks to care, for every province on Earth.</p>
+    <p class="muted small">Estimates of exposure from satellite and population data, not measures of harm. First layer set, built <span id="built">…</span>.</p>
+  </header>
+
+  <div class="layers" role="group" aria-label="Map layer" id="layers"></div>
+
+  <div class="main">
+    <div class="mapbox" id="mapbox">
+      <canvas id="map" role="img" aria-label="World map of provinces shaded by the selected layer. The ranked list beside the map gives the same information as text."></canvas>
+      <div class="maptools">
+        <div class="seg" role="group" aria-label="Show">
+          <button type="button" id="m-share" aria-pressed="true">Share</button>
+          <button type="button" id="m-count" aria-pressed="false">Number</button>
+        </div>
+      </div>
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button type="button" id="z-in" aria-label="Zoom in">+</button>
+        <button type="button" id="z-out" aria-label="Zoom out">−</button>
+        <button type="button" id="z-reset" aria-label="Reset view">⟲</button>
+      </div>
+      <div class="legend" id="legend" hidden></div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="status" id="status">Loading the provinces…</div>
+    </div>
+
+    <aside class="side">
+      <section class="card" id="place" aria-live="polite">
+        <div>
+          <div class="place-name" id="p-name">The world</div>
+          <div class="muted small" id="p-sub">Click a province on the map or in the list</div>
+        </div>
+        <dl id="p-facts"></dl>
+        <p class="muted small" id="p-note" hidden></p>
+      </section>
+      <section class="card">
+        <h2 id="rank-title">Highest shares</h2>
+        <input id="search" type="search" placeholder="Filter by country or province" aria-label="Filter the list by country or province">
+        <ol class="rank" id="rank"></ol>
+        <p class="muted small" id="rank-note"></p>
+      </section>
+    </aside>
+  </div>
+
+  <details>
+    <summary>How these numbers are made, and their limits</summary>
+    <ul>
+      <li><b>Women and girls:</b> LandScan Global 2024 population at 1 km, multiplied by the local share of women aged 15–49 and girls aged 10–14 from GPWv4.11 (2010 census round). Age shares shift slowly, but they are a decade and a half old.</li>
+      <li><b>Freezing nights:</b> the share of MODIS Aqua 8-day night land-surface-temperature composites below 0 °C, 2016–2025, times 365. The satellite sees the ground only on clear nights, which run colder than cloudy ones.</li>
+      <li><b>Extreme heat:</b> days a year with a maximum air temperature of 35 °C or more, 2021–2025, from ERA5-Land at 9 km. It misses heat in narrow valleys and ignores humidity.</li>
+      <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
+      <li><b>Exposed and far:</b> two hours' walk or more from care, and either 30 or more freezing nights or 30 or more hot days a year.</li>
+      <li><b>Borders and names:</b> geoBoundaries v6.0.0, first administrative level. They are a data source, not a position on any disputed territory.</li>
+      <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
+    </ul>
+  </details>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(() => {
+  const LAYERS = [
+    { id: 'cold30', name: 'Freezing nights', color: '--cold', def: '30 or more freezing nights a year', avg: 'frost', avgLabel: 'Freezing nights a year' },
+    { id: 'hot90', name: 'Extreme heat', color: '--heat', def: '90 or more days a year at 35 °C or hotter', avg: 'hot', avgLabel: 'Days a year at 35 °C or hotter' },
+    { id: 'far2h', name: 'Far from care', color: '--care', def: 'Two hours’ walk or more from a health facility' },
+    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights or extreme heat' },
+  ];
+  const SHARE_BINS = [10, 25, 50, 75], COUNT_BINS = [1e4, 1e5, 1e6, 5e6];
+  const MIN_FEM = 50000;
+  const $ = (id) => document.getElementById(id);
+  const fmtInt = d3.format(','), fmtPct = (v) => (v == null ? '—' : d3.format('.0f')(v) + '%');
+  const fmtBig = (v) => v >= 1e9 ? d3.format('.2f')(v / 1e9) + ' billion' : v >= 1e6 ? d3.format('.1f')(v / 1e6) + ' million' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + ' thousand' : fmtInt(Math.round(v));
+  const fmtShort = (v) => v >= 1e6 ? d3.format('.1f')(v / 1e6) + 'M' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + 'k' : String(Math.round(v));
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const state = { layer: 'cold30', metric: 'share', selected: null, hover: null, filter: '' };
+  let units = [], byId = new Map(), feats = [], meta = null, tr = d3.zoomIdentity, W = 0, H = 0, dpr = 1, zoomB = null, spherePath = null;
+  const canvas = $('map'), ctx = canvas.getContext('2d');
+
+  const count = (u, id) => u['p_' + id] == null ? null : u.fem * u['p_' + id] / 100;
+  const value = (u) => state.metric === 'share' ? u['p_' + state.layer] : count(u, state.layer);
+  const layer = () => LAYERS.find((l) => l.id === state.layer);
+  function ramp() {
+    const lo = css('--ramp-lo'), hi = css(layer().color);
+    const it = d3.interpolateLab(lo, hi);
+    return [0.06, 0.3, 0.55, 0.78, 1].map(it);
+  }
+  function colorFor(u, cols) {
+    const v = value(u);
+    if (v == null) return css('--nodata');
+    const bins = state.metric === 'share' ? SHARE_BINS : COUNT_BINS;
+    return cols[d3.bisectRight(bins, v)];
+  }
+
+  function buildLayers() {
+    const box = $('layers');
+    box.replaceChildren(...LAYERS.map((l) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'layer'; b.id = 'layer-' + l.id; b.style.setProperty('--lc', `var(${l.color})`);
+      b.setAttribute('aria-pressed', String(l.id === state.layer));
+      const nm = document.createElement('span'); nm.className = 'layer-name';
+      const dot = document.createElement('span'); dot.className = 'dot'; nm.append(dot, l.name);
+      const num = document.createElement('span'); num.className = 'layer-num';
+      const t = meta.totals[l.id], share = 100 * t / meta.totals.fem;
+      num.textContent = fmtBig(t) + ' · ' + d3.format('.0f')(share) + '%';
+      const def = document.createElement('span'); def.className = 'layer-def'; def.textContent = l.def;
+      b.append(nm, num, def);
+      b.addEventListener('click', () => { state.layer = l.id; refresh(); });
+      return b;
+    }));
+  }
+
+  function setup() {
+    const r = canvas.getBoundingClientRect();
+    W = Math.max(280, r.width); H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    const proj = d3.geoEqualEarth().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
+    const path = d3.geoPath(proj);
+    spherePath = new Path2D(path({ type: 'Sphere' }));
+    for (const f of feats) {
+      const d = path(f);
+      f.p2d = d ? new Path2D(d) : null;
+      f.box = d ? path.bounds(f) : null;
+    }
+    if (!zoomB) {
+      zoomB = d3.zoom().scaleExtent([1, 14]).on('zoom', (e) => { tr = e.transform; draw(); });
+      d3.select(canvas).call(zoomB).on('dblclick.zoom', null);
+    }
+    zoomB.translateExtent([[0, 0], [W, H]]).extent([[0, 0], [W, H]]);
+    draw();
+  }
+
+  function draw() {
+    if (!feats.length) return;
+    const cols = ramp(), land = css('--nodata'), edge = css('--bg'), ink = css('--ink');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = css('--sea'); ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(dpr * tr.k, 0, 0, dpr * tr.k, dpr * tr.x, dpr * tr.y);
+    ctx.lineJoin = 'round';
+    for (const f of feats) {
+      if (!f.p2d) continue;
+      const u = byId.get(f.properties.id);
+      ctx.fillStyle = u ? colorFor(u, cols) : land;
+      ctx.fill(f.p2d);
+    }
+    ctx.strokeStyle = edge; ctx.lineWidth = 0.35 / tr.k; ctx.globalAlpha = 0.7;
+    for (const f of feats) if (f.p2d) ctx.stroke(f.p2d);
+    ctx.globalAlpha = 1;
+    for (const id of [state.hover, state.selected]) {
+      const f = id && feats.find((x) => x.properties.id === id);
+      if (f && f.p2d) { ctx.strokeStyle = ink; ctx.lineWidth = (id === state.selected ? 2 : 1.2) / tr.k; ctx.stroke(f.p2d); }
+    }
+  }
+
+  function hit(evt) {
+    const r = canvas.getBoundingClientRect();
+    const x = (evt.clientX - r.left - tr.x) / tr.k, y = (evt.clientY - r.top - tr.y) / tr.k;
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    let found = null;
+    for (const f of feats) {
+      const b = f.box;
+      if (!b || x < b[0][0] || x > b[1][0] || y < b[0][1] || y > b[1][1]) continue;
+      if (ctx.isPointInPath(f.p2d, x, y)) { found = f.properties.id; break; }
+    }
+    ctx.restore();
+    return found;
+  }
+
+  function showTip(evt, u) {
+    const tip = $('tip'), box = $('mapbox').getBoundingClientRect();
+    const l = layer();
+    tip.replaceChildren();
+    const a = document.createElement('div'); a.textContent = u.n + ', ' + u.cn;
+    const b = document.createElement('div'); const v = document.createElement('b');
+    v.textContent = fmtPct(u['p_' + l.id]) + ' · ' + (count(u, l.id) == null ? '—' : fmtShort(count(u, l.id)));
+    b.append(l.name + ': ', v);
+    tip.append(a, b); tip.hidden = false;
+    let x = evt.clientX - box.left + 14, y = evt.clientY - box.top + 14;
+    if (x + tip.offsetWidth > box.width - 6) x = Math.max(6, evt.clientX - box.left - tip.offsetWidth - 14);
+    if (y + tip.offsetHeight > box.height - 6) y = Math.max(6, evt.clientY - box.top - tip.offsetHeight - 14);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+
+  function fact(dl, k, v) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
+  function renderPlace() {
+    const dl = $('p-facts'); dl.replaceChildren();
+    const u = state.selected && byId.get(state.selected), note = $('p-note');
+    if (!u) {
+      $('p-name').textContent = 'The world';
+      $('p-sub').textContent = `${fmtInt(meta.units)} provinces in ${meta.countries} countries and territories. Click one on the map or in the list.`;
+      fact(dl, 'Women aged 15–49', fmtBig(meta.totals.women)); fact(dl, 'Girls aged 10–14', fmtBig(meta.totals.girls));
+      for (const l of LAYERS) fact(dl, l.name, fmtBig(meta.totals[l.id]));
+      note.hidden = true; return;
+    }
+    $('p-name').textContent = u.n; $('p-sub').textContent = u.cn;
+    fact(dl, 'Women aged 15–49', fmtInt(u.women)); fact(dl, 'Girls aged 10–14', fmtInt(u.girls));
+    fact(dl, 'Freezing nights a year', u.frost == null ? '—' : d3.format('.0f')(u.frost));
+    fact(dl, 'Days a year at 35 °C or hotter', u.hot == null ? '—' : d3.format('.0f')(u.hot));
+    fact(dl, '30+ freezing nights', fmtPct(u.p_cold30)); fact(dl, '90+ hot days', fmtPct(u.p_hot90));
+    fact(dl, 'An hour or more from care', fmtPct(u.p_far1h)); fact(dl, 'Two hours or more from care', fmtPct(u.p_far2h));
+    fact(dl, 'Exposed and far', fmtPct(u.p_far2h_exposed));
+    note.hidden = !(u.cov < 90);
+    if (u.cov < 90) note.textContent = `Shares cover ${d3.format('.0f')(u.cov)}% of this province's women and girls; satellite or travel-time data is missing for the rest.`;
+  }
+
+  function renderRank() {
+    const l = layer(), q = state.filter.trim().toLowerCase();
+    $('rank-title').textContent = (state.metric === 'share' ? 'Highest shares: ' : 'Largest numbers: ') + l.name.toLowerCase();
+    let rows = units.filter((u) => value(u) != null && (state.metric === 'count' || u.fem >= MIN_FEM));
+    if (q) rows = rows.filter((u) => (u.n + ' ' + u.cn).toLowerCase().includes(q));
+    rows.sort((a, b) => value(b) - value(a) || b.fem - a.fem);
+    const top = rows.slice(0, 12);
+    $('rank').replaceChildren(...top.map((u, i) => {
+      const li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button';
+      const a = document.createElement('span'); a.className = 'i'; a.textContent = i + 1;
+      const n = document.createElement('span'); n.className = 'nm'; n.textContent = u.n + ', ' + u.cn; n.title = u.n + ', ' + u.cn;
+      const v = document.createElement('span'); v.className = 'v'; v.textContent = state.metric === 'share' ? fmtPct(value(u)) : fmtShort(value(u));
+      b.append(a, n, v); b.addEventListener('click', () => { state.selected = u.id; renderPlace(); draw(); });
+      li.append(b); return li;
+    }));
+    $('rank-note').textContent = !top.length ? 'No province matches that filter.' :
+      state.metric === 'share' ? `Share of women and girls aged 10–49. Provinces with fewer than ${fmtInt(MIN_FEM)} are left out of this list.` : 'Number of women and girls aged 10–49.';
+  }
+
+  function renderLegend() {
+    const cols = ramp(), l = layer(), lg = $('legend');
+    const labels = state.metric === 'share' ? ['<10%', '10–25', '25–50', '50–75', '75%+'] : ['<10k', '10k–100k', '100k–1M', '1M–5M', '5M+'];
+    const t = document.createElement('div'); t.className = 'legend-title';
+    t.textContent = (state.metric === 'share' ? 'Share of women and girls: ' : 'Women and girls: ') + l.def.charAt(0).toLowerCase() + l.def.slice(1);
+    const sw = document.createElement('div'); sw.className = 'swatches';
+    cols.forEach((c, i) => { const s = document.createElement('span'), box = document.createElement('i'); box.style.background = c; s.append(box, labels[i]); sw.append(s); });
+    lg.replaceChildren(t, sw); lg.hidden = false;
+  }
+
+  function refresh() {
+    for (const l of LAYERS) $('layer-' + l.id).setAttribute('aria-pressed', String(l.id === state.layer));
+    $('m-share').setAttribute('aria-pressed', String(state.metric === 'share'));
+    $('m-count').setAttribute('aria-pressed', String(state.metric === 'count'));
+    renderLegend(); renderRank(); renderPlace(); draw();
+  }
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (e.buttons) { $('tip').hidden = true; return; }
+    const id = hit(e);
+    if (id !== state.hover) { state.hover = id; draw(); }
+    const u = id && byId.get(id);
+    if (u) showTip(e, u); else $('tip').hidden = true;
+  });
+  canvas.addEventListener('pointerleave', () => { state.hover = null; $('tip').hidden = true; draw(); });
+  canvas.addEventListener('click', (e) => { const id = hit(e); state.selected = id && byId.has(id) ? id : null; renderPlace(); draw(); });
+  $('m-share').addEventListener('click', () => { state.metric = 'share'; refresh(); });
+  $('m-count').addEventListener('click', () => { state.metric = 'count'; refresh(); });
+  $('z-in').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.scaleBy, 1.8));
+  $('z-out').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.scaleBy, 1 / 1.8));
+  $('z-reset').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.transform, d3.zoomIdentity));
+  $('search').addEventListener('input', (e) => { state.filter = e.target.value; renderRank(); });
+
+  Promise.all([fetch('atlas.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+               fetch('adm1.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })])
+    .then(([a, g]) => {
+      meta = a.meta; units = a.units; byId = new Map(units.map((u) => [u.id, u])); feats = g.features;
+      $('tot-fem').textContent = fmtBig(meta.totals.fem); $('built').textContent = meta.built;
+      $('status').hidden = true;
+      buildLayers(); setup(); refresh();
+      new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) setup(); }).observe(canvas);
+      const redraw = () => { renderLegend(); draw(); };
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
+      new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    })
+    .catch(() => { $('status').textContent = 'The map data did not load. Reload the page to try again.'; });
+})();
+</script>

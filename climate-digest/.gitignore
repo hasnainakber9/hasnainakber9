@@ -2,3 +2,6 @@ harvest/*.json
 __pycache__/
 projects/mountain-watch/store/
 projects/mountain-watch/data/*.log
+projects/atlas/data/*.log
+projects/atlas/site/_preview.html
+projects/mountain-watch/data/*.log
