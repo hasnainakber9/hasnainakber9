@@ -1,0 +1,9 @@
+node_modules/
+data/
+.env
+.env.*
+!.env.example
+references/*
+!references/README.md
+!references/PINNED
+*.log

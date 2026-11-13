@@ -1,0 +1,483 @@
+{
+  "chainId": 8453,
+  "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+  "generatedAt": "2026-11-12T09:27:53.236Z",
+  "feeds": [
+    {
+      "address": "0x65B5d02E1Fff839b8B67Fa26F8540e5f11454316",
+      "role": "proxy",
+      "name": "AAVE / USD",
+      "path": "aave-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xAAEbc0287EC3BF3fe56fCA1E4bcC793b219De551",
+      "role": "secondary_proxy",
+      "name": "AAVE / USD",
+      "path": "aave-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x5299a0e1e79BaebA0EAB96C10727DF35489aAA38",
+      "role": "proxy",
+      "name": "ADA / USD",
+      "path": "ada-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x2DFd771ec9081c59A61056eeC82bb29649cdeA49",
+      "role": "secondary_proxy",
+      "name": "ADA / USD",
+      "path": "ada-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xf4DF589BeAbE63fEF977c73b9150BD2bdA1e346C",
+      "role": "proxy",
+      "name": "ADA / USD",
+      "path": "ada-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x34cD971a092d5411bD69C10a5F0A7EEF72C69041",
+      "role": "secondary_proxy",
+      "name": "ADA / USD",
+      "path": "ada-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x2B5f2D558BEb94d2FE5D97f53b564B5e17715c39",
+      "role": "proxy",
+      "name": "APXUSD / USD Exchange Rate",
+      "path": "apxusd-usd-exchange-rate-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xDd81826C339B9Dfa7e10b17489a9e3fA086C04b5",
+      "role": "secondary_proxy",
+      "name": "APXUSD / USD Exchange Rate",
+      "path": "apxusd-usd-exchange-rate-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x8D9e0911A532e2a3C005667B475E6F9742355f2b",
+      "role": "proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x03Df23A32C83cA8cD9B1aAC0aF1c72924af7502b",
+      "role": "secondary_proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xC01502b887D09B0f329981764268fC32a94cB453",
+      "role": "proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F",
+      "role": "secondary_proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x32F587986D3fb47601157c19615d568BeD0BCabc",
+      "role": "proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x3A932b286715abc4A86a4ACAF68A6cdD89E0d446",
+      "role": "secondary_proxy",
+      "name": "BTC / USD",
+      "path": "btc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x10509b4053385b49145Fab2D6B1c58e96Eac5b79",
+      "role": "proxy",
+      "name": "CBBTC / USD",
+      "path": "cbbtc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x2231aEdEf63Bef7F32fA1cEc5851C5CD72746263",
+      "role": "secondary_proxy",
+      "name": "CBBTC / USD",
+      "path": "cbbtc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x304adeae3041d6D0745249FD4583e8C542De67d6",
+      "role": "proxy",
+      "name": "DOGE / USD",
+      "path": "doge-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x3A5dCa7751715Eb11A13c74BD2FF00CC40bF2Dfd",
+      "role": "secondary_proxy",
+      "name": "DOGE / USD",
+      "path": "doge-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x249d22434438889106DbB59a576a1787b115E52d",
+      "role": "proxy",
+      "name": "DOGE / USD",
+      "path": "doge-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x8422f3d3CAFf15Ca682939310d6A5e619AE08e57",
+      "role": "secondary_proxy",
+      "name": "DOGE / USD",
+      "path": "doge-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x5731Ae06077c79A3B292498940211E0aE7130bd3",
+      "role": "proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x1428C9E908e32dD2839F99D63C242c91329A58C0",
+      "role": "secondary_proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x50015f8b17fb2C290Dde41fDc246ed0dcEE93a8b",
+      "role": "proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+      "role": "secondary_proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0xa4250cE1aA15Ff4cb5E5a8655293b65694e436Ed",
+      "role": "proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x9dA00D23465282005DB222a441a663eE7B9dfCc8",
+      "role": "secondary_proxy",
+      "name": "ETH / USD",
+      "path": "eth-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xa25cBF938Ace4b219a9d012971c7b4e898EF6c68",
+      "role": "proxy",
+      "name": "EURC / USD",
+      "path": "eurc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x2C33efee59abFcc3612B60B7a78bdc2CDd8797d1",
+      "role": "secondary_proxy",
+      "name": "EURC / USD",
+      "path": "eurc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x9867186e52d2F1C2c565CDA6E747101Fa56501e0",
+      "role": "proxy",
+      "name": "EURC / USD",
+      "path": "eurc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x8a55b7aB579321Eb1adb54Bc770308EA0378E287",
+      "role": "secondary_proxy",
+      "name": "EURC / USD",
+      "path": "eurc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x442f870a32Ea74C1A4630f7Dc357F8aBd552eF37",
+      "role": "proxy",
+      "name": "EZETH / ETH Exchange Rate",
+      "path": "ezeth-eth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xB5DD7388a9cE094dAde71bB1Dd32dCE68dA8Ac30",
+      "role": "secondary_proxy",
+      "name": "EZETH / ETH Exchange Rate",
+      "path": "ezeth-eth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x1B5FEF61Ff9B690364359b03cC07E060b12Bd3C1",
+      "role": "proxy",
+      "name": "GHO / USD",
+      "path": "gho-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xd8CA171B6f0F6B2a01B6B2dB7424dd72AA07a6F1",
+      "role": "secondary_proxy",
+      "name": "GHO / USD",
+      "path": "gho-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xEdB56c5DE751eD3182DDa337f7d9ab33cf091DcA",
+      "role": "proxy",
+      "name": "HYPE / USD",
+      "path": "hype-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xAdB55eF366459c94a318Af2b05A44EEe463f8e63",
+      "role": "secondary_proxy",
+      "name": "HYPE / USD",
+      "path": "hype-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xBf4892f41c753c5E1b03e8a7B425bd2679a6C224",
+      "role": "proxy",
+      "name": "LBTC / BTC Exchange Rate",
+      "path": "lbtc-btc-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xA6E3b91196afC536E4944B78aBb7DA41E7e18d6b",
+      "role": "secondary_proxy",
+      "name": "LBTC / BTC Exchange Rate",
+      "path": "lbtc-btc-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xa03A14F790eb8F5Ff73227278a3bb6eDE57Dc8c9",
+      "role": "proxy",
+      "name": "LTC / USD",
+      "path": "ltc-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x206a34e47093125fbf4C75b7c7E88b84c6A77a69",
+      "role": "secondary_proxy",
+      "name": "LTC / USD",
+      "path": "ltc-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0xb87Eba1aF247453930B71B87e948049882B1A95e",
+      "role": "proxy",
+      "name": "MXN / USD",
+      "path": "mxn-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x43Ec496624B805077D83d33F5E8026030A937644",
+      "role": "secondary_proxy",
+      "name": "MXN / USD",
+      "path": "mxn-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xd49c546D32D5472a7F7704EC183128512a1B2fcb",
+      "role": "proxy",
+      "name": "PAXG / USD",
+      "path": "paxg-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xAc2483950B39eEaE305Fd3a99c685bfF21733009",
+      "role": "secondary_proxy",
+      "name": "PAXG / USD",
+      "path": "paxg-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xAc0a5bB171350536207245afB0EB269b8195501B",
+      "role": "proxy",
+      "name": "rsETH / ETH Exchange Rate",
+      "path": "rseth-eth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xF5f4A4de107a46f25CDf08529144B48448dc2f83",
+      "role": "secondary_proxy",
+      "name": "rsETH / ETH Exchange Rate",
+      "path": "rseth-eth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xDa5Fd22F9382e57534fEdA4fF544878aa1cf401f",
+      "role": "proxy",
+      "name": "SOL / USD",
+      "path": "sol-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xB221fFf161c23C6473a6316294E2d510cfb667b0",
+      "role": "secondary_proxy",
+      "name": "SOL / USD",
+      "path": "sol-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x5D424D5a664a9f3c820F422297077d49877F9C93",
+      "role": "proxy",
+      "name": "SOL / USD",
+      "path": "sol-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x975043adBb80fc32276CbF9Bbcfd4A601a12462D",
+      "role": "secondary_proxy",
+      "name": "SOL / USD",
+      "path": "sol-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0xd0Dc8c910565D94D408729D16bE5467B5d7633Ad",
+      "role": "proxy",
+      "name": "USDC / USD",
+      "path": "usdc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x1401Fd60F9ba4F718a2fE6149aadf3d1F0dB1b0A",
+      "role": "secondary_proxy",
+      "name": "USDC / USD",
+      "path": "usdc-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x458138Fc0D67027E9A6778ef40a6ffC318c69061",
+      "role": "proxy",
+      "name": "USDC / USD",
+      "path": "usdc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x1550207eAeB590D1557a6E6C066D3d57B5A4Dc65",
+      "role": "secondary_proxy",
+      "name": "USDC / USD",
+      "path": "usdc-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xE6c6bf78308C46bad5Cae5D0ed44b36370b4B00d",
+      "role": "proxy",
+      "name": "USDT / USD",
+      "path": "usdt-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xb4b7ac939fB1ABA057D70Eb070254503777D8b1c",
+      "role": "secondary_proxy",
+      "name": "USDT / USD",
+      "path": "usdt-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xE5fa3A4e4208858ADdf2CDb4e12651E89f1f1A70",
+      "role": "proxy",
+      "name": "USDT / USD",
+      "path": "usdt-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x203e994f3908cF886C6155c31742557D82c9B4a2",
+      "role": "secondary_proxy",
+      "name": "USDT / USD",
+      "path": "usdt-usd-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xd71cdcAaea1Ce61146CD7257BE65412007a62819",
+      "role": "proxy",
+      "name": "WEETH / EETH Exchange Rate",
+      "path": "weeth-eeth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x807f6Da67498aE4185Cd45deaB9e803eDDd151bf",
+      "role": "secondary_proxy",
+      "name": "WEETH / EETH Exchange Rate",
+      "path": "weeth-eeth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xfd14a390149e23F972AbC9B7E31d3B1fdf508B38",
+      "role": "proxy",
+      "name": "WSTETH / STETH Exchange Rate",
+      "path": "wsteth-steth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0x2d4b8B1083a7C278B4C45c598De155e5f9b7A8D5",
+      "role": "secondary_proxy",
+      "name": "WSTETH / STETH Exchange Rate",
+      "path": "wsteth-steth-exchange-rate-svr",
+      "label": "Aave SVR"
+    },
+    {
+      "address": "0xF35059FB4471333F81E4F39fA40260FF53Dc340b",
+      "role": "proxy",
+      "name": "XRP / USD",
+      "path": "xrp-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x2938070D32d08E46B29E285fb7cA7EE3EE08FF05",
+      "role": "secondary_proxy",
+      "name": "XRP / USD",
+      "path": "xrp-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0x281F1D237Fa1382d96f7A4fd190500D182042e3b",
+      "role": "proxy",
+      "name": "XRP / USD",
+      "path": "xrp-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x9f0C1dD78C4CBdF5b9cf923a549A201EdC676D34",
+      "role": "secondary_proxy",
+      "name": "XRP / USD",
+      "path": "xrp-usd-shared-svr-2",
+      "label": "Shared SVR"
+    },
+    {
+      "address": "0x69e5BC4988a9AF30Ec827C5609c0D41028446ec0",
+      "role": "proxy",
+      "name": "ZEC / USD",
+      "path": "zec-usd-shared-svr",
+      "label": "Compound SVR"
+    },
+    {
+      "address": "0xC4a161651546983083AeDDDEc5878A2eAf604890",
+      "role": "secondary_proxy",
+      "name": "ZEC / USD",
+      "path": "zec-usd-shared-svr",
+      "label": "Compound SVR"
+    }
+  ]
+}
