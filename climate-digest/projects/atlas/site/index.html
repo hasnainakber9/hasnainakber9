@@ -7,7 +7,7 @@
   :root {
     --bg: #eef1ef; --panel: #fbfcfb; --ink: #17212a; --muted: #586671; --line: #cdd5d4;
     --sea: #dfe7e8; --nodata: #d3d9d8; --accent: #0e5a68; --focus: #0e5a68;
-    --ramp-lo: #f2f4ef; --cold: #1c4b8a; --heat: #b3361c; --care: #6a2c7b; --both: #7b1f3f;
+    --ramp-lo: #f2f4ef; --cold: #1c4b8a; --heat: #b3361c; --flood: #0f6f62; --care: #6a2c7b; --both: #7b1f3f; --study: #7a5200;
     --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -16,16 +16,17 @@
     :root:not([data-theme="light"]) {
       --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
       --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
-      --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --care: #d592ea; --both: #ff86a8;
+      --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
     --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
-    --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --care: #d592ea; --both: #ff86a8;
+    --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
     color-scheme: dark;
   }
+  [hidden] { display: none !important; }
   body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
   .wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 48px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -39,24 +40,29 @@
   .muted { color: var(--muted); }
   .small { font-size: 0.86rem; }
 
-  .layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 10px; }
   .layer { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
     padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; min-width: 0; align-content: start; }
   .layer:hover { border-color: var(--muted); }
   .layer[aria-pressed="true"] { border-color: var(--lc); box-shadow: inset 0 -3px 0 var(--lc); }
-  .layer:focus-visible, .seg button:focus-visible, .zoom button:focus-visible, .rank button:focus-visible, #search:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .layer:focus-visible, .seg button:focus-visible, .zoom button:focus-visible, .rank button:focus-visible, #search:focus-visible, .pick:focus-visible, .act:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .layer-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lc); flex: none; }
-  .layer-num { font-family: var(--mono); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .layer-num { font-family: var(--mono); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+  .layer-share { font-family: var(--mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
   .layer-def { color: var(--muted); font-size: 0.84rem; }
+  @media (max-width: 560px) { .layers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .layer { padding: 10px; } .layer-num { font-size: 1.02rem; } }
 
   .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
   @media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
   .mapcol { display: grid; gap: 8px; min-width: 0; }
   .mapbox { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; min-width: 0; }
-  #map { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; touch-action: none; cursor: grab; }
+  #map { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; touch-action: none; cursor: grab; }
   @media (max-width: 560px) { #map { aspect-ratio: 4 / 3; } }
-  .maptools { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .maptools { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap; max-width: calc(100% - 70px); }
+  .pick { font: inherit; font-size: 0.84rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
+  .act { font: inherit; font-size: 0.88rem; color: var(--panel); background: var(--accent); border: 0; border-radius: 6px; padding: 7px 12px; cursor: pointer; justify-self: start; }
+  .act.ghost { color: var(--accent); background: transparent; border: 1px solid var(--accent); }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
   .seg button, .zoom button { font: inherit; font-size: 0.84rem; color: var(--ink); background: transparent; border: 0; padding: 6px 10px; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
@@ -68,7 +74,9 @@
   .swatches { display: flex; gap: 2px; }
   .swatches span { display: grid; gap: 3px; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: center; }
   .swatches i { display: block; width: 44px; height: 10px; border-radius: 2px; }
+  .swatches.wide { gap: 8px; flex-wrap: wrap; } .swatches.wide i { width: auto; min-width: 44px; }
   @media (max-width: 560px) { .swatches i { width: 34px; } }
+  @media (max-width: 560px) { .legend { position: static; border: 0; border-top: 1px solid var(--line); border-radius: 0; max-width: none; } }
   .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 0.84rem; line-height: 1.35; white-space: nowrap; box-shadow: 0 4px 14px rgb(0 0 0 / 0.18); }
   .tip b { font-family: var(--mono); font-weight: 500; }
   .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 16px; text-align: center; }
@@ -94,8 +102,8 @@
 <div class="wrap">
   <header class="head">
     <h1>Atlas of the Uncounted</h1>
-    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with freezing nights, extreme heat and long walks to care, for every province on Earth.</p>
-    <p class="muted small">Estimates of exposure from satellite and population data, not measures of harm. First layer set, built <span id="built">…</span>.</p>
+    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with freezing nights, extreme heat, floods and long walks to care, and where research has not looked. Every province on Earth, with districts for <b id="n-dc">…</b>.</p>
+    <p class="muted small">Estimates of exposure from satellite and population data, not measures of harm. Built <span id="built">…</span>.</p>
   </header>
 
   <div class="layers" role="group" aria-label="Map layer" id="layers"></div>
@@ -109,6 +117,7 @@
           <button type="button" id="m-share" aria-pressed="true">Share</button>
           <button type="button" id="m-count" aria-pressed="false">Number</button>
         </div>
+        <select class="pick" id="country" aria-label="Open a country to see its districts"></select>
       </div>
       <div class="zoom" role="group" aria-label="Zoom">
         <button type="button" id="z-in" aria-label="Zoom in">+</button>
@@ -129,6 +138,7 @@
           <div class="muted small" id="p-sub">Click a province on the map or in the list</div>
         </div>
         <dl id="p-facts"></dl>
+        <button type="button" class="act" id="p-open" hidden></button>
         <p class="muted small" id="p-note" hidden></p>
       </section>
       <section class="card">
@@ -146,10 +156,13 @@
       <li><b>Women and girls:</b> LandScan Global 2024 population at 1 km, multiplied by the local share of women aged 15–49 and girls aged 10–14 from GPWv4.11 (2010 census round). Age shares shift slowly, but they are a decade and a half old.</li>
       <li><b>Freezing nights:</b> the share of MODIS Aqua 8-day night land-surface-temperature composites below 0 °C, 2016–2025, times 365. The satellite sees the ground only on clear nights, which run colder than cloudy ones.</li>
       <li><b>Extreme heat:</b> days a year with a maximum air temperature of 35 °C or more, 2021–2025, from ERA5-Land at 9 km. It misses heat in narrow valleys and ignores humidity.</li>
+      <li><b>Flooded land:</b> the Global Flood Database maps 913 large floods seen by the MODIS satellites from 2000 to 2018, at 250 m. Land counts as flooded if it stayed under water for three days or more in at least one of them and lies within 10 m of height above the nearest river or the sea; that second test removes mountain and building shadows that the satellite mistakes for water. Each 1 km cell gets the share of its area that flooded, and women and girls are counted in proportion. The record stops in 2018, so it misses Pakistan’s 2022 floods; it also misses floods hidden by cloud, flash floods shorter than three days and most flooding inside cities.</li>
       <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
-      <li><b>Exposed and far:</b> two hours' walk or more from care, and either 30 or more freezing nights or 30 or more hot days a year.</li>
-      <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at this scale. They are still counted in the totals and the list.</li>
-      <li><b>Borders and names:</b> geoBoundaries v6.0.0, first administrative level. They are a data source, not a position on any disputed territory.</li>
+      <li><b>Exposed and far:</b> two hours’ walk or more from care, and living with 30 or more freezing nights a year, 30 or more hot days a year, or on land that has flooded.</li>
+      <li><b>Unstudied:</b> for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</li>
+      <li><b>Districts:</b> second administrative level from geoBoundaries v6.0.0, worked out the same way as provinces. Research counts are not made for districts. Some district names have lost their accented letters in the source and show a “?”.</li>
+      <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at world scale. They are still counted in the totals and the list.</li>
+      <li><b>Borders and names:</b> geoBoundaries v6.0.0. They are a data source, not a position on any disputed territory.</li>
       <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
     </ul>
   </details>
@@ -163,69 +176,95 @@
       caveat: 'The satellite sees ground temperature only on clear nights, which run colder than cloudy ones.' },
     { id: 'hot90', name: 'Extreme heat', color: '--heat', def: '90 or more days a year at 35 °C or hotter',
       caveat: 'Air temperature on a 9 km grid. Humidity is not counted, and heat in narrow valleys is missed.' },
+    { id: 'flood', name: 'Flooded land', color: '--flood', def: 'On land satellites saw flooded for three days or more, 2000–2018',
+      bins: [1, 3, 10, 25], labels: ['<1%', '1–3', '3–10', '10–25', '25%+'],
+      caveat: 'The flood record ends in 2018, so Pakistan’s 2022 floods are not in it. It also misses floods under cloud, floods shorter than three days and most flooding inside cities, so these are low estimates.' },
     { id: 'far2h', name: 'Far from care', color: '--care', def: 'Two hours’ walk or more from a health facility',
       caveat: 'Read with care: where the source map of health facilities is thin, walking times are overstated. Afghanistan and North Korea look affected, with whole provinces at 100%.' },
-    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights or extreme heat',
+    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights, heat or flooding',
       caveat: 'Read with care: this layer inherits the gaps in the health-facility map, so it is overstated where that map is thin, such as Afghanistan and North Korea.' },
+    { id: 'research', kind: 'research', name: 'Unstudied', color: '--study', def: 'In provinces that research on women names, but never with a climate hazard',
+      caveat: 'Counts studies in Europe PMC, a health and life-science index, that name the province. Social science, reports and local-language work are undercounted, so “none” means none in this index. Where fewer than five studies on women name a province at all, the map says “too few to tell”, because the name may simply be spelled differently in the literature.' },
   ];
   const SHARE_BINS = [10, 25, 50, 75], COUNT_BINS = [1e4, 1e5, 1e6, 5e6];
-  const MIN_FEM = 50000;
+  const SHARE_LABELS = ['<10%', '10–25', '25–50', '50–75', '75%+'], COUNT_LABELS = ['<10k', '10k–100k', '100k–1M', '1M–5M', '5M+'];
+  const R_LABELS = ['5+ studies', '1–4', 'none', 'too few to tell'];
+  const MIN_FEM = 50000, MIN_FEM_D = 5000;
   const $ = (id) => document.getElementById(id);
-  const fmtInt = d3.format(','), fmtPct = (v) => (v == null ? '—' : d3.format('.0f')(v) + '%');
+  const fmtInt = d3.format(',');
+  const fmtPct = (v) => (v == null ? '—' : (v > 0 && v < 10 ? d3.format('.1f')(v) : d3.format('.0f')(v)) + '%');
   const fmtBig = (v) => v >= 1e9 ? d3.format('.2f')(v / 1e9) + ' billion' : v >= 1e6 ? d3.format('.1f')(v / 1e6) + ' million' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + ' thousand' : fmtInt(Math.round(v));
   const fmtShort = (v) => v >= 1e6 ? d3.format('.1f')(v / 1e6) + 'M' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + 'k' : String(Math.round(v));
+  const fmtRate = (v) => v >= 10 ? d3.format('.0f')(v) : d3.format('.1f')(v);
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const state = { layer: 'cold30', metric: 'share', selected: null, hover: null, filter: '' };
-  let units = [], byId = new Map(), feats = [], meta = null, tr = d3.zoomIdentity, W = 0, H = 0, dpr = 1, zoomB = null, spherePath = null;
+  const state = { layer: 'cold30', metric: 'share', selected: null, hover: null, filter: '', focus: null };
+  let units = [], byId = new Map(), feats = [], featById = new Map(), meta = null, tr = d3.zoomIdentity, W = 0, H = 0, dpr = 1, zoomB = null, path = null;
+  const dCache = new Map();            // ISO -> { units, feats, byId } for countries whose districts are loaded
   const canvas = $('map'), ctx = canvas.getContext('2d');
 
-  const count = (u, id) => u['p_' + id] == null ? null : u.fem * u['p_' + id] / 100;
-  const value = (u) => state.metric === 'share' ? u['p_' + state.layer] : count(u, state.layer);
   const layer = () => LAYERS.find((l) => l.id === state.layer);
+  const isR = () => layer().kind === 'research';
+  const focus = () => (state.focus && !isR() ? dCache.get(state.focus) : null);
+  const lookup = (id) => { const f = focus(); return (f && f.byId.get(id)) || byId.get(id); };
+  const count = (u, id) => u['p_' + id] == null ? null : u.fem * u['p_' + id] / 100;
+  // Research classes: 'some' (studies on women and a climate hazard exist), 'gap' (studied, but never with a climate hazard),
+  // 'thin' (too few studies of any kind under this name to tell), null (name too generic to search).
+  const rclass = (u) => u.rc == null ? null : u.rc > 0 ? 'some' : u.rw >= ((meta.research || {}).min_rw || 5) ? 'gap' : 'thin';
+  function rcols(cols) { return [cols[0], cols[2], cols[4], d3.interpolateLab(css('--nodata'), css(layer().color))(0.42)]; }
+  function value(u) {
+    if (isR()) return u.rc == null ? null : u.rc;
+    return state.metric === 'share' ? u['p_' + state.layer] : count(u, state.layer);
+  }
   function ramp() {
-    const lo = css('--ramp-lo'), hi = css(layer().color);
-    const it = d3.interpolateLab(lo, hi);
+    const it = d3.interpolateLab(css('--ramp-lo'), css(layer().color));
     return [0.06, 0.3, 0.55, 0.78, 1].map(it);
   }
   function colorFor(u, cols) {
     const v = value(u);
     if (v == null) return css('--nodata');
-    const bins = state.metric === 'share' ? SHARE_BINS : COUNT_BINS;
+    if (isR()) { const c = rclass(u), rc = rcols(cols); return c === 'thin' ? rc[3] : c === 'gap' ? rc[2] : u.rc >= 5 ? rc[0] : rc[1]; }
+    const bins = state.metric === 'share' ? (layer().bins || SHARE_BINS) : COUNT_BINS;
     return cols[d3.bisectRight(bins, v)];
   }
 
   function buildLayers() {
-    const box = $('layers');
-    box.replaceChildren(...LAYERS.map((l) => {
+    $('layers').replaceChildren(...LAYERS.map((l) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'layer'; b.id = 'layer-' + l.id; b.style.setProperty('--lc', `var(${l.color})`);
       b.setAttribute('aria-pressed', String(l.id === state.layer));
       const nm = document.createElement('span'); nm.className = 'layer-name';
       const dot = document.createElement('span'); dot.className = 'dot'; nm.append(dot, l.name);
       const num = document.createElement('span'); num.className = 'layer-num';
-      const t = meta.totals[l.id], share = 100 * t / meta.totals.fem;
-      num.textContent = fmtBig(t) + ' · ' + d3.format('.0f')(share) + '%';
+      const R = meta.research || {};
+      const t = l.kind === 'research' ? R.none_fem : meta.totals[l.id], base = l.kind === 'research' ? R.searchable_fem : meta.totals.fem;
+      num.textContent = t == null ? '—' : fmtBig(t);
+      const sh = document.createElement('span'); sh.className = 'layer-share';
+      sh.textContent = t == null ? 'not counted yet' : fmtPct(100 * t / base) + (l.kind === 'research' ? ' of those searched' : ' of the total');
       const def = document.createElement('span'); def.className = 'layer-def'; def.textContent = l.def;
-      b.append(nm, num, def);
+      b.append(nm, num, sh, def);
       b.addEventListener('click', () => { state.layer = l.id; refresh(); });
       return b;
     }));
   }
 
+  function buildCountryPicker() {
+    const sel = $('country'), isos = Object.keys(meta.districts || {}).sort((a, b) => meta.names[a].localeCompare(meta.names[b]));
+    const o0 = document.createElement('option'); o0.value = ''; o0.textContent = isos.length ? 'World: open a country’s districts…' : 'Districts are still being computed';
+    sel.replaceChildren(o0, ...isos.map((iso) => { const o = document.createElement('option'); o.value = iso; o.textContent = meta.names[iso] + ' (' + fmtInt(meta.districts[iso]) + ')'; return o; }));
+    sel.disabled = !isos.length;
+    sel.addEventListener('change', () => (sel.value ? openCountry(sel.value) : closeCountry()));
+  }
+
+  function shape(f) { const d = path(f); f.p2d = d ? new Path2D(d) : null; f.box = d ? path.bounds(f) : null; }
   function setup() {
     const r = canvas.getBoundingClientRect();
     W = Math.max(280, r.width); H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    const proj = d3.geoEqualEarth().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
-    const path = d3.geoPath(proj);
-    spherePath = new Path2D(path({ type: 'Sphere' }));
-    for (const f of feats) {
-      const d = path(f);
-      f.p2d = d ? new Path2D(d) : null;
-      f.box = d ? path.bounds(f) : null;
-    }
+    path = d3.geoPath(d3.geoEqualEarth().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' }));
+    feats.forEach(shape);
+    for (const c of dCache.values()) c.feats.forEach(shape);
     if (!zoomB) {
-      zoomB = d3.zoom().scaleExtent([1, 14]).on('zoom', (e) => { tr = e.transform; draw(); });
+      zoomB = d3.zoom().scaleExtent([1, 90]).on('zoom', (e) => { tr = e.transform; draw(); });
       d3.select(canvas).call(zoomB).on('dblclick.zoom', null);
     }
     zoomB.translateExtent([[0, 0], [W, H]]).extent([[0, 0], [W, H]]);
@@ -234,7 +273,7 @@
 
   function draw() {
     if (!feats.length) return;
-    const cols = ramp(), land = css('--nodata'), edge = css('--bg'), ink = css('--ink');
+    const cols = ramp(), land = css('--nodata'), edge = css('--bg'), ink = css('--ink'), fc = focus();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = css('--sea'); ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(dpr * tr.k, 0, 0, dpr * tr.k, dpr * tr.x, dpr * tr.y);
@@ -242,40 +281,78 @@
     for (const f of feats) {
       if (!f.p2d) continue;
       const u = byId.get(f.properties.id);
-      ctx.fillStyle = u ? colorFor(u, cols) : land;
+      ctx.fillStyle = !u || (fc && u.c === state.focus) ? land : colorFor(u, cols);
       ctx.fill(f.p2d);
     }
     ctx.strokeStyle = edge; ctx.lineWidth = 0.35 / tr.k; ctx.globalAlpha = 0.7;
     for (const f of feats) if (f.p2d) ctx.stroke(f.p2d);
+    if (fc) {
+      ctx.globalAlpha = 1;
+      for (const f of fc.feats) { if (!f.p2d) continue; ctx.fillStyle = colorFor(fc.byId.get(f.properties.id), cols); ctx.fill(f.p2d); }
+      ctx.globalAlpha = 0.7; ctx.lineWidth = 0.3 / tr.k;
+      for (const f of fc.feats) if (f.p2d) ctx.stroke(f.p2d);
+      ctx.strokeStyle = ink; ctx.globalAlpha = 0.45; ctx.lineWidth = 0.9 / tr.k;
+      for (const f of feats) { const u = byId.get(f.properties.id); if (f.p2d && u && u.c === state.focus) ctx.stroke(f.p2d); }
+    }
     ctx.globalAlpha = 1;
     for (const id of [state.hover, state.selected]) {
-      const f = id && feats.find((x) => x.properties.id === id);
+      const f = id && ((fc && fc.featById.get(id)) || featById.get(id));
       if (f && f.p2d) { ctx.strokeStyle = ink; ctx.lineWidth = (id === state.selected ? 2 : 1.2) / tr.k; ctx.stroke(f.p2d); }
     }
   }
 
   function hit(evt) {
-    const r = canvas.getBoundingClientRect();
+    const r = canvas.getBoundingClientRect(), fc = focus();
     const x = (evt.clientX - r.left - tr.x) / tr.k, y = (evt.clientY - r.top - tr.y) / tr.k;
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
     let found = null;
-    for (const f of feats) {
-      const b = f.box;
-      if (!b || x < b[0][0] || x > b[1][0] || y < b[0][1] || y > b[1][1]) continue;
-      if (ctx.isPointInPath(f.p2d, x, y)) { found = f.properties.id; break; }
+    for (const list of fc ? [fc.feats, feats] : [feats]) {
+      for (const f of list) {
+        const b = f.box;
+        if (!b || x < b[0][0] || x > b[1][0] || y < b[0][1] || y > b[1][1]) continue;
+        if (ctx.isPointInPath(f.p2d, x, y)) { found = f.properties.id; break; }
+      }
+      if (found) break;
     }
     ctx.restore();
     return found;
   }
 
+  function zoomTo(list) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const f of list) if (f.box) { x0 = Math.min(x0, f.box[0][0]); y0 = Math.min(y0, f.box[0][1]); x1 = Math.max(x1, f.box[1][0]); y1 = Math.max(y1, f.box[1][1]); }
+    if (!isFinite(x0)) return;
+    const k = Math.max(1, Math.min(90, 0.85 / Math.max((x1 - x0) / W, (y1 - y0) / H)));
+    const t = d3.zoomIdentity.translate(W / 2, H / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+    d3.select(canvas).transition().duration(350).call(zoomB.transform, t);
+  }
+
+  function openCountry(iso) {
+    const done = () => { state.focus = iso; state.selected = null; $('country').value = iso; refresh(); zoomTo(dCache.get(iso).feats.length ? dCache.get(iso).feats : feats.filter((f) => (byId.get(f.properties.id) || {}).c === iso)); };
+    if (dCache.has(iso)) return done();
+    $('p-sub').textContent = 'Loading the districts of ' + meta.names[iso] + '…';
+    fetch('d/' + iso + '.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => {
+      for (const u of d.units) { u.c = iso; u.cn = meta.names[iso]; u.d = true; }
+      d.features.forEach(shape);
+      dCache.set(iso, { units: d.units, feats: d.features, byId: new Map(d.units.map((u) => [u.id, u])), featById: new Map(d.features.map((f) => [f.properties.id, f])) });
+      done();
+    }).catch(() => { $('p-sub').textContent = 'The districts of ' + meta.names[iso] + ' did not load. Try again.'; $('country').value = state.focus || ''; });
+  }
+  function closeCountry() { state.focus = null; state.selected = null; $('country').value = ''; refresh(); d3.select(canvas).transition().duration(350).call(zoomB.transform, d3.zoomIdentity); }
+
   function showTip(evt, u) {
-    const tip = $('tip'), box = $('mapbox').getBoundingClientRect();
-    const l = layer();
+    const tip = $('tip'), box = $('mapbox').getBoundingClientRect(), l = layer();
     tip.replaceChildren();
     const a = document.createElement('div'); a.textContent = u.n + ', ' + u.cn;
     const b = document.createElement('div'); const v = document.createElement('b');
-    v.textContent = fmtPct(u['p_' + l.id]) + ' · ' + (count(u, l.id) == null ? '—' : fmtShort(count(u, l.id)));
-    b.append(l.name + ': ', v);
+    if (isR()) {
+      if (u.rc == null) b.append('Name too generic to search');
+      else if (rclass(u) === 'thin') { v.textContent = fmtInt(u.rw); b.append('Too few studies name it to tell: ', v); }
+      else { v.textContent = fmtInt(u.rc) + ' of ' + fmtInt(u.rw); b.append('Studies on women and climate: ', v); }
+    } else {
+      v.textContent = fmtPct(u['p_' + l.id]) + ' · ' + (count(u, l.id) == null ? '—' : fmtShort(count(u, l.id)));
+      b.append(l.name + ': ', v);
+    }
     tip.append(a, b); tip.hidden = false;
     let x = evt.clientX - box.left + 14, y = evt.clientY - box.top + 14;
     if (x + tip.offsetWidth > box.width - 6) x = Math.max(6, evt.clientX - box.left - tip.offsetWidth - 14);
@@ -284,53 +361,96 @@
   }
 
   function fact(dl, k, v) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
+  function sumFacts(dl, list, fem) {
+    for (const l of LAYERS) {
+      if (l.kind === 'research') continue;
+      const t = d3.sum(list, (u) => count(u, l.id) || 0);
+      fact(dl, l.name, list.some((u) => count(u, l.id) != null) ? fmtBig(t) + ' · ' + fmtPct(100 * t / fem) : '—');
+    }
+  }
   function renderPlace() {
     const dl = $('p-facts'); dl.replaceChildren();
-    const u = state.selected && byId.get(state.selected), note = $('p-note');
-    if (!u) {
+    const u = state.selected && lookup(state.selected), note = $('p-note'), open = $('p-open'), R = meta.research || {};
+    open.hidden = true; note.hidden = true; open.onclick = null;
+    if (!u && !state.focus) {
       $('p-name').textContent = 'The world';
       $('p-sub').textContent = `${fmtInt(meta.units)} provinces in ${meta.countries} countries and territories. Click one on the map or in the list.`;
       fact(dl, 'Women aged 15–49', fmtBig(meta.totals.women)); fact(dl, 'Girls aged 10–14', fmtBig(meta.totals.girls));
-      for (const l of LAYERS) fact(dl, l.name, fmtBig(meta.totals[l.id]));
-      note.hidden = true; return;
+      for (const l of LAYERS) if (l.kind !== 'research') fact(dl, l.name, fmtBig(meta.totals[l.id]));
+      if (R.searchable) { fact(dl, 'Provinces studied, never on climate', fmtInt(R.none) + ' of ' + fmtInt(R.searchable)); fact(dl, 'Provinces with too few studies to tell', fmtInt(R.thin)); }
+      return;
     }
-    $('p-name').textContent = u.n; $('p-sub').textContent = u.cn;
+    if (!u) {                                   // a country is open, nothing selected: country summary
+      const iso = state.focus, list = units.filter((x) => x.c === iso), fem = d3.sum(list, (x) => x.fem), c = dCache.get(iso);
+      $('p-name').textContent = meta.names[iso];
+      $('p-sub').textContent = `${fmtInt(list.length)} provinces, ${fmtInt(c.units.length)} districts. Click one on the map or in the list.`;
+      fact(dl, 'Women and girls aged 10–49', fmtBig(fem));
+      sumFacts(dl, list, fem);
+      const rc = (R.countries || {})[iso];
+      if (rc) { fact(dl, 'Studies on women and girls naming the country', fmtInt(rc[0])); fact(dl, 'Of those, also on climate hazards', fmtInt(rc[1])); }
+      open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
+      return;
+    }
+    $('p-name').textContent = u.n; $('p-sub').textContent = (u.d ? 'District in ' : '') + u.cn;
     fact(dl, 'Women aged 15–49', fmtInt(u.women)); fact(dl, 'Girls aged 10–14', fmtInt(u.girls));
     fact(dl, 'Freezing nights a year', u.frost == null ? '—' : d3.format('.0f')(u.frost));
     fact(dl, 'Days a year at 35 °C or hotter', u.hot == null ? '—' : d3.format('.0f')(u.hot));
     fact(dl, '30+ freezing nights', fmtPct(u.p_cold30)); fact(dl, '90+ hot days', fmtPct(u.p_hot90));
+    fact(dl, 'On land that has flooded', fmtPct(u.p_flood));
     fact(dl, 'An hour or more from care', fmtPct(u.p_far1h)); fact(dl, 'Two hours or more from care', fmtPct(u.p_far2h));
     fact(dl, 'Exposed and far', fmtPct(u.p_far2h_exposed));
-    note.hidden = !(u.cov < 90);
-    if (u.cov < 90) note.textContent = `Shares cover ${d3.format('.0f')(u.cov)}% of this province's women and girls; satellite or travel-time data is missing for the rest.`;
+    if (!u.d && R.searchable) {
+      if (u.rc == null) fact(dl, 'Studies on women and girls', 'name too generic to search');
+      else { fact(dl, 'Studies on women and girls', fmtInt(u.rw)); fact(dl, 'Of those, also on climate hazards', fmtInt(u.rc)); }
+      if (rclass(u) === 'thin') { note.hidden = false; note.textContent = 'Fewer than five studies on women name this province, so it may be unstudied, or spelled differently in the literature.'; }
+    }
+    if ((meta.districts || {})[u.c] && state.focus !== u.c) {
+      open.hidden = false; open.className = 'act'; open.textContent = 'Show the districts of ' + u.cn; open.onclick = () => openCountry(u.c);
+    } else if (state.focus) {
+      open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
+    }
+    if (u.cov < 90) { note.hidden = false; note.textContent = (note.textContent && rclass(u) === 'thin' && !u.d ? note.textContent + ' ' : '') + `Shares cover ${d3.format('.0f')(u.cov)}% of this ${u.d ? 'district' : 'province'}'s women and girls; satellite or travel-time data is missing for the rest.`; }
   }
 
   function renderRank() {
-    const l = layer(), q = state.filter.trim().toLowerCase();
-    $('rank-title').textContent = (state.metric === 'share' ? 'Highest shares: ' : 'Largest numbers: ') + l.name.toLowerCase();
-    let rows = units.filter((u) => value(u) != null && (state.metric === 'count' || u.fem >= MIN_FEM));
+    const l = layer(), q = state.filter.trim().toLowerCase(), fc = focus(), r = isR();
+    const where = state.focus ? ' in ' + meta.names[state.focus] : '', word = fc ? 'Districts' : 'Provinces', min = fc ? MIN_FEM_D : MIN_FEM;
+    const pool = fc ? fc.units : state.focus ? units.filter((u) => u.c === state.focus) : units;
+    let rows;
+    if (r) {
+      const all = !!(q || state.focus), order = { gap: 0, thin: 1, some: 2 };
+      rows = pool.filter((u) => u.rc != null && (all || rclass(u) === 'gap'));
+      rows.sort((a, b) => order[rclass(a)] - order[rclass(b)] || b.fem - a.fem);
+    } else {
+      rows = pool.filter((u) => value(u) != null && (state.metric === 'count' || u.fem >= min));
+      rows.sort((a, b) => value(b) - value(a) || b.fem - a.fem);
+    }
     if (q) rows = rows.filter((u) => (u.n + ' ' + u.cn).toLowerCase().includes(q));
-    rows.sort((a, b) => value(b) - value(a) || b.fem - a.fem);
+    $('rank-title').textContent = (r ? 'Largest provinces studied, but never on climate' : (state.metric === 'share' ? 'Highest shares: ' : 'Largest numbers: ') + l.name.toLowerCase()) + where;
     const top = rows.slice(0, 12);
     $('rank').replaceChildren(...top.map((u, i) => {
       const li = document.createElement('li'), b = document.createElement('button');
       b.type = 'button';
       const a = document.createElement('span'); a.className = 'i'; a.textContent = i + 1;
-      const n = document.createElement('span'); n.className = 'nm'; n.textContent = u.n + ', ' + u.cn; n.title = u.n + ', ' + u.cn;
-      const v = document.createElement('span'); v.className = 'v'; v.textContent = state.metric === 'share' ? fmtPct(value(u)) : fmtShort(value(u));
+      const n = document.createElement('span'); n.className = 'nm'; n.textContent = state.focus ? u.n : u.n + ', ' + u.cn; n.title = u.n + ', ' + u.cn;
+      const v = document.createElement('span'); v.className = 'v';
+      v.textContent = r ? (rclass(u) === 'thin' ? 'too few' : fmtInt(u.rc) + ' of ' + fmtInt(u.rw)) : state.metric === 'share' ? fmtPct(value(u)) : fmtShort(value(u));
       b.append(a, n, v); b.addEventListener('click', () => { state.selected = u.id; renderPlace(); draw(); });
       li.append(b); return li;
     }));
-    $('rank-note').textContent = !top.length ? 'No province matches that filter.' :
-      state.metric === 'share' ? `Share of women and girls aged 10–49. Provinces with fewer than ${fmtInt(MIN_FEM)} are left out of this list.` : 'Number of women and girls aged 10–49.';
+    $('rank-note').textContent = !top.length ? 'Nothing matches that filter.' :
+      r ? 'Studies on women or girls and a climate hazard, of all studies on women or girls that name the province (Europe PMC, 2010–2026). Largest populations first.' :
+      state.metric === 'share' ? `Share of women and girls aged 10–49. ${word} with fewer than ${fmtInt(min)} are left out of this list.` : 'Number of women and girls aged 10–49.';
+    $('search').placeholder = state.focus ? 'Filter by name' : 'Filter by country or province';
   }
 
   function renderLegend() {
-    const cols = ramp(), l = layer(), lg = $('legend');
-    const labels = state.metric === 'share' ? ['<10%', '10–25', '25–50', '50–75', '75%+'] : ['<10k', '10k–100k', '100k–1M', '1M–5M', '5M+'];
+    const l = layer(), lg = $('legend'), r = isR(), cols = r ? rcols(ramp()) : ramp();
+    const labels = r ? R_LABELS : state.metric === 'share' ? (l.labels || SHARE_LABELS) : COUNT_LABELS;
     const t = document.createElement('div'); t.className = 'legend-title';
-    t.textContent = (state.metric === 'share' ? 'Share of women and girls: ' : 'Women and girls: ') + l.def.charAt(0).toLowerCase() + l.def.slice(1);
-    const sw = document.createElement('div'); sw.className = 'swatches';
+    t.textContent = r ? 'Studies naming the province on women or girls and a climate hazard'
+      : (state.metric === 'share' ? 'Share of women and girls: ' : 'Women and girls: ') + l.def.charAt(0).toLowerCase() + l.def.slice(1);
+    const sw = document.createElement('div'); sw.className = 'swatches' + (r ? ' wide' : '');
     cols.forEach((c, i) => { const s = document.createElement('span'), box = document.createElement('i'); box.style.background = c; s.append(box, labels[i]); sw.append(s); });
     lg.replaceChildren(t, sw); lg.hidden = false;
   }
@@ -339,7 +459,9 @@
     for (const l of LAYERS) $('layer-' + l.id).setAttribute('aria-pressed', String(l.id === state.layer));
     $('m-share').setAttribute('aria-pressed', String(state.metric === 'share'));
     $('m-count').setAttribute('aria-pressed', String(state.metric === 'count'));
-    $('caveat').textContent = layer().caveat;
+    $('m-share').parentElement.hidden = isR();
+    $('caveat').textContent = layer().caveat + (isR() && state.focus ? ' Showing provinces, because research is not counted for districts.' : '');
+    if (state.selected && !lookup(state.selected)) state.selected = null;
     renderLegend(); renderRank(); renderPlace(); draw();
   }
 
@@ -347,11 +469,11 @@
     if (e.buttons) { $('tip').hidden = true; return; }
     const id = hit(e);
     if (id !== state.hover) { state.hover = id; draw(); }
-    const u = id && byId.get(id);
+    const u = id && lookup(id);
     if (u) showTip(e, u); else $('tip').hidden = true;
   });
   canvas.addEventListener('pointerleave', () => { state.hover = null; $('tip').hidden = true; draw(); });
-  canvas.addEventListener('click', (e) => { const id = hit(e); state.selected = id && byId.has(id) ? id : null; renderPlace(); draw(); });
+  canvas.addEventListener('click', (e) => { const id = hit(e); state.selected = id && lookup(id) ? id : null; renderPlace(); draw(); });
   $('m-share').addEventListener('click', () => { state.metric = 'share'; refresh(); });
   $('m-count').addEventListener('click', () => { state.metric = 'count'; refresh(); });
   $('z-in').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.scaleBy, 1.8));
@@ -363,9 +485,12 @@
                fetch('adm1.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })])
     .then(([a, g]) => {
       meta = a.meta; units = a.units; byId = new Map(units.map((u) => [u.id, u])); feats = g.features;
+      featById = new Map(feats.map((f) => [f.properties.id, f]));
+      const nd = Object.keys(meta.districts || {}).length;
       $('tot-fem').textContent = fmtBig(meta.totals.fem); $('built').textContent = meta.built;
+      $('n-dc').textContent = nd ? `${nd} ${nd === 1 ? 'country' : 'countries'} so far` : 'more countries on the way';
       $('status').hidden = true;
-      buildLayers(); setup(); refresh();
+      buildLayers(); buildCountryPicker(); setup(); refresh();
       new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) setup(); }).observe(canvas);
       const redraw = () => { renderLegend(); draw(); };
       matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);

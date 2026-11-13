@@ -5,3 +5,7 @@ projects/mountain-watch/data/*.log
 projects/atlas/data/*.log
 projects/atlas/site/_preview.html
 projects/mountain-watch/data/*.log
+projects/atlas/data/research_cache.json
+projects/atlas/data/shapes2/
+projects/atlas/data/*_ids.json
+projects/atlas/site/d/
