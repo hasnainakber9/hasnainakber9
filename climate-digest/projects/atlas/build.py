@@ -130,6 +130,15 @@ districts, d_units, d_fem = {}, 0, 0
 os.makedirs(os.path.join(HERE, "site", "d"), exist_ok=True)
 for stale in glob.glob(os.path.join(HERE, "site", "d", "*.json")):
     os.remove(stale)
+load = lambda fn: json.load(open(D(fn))) if os.path.exists(D(fn)) else {}
+d_names, d_fixes = load("adm2_names.json"), load("adm2_name_fixes.json")     # from repair.py, and by hand
+
+
+def dname(r):
+    n = d_names.get(r["shapeID"]) or d_fixes.get(r["shapeGroup"] + "|" + r["shapeName"]) or tidy(r["shapeName"])
+    return n if n.strip("? -�") else "Name not available"
+
+
 adm2 = {}
 for r in read(D("adm2_raw.csv")):
     adm2.setdefault(r["shapeGroup"], {})[r["shapeID"]] = r
@@ -143,7 +152,7 @@ for iso, got in sorted(adm2.items()):
         continue                                   # country not finished yet
     us = []
     for sid, r in got.items():
-        u = unit(r, tidy(r["shapeName"]))
+        u = unit(r, dname(r))
         if u:
             us.append(u)
     keep = {u["id"] for u in us}
