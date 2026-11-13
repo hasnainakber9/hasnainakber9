@@ -44,7 +44,7 @@
 <div class="mw">
   <header class="mw-head" id="top">
     <h1>Mountain Watch</h1>
-    <p class="mw-sub">Gilgit-Baltistan and Chitral, Pakistan. Satellite snow cover, summer greenness and high-altitude lakes.</p>
+    <p class="mw-sub">Gilgit-Baltistan and Chitral, Pakistan. Satellite snow cover, summer greenness and high-altitude lakes, and the women and girls who live through these winters.</p>
     <p class="mw-take" id="takeaway">Snow cover across Gilgit-Baltistan this season (<span data-draw="window">—</span>) is <b data-draw="gb-anom" data-source="season_now" data-field="anom_pp" data-where="unit=Gilgit-Baltistan">—</b> percentage points <span data-draw="gb-dir">—</span> the 2001–2025 normal for the same dates: the <b data-draw="gb-place" data-source="place_now" data-field="place_from_top" data-where="unit=Gilgit-Baltistan">—</b> highest of <b data-draw="gb-seasons" data-source="place_now" data-field="seasons" data-where="unit=Gilgit-Baltistan">—</b> winters in the MODIS record, during an El Niño with the latest ONI at <b data-draw="oni-now" data-source="oni_recent" data-field="anom">—</b> °C (<span data-draw="oni-season">—</span>).</p>
   </header>
 
@@ -108,6 +108,51 @@
     <p class="mw-note">Bars: snow-covered share over the same window in each winter. The line marks the 2001–2025 normal. The current winter is highlighted.</p>
   </section>
 
+
+  <section class="mw-sec" id="women">
+    <h2>Who lives through these winters</h2>
+    <p>About <b data-draw="fem-total" data-source="women_total" data-field="fem_10_49" data-row="0">—</b> women and girls aged 10 to 49 live in Gilgit-Baltistan and Chitral. <b data-draw="fem-share0" data-source="women_total" data-field="share_below_0" data-row="0">—</b> of them live where January nights average below freezing, and <b data-draw="fem-share10" data-source="women_total" data-field="share_below_10" data-row="0">—</b> where they average below −10 °C. They face about <b data-draw="fem-nights" data-source="women_total" data-field="freezing_nights" data-row="0">—</b> freezing nights each winter, the months when water freezes, roads close, and managing menstruation, pregnancy and sanitation is hardest.</p>
+    <div class="mw-two">
+      <div class="mw-sec" id="women-chart">
+        <div class="mw-chart" data-draw="women-bars" data-source="exposure"></div>
+        <p class="mw-note">Bars: women and girls aged 10–49 in each district. The label gives the average January night temperature where they live.</p>
+      </div>
+      <div class="mw-sec" id="women-table">
+        <div class="mw-tablewrap">
+          <table data-source="exposure" data-row-key="unit">
+            <thead><tr>
+              <th data-field="unit">Area</th>
+              <th class="num" data-field="women_15_49">Women 15–49</th>
+              <th class="num" data-field="girls_10_14">Girls 10–14</th>
+              <th class="num" data-field="jan_night_c">January night °C</th>
+              <th class="num" data-field="freezing_nights">Freezing nights</th>
+              <th class="num" data-field="share_jan_below_10">% below −10 °C</th>
+            </tr></thead>
+            <tbody data-draw="exposure-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="mw-note">These are estimates of exposure, not of harm. Population: WorldPop 2020, placed only where buildings are mapped; it is a model, not a census. Temperature: MODIS Aqua night land-surface temperature at 1 km, 2017–2026, seen only on clear nights, which run colder than cloudy ones. Freezing nights: of the 151 nights from November to March.</p>
+  </section>
+
+  <section class="mw-sec" id="chitral-villages">
+    <h2>What flood-affected villages in Chitral report about women</h2>
+    <p>In August 2024 the UN migration agency (IOM) assessed <b data-draw="chitral-n" data-source="village_reports" data-field="chitral_villages" data-row="0">—</b> flood-affected villages in Upper and Lower Chitral. The most common problem for women was toilets with no separation between men and women. The assessment asked nothing about menstruation, violence or child marriage, and it was done in summer.</p>
+    <div class="mw-tablewrap">
+      <table data-source="village_reports" data-row-key="indicator_id">
+        <thead><tr>
+          <th data-field="indicator">Share of villages reporting</th>
+          <th class="num" data-field="chitral_pct">Chitral %</th>
+          <th class="num" data-field="mountain_pct">Mountain districts %</th>
+          <th class="num" data-field="all_pct">All 12,820 villages %</th>
+        </tr></thead>
+        <tbody data-draw="village-rows"></tbody>
+      </table>
+    </div>
+    <p class="mw-note">One row of data is one village: a group of key informants answers for everyone, and their sex is not published. Mountain districts: Chitral, Swat, Upper Dir, Upper and Lower Kohistan. All villages: 6,292 in Balochistan and Khyber Pakhtunkhwa (2024) and 6,528 in Punjab after the 2025 floods. Source: IOM Displacement Tracking Matrix, Community Needs Identification.</p>
+  </section>
+
   <section class="mw-sec" id="why">
     <h2>Why winter snow matters for summer</h2>
     <p>In both regions, El Niño springs tend to bring more snow, and snowier springs are followed by greener summers. This is the likely route behind the link between El Niño and summer greenness in Gilgit-Baltistan.</p>
@@ -153,6 +198,8 @@
       <li>Greenness: MODIS MOD13A3 v061 monthly NDVI, good-quality pixels, over land classed as vegetated in most years (MCD12Q1).</li>
       <li>El Niño index: NOAA CPC Oceanic Niño Index (ONI), 3-month means of Niño-3.4 sea-surface temperature anomalies.</li>
       <li>Lakes: JRC Global Surface Water v1.4 yearly history above 3,500 m (NASADEM elevation).</li>
+      <li>Women and girls: WorldPop 2020 age and sex structure at 100 m, constrained to mapped buildings; night temperature from MODIS Aqua MYD11A2 v061.</li>
+      <li>Village reports: IOM Displacement Tracking Matrix, Community Needs Identification (Flood Response), Rounds 6 and 7, from the Humanitarian Data Exchange. © IOM.</li>
       <li>Boundaries: geoBoundaries v6.0.0 (Gilgit-Baltistan ADM1, its 10 districts and Chitral ADM2).</li>
       <li>Normal: the 2001–2025 mean for the same calendar window. Status: Well above normal at +1 standard deviation or more, Above normal at +0.5, and the same thresholds below.</li>
     </ul>
@@ -221,6 +268,19 @@
     fn: (season_now) => season_now
       .filter((r) => r.unit !== 'Gilgit-Baltistan' && +r.rank_low_to_high === +r.n_years + 1)
       .map((r) => ({ unit: r.unit, scf_to_date: +r.scf_to_date, previous_max: +r.clim_max })),
+  });
+
+  dash.calc('women_total', {
+    title: 'Women and girls in both regions',
+    description: 'Gilgit-Baltistan plus Chitral: women and girls aged 10–49, and the shares living where January nights average below 0 and below −10 °C, weighted by the number in each region.',
+    inputs: ['exposure'],
+    fn: (exposure) => {
+      const two = exposure.filter((r) => r.unit === 'Gilgit-Baltistan' || r.unit === 'Chitral');
+      const n = two.reduce((a, r) => a + (+r.fem_10_49), 0);
+      const w = (f) => two.reduce((a, r) => a + (+r.fem_10_49) * (+r[f]), 0) / n;
+      return [{ region: 'Gilgit-Baltistan and Chitral', fem_10_49: n, share_below_0: w('share_jan_below_0'),
+                share_below_10: w('share_jan_below_10'), freezing_nights: w('freezing_nights') }];
+    },
   });
 
   dash.calc('record_count', {
@@ -490,5 +550,78 @@
       .on('pointerleave', () => tip.hide());
     const old = el.querySelector(':scope > svg'); if (old) old.remove();
     el.prepend(svg.node());
+  });
+</script>
+
+<script>
+  // Women and girls: exposure
+  const setText = mw.setText;
+  const total = () => { const d = dash.data('women_total'); return d.status === 'ok' && d.data && d.data.length ? d.data[0] : null; };
+  dash.draw('fem-total', (el) => { const t = total(); setText(el, t ? d3.format(',')(Math.round(t.fem_10_49 / 1000) * 1000) : '—'); });
+  dash.draw('fem-share0', (el) => { const t = total(); setText(el, t ? d3.format('.1f')(t.share_below_0) + '%' : '—'); });
+  dash.draw('fem-share10', (el) => { const t = total(); setText(el, t ? d3.format('.0f')(t.share_below_10) + '%' : '—'); });
+  dash.draw('fem-nights', (el) => { const t = total(); setText(el, t ? d3.format('.0f')(t.freezing_nights) : '—'); });
+
+  dash.draw('exposure-rows', (tb) => {
+    const d = dash.data('exposure');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    const top = ['Gilgit-Baltistan', 'Chitral'];
+    const rows = d.data.slice().sort((a, b) => (top.includes(b.unit) - top.includes(a.unit)) || ((+a.jan_night_c) - (+b.jan_night_c)));
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr');
+      [[r.unit, ''], [d3.format(',')(+r.women_15_49), 'num'], [d3.format(',')(+r.girls_10_14), 'num'], [d3.format('.1f')(+r.jan_night_c), 'num'],
+       [d3.format('.0f')(+r.freezing_nights), 'num'], [d3.format('.0f')(+r.share_jan_below_10), 'num']].forEach(([v, c]) => {
+        const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td);
+      });
+      if (top.includes(r.unit)) tr.style.fontWeight = 'var(--cds-font-weight-medium)';
+      return tr;
+    }));
+  });
+
+  dash.draw('women-bars', (el) => {
+    const d = dash.data('exposure');
+    if (d.status === 'error') return mw.placeholder(el, 'Failed to load');
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const rows = d.data.filter((r) => r.unit !== 'Gilgit-Baltistan').map((r) => ({ unit: r.unit, n: +r.fem_10_49, t: +r.jan_night_c }))
+      .sort((a, b) => b.n - a.n);
+    const W = Math.max(280, el.clientWidth), rowH = 26, m = { t: 6, r: 64, b: 24, l: 78 };
+    const H = m.t + m.b + rowH * rows.length;
+    const x = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.n)]).nice().range([m.l, W - m.r]);
+    const y = d3.scaleBand().domain(rows.map((r) => r.unit)).range([m.t, H - m.b]).padding(0.22);
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Bar chart of women and girls aged 10 to 49 by district, labelled with the average January night temperature');
+    svg.append('g').attr('class', 'mw-grid').attr('transform', `translate(0,${H - m.b})`)
+      .call(d3.axisBottom(x).ticks(4).tickSize(-(H - m.t - m.b)).tickFormat('')).call((g) => g.select('.domain').remove());
+    const tip = mw.tip(el);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', m.l).attr('y', (r) => y(r.unit)).attr('width', (r) => x(r.n) - m.l).attr('height', y.bandwidth()).attr('rx', 2)
+      .style('fill', dash.colors[0])
+      .attr('data-source', 'exposure').attr('data-field', 'fem_10_49').attr('data-where', (r) => 'unit=' + encodeURIComponent(r.unit))
+      .on('pointermove', (evt, r) => tip.show(evt, [[r.unit, ''], ['Women and girls 10–49', d3.format(',')(r.n)], ['January nights', d3.format('.1f')(r.t) + ' °C']]))
+      .on('pointerleave', () => tip.hide());
+    svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'mw-axis-label')
+      .attr('x', (r) => x(r.n) + 6).attr('y', (r) => y(r.unit) + y.bandwidth() / 2).attr('dy', '0.35em')
+      .text((r) => d3.format('.0f')(r.t) + ' °C');
+    svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).tickSize(0)).call((g) => g.select('.domain').remove());
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(4).tickFormat(d3.format('~s')).tickSizeOuter(0));
+    const old = el.querySelector(':scope > svg'); if (old) old.remove();
+    el.prepend(svg.node());
+  });
+
+  // Village reports (IOM DTM)
+  dash.draw('chitral-n', (el) => {
+    const d = dash.data('village_reports');
+    setText(el, d.status === 'ok' && d.data.length ? d3.format(',')(+d.data[0].chitral_villages) : '—');
+  });
+  dash.draw('village-rows', (tb) => {
+    const d = dash.data('village_reports');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    tb.replaceChildren(...d.data.map((r) => {
+      const tr = document.createElement('tr');
+      [[r.indicator, ''], [d3.format('.0f')(+r.chitral_pct), 'num'], [d3.format('.0f')(+r.mountain_pct), 'num'], [d3.format('.0f')(+r.all_pct), 'num']].forEach(([v, c]) => {
+        const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td);
+      });
+      return tr;
+    }));
   });
 </script>

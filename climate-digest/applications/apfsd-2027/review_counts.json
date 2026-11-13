@@ -1,0 +1,66 @@
+{
+ "n": 55,
+ "academic": 50,
+ "grey": 5,
+ "published_2024_2026": 31,
+ "monsoon_flood_items": 32,
+ "any_lowland_flood_items": 35,
+ "mountain_items": 7,
+ "mountain_ids": [
+  "A20",
+  "G1",
+  "G2",
+  "G3",
+  "B14",
+  "B17",
+  "B27"
+ ],
+ "mountain_menstrual": [
+  "B14"
+ ],
+ "mountain_gbv_or_harassment": [],
+ "winter_displacement_items": 0,
+ "cold_tested_items": [
+  "B9"
+ ],
+ "menstrual_items": 13,
+ "menstrual_commentary": 5,
+ "gbv_items": [
+  "A2",
+  "A3",
+  "A14",
+  "A15",
+  "G5",
+  "G6",
+  "B2",
+  "B15",
+  "B19",
+  "B21"
+ ],
+ "harassment_direct": [
+  "G4",
+  "B5"
+ ],
+ "transgender": [
+  "G4"
+ ],
+ "child_marriage": [
+  "G5",
+  "B2",
+  "B26"
+ ],
+ "maternal_items": 26,
+ "commentary_like": 11,
+ "by_year": {
+  "2012": 1,
+  "2015": 1,
+  "2017": 2,
+  "2019": 2,
+  "2020": 1,
+  "2022": 6,
+  "2023": 11,
+  "2024": 8,
+  "2025": 11,
+  "2026": 12
+ }
+}

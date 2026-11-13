@@ -1,0 +1,42 @@
+{
+ "link_open_defecation_safety": {
+  "unsafe_dark_if_open_pct": 68.6,
+  "unsafe_dark_if_latrine_pct": 15.1,
+  "no_privacy_if_open_pct": 81.6,
+  "no_privacy_if_latrine_pct": 29.6,
+  "n": 12763
+ },
+ "rounds": {
+  "R7 Sep-Oct 2025 (Punjab)": 6528,
+  "R6 Aug 2024 (Balochistan, KP)": 6292
+ },
+ "districts": 26,
+ "instrument_audit": {
+  "R6": {
+   "questions_and_options": 327,
+   "menstr": 0,
+   "violence": 0,
+   "GBV": 0,
+   "marriage": 0,
+   "pregnan": 0,
+   "disab": 0,
+   "transgender": 0,
+   "harass": 0,
+   "exploit": 0,
+   "dignity kit": 1
+  },
+  "R7": {
+   "questions_and_options": 286,
+   "menstr": 0,
+   "violence": 0,
+   "GBV": 0,
+   "marriage": 0,
+   "pregnan": 0,
+   "disab": 0,
+   "transgender": 0,
+   "harass": 1,
+   "exploit": 1,
+   "dignity kit": 1
+  }
+ }
+}

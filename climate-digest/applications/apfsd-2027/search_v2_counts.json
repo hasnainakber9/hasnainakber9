@@ -1,0 +1,33 @@
+{
+ "queries": [
+  "Pakistan flood gender-based violence women displacement",
+  "Pakistan floods menstrual hygiene management women",
+  "climate displacement sexual harassment women Pakistan",
+  "Pakistan flood relief camps women safety privacy",
+  "Gilgit-Baltistan women climate change",
+  "glacial lake outburst flood women Pakistan",
+  "Chitral women flood",
+  "Pakistan flood child marriage",
+  "Pakistan floods transgender",
+  "Pakistan floods pregnant women maternal health",
+  "climate-induced migration women Pakistan",
+  "Pakistan 2025 floods women",
+  "Pakistan flood sexual exploitation abuse aid",
+  "Pakistan winter cold women menstrual",
+  "Pakistan flood open defecation women safety",
+  "Pakistan heatwave women pregnancy",
+  "Pakistan drought women migration Sindh Balochistan",
+  "Pakistan floods mental health women",
+  "Pakistan flood girls education early marriage",
+  "Pakistan disaster women disability"
+ ],
+ "records_by_db": {
+  "crossref": 1200,
+  "europepmc": 1224,
+  "doaj": 27,
+  "datacite": 28
+ },
+ "records_total": 2479,
+ "unique": 1837,
+ "passed_auto_screen": 126
+}

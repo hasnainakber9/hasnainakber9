@@ -18,9 +18,10 @@ supported 19 locally led environmental actions across eight districts. Through G
 grant-funded project, we trained more than 50 teachers in climate education. As a research fellow with
 Equitech Futures, I conducted more than 40 interviews in Urdu and Balti on misinformation, trust and
 exclusion in Gilgit-Baltistan. My MS research in Business Analytics models inequality across 134 countries.
-Most recently, I carried out a scoping review of gendered harms in Pakistan's climate displacement. It found
-that the evidence covers lowland summer floods and leaves mountain winters, menstrual safety and harassment
-almost entirely unexamined.
+Most recently, I carried out three linked studies on gendered harm in Pakistan's climate
+disasters: a review of 55 studies, a satellite estimate of the 479,000 women and girls who live through freezing
+winters in Gilgit-Baltistan and Chitral, and an analysis of what 12,820 flood-affected villages report about
+women's sanitation safety, childbirth and protection from abuse.
 
 **Why do you want to attend? (about 100 words)**
 Women and gender-diverse people in Pakistan's mountains face climate displacement in conditions that research
@@ -30,9 +31,10 @@ health and GBV in disasters. And I want to connect with partners to turn this re
 study in Gilgit-Baltistan and Chitral.
 
 **What will you contribute to the Call to Action?**
-A concrete ask: national disaster authorities and humanitarian clusters should collect sex- and
-season-disaggregated displacement data. They should include menstrual-safety and harassment indicators in
-camp assessments, and fund youth-led research in mountain communities.
+Three concrete asks, each backed by the studies above:
+- Flood needs assessments should interview women directly and add questions on menstruation, violence and child marriage. The assessment of 12,820 villages asks about none of them.
+- Every flood-affected village should have a way to report sexual exploitation by aid workers. Only one in five does.
+- Disaster data should be broken down by sex and season, and winter preparedness in mountain districts should include menstrual supplies and safe, warm washing spaces.
 
 **Interpretation needed?** No (English).
 

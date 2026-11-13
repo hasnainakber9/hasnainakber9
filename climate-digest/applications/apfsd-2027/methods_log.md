@@ -1,4 +1,6 @@
-# Methods log: rapid scoping review (conducted 12 Nov 2026)
+# Methods log: rapid scoping review (v1 on 12 Nov 2026, v2 update on 13 Nov 2026)
+
+**The abstract uses the v2 numbers. Version 2 is described at the end of this file; the v1 sections are kept as the record of the first pass.**
 
 This log records exactly what was done, so you can defend the abstract and reproduce the review.
 
@@ -93,3 +95,62 @@ A mixed-methods study in GB and Chitral on cold-season displacement:
 - women's access to early-warning information.
 
 Panel data on hazards (ERA5 and snow cover) could be paired with household surveys.
+
+---
+
+# Version 2 update (13 Nov 2026): more databases, newer records
+
+## Why
+Version 1 searched one database (Crossref). Version 2 adds three more and newer records, including studies
+of the 2025 floods. Script: `search_v2.py`; counts: `search_v2_counts.json`.
+
+## Search
+- 20 queries (listed in `search_v2.py`), 2010–2026.
+- Crossref: 1,200 records. Europe PMC (covers PubMed/MEDLINE, PMC and preprints): 1,224. DOAJ: 27. DataCite: 28.
+- Total 2,479 records, 1,837 unique. With v1 (22 queries, 1,320 records) that is **42 queries and 3,799 records**.
+  The two versions overlap, so 3,799 counts records retrieved, not unique papers.
+- OpenAlex and Semantic Scholar refused the requests (rate limits), and ReliefWeb's API needs a registered
+  app name, so those three were not searched.
+
+## Screening
+1. Same automatic rule as v1 (gender term + hazard or displacement term + Pakistan place name): 126 passed.
+2. 16 were already in the v1 table. The other 110 were screened by hand on title and abstract.
+3. **29 added.** One v1 item (G2, a conference abstract on Hunza) was replaced by its full preprint.
+4. Excluded:
+   - protocols and trial registrations (4);
+   - policy analyses with no disaster-harm evidence (6);
+   - studies with no gendered harm, e.g. disease outbreaks, oral health, ethnobotany;
+   - one study of men's experience after the Pishin floods (the review is about harms to women and gender-diverse people);
+   - one water-insecurity study with no clear climate hazard;
+   - duplicate repository copies of v1 items.
+
+## Results used in the abstract (computed from `evidence_table.csv`; see `review_counts.json`)
+- **55 items**: 50 academic, 5 grey. 31 were published in 2024–2026.
+- **32** concern summer monsoon floods (2010, 2014, 2022, 2025).
+- Maternal and reproductive health is the largest domain: 26 items. Menstrual health: 13, of which 5 are commentaries, letters or editorials.
+- **7 mountain items** (Gilgit-Baltistan, Chitral, mountain Khyber Pakhtunkhwa): A20, G1, G2, G3, B14, B17, B27.
+  - One addresses menstrual health: B14, an ethnography in relief camps in the northern mountains.
+  - None addresses violence or harassment.
+- **Winter:** no item examines displacement in winter. One national study (B9) tests cold exposure, on birth weight, and finds no association.
+  B5 reports infant deaths from hypothermia in flood shelters in south Punjab.
+- **Harassment** is documented directly in two sources: G4 (human-rights commission assessment) and B5 (interviews in Rajanpur shelters, 2025 floods).
+  B21 concerns sexual assault among flood-affected women; I did not check its article type or read its text.
+- **Transgender survivors:** one source (G4).
+- **Child marriage:** three items mention it (a UN situation report, an editorial, a South Asia-wide model). None is a primary study in Pakistan.
+
+## What changed from v1
+| | v1 (12 Nov) | v2 (13 Nov) |
+|---|---|---|
+| Items | 26 | 55 |
+| Monsoon-flood items | 17 | 32 |
+| Mountain items | 4 | 7 |
+| Mountain items on menstrual health | 0 | 1 |
+| Items on winter displacement | 0 | 0 |
+| Direct documentation of harassment | 1 source | 2 sources |
+
+The v1 claim "no mountain item addressed menstrual health" was wrong once Europe PMC was searched. The abstract now says one does.
+
+## Limits of v2
+- Still a rapid review: one screener, title and abstract only. Five of the new items (B13, B19, B21, B22, B23) had no abstract in the databases and were coded from their titles.
+- B14's abstract says "northern region" and "mountainous rural region" without naming the district.
+- The grey-literature search was not repeated in v2; UN and NGO reports from 2025–2026 may be missing.
