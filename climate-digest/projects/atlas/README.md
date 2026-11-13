@@ -1,5 +1,7 @@
 # Atlas of the Uncounted
 
+Live map: https://claude.ai/artifact/81JW693JEEk7wcUk5Sjrh1
+
 A global map of where women and girls aged 10–49 live with freezing nights, extreme heat and long walks to
 health care, for every first-level administrative unit (province or state) on Earth. This is layer set 1; more
 layers (floods, drought, research coverage) can be added on top.
@@ -22,6 +24,22 @@ python3 extract_global.py shapes   # simplified outlines -> data/shapes/
 python3 build.py                   # -> site/atlas.json, site/adm1.json
 ```
 `site/index.html` is the map page (d3 on canvas). It needs `atlas.json` and `adm1.json` beside it.
+
+## First results (13 Nov 2026)
+3,202 provinces in 213 countries and territories; 2.40 billion women and girls aged 10–49.
+
+| Layer | Women and girls | Share |
+|---|---|---|
+| Freezing nights (30+ a year) | 586 million | 24% |
+| Extreme heat (90+ days at 35 °C or hotter) | 285 million | 12% |
+| Far from care (2+ hours' walk) | 418 million | 17% |
+| Exposed and far | 278 million | 12% |
+
+The two "far from care" figures are overstated where the health-facility map is thin. Afghanistan and North Korea
+show whole provinces at 100%, including provinces next to Kabul, which points to missing facilities in the source data.
+
+Russia was computed region by region with `extract_big.py`; Antarctica is left out (no resident population).
+About 125 very small islands and city districts have data but no outline at this scale.
 
 ## Known limits
 - Exposure, not harm. The atlas counts who lives where conditions are hard.

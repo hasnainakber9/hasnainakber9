@@ -52,6 +52,7 @@
 
   .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
   @media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .mapcol { display: grid; gap: 8px; min-width: 0; }
   .mapbox { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; min-width: 0; }
   #map { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; touch-action: none; cursor: grab; }
   @media (max-width: 560px) { #map { aspect-ratio: 4 / 3; } }
@@ -100,6 +101,7 @@
   <div class="layers" role="group" aria-label="Map layer" id="layers"></div>
 
   <div class="main">
+    <div class="mapcol">
     <div class="mapbox" id="mapbox">
       <canvas id="map" role="img" aria-label="World map of provinces shaded by the selected layer. The ranked list beside the map gives the same information as text."></canvas>
       <div class="maptools">
@@ -116,6 +118,8 @@
       <div class="legend" id="legend" hidden></div>
       <div class="tip" id="tip" hidden></div>
       <div class="status" id="status">Loading the provinces…</div>
+    </div>
+    <p class="muted small" id="caveat"></p>
     </div>
 
     <aside class="side">
@@ -144,6 +148,7 @@
       <li><b>Extreme heat:</b> days a year with a maximum air temperature of 35 °C or more, 2021–2025, from ERA5-Land at 9 km. It misses heat in narrow valleys and ignores humidity.</li>
       <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
       <li><b>Exposed and far:</b> two hours' walk or more from care, and either 30 or more freezing nights or 30 or more hot days a year.</li>
+      <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at this scale. They are still counted in the totals and the list.</li>
       <li><b>Borders and names:</b> geoBoundaries v6.0.0, first administrative level. They are a data source, not a position on any disputed territory.</li>
       <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
     </ul>
@@ -154,10 +159,14 @@
 <script>
 (() => {
   const LAYERS = [
-    { id: 'cold30', name: 'Freezing nights', color: '--cold', def: '30 or more freezing nights a year', avg: 'frost', avgLabel: 'Freezing nights a year' },
-    { id: 'hot90', name: 'Extreme heat', color: '--heat', def: '90 or more days a year at 35 °C or hotter', avg: 'hot', avgLabel: 'Days a year at 35 °C or hotter' },
-    { id: 'far2h', name: 'Far from care', color: '--care', def: 'Two hours’ walk or more from a health facility' },
-    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights or extreme heat' },
+    { id: 'cold30', name: 'Freezing nights', color: '--cold', def: '30 or more freezing nights a year',
+      caveat: 'The satellite sees ground temperature only on clear nights, which run colder than cloudy ones.' },
+    { id: 'hot90', name: 'Extreme heat', color: '--heat', def: '90 or more days a year at 35 °C or hotter',
+      caveat: 'Air temperature on a 9 km grid. Humidity is not counted, and heat in narrow valleys is missed.' },
+    { id: 'far2h', name: 'Far from care', color: '--care', def: 'Two hours’ walk or more from a health facility',
+      caveat: 'Read with care: where the source map of health facilities is thin, walking times are overstated. Afghanistan and North Korea look affected, with whole provinces at 100%.' },
+    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights or extreme heat',
+      caveat: 'Read with care: this layer inherits the gaps in the health-facility map, so it is overstated where that map is thin, such as Afghanistan and North Korea.' },
   ];
   const SHARE_BINS = [10, 25, 50, 75], COUNT_BINS = [1e4, 1e5, 1e6, 5e6];
   const MIN_FEM = 50000;
@@ -330,6 +339,7 @@
     for (const l of LAYERS) $('layer-' + l.id).setAttribute('aria-pressed', String(l.id === state.layer));
     $('m-share').setAttribute('aria-pressed', String(state.metric === 'share'));
     $('m-count').setAttribute('aria-pressed', String(state.metric === 'count'));
+    $('caveat').textContent = layer().caveat;
     renderLegend(); renderRank(); renderPlace(); draw();
   }
 
