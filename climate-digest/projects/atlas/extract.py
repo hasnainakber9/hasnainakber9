@@ -112,6 +112,10 @@ def batch(iso, ids, w, fh, depth=0):
 
 
 def run_stats():
+    if not os.path.exists(OUT) and os.path.exists(OUT + ".gz"):      # a snapshot kept in git: unpack and carry on from it
+        import gzip, shutil
+        with gzip.open(OUT + ".gz", "rb") as a, open(OUT, "wb") as b:
+            shutil.copyfileobj(a, b)
     done = {r["shapeID"] for r in csv.DictReader(open(OUT))} if os.path.exists(OUT) else set()
     todo = {}
     for iso, sid in units():
