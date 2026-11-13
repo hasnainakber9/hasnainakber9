@@ -1,7 +1,9 @@
 """Run the atlas layers for every administrative unit on Earth at one level.
 
-Usage: python3 extract.py ADM1 stats    -> data/adm1_v2.csv            (provinces / states)
+Usage: python3 extract.py ADM1 stats    -> data/adm1_v2.csv            (provinces / states; layers.py)
        python3 extract.py ADM2 stats    -> data/adm2_raw.csv           (districts / counties)
+       python3 extract.py ADM1 stats2   -> data/adm1_s2.csv            (second set of layers; layers2.py)
+       python3 extract.py ADM2 stats2   -> data/adm2_s2.csv
        python3 extract.py ADM2 shapes   -> data/shapes2/<ISO3>.json    (simplified outlines)
 Everything is resumable: rerun the same command after a crash and it carries on.
 
@@ -17,8 +19,14 @@ HERE = layers.HERE
 LEVEL, WHAT = sys.argv[1], sys.argv[2]
 FC = ee.FeatureCollection("WM/geoLab/geoBoundaries/600/" + LEVEL)
 KEEP = ["shapeID", "shapeName", "shapeGroup"]
-COLS = KEEP + layers.BANDS
-OUT = os.path.join(HERE, "data", {"ADM1": "adm1_v2.csv", "ADM2": "adm2_raw.csv"}[LEVEL])
+if WHAT == "stats2":
+    import layers2
+    BANDS, stack_for = layers2.BANDS, layers2.stack_for          # this set sends the conflict points near each country
+    OUT = os.path.join(HERE, "data", {"ADM1": "adm1_s2.csv", "ADM2": "adm2_s2.csv"}[LEVEL])
+else:
+    BANDS, stack_for = layers.BANDS, (lambda iso: layers.stack)
+    OUT = os.path.join(HERE, "data", {"ADM1": "adm1_v2.csv", "ADM2": "adm2_raw.csv"}[LEVEL])
+COLS = KEEP + BANDS
 SHAPES = os.path.join(HERE, "data", {"ADM1": "shapes", "ADM2": "shapes2"}[LEVEL])
 GIANTS = {"RUS", "CAN", "USA", "BRA", "AUS", "CHN", "GRL", "KAZ", "DZA", "ARG", "IND", "MNG", "SAU", "COD", "SDN", "LBY"}
 SKIP = {"ATA"}
@@ -62,14 +70,14 @@ def sub(iso, ids):
     return FC.filter(ee.Filter.eq("shapeGroup", iso)).filter(ee.Filter.inList("shapeID", ids))
 
 
-def tiles(feature):
+def tiles(feature, iso):
     geom = feature.geometry()
     b = info(geom.bounds().coordinates())[0]
     xs, ys = [c[0] for c in b], [c[1] for c in b]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     if x1 - x0 > 180:                           # unit crosses the antimeridian
         x0, x1 = 0, 360
-    r = {k: 0.0 for k in layers.BANDS}
+    r = {k: 0.0 for k in BANDS}
     x = x0
     while x < x1:
         y = y0
@@ -77,8 +85,8 @@ def tiles(feature):
             tile = ee.Geometry.Rectangle([x, y, min(x + 10, x1), min(y + 5, y1)], None, False)
             for k in range(3):
                 try:
-                    p = info(layers.stack.reduceRegion(ee.Reducer.sum(), geom.intersection(tile, 100), scale=927.66, maxPixels=1e13, tileScale=16))
-                    for key in layers.BANDS:
+                    p = info(stack_for(iso).reduceRegion(ee.Reducer.sum(), geom.intersection(tile, 100), scale=927.66, maxPixels=1e13, tileScale=16))
+                    for key in BANDS:
                         r[key] += p.get(key) or 0
                     break
                 except Exception as e:  # noqa: BLE001
@@ -92,7 +100,7 @@ def tiles(feature):
 
 def batch(iso, ids, w, fh, depth=0):
     try:
-        feats = info(layers.stack.reduceRegions(sub(iso, ids), ee.Reducer.sum(), scale=927.66, tileScale=4 if depth == 0 else 16)
+        feats = info(stack_for(iso).reduceRegions(sub(iso, ids), ee.Reducer.sum(), scale=927.66, tileScale=4 if depth == 0 else 16)
                      .select(COLS, retainGeometry=False))["features"]
         rows = [f["properties"] for f in feats]
     except Exception as e:  # noqa: BLE001
@@ -102,7 +110,7 @@ def batch(iso, ids, w, fh, depth=0):
             return
         try:
             ft = sub(iso, ids).first()
-            rows = [{**info(ft.toDictionary(KEEP)), **tiles(ft)}]
+            rows = [{**info(ft.toDictionary(KEEP)), **tiles(ft, iso)}]
         except Exception as e2:  # noqa: BLE001
             print("  FAILED", iso, ids[0], str(e2)[:90], flush=True); return
     with lock:
@@ -225,4 +233,4 @@ def run_shapes():
 
 
 if __name__ == "__main__":
-    {"stats": run_stats, "shapes": run_shapes}[WHAT]()
+    {"stats": run_stats, "stats2": run_stats, "shapes": run_shapes}[WHAT]()

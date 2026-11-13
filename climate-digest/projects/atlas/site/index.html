@@ -8,6 +8,7 @@
     --bg: #eef1ef; --panel: #fbfcfb; --ink: #17212a; --muted: #586671; --line: #cdd5d4;
     --sea: #dfe7e8; --nodata: #d3d9d8; --accent: #0e5a68; --focus: #0e5a68;
     --ramp-lo: #f2f4ef; --cold: #1c4b8a; --heat: #b3361c; --flood: #0f6f62; --care: #6a2c7b; --both: #7b1f3f; --study: #7a5200;
+    --dry: #5f6f14; --war: #4a3f3a; --night: #2f3a8f; --motor: #93356a; --asked: #1f6a8a;
     --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -17,6 +18,7 @@
       --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
       --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
       --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
+      --dry: #c5d86a; --war: #d6c9c2; --night: #a3adff; --motor: #f29bcb; --asked: #7ccbe8;
       color-scheme: dark;
     }
   }
@@ -24,6 +26,7 @@
     --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
     --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
     --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
+    --dry: #c5d86a; --war: #d6c9c2; --night: #a3adff; --motor: #f29bcb; --asked: #7ccbe8;
     color-scheme: dark;
   }
   [hidden] { display: none !important; }
@@ -40,18 +43,29 @@
   .muted { color: var(--muted); }
   .small { font-size: 0.86rem; }
 
-  .layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 10px; }
+  .layers { display: grid; gap: 12px; }
+  .lgroup { display: grid; gap: 6px; min-width: 0; }
+  .lg-title { font-family: var(--mono); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .lg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  @media (min-width: 900px) { .lg-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
   .layer { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
-    padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; min-width: 0; align-content: start; }
+    padding: 9px 12px; cursor: pointer; display: grid; gap: 2px; min-width: 0; align-content: start; }
   .layer:hover { border-color: var(--muted); }
   .layer[aria-pressed="true"] { border-color: var(--lc); box-shadow: inset 0 -3px 0 var(--lc); }
   .layer:focus-visible, .seg button:focus-visible, .zoom button:focus-visible, .rank button:focus-visible, #search:focus-visible, .pick:focus-visible, .act:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .layer-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lc); flex: none; }
-  .layer-num { font-family: var(--mono); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
-  .layer-share { font-family: var(--mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
-  .layer-def { color: var(--muted); font-size: 0.84rem; }
-  @media (max-width: 560px) { .layers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .layer { padding: 10px; } .layer-num { font-size: 1.02rem; } }
+  .layer-name { font-size: 0.92rem; }
+  .layer-num { font-family: var(--mono); font-size: 1.08rem; font-variant-numeric: tabular-nums; }
+  .layer-share { font-family: var(--mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+  /* Phone: each group is one row that scrolls sideways inside itself, so the map stays near the top. */
+  @media (max-width: 560px) {
+    .lg-cards { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; margin-right: -16px; padding-right: 16px; }
+    .layer { flex: 0 0 148px; scroll-snap-align: start; padding: 8px 10px; }
+    .layer-num { font-size: 1rem; }
+  }
+  .showing { font-size: 0.95rem; max-width: 78ch; }
+  .showing b { font-weight: 600; }
 
   .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
   @media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
@@ -84,8 +98,10 @@
   .side { display: grid; gap: 16px; min-width: 0; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
   .place-name { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.15; overflow-wrap: anywhere; }
-  dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; font-size: 0.9rem; }
-  dt { color: var(--muted); } dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  dl { margin: 0; display: grid; grid-template-columns: minmax(45%, 1fr) auto; gap: 6px 12px; font-size: 0.9rem; }
+  dl .sub { grid-column: 1 / -1; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+  dl .sub:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
   .rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
   .rank button { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer;
     display: grid; grid-template-columns: 1.6em minmax(0, 1fr) auto; gap: 8px; text-align: left; align-items: baseline; }
@@ -102,11 +118,13 @@
 <div class="wrap">
   <header class="head">
     <h1>Atlas of the Uncounted</h1>
-    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with freezing nights, extreme heat, floods and long walks to care, and where research has not looked. Every province on Earth, with districts for <b id="n-dc">…</b>.</p>
+    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with cold, heat, floods, failed rains, fighting, darkness and long journeys to care, and where nobody has asked or studied. Every province on Earth, with districts for <b id="n-dc">…</b>.</p>
     <p class="muted small">Estimates of exposure from satellite and population data, not measures of harm. Built <span id="built">…</span>.</p>
   </header>
 
   <div class="layers" role="group" aria-label="Map layer" id="layers"></div>
+
+  <p class="showing" id="showing" aria-live="polite"></p>
 
   <div class="main">
     <div class="mapcol">
@@ -159,8 +177,14 @@
       <li><b>Flooded land:</b> the Global Flood Database maps 913 large floods seen by the MODIS satellites from 2000 to 2018, at 250 m. Land counts as flooded if it stayed under water for three days or more in at least one of them and lies within 10 m of height above the nearest river or the sea; that second test removes mountain and building shadows that the satellite mistakes for water. Each 1 km cell gets the share of its area that flooded, and women and girls are counted in proportion. The record stops in 2018, so it misses Pakistan’s 2022 floods; it also misses floods hidden by cloud, flash floods shorter than three days and most flooding inside cities. Some false alarms survive the filter, mostly tidal flats and persistent cloud shadow near coasts (Scotland’s 10% is too high).</li>
       <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
       <li><b>Exposed and far:</b> two hours’ walk or more from care, and living with 30 or more freezing nights a year, 30 or more hot days a year, or on land that has flooded.</li>
+      <li><b>Flood of 2022, Pakistan:</b> Sentinel-1 radar. A 100 m pixel counts as flooded if it was open water between 20 August and 15 September 2022 and not in the same weeks of 2021, is not permanent or seasonal water, and lies on flat, low ground. Radar misses water under crops, trees and between buildings, and water that came and went between satellite passes, so this is a low estimate of where water stood, not of who was affected.</li>
+      <li><b>Failed rains:</b> CHIRPS rainfall, 1981–2025, between 50°S and 50°N. A rain year runs July to June. A year counts as failed if it brought less than three quarters of the 1981–2010 average. Women and girls are counted where two or more of the last ten rain years failed, and only in rain-fed farming areas: 10% or more cropland nearby (Copernicus land cover 2019), less than half of it irrigated, and at least 200 mm of rain a year. Rainfall is not harvests; it says nothing about prices, pests or irrigation since 2010. “Rain in El Niño years” is the average of the ten strongest El Niño years since 1981 against all years, a rough guide from ten cases.</li>
+      <li><b>Far by vehicle:</b> an hour or more from the nearest health facility by motor vehicle, Malaria Atlas Project 2019. It assumes a vehicle is available and the road is open.</li>
+      <li><b>Dark at night:</b> settled places (100 or more people per square kilometre) where the VIIRS satellite recorded no light at night in 2025. Mostly places without electricity, but dim, shaded or sparsely lit villages can also read as dark, and so can towns under blackout.</li>
+      <li><b>Near fighting:</b> within 50 km of a place where organised violence killed at least one person in 2021–2025, from the Uppsala Conflict Data Program’s georeferenced events (version 26.1), using events located to district level or better. “Heavy” means 25 or more deaths recorded at that place. It covers wars, fighting between armed groups and attacks on civilians by them, not crime or violence at home, and it does not say that any one person was harmed.</li>
+      <li><b>Not asked:</b> four questions about women’s lives, checked country by country: how many marry before 18, where women give birth, violence by a partner, and menstruation. A question counts as unanswered if UNICEF’s global database has no national figure since 2016 (child marriage, place of birth), if the WHO found no usable survey between 2000 and 2023 (partner violence), or if neither UNICEF nor the DHS programme holds any figure (menstruation). Only low- and middle-income countries are scored, because richer countries use other statistics. A national survey that these databases do not carry would be missed, so treat “not asked” as a lead to check. Province figures on the place card come from the latest DHS survey that reports by region.</li>
       <li><b>Unstudied:</b> for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</li>
-      <li><b>Districts:</b> 49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</li>
+      <li><b>Districts:</b> 49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research and survey counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</li>
       <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at world scale. They are still counted in the totals and the list.</li>
       <li><b>Borders and names:</b> geoBoundaries v6.0.0. They are a data source, not a position on any disputed territory.</li>
       <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
@@ -171,24 +195,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
 (() => {
+  const GROUPS = [['climate', 'Climate'], ['access', 'Care, power and safety'], ['blind', 'Blind spots']];
   const LAYERS = [
-    { id: 'cold30', name: 'Freezing nights', color: '--cold', def: '30 or more freezing nights a year',
+    { id: 'cold30', group: 'climate', name: 'Freezing nights', color: '--cold', def: 'With 30 or more freezing nights a year',
       caveat: 'The satellite sees ground temperature only on clear nights, which run colder than cloudy ones.' },
-    { id: 'hot90', name: 'Extreme heat', color: '--heat', def: '90 or more days a year at 35 °C or hotter',
+    { id: 'hot90', group: 'climate', name: 'Extreme heat', color: '--heat', def: 'With 90 or more days a year at 35 °C or hotter',
       caveat: 'Air temperature on a 9 km grid. Humidity is not counted, and heat in narrow valleys is missed.' },
-    { id: 'flood', name: 'Flooded land', color: '--flood', def: 'On land satellites saw flooded for three days or more, 2000–2018',
+    { id: 'flood', group: 'climate', name: 'Flooded land', color: '--flood', def: 'On land satellites saw flooded for three days or more, 2000–2018',
       bins: [1, 3, 10, 25], labels: ['<1%', '1–3', '3–10', '10–25', '25%+'],
-      caveat: 'The flood record ends in 2018, so Pakistan’s 2022 floods are not in it. It also misses floods under cloud, floods shorter than three days and most flooding inside cities, so most figures are low. A few are too high: tidal flats and lingering cloud shadow can still pass for floodwater, as in Scotland.' },
-    { id: 'far2h', name: 'Far from care', color: '--care', def: 'Two hours’ walk or more from a health facility',
+      caveat: 'The flood record ends in 2018, so Pakistan’s 2022 floods are not in it (they have their own layer). It also misses floods under cloud, floods shorter than three days and most flooding inside cities, so most figures are low. A few are too high: tidal flats and lingering cloud shadow can still pass for floodwater, as in Scotland.' },
+    { id: 'flood22', group: 'climate', name: 'Flood of 2022', color: '--flood', def: 'On land that radar saw under water in Pakistan, August–September 2022', only: 'PAK',
+      bins: [1, 3, 10, 25], labels: ['<1%', '1–3', '3–10', '10–25', '25%+'],
+      caveat: 'Pakistan only, from Sentinel-1 radar. It counts women and girls living where water stood in late August and early September 2022, not everyone the flood affected: radar misses water under crops and between buildings, and water that came and went between satellite passes.' },
+    { id: 'drought', group: 'climate', name: 'Failed rains', color: '--dry', def: 'In rain-fed farming areas where the rains failed in two or more of the last ten years',
+      bins: [5, 15, 30, 50], labels: ['<5%', '5–15', '15–30', '30–50', '50%+'],
+      caveat: 'A failed year brought less than three quarters of normal rain (July to June). Rainfall only, between 50°S and 50°N: it does not measure harvests, and the irrigation map is from 2010.' },
+    { id: 'far2h', group: 'access', name: 'Far on foot', color: '--care', def: 'Two hours’ walk or more from a health facility',
       caveat: 'Read with care: where the source map of health facilities is thin, walking times are overstated. Afghanistan and North Korea look affected, with whole provinces at 100%.' },
-    { id: 'far2h_exposed', name: 'Exposed and far', color: '--both', def: 'Far from care, with freezing nights, heat or flooding',
+    { id: 'motor1h', group: 'access', name: 'Far by vehicle', color: '--motor', def: 'An hour or more from a health facility even by motor vehicle',
+      bins: [2, 5, 15, 30], labels: ['<2%', '2–5', '5–15', '15–30', '30%+'],
+      caveat: 'Assumes a vehicle is to hand and the road is open. Where the map of health facilities is thin, times are overstated.' },
+    { id: 'dark', group: 'access', name: 'Dark at night', color: '--night', def: 'In settled places where satellites see no light at night',
+      caveat: 'Mostly places without electricity. Dim or sparsely lit villages can also read as dark, and so can towns under blackout, as in Ukraine.' },
+    { id: 'conf', group: 'access', name: 'Near fighting', color: '--war', def: 'Within 50 km of a place where organised violence killed someone, 2021–2025',
+      caveat: 'Wars, fighting between armed groups and their attacks on civilians, as recorded by the Uppsala Conflict Data Program. Not crime or violence at home. Living near fighting does not mean being harmed by it.' },
+    { id: 'far2h_exposed', group: 'access', name: 'Exposed and far', color: '--both', def: 'Two hours’ walk from care, with freezing nights, heat or flooding',
       caveat: 'Read with care: this layer inherits the gaps in the health-facility map, so it is overstated where that map is thin, such as Afghanistan and North Korea.' },
-    { id: 'research', kind: 'research', name: 'Unstudied', color: '--study', def: 'In provinces that research on women names, but never with a climate hazard',
+    { id: 'asked', kind: 'asked', group: 'blind', name: 'Not asked', color: '--asked', def: 'In countries where two or more of four questions about women’s lives have no recent answer',
+      caveat: 'The four questions: marriage before 18, where women give birth, violence by a partner, and menstruation. Scored for low- and middle-income countries from UNICEF, WHO and DHS databases; a national survey those databases do not carry would be missed.' },
+    { id: 'research', kind: 'research', group: 'blind', name: 'Unstudied', color: '--study', def: 'In provinces that research on women names, but never with a climate hazard',
       caveat: 'Counts studies in Europe PMC, a health and life-science index, that name the province. Social science, reports and local-language work are undercounted, so “none” means none in this index. Where fewer than five studies on women name a province at all, the map says “too few to tell”, because the name may simply be spelled differently in the literature.' },
   ];
   const SHARE_BINS = [10, 25, 50, 75], COUNT_BINS = [1e4, 1e5, 1e6, 5e6];
   const SHARE_LABELS = ['<10%', '10–25', '25–50', '50–75', '75%+'], COUNT_LABELS = ['<10k', '10k–100k', '100k–1M', '1M–5M', '5M+'];
   const R_LABELS = ['5+ studies', '1–4', 'none', 'too few to tell'];
+  const A_LABELS = ['all asked', '1 missing', '2', '3', 'none asked'];
+  const Q_NAMES = { cm: 'marriage before 18', bi: 'where women give birth', pv: 'violence by a partner', me: 'menstruation' };
   const MIN_FEM = 50000, MIN_FEM_D = 5000;
   const $ = (id) => document.getElementById(id);
   const fmtInt = d3.format(',');
@@ -204,7 +246,12 @@
 
   const layer = () => LAYERS.find((l) => l.id === state.layer);
   const isR = () => layer().kind === 'research';
-  const focus = () => (state.focus && !isR() ? dCache.get(state.focus) : null);
+  const isA = () => layer().kind === 'asked';
+  const special = () => isR() || isA();                 // layers that exist for provinces or countries only
+  const asked = (iso) => ((meta.asked || {}).countries || {})[iso];
+  const gaps = (u) => { const a = asked(u.c); return a && a.gaps ? a.gaps.length : null; };
+  const hasD = (c) => c.units.some((u) => u['p_' + state.layer] != null);
+  const focus = () => { const c = state.focus && !special() ? dCache.get(state.focus) : null; return c && hasD(c) ? c : null; };
   const lookup = (id) => { const f = focus(); return (f && f.byId.get(id)) || byId.get(id); };
   const count = (u, id) => u['p_' + id] == null ? null : u.fem * u['p_' + id] / 100;
   // Research classes: 'some' (studies on women and a climate hazard exist), 'gap' (studied, but never with a climate hazard),
@@ -213,6 +260,7 @@
   function rcols(cols) { return [cols[0], cols[2], cols[4], d3.interpolateLab(css('--nodata'), css(layer().color))(0.42)]; }
   function value(u) {
     if (isR()) return u.rc == null ? null : u.rc;
+    if (isA()) return gaps(u);
     return state.metric === 'share' ? u['p_' + state.layer] : count(u, state.layer);
   }
   function ramp() {
@@ -223,27 +271,44 @@
     const v = value(u);
     if (v == null) return css('--nodata');
     if (isR()) { const c = rclass(u), rc = rcols(cols); return c === 'thin' ? rc[3] : c === 'gap' ? rc[2] : u.rc >= 5 ? rc[0] : rc[1]; }
+    if (isA()) return cols[v];
     const bins = state.metric === 'share' ? (layer().bins || SHARE_BINS) : COUNT_BINS;
     return cols[d3.bisectRight(bins, v)];
   }
 
+  function headline(l) {                               // [number, base, words after the share]
+    const R = meta.research || {}, A = meta.asked || {};
+    if (l.kind === 'research') return [R.none_fem, R.searchable_fem, ' of those searched'];
+    if (l.kind === 'asked') return [A.two_plus_fem, A.scored_fem, ' of those scored'];
+    if (l.only) return [meta.totals[l.id], d3.sum(units, (u) => (u.c === l.only ? u.fem : 0)), ' of ' + meta.names[l.only]];
+    return [meta.totals[l.id], meta.totals.fem, ' of the total'];
+  }
+  function pickLayer(l) {
+    state.layer = l.id;
+    if (l.only && state.focus !== l.only && (meta.districts || {})[l.only]) return openCountry(l.only);
+    refresh();
+  }
   function buildLayers() {
-    $('layers').replaceChildren(...LAYERS.map((l) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'layer'; b.id = 'layer-' + l.id; b.style.setProperty('--lc', `var(${l.color})`);
-      b.setAttribute('aria-pressed', String(l.id === state.layer));
-      const nm = document.createElement('span'); nm.className = 'layer-name';
-      const dot = document.createElement('span'); dot.className = 'dot'; nm.append(dot, l.name);
-      const num = document.createElement('span'); num.className = 'layer-num';
-      const R = meta.research || {};
-      const t = l.kind === 'research' ? R.none_fem : meta.totals[l.id], base = l.kind === 'research' ? R.searchable_fem : meta.totals.fem;
-      num.textContent = t == null ? '—' : fmtBig(t);
-      const sh = document.createElement('span'); sh.className = 'layer-share';
-      sh.textContent = t == null ? 'not counted yet' : fmtPct(100 * t / base) + (l.kind === 'research' ? ' of those searched' : ' of the total');
-      const def = document.createElement('span'); def.className = 'layer-def'; def.textContent = l.def;
-      b.append(nm, num, sh, def);
-      b.addEventListener('click', () => { state.layer = l.id; refresh(); });
-      return b;
+    $('layers').replaceChildren(...GROUPS.map(([gid, gname]) => {
+      const sec = document.createElement('section'); sec.className = 'lgroup';
+      const h = document.createElement('h2'); h.className = 'lg-title'; h.textContent = gname;
+      const row = document.createElement('div'); row.className = 'lg-cards'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', gname);
+      row.append(...LAYERS.filter((l) => l.group === gid).map((l) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'layer'; b.id = 'layer-' + l.id; b.style.setProperty('--lc', `var(${l.color})`); b.title = l.def;
+        b.setAttribute('aria-pressed', String(l.id === state.layer));
+        const nm = document.createElement('span'); nm.className = 'layer-name';
+        const dot = document.createElement('span'); dot.className = 'dot'; nm.append(dot, l.name);
+        const num = document.createElement('span'); num.className = 'layer-num';
+        const [t, base, words] = headline(l);
+        num.textContent = t == null ? '—' : fmtBig(t);
+        const sh = document.createElement('span'); sh.className = 'layer-share';
+        sh.textContent = t == null ? 'not counted yet' : fmtPct(100 * t / base) + words;
+        b.append(nm, num, sh);
+        b.addEventListener('click', () => pickLayer(l));
+        return b;
+      }));
+      sec.append(h, row); return sec;
     }));
   }
 
@@ -349,6 +414,11 @@
       if (u.rc == null) b.append('Name too generic to search');
       else if (rclass(u) === 'thin') { v.textContent = fmtInt(u.rw); b.append('Too few studies name it to tell: ', v); }
       else { v.textContent = fmtInt(u.rc) + ' of ' + fmtInt(u.rw); b.append('Studies on women and climate: ', v); }
+    } else if (isA()) {
+      const a = asked(u.c);
+      if (!a || !a.gaps) b.append(a && a.inc === 'HIC' ? 'High-income country: not scored' : 'Not scored');
+      else if (!a.gaps.length) b.append('All four questions have a recent answer');
+      else { v.textContent = a.gaps.length + ' of 4'; b.append('No recent answer: ', v, ' (' + a.gaps.map((k) => Q_NAMES[k]).join(', ') + ')'); b.style.whiteSpace = 'normal'; b.style.maxWidth = '260px'; }
     } else {
       v.textContent = fmtPct(u['p_' + l.id]) + ' · ' + (count(u, l.id) == null ? '—' : fmtShort(count(u, l.id)));
       b.append(l.name + ': ', v);
@@ -361,59 +431,126 @@
   }
 
   function fact(dl, k, v) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
+  function sub(dl, text) { const d = document.createElement('div'); d.className = 'sub'; d.textContent = text; dl.append(d); }
+  const plain = (l) => !l.kind && !l.only;
   function sumFacts(dl, list, fem) {
-    for (const l of LAYERS) {
-      if (l.kind === 'research') continue;
-      const t = d3.sum(list, (u) => count(u, l.id) || 0);
-      fact(dl, l.name, list.some((u) => count(u, l.id) != null) ? fmtBig(t) + ' · ' + fmtPct(100 * t / fem) : '—');
+    for (const [gid, gname] of GROUPS) {
+      const ls = LAYERS.filter((l) => l.group === gid && !l.kind && list.some((u) => count(u, l.id) != null));
+      if (!ls.length) continue;
+      sub(dl, gname);
+      for (const l of ls) { const t = d3.sum(list, (u) => count(u, l.id) || 0); fact(dl, l.name, fmtBig(t) + ' · ' + fmtPct(100 * t / fem)); }
     }
   }
+  function askedFacts(dl, iso) {
+    const a = asked(iso); if (!a) return false;
+    sub(dl, 'Last asked, nationally');
+    fact(dl, 'Marriage before 18', a.cm ? a.cm[0] + ' · ' + fmtPct(a.cm[1]) : 'no figure');
+    fact(dl, 'Births in a health facility', a.bi ? a.bi[0] + ' · ' + fmtPct(a.bi[1]) : 'no figure');
+    fact(dl, 'Violence by a partner, past year', a.pv != null ? fmtPct(a.pv) + ' (WHO estimate)' : 'no survey since 2000');
+    fact(dl, 'Menstruation', a.me ? String(a.me[0]) + (a.me[1] != null ? ' · ' + fmtPct(a.me[1]) + ' missed out' : '') : 'no figure');
+    return true;
+  }
+  const DH = [['cm', 'Married before 18 (women 20–24)'], ['hb', 'Births at home'], ['an', 'Women with anaemia'], ['pv', 'Violence by a partner, past year'], ['mh', 'Clean materials and privacy for periods']];
   function renderPlace() {
     const dl = $('p-facts'); dl.replaceChildren();
-    const u = state.selected && lookup(state.selected), note = $('p-note'), open = $('p-open'), R = meta.research || {};
+    const u = state.selected && lookup(state.selected), note = $('p-note'), open = $('p-open'), R = meta.research || {}, A = meta.asked || {};
+    const notes = [];
     open.hidden = true; note.hidden = true; open.onclick = null;
+    const done = () => { if (notes.length) { note.hidden = false; note.textContent = notes.join(' '); } };
     if (!u && !state.focus) {
       $('p-name').textContent = 'The world';
       $('p-sub').textContent = `${fmtInt(meta.units)} provinces in ${meta.countries} countries and territories. Click one on the map or in the list.`;
+      sub(dl, 'People');
       fact(dl, 'Women aged 15–49', fmtBig(meta.totals.women)); fact(dl, 'Girls aged 10–14', fmtBig(meta.totals.girls));
-      for (const l of LAYERS) if (l.kind !== 'research') fact(dl, l.name, fmtBig(meta.totals[l.id]));
+      for (const [gid, gname] of GROUPS) {
+        const ls = LAYERS.filter((l) => l.group === gid && !l.kind && meta.totals[l.id] != null);
+        if (ls.length) sub(dl, gname);
+        for (const l of ls) fact(dl, l.name + (l.only ? ', ' + meta.names[l.only] : ''), fmtBig(meta.totals[l.id]));
+      }
+      sub(dl, 'Blind spots');
+      if (A.scored_fem) fact(dl, 'Where 2+ of 4 questions are unanswered', fmtBig(A.two_plus_fem));
       if (R.searchable) { fact(dl, 'Provinces studied, never on climate', fmtInt(R.none) + ' of ' + fmtInt(R.searchable)); fact(dl, 'Provinces with too few studies to tell', fmtInt(R.thin)); }
       return;
     }
     if (!u) {                                   // a country is open, nothing selected: country summary
       const iso = state.focus, list = units.filter((x) => x.c === iso), fem = d3.sum(list, (x) => x.fem), c = dCache.get(iso);
       $('p-name').textContent = meta.names[iso];
-      $('p-sub').textContent = `${fmtInt(list.length)} provinces, ${fmtInt(c.units.length)} districts. Click one on the map or in the list.`;
+      $('p-sub').textContent = `${fmtInt(list.length)} provinces` + (c ? `, ${fmtInt(c.units.length)} districts` : '') + '. Click one on the map or in the list.';
+      sub(dl, 'People');
       fact(dl, 'Women and girls aged 10–49', fmtBig(fem));
       sumFacts(dl, list, fem);
+      const a = asked(iso);
+      if (askedFacts(dl, iso) && a.inc === 'HIC') notes.push('High-income country: not scored on the four questions, because these surveys are not its main source of figures.');
       const rc = (R.countries || {})[iso];
-      if (rc) { fact(dl, 'Studies on women and girls naming the country', fmtInt(rc[0])); fact(dl, 'Of those, also on climate hazards', fmtInt(rc[1])); }
+      if (rc) { sub(dl, 'Research'); fact(dl, 'Studies on women and girls naming the country', fmtInt(rc[0])); fact(dl, 'Of those, also on climate hazards', fmtInt(rc[1])); }
       open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
-      return;
+      return done();
     }
     $('p-name').textContent = u.n; $('p-sub').textContent = (u.d ? 'District in ' : '') + u.cn;
+    sub(dl, 'People');
     fact(dl, 'Women aged 15–49', fmtInt(u.women)); fact(dl, 'Girls aged 10–14', fmtInt(u.girls));
+    sub(dl, 'Climate');
     fact(dl, 'Freezing nights a year', u.frost == null ? '—' : d3.format('.0f')(u.frost));
     fact(dl, 'Days a year at 35 °C or hotter', u.hot == null ? '—' : d3.format('.0f')(u.hot));
     fact(dl, '30+ freezing nights', fmtPct(u.p_cold30)); fact(dl, '90+ hot days', fmtPct(u.p_hot90));
     fact(dl, 'On land that has flooded', fmtPct(u.p_flood));
-    fact(dl, 'An hour or more from care', fmtPct(u.p_far1h)); fact(dl, 'Two hours or more from care', fmtPct(u.p_far2h));
+    if (u.p_flood22 != null) fact(dl, 'On land under water in 2022', fmtPct(u.p_flood22));
+    if (u.p_farm != null) { fact(dl, 'In rain-fed farming areas', fmtPct(u.p_farm)); fact(dl, 'Rains failed 2+ years in 10', fmtPct(u.p_drought)); }
+    if (u.nino != null) fact(dl, 'Rain in El Niño years', (u.nino > 0 ? '+' : u.nino < 0 ? '−' : '') + Math.abs(u.nino) + '% vs normal');
+    sub(dl, 'Care, power and safety');
+    fact(dl, 'An hour or more from care on foot', fmtPct(u.p_far1h)); fact(dl, 'Two hours or more on foot', fmtPct(u.p_far2h));
+    if (u.p_motor1h != null) fact(dl, 'An hour or more by vehicle', fmtPct(u.p_motor1h));
+    if (u.p_dark != null) fact(dl, 'In settlements dark at night', fmtPct(u.p_dark));
+    if (u.p_conf != null) { fact(dl, 'Within 50 km of fighting', fmtPct(u.p_conf)); fact(dl, 'Within 50 km of heavy fighting', fmtPct(u.p_conf25)); }
     fact(dl, 'Exposed and far', fmtPct(u.p_far2h_exposed));
+    if (u.dh) {
+      const yrs = [...new Set(Object.values(u.dh).map((x) => x[1]))];
+      sub(dl, 'What surveys found here' + (yrs.length === 1 ? ' (DHS ' + yrs[0] + ')' : ''));
+      for (const [k, name] of DH) if (u.dh[k]) fact(dl, name, fmtPct(u.dh[k][0]) + (yrs.length > 1 ? ' · ' + u.dh[k][1] : ''));
+    }
+    if (!u.d && isA()) askedFacts(dl, u.c);
     if (!u.d && R.searchable) {
+      sub(dl, 'Research');
       if (u.rc == null) fact(dl, 'Studies on women and girls', 'name too generic to search');
       else { fact(dl, 'Studies on women and girls', fmtInt(u.rw)); fact(dl, 'Of those, also on climate hazards', fmtInt(u.rc)); }
-      if (rclass(u) === 'thin') { note.hidden = false; note.textContent = 'Fewer than five studies on women name this province, so it may be unstudied, or spelled differently in the literature.'; }
+      if (rclass(u) === 'thin') notes.push('Fewer than five studies on women name this province, so it may be unstudied, or spelled differently in the literature.');
     }
     if ((meta.districts || {})[u.c] && state.focus !== u.c) {
       open.hidden = false; open.className = 'act'; open.textContent = 'Show the districts of ' + u.cn; open.onclick = () => openCountry(u.c);
     } else if (state.focus) {
       open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
     }
-    if (u.cov < 90) { note.hidden = false; note.textContent = (note.textContent && rclass(u) === 'thin' && !u.d ? note.textContent + ' ' : '') + `Shares cover ${d3.format('.0f')(u.cov)}% of this ${u.d ? 'district' : 'province'}'s women and girls; satellite or travel-time data is missing for the rest.`; }
+    if (u.cov < 90) notes.push(`Climate and walking shares cover ${d3.format('.0f')(u.cov)}% of this ${u.d ? 'district' : 'province'}'s women and girls; satellite or travel-time data is missing for the rest.`);
+    done();
   }
 
+  function rankAsked(q) {                              // this layer is by country, so the list is of countries
+    const fem = d3.rollup(units, (v) => d3.sum(v, (u) => u.fem), (u) => u.c), A = meta.asked || {};
+    let rows = Object.entries(A.countries || {}).filter(([iso, a]) => a.gaps && fem.has(iso) && (q || a.gaps.length >= 2));
+    rows.sort((a, b) => b[1].gaps.length - a[1].gaps.length || fem.get(b[0]) - fem.get(a[0]));
+    if (q) rows = rows.filter(([iso]) => meta.names[iso].toLowerCase().includes(q));
+    $('rank-title').textContent = 'Largest countries with two or more questions unanswered';
+    const top = rows.slice(0, 12);
+    $('rank').replaceChildren(...top.map(([iso, a], i) => {
+      const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button';
+      const x = document.createElement('span'); x.className = 'i'; x.textContent = i + 1;
+      const n = document.createElement('span'); n.className = 'nm'; n.textContent = meta.names[iso]; n.title = a.gaps.map((k) => Q_NAMES[k]).join(', ') || 'all four asked';
+      const v = document.createElement('span'); v.className = 'v'; v.textContent = a.gaps.length + ' of 4';
+      b.append(x, n, v);
+      b.addEventListener('click', () => {
+        if ((meta.districts || {})[iso]) return openCountry(iso);
+        const big = units.filter((u) => u.c === iso).sort((p, r) => r.fem - p.fem)[0];
+        state.selected = big.id; renderPlace(); draw(); zoomTo(feats.filter((f) => (byId.get(f.properties.id) || {}).c === iso));
+      });
+      li.append(b); return li;
+    }));
+    $('rank-note').textContent = !top.length ? 'Nothing matches that filter.' :
+      `How many of four questions have no national answer since ${A.since}: marriage before 18, where women give birth, violence by a partner, menstruation. Low- and middle-income countries, largest first.`;
+    $('search').placeholder = 'Filter by country';
+  }
   function renderRank() {
     const l = layer(), q = state.filter.trim().toLowerCase(), fc = focus(), r = isR();
+    if (isA()) return rankAsked(q);
     const where = state.focus ? ' in ' + meta.names[state.focus] : '', word = fc ? 'Districts' : 'Provinces', min = fc ? MIN_FEM_D : MIN_FEM;
     const pool = fc ? fc.units : state.focus ? units.filter((u) => u.c === state.focus) : units;
     let rows;
@@ -438,7 +575,7 @@
       b.append(a, n, v); b.addEventListener('click', () => { state.selected = u.id; renderPlace(); draw(); });
       li.append(b); return li;
     }));
-    $('rank-note').textContent = !top.length ? 'Nothing matches that filter.' :
+    $('rank-note').textContent = !top.length ? (l.only && state.focus !== l.only ? 'This layer covers ' + meta.names[l.only] + ' only.' : 'Nothing matches that filter.') :
       r ? 'Studies on women or girls and a climate hazard, of all studies on women or girls that name the province (Europe PMC, 2010–2026). Largest populations first.' :
       state.metric === 'share' ? `Share of women and girls aged 10–49. ${word} with fewer than ${fmtInt(min)} are left out of this list.` : 'Number of women and girls aged 10–49.';
     $('search').placeholder = state.focus ? 'Filter by name' : 'Filter by country or province';
@@ -446,11 +583,12 @@
 
   function renderLegend() {
     const l = layer(), lg = $('legend'), r = isR(), cols = r ? rcols(ramp()) : ramp();
-    const labels = r ? R_LABELS : state.metric === 'share' ? (l.labels || SHARE_LABELS) : COUNT_LABELS;
+    const labels = r ? R_LABELS : isA() ? A_LABELS : state.metric === 'share' ? (l.labels || SHARE_LABELS) : COUNT_LABELS;
     const t = document.createElement('div'); t.className = 'legend-title';
     t.textContent = r ? 'Studies naming the province on women or girls and a climate hazard'
+      : isA() ? 'Of four questions about women’s lives, how many have no recent national answer'
       : (state.metric === 'share' ? 'Share of women and girls: ' : 'Women and girls: ') + l.def.charAt(0).toLowerCase() + l.def.slice(1);
-    const sw = document.createElement('div'); sw.className = 'swatches' + (r ? ' wide' : '');
+    const sw = document.createElement('div'); sw.className = 'swatches' + (r || isA() ? ' wide' : '');
     cols.forEach((c, i) => { const s = document.createElement('span'), box = document.createElement('i'); box.style.background = c; s.append(box, labels[i]); sw.append(s); });
     lg.replaceChildren(t, sw); lg.hidden = false;
   }
@@ -459,8 +597,12 @@
     for (const l of LAYERS) $('layer-' + l.id).setAttribute('aria-pressed', String(l.id === state.layer));
     $('m-share').setAttribute('aria-pressed', String(state.metric === 'share'));
     $('m-count').setAttribute('aria-pressed', String(state.metric === 'count'));
-    $('m-share').parentElement.hidden = isR();
-    $('caveat').textContent = layer().caveat + (isR() && state.focus ? ' Showing provinces, because research is not counted for districts.' : '');
+    $('m-share').parentElement.hidden = special();
+    const l = layer(), [t] = headline(l), c = state.focus && dCache.get(state.focus);
+    const sh = $('showing'), nm = document.createElement('b'); nm.textContent = l.name + ': ';
+    sh.replaceChildren(nm, (t == null ? 'Women and girls who live ' : fmtBig(t) + ' women and girls live ') + l.def.charAt(0).toLowerCase() + l.def.slice(1) + '.');
+    $('caveat').textContent = l.caveat + (special() && state.focus ? ' Showing provinces, because this layer is not counted for districts.'
+      : c && !hasD(c) ? (l.only && l.only !== state.focus ? ' This layer covers ' + meta.names[l.only] + ' only.' : ' Showing provinces: district figures for this layer are not ready yet.') : '');
     if (state.selected && !lookup(state.selected)) state.selected = null;
     renderLegend(); renderRank(); renderPlace(); draw();
   }

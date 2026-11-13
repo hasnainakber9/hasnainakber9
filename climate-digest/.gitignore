@@ -11,3 +11,4 @@ projects/atlas/data/*_ids.json
 projects/atlas/site/d/
 projects/atlas/data/adm2_raw.csv
 projects/atlas/data/gb_cache/
+projects/atlas/data/asked_cache/
