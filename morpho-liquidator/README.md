@@ -56,12 +56,15 @@ it is rate-limited and has no uptime guarantee; use a dedicated endpoint for the
 `.github/workflows/morpho-scanner.yml` (at the repository root) runs the scanner on
 GitHub's machines, with nothing to host yourself.
 
-- It starts on its own once the workflow file is on the default branch (within two
-  hours), or immediately from **Actions → Morpho scanner → Run workflow**.
+- Start it once from **Actions → Morpho scanner → Run workflow**. From then on it
+  keeps itself going.
 - A GitHub job can run for at most 6 hours, so the scanner runs as back-to-back
-  jobs of about 5 h 20 min. The next job is always queued behind the current one, and
+  jobs of about 5 h 20 min. Each job queues its successor as soon as it starts, and
   the database is carried over in the Actions cache. The hand-over leaves about a
   minute unobserved, which the gate's coverage figure accounts for.
+- The two-hourly schedule is only a watchdog that restarts the chain if it breaks.
+  GitHub's schedule is best-effort and can skip slots for hours, so the scanner does
+  not rely on it.
 - Each run's page shows the current gate report in its summary, and keeps the
   database and log as a downloadable artifact for 14 days.
 - When a realistic candidate appears, and again when the 7-day window completes, the
@@ -78,7 +81,9 @@ URLs are redacted from everything the scanner writes. Round-the-clock monitoring
 not what Actions is designed for, so treat this as a way to run the 7-day window, not
 as permanent hosting.
 
-To stop it early: Actions → Morpho scanner → ⋯ → Disable workflow.
+To stop it early: Actions → Morpho scanner → ⋯ → Disable workflow. The job in
+progress finishes its stint; the queued one cancels itself when it finds the workflow
+disabled. Cancel the running job too if you want it to stop at once.
 
 ## Commands
 
