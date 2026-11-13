@@ -2,8 +2,8 @@
 
 Live map: https://claude.ai/artifact/81JW693JEEk7wcUk5Sjrh1
 
-A global map of where women and girls aged 10–49 live with freezing nights, extreme heat, floods and long walks
-to health care, and of where published research has and has not looked. Every first-level administrative unit
+A global map of where women and girls aged 10–49 live with cold, heat, floods, failed rains, fighting, darkness
+and long journeys to health care, and of where surveys and published research have and have not looked. Every first-level administrative unit
 (province or state) on Earth, and second-level units (districts) for 196 countries.
 
 ## Layers
@@ -16,6 +16,12 @@ to health care, and of where published research has and has not looked. Every fi
 | Far from care | Two hours' walk or more from a health facility | Malaria Atlas Project walking-only travel time, 2019 |
 | Exposed and far | Far from care, with 30+ freezing nights, 30+ hot days, or on flooded land | combination of the above |
 | Unstudied | Provinces named by 5+ studies on women or girls, none of which mentions a climate hazard | Europe PMC title and abstract search, 2010–2026 |
+| Flood of 2022 (Pakistan) | Share of each 1 km cell that was open water 20 Aug–15 Sep 2022 and not in the same weeks of 2021, on flat low ground, excluding permanent and seasonal water | Sentinel-1 radar (`flood22.py`) |
+| Failed rains | Rain-fed farming areas where 2+ of the last 10 rain years (Jul–Jun) brought under 75% of the 1981–2010 mean | CHIRPS 2.0 + Copernicus land cover 2019 + GFSAD1000 irrigation |
+| Far by vehicle | An hour or more from a health facility by motor vehicle | Malaria Atlas Project motorised travel time, 2019 |
+| Dark at night | Settled cells (100+ people) with average night radiance under 0.5 nW/cm²/sr in each of 2023–2025 | VIIRS annual night lights V2.2 + LandScan |
+| Near fighting | Within 50 km of a 0.1° cell where organised violence killed 25+ people, 2021–2025 (also kept: any deadly event) | UCDP Georeferenced Event Dataset 26.1 (`data/conflict_cells.csv`) |
+| Not asked | Low- and middle-income countries where 2+ of 4 questions (marriage before 18, place of birth, partner violence, menstruation) have no recent national figure; DHS regional results per province | UNICEF global database, UN SDG database (WHO estimates), DHS API, World Bank income groups (`asked.py`) |
 
 Boundaries: geoBoundaries v6.0.0, ADM1 and ADM2.
 
@@ -24,6 +30,10 @@ Boundaries: geoBoundaries v6.0.0, ADM1 and ADM2.
 python3 extract.py ADM1 stats      # provinces: Earth Engine, resumable -> data/adm1_v2.csv
 python3 extract.py ADM2 stats      # districts: same, about 49,600 units -> data/adm2_raw.csv
 python3 extract.py ADM2 shapes     # simplified district outlines -> data/shapes2/<ISO3>.json
+python3 extract.py ADM1 stats2     # second set of layers (layers2.py) -> data/adm1_s2.csv
+python3 extract.py ADM2 stats2     # same for districts -> data/adm2_s2.csv
+python3 flood22.py                 # Pakistan 2022 flood, provinces and districts -> data/flood22_pak.csv
+python3 asked.py                   # survey coverage and DHS results -> data/asked_countries.csv, data/asked_provinces.csv
 python3 repair.py                  # district names and missing outlines from geoBoundaries v6.0.0 -> data/adm2_names.json
 python3 research.py                # Europe PMC counts per country and province -> data/research.csv
 python3 build.py                   # -> site/atlas.json, site/adm1.json, site/d/<ISO3>.json
@@ -31,7 +41,8 @@ python3 build.py                   # -> site/atlas.json, site/adm1.json, site/d/
 `FIRST=PAK,BGD` runs those countries first; `ONLY=PAK` runs one country; `THREADS=5` sets parallel requests.
 `site/index.html` is the map page (d3 on canvas). It loads `atlas.json` and `adm1.json`, then one `d/<ISO3>.json`
 when a country's districts are opened. District outlines and page files are rebuilt from the scripts and are not
-kept in git (`data/shapes2/`, `site/d/`); the district statistics are kept as `data/adm2_raw.csv.gz`.
+kept in git (`data/shapes2/`, `site/d/`); the district statistics are kept as `data/adm2_raw.csv.gz` and
+`data/adm2_s2.csv.gz` (`./snapshot.sh` writes both and rebuilds). `asked.py` needs `shapely` and `pycountry`.
 
 Province outlines (`data/shapes/`) and the first heat, cold and care results (`data/adm1_raw.csv`) came from an
 earlier version of the extractor; `adm1_v2.csv` supersedes the statistics.
@@ -46,6 +57,14 @@ earlier version of the extractor; `adm1_v2.csv` supersedes the statistics.
 | Flooded land (2000–2018) | 41 million | 1.7% |
 | Far from care (2+ hours' walk) | 418 million | 17% |
 | Exposed and far | 283 million | 12% |
+
+| Failed rains | 105 million | 4.4% |
+| Far by vehicle (1+ hour) | 94 million | 3.9% |
+| Dark at night | 205 million | 8.5% |
+| Near fighting (25+ deaths within 50 km) | 253 million | 10.5% |
+| Near any deadly fighting | 730 million | 30% |
+| Not asked (2+ of 4 questions, of 2.03 billion scored) | 264 million | 13% |
+| Flood of 2022, Pakistan | 1.0 million | 1.3% of Pakistan |
 
 **Floods.** Two thirds of the 41 million are in India (14.5 million) and Bangladesh (11.1 million), then China
 (3.8), Vietnam (2.9), Pakistan (1.7) and Thailand (1.5). Highest shares: the Mekong delta (Cà Mau 74%, Kiên Giang
@@ -66,6 +85,24 @@ low estimate; the published estimate for all people from the same database, with
 living in them and are on the map. Largest numbers on flooded land: Sirajganj (Bangladesh) 888,000, Darbhanga
 (India) 704,000, Sunamganj 640,000, Brahmanbaria 628,000, Sylhet 534,000. Highest shares: districts of the Mekong
 delta in Vietnam (Tan Hiep 99%, Cai Nuoc 98%, Dam Doi 95%). Pakistan: Jacobabad and Jafarabad 41%, Badin 34%.
+
+**Pakistan 2022.** Radar puts 0.97 million women and girls on land that stood under water: Qambar Shahdadkot 35%,
+Jacobabad 31%, Dadu 29%, Jafarabad 28%, Jhal Magsi 28%. This is where water stood, a small part of the 33 million
+people the flood affected.
+
+**Failed rains.** India 14.8 million (Andhra Pradesh, Karnataka, Maharashtra), Brazil 11.1, Algeria 5.1, Morocco 4.8.
+Rain in strong El Niño years runs a third below normal in the central Philippines and a fifth to a quarter below in
+Gujarat and southern Zimbabwe; Sindh −18%, Punjab −12%.
+
+**Darkness.** Nigeria 23.5 million, Ethiopia 21.1, DR Congo 20.7. Burundi and inner Congo are above 90%.
+Gilgit-Baltistan 16%, Balochistan 23%. China's 15 million are mostly dim hill villages, not places without power.
+
+**Fighting.** Nigeria 28 million, Mexico 24, Pakistan 22 (Khyber Pakhtunkhwa 77%, Balochistan 59%, Sindh 53%),
+Ethiopia 21.
+
+**Not asked.** Of 133 low- and middle-income countries scored, 8 have no recent answer to any of the four
+questions (largest: Syria), 18 to three (Iran, Sudan, Malaysia, Venezuela, Ukraine) and 10 to two (Brazil, Mexico).
+1,348 provinces carry results from a DHS survey.
 
 ## Why the flood layer is filtered
 The raw Global Flood Database maps mistake terrain, cloud and building shadow for water: unfiltered, Andorra came
@@ -93,6 +130,12 @@ Some false alarms remain near coasts, where tidal flats and persistent cloud sha
   script. 34 districts have no name in the source (Japan 25, Turkmenistan 8, China 1).
 - 33 very small districts (Malta 14, Marshall Islands 12, Nauru 7) have data but no outline. Countries with no
   second level in geoBoundaries (and 19 disputed areas) have provinces only.
+- Failed rains counts everyone living in farming country, not farming households, and measures rain, not harvests.
+- Darkness measures light, not grid connections: steep or dimly lit villages read as dark.
+- Fighting uses UCDP's definition (organised armed violence); a single mass attack in a city marks the whole city.
+- "Not asked" is only as complete as the UNICEF, WHO and DHS databases. India's NFHS menstrual-hygiene question is
+  added by hand; other national surveys may be missing. High-income countries are not scored.
+- The 2022 flood layer misses water under crops and buildings and between satellite passes.
 - Antarctica is left out. About 125 very small islands and city districts have data but no outline at world scale.
 
 ## Earth Engine quota

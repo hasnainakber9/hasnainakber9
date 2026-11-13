@@ -9,8 +9,8 @@ Failed rains rain years (July-June) with less than 75% of the 1981-2010 mean rai
              Land Cover 2019, 100 m), less than half of it irrigated (GFSAD1000) and 200 mm or more of rain a year.
 El Nino      mean rain-year rainfall in the ten strongest El Nino years since 1981, as % difference from the
              1981-2024 mean (same farming cells).
-Darkness     settled cells (100 or more people per 1 km cell) with no detectable light in the VIIRS annual
-             night-time composite (masked average radiance of zero), latest year.
+Darkness     settled cells (100 or more people per 1 km cell) where the VIIRS night-time annual composites show
+             almost no light: average radiance under 0.5 nW/cm2/sr in each of the last three years (2023-2025).
 By vehicle   motorised travel time to the nearest health facility (Malaria Atlas Project 2019), 1 and 2 hours.
 """
 import csv, json, math, os
@@ -49,10 +49,12 @@ drought = farm.And(dry_years.gte(2)).unmask(0)
 drought3 = farm.And(dry_years.gte(3)).unmask(0)
 
 # ---------------------------------------------------------------- darkness
-_v = ee.ImageCollection("NOAA/VIIRS/DNB/ANNUAL_V22").sort("system:time_start", False).first()
-light = _v.select("average_masked").unmask(0)
+# The masked composite zeroes dim light, which made the hill villages of south-west China read as unlit (63 million
+# women "in the dark"). Use the unmasked average instead, the brightest of the last three years, with a low cut-off.
+_v = ee.ImageCollection("NOAA/VIIRS/DNB/ANNUAL_V22").sort("system:time_start", False)
+light = ee.ImageCollection(_v.toList(3)).select("average").max().unmask(0)
 settled = layers.landscan.gte(100)
-dark = settled.And(light.lte(0))
+dark = settled.And(light.lt(0.5))
 
 # ---------------------------------------------------------------- by vehicle
 motor = ee.Image("projects/malariaatlasproject/assets/accessibility/accessibility_to_healthcare/2019").select(0)

@@ -180,8 +180,8 @@
       <li><b>Flood of 2022, Pakistan:</b> Sentinel-1 radar. A 100 m pixel counts as flooded if it was open water between 20 August and 15 September 2022 and not in the same weeks of 2021, is not permanent or seasonal water, and lies on flat, low ground. Radar misses water under crops, trees and between buildings, and water that came and went between satellite passes, so this is a low estimate of where water stood, not of who was affected.</li>
       <li><b>Failed rains:</b> CHIRPS rainfall, 1981–2025, between 50°S and 50°N. A rain year runs July to June. A year counts as failed if it brought less than three quarters of the 1981–2010 average. Women and girls are counted where two or more of the last ten rain years failed, and only in rain-fed farming areas: 10% or more cropland nearby (Copernicus land cover 2019), less than half of it irrigated, and at least 200 mm of rain a year. Rainfall is not harvests; it says nothing about prices, pests or irrigation since 2010. “Rain in El Niño years” is the average of the ten strongest El Niño years since 1981 against all years, a rough guide from ten cases.</li>
       <li><b>Far by vehicle:</b> an hour or more from the nearest health facility by motor vehicle, Malaria Atlas Project 2019. It assumes a vehicle is available and the road is open.</li>
-      <li><b>Dark at night:</b> settled places (100 or more people per square kilometre) where the VIIRS satellite recorded no light at night in 2025. Mostly places without electricity, but dim, shaded or sparsely lit villages can also read as dark, and so can towns under blackout.</li>
-      <li><b>Near fighting:</b> within 50 km of a place where organised violence killed at least one person in 2021–2025, from the Uppsala Conflict Data Program’s georeferenced events (version 26.1), using events located to district level or better. “Heavy” means 25 or more deaths recorded at that place. It covers wars, fighting between armed groups and attacks on civilians by them, not crime or violence at home, and it does not say that any one person was harmed.</li>
+      <li><b>Dark at night:</b> settled places (100 or more people per square kilometre) where the VIIRS satellite recorded almost no light at night in each of the last three years (average radiance under 0.5 nW/cm²/sr, 2023–2025). Mostly places without electricity, but villages with a few dim lights also read as dark, especially in steep terrain.</li>
+      <li><b>Near fighting:</b> within 50 km of a place (a cell of about 10 km) where organised violence killed 25 or more people in 2021–2025, from the Uppsala Conflict Data Program’s georeferenced events (version 26.1), using events located to district level or better. The place card also gives the wider count, within 50 km of any deadly event. It covers wars, fighting between armed groups and attacks on civilians by them, not crime or violence at home, and it does not say that any one person was harmed.</li>
       <li><b>Not asked:</b> four questions about women’s lives, checked country by country: how many marry before 18, where women give birth, violence by a partner, and menstruation. A question counts as unanswered if UNICEF’s global database has no national figure since 2016 (child marriage, place of birth), if the WHO found no usable survey between 2000 and 2023 (partner violence), or if neither UNICEF nor the DHS programme holds any figure (menstruation). Only low- and middle-income countries are scored, because richer countries use other statistics. A national survey that these databases do not carry would be missed, so treat “not asked” as a lead to check. Province figures on the place card come from the latest DHS survey that reports by region.</li>
       <li><b>Unstudied:</b> for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</li>
       <li><b>Districts:</b> 49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research and survey counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</li>
@@ -214,11 +214,11 @@
       caveat: 'Read with care: where the source map of health facilities is thin, walking times are overstated. Afghanistan and North Korea look affected, with whole provinces at 100%.' },
     { id: 'motor1h', group: 'access', name: 'Far by vehicle', color: '--motor', def: 'An hour or more from a health facility even by motor vehicle',
       bins: [2, 5, 15, 30], labels: ['<2%', '2–5', '5–15', '15–30', '30%+'],
-      caveat: 'Assumes a vehicle is to hand and the road is open. Where the map of health facilities is thin, times are overstated.' },
-    { id: 'dark', group: 'access', name: 'Dark at night', color: '--night', def: 'In settled places where satellites see no light at night',
-      caveat: 'Mostly places without electricity. Dim or sparsely lit villages can also read as dark, and so can towns under blackout, as in Ukraine.' },
-    { id: 'conf', group: 'access', name: 'Near fighting', color: '--war', def: 'Within 50 km of a place where organised violence killed someone, 2021–2025',
-      caveat: 'Wars, fighting between armed groups and their attacks on civilians, as recorded by the Uppsala Conflict Data Program. Not crime or violence at home. Living near fighting does not mean being harmed by it.' },
+      caveat: 'Assumes a vehicle is to hand and the road is open. Where the source map of health facilities is thin, times are overstated: China, Afghanistan and North Korea rank too high.' },
+    { id: 'dark', group: 'access', name: 'Dark at night', color: '--night', def: 'In settled places where satellites see almost no light at night',
+      caveat: 'Mostly places without electricity. Villages with a few dim lights also read as dark, especially in steep country: the hills of south-west China and northern Vietnam have power but show here.' },
+    { id: 'conf25', group: 'access', name: 'Near fighting', color: '--war', def: 'Within 50 km of a place where organised violence killed 25 or more people, 2021–2025',
+      caveat: 'Wars, fighting between armed groups and their attacks on civilians, as recorded by the Uppsala Conflict Data Program, including single mass attacks in big cities. Not ordinary crime or violence at home. Living near fighting does not mean being harmed by it.' },
     { id: 'far2h_exposed', group: 'access', name: 'Exposed and far', color: '--both', def: 'Two hours’ walk from care, with freezing nights, heat or flooding',
       caveat: 'Read with care: this layer inherits the gaps in the health-facility map, so it is overstated where that map is thin, such as Afghanistan and North Korea.' },
     { id: 'asked', kind: 'asked', group: 'blind', name: 'Not asked', color: '--asked', def: 'In countries where two or more of four questions about women’s lives have no recent answer',
@@ -387,8 +387,9 @@
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const f of list) if (f.box) { x0 = Math.min(x0, f.box[0][0]); y0 = Math.min(y0, f.box[0][1]); x1 = Math.max(x1, f.box[1][0]); y1 = Math.max(y1, f.box[1][1]); }
     if (!isFinite(x0)) return;
-    const k = Math.max(1, Math.min(90, 0.85 / Math.max((x1 - x0) / W, (y1 - y0) / H)));
-    const t = d3.zoomIdentity.translate(W / 2, H / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+    const lg = $('legend'), Hu = H - (getComputedStyle(lg).position === 'absolute' && !lg.hidden ? lg.offsetHeight + 14 : 0);   // keep clear of the legend
+    const k = Math.max(1, Math.min(90, 0.88 / Math.max((x1 - x0) / W, (y1 - y0) / Hu)));
+    const t = d3.zoomIdentity.translate(W / 2, Hu / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
     d3.select(canvas).transition().duration(350).call(zoomB.transform, t);
   }
 
@@ -501,7 +502,7 @@
     fact(dl, 'An hour or more from care on foot', fmtPct(u.p_far1h)); fact(dl, 'Two hours or more on foot', fmtPct(u.p_far2h));
     if (u.p_motor1h != null) fact(dl, 'An hour or more by vehicle', fmtPct(u.p_motor1h));
     if (u.p_dark != null) fact(dl, 'In settlements dark at night', fmtPct(u.p_dark));
-    if (u.p_conf != null) { fact(dl, 'Within 50 km of fighting', fmtPct(u.p_conf)); fact(dl, 'Within 50 km of heavy fighting', fmtPct(u.p_conf25)); }
+    if (u.p_conf != null) { fact(dl, 'Within 50 km of heavy fighting', fmtPct(u.p_conf25)); fact(dl, 'Within 50 km of any deadly fighting', fmtPct(u.p_conf)); }
     fact(dl, 'Exposed and far', fmtPct(u.p_far2h_exposed));
     if (u.dh) {
       const yrs = [...new Set(Object.values(u.dh).map((x) => x[1]))];

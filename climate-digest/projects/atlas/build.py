@@ -189,7 +189,7 @@ for fn in sorted(glob.glob(D("shapes", "*.json"))):
                 feats.append(ft)
 
 # ---------------------------------------------------------------- districts, one file per finished country
-districts, d_units, d_fem = {}, 0, 0
+districts, d_units, d_fem, s2_ready = {}, 0, 0, []
 os.makedirs(os.path.join(HERE, "site", "d"), exist_ok=True)
 for stale in glob.glob(os.path.join(HERE, "site", "d", "*.json")):
     os.remove(stale)
@@ -215,11 +215,13 @@ for iso, got in sorted(adm2.items()):
     if not os.path.exists(shp) or len(got) < 0.97 * len(ids.get(iso, got)):
         continue                                   # country not finished yet
     us = []
+    ready = sum(1 for sid in got if sid in s2d) >= 0.97 * len(got)      # second set of layers: only once the whole country is in
     for sid, r in got.items():
         u = unit(r, dname(r))
         if u:
-            more(u, s2d.get(sid), f22.get(sid))
+            more(u, s2d.get(sid) if ready else None, f22.get(sid))
             us.append(u)
+    s2_ready += [iso] if ready else []
     keep = {u["id"] for u in us}
     fs = []
     for ft in json.load(open(shp))["features"]:
@@ -234,7 +236,7 @@ for iso, got in sorted(adm2.items()):
     districts[iso] = len(us); d_units += len(us); d_fem += sum(u["fem"] for u in us)
 
 meta = {"units": len(units), "countries": len({u["c"] for u in units}), "totals": {k: round(v) for k, v in {**tot, **tot2}.items()},
-        "s2_done": len(s2), "s2_districts": len(s2d), "asked": asked_meta,
+        "s2_done": len(s2), "s2_districts": sorted(s2_ready), "asked": asked_meta,
         "names": {iso: names.get(iso, iso) for iso in {u["c"] for u in units}},
         "flood_done": sum(1 for u in units if u["p_flood"] is not None),
         "districts": districts, "district_units": d_units, "research": research,
