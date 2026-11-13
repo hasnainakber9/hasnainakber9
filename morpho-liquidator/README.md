@@ -16,7 +16,7 @@ and [`ARCHITECTURE.md`](ARCHITECTURE.md) for how it works and why.
 | 0 — Rules, references, architecture | Done |
 | 1 — Minimal robust scanner | Done; runs continuously against Base |
 | 2 — Economics + sized unwind | Done; any position can be evaluated on demand |
-| 3 — Forced decision gate | Tooling done (`pnpm gate`); the 7-day window has to be run |
+| 3 — Forced decision gate | Tooling done (`pnpm gate`); the 7-day window runs on GitHub Actions |
 | 4 — Tiny live path | Not built. Only if the gate says PROCEED |
 
 ## Quick start
@@ -50,6 +50,35 @@ BASE_RPC_URL=https://your-base-rpc pnpm scan
 Without `BASE_RPC_URL` the scanner uses the public Base endpoint. That works, but
 it is rate-limited and has no uptime guarantee; use a dedicated endpoint for the
 7-day gate window.
+
+## Running it on GitHub Actions
+
+`.github/workflows/morpho-scanner.yml` (at the repository root) runs the scanner on
+GitHub's machines, with nothing to host yourself.
+
+- It starts on its own once the workflow file is on the default branch (within two
+  hours), or immediately from **Actions → Morpho scanner → Run workflow**.
+- A GitHub job can run for at most 6 hours, so the scanner runs as back-to-back
+  jobs of about 5 h 20 min. The next job is always queued behind the current one, and
+  the database is carried over in the Actions cache. The hand-over leaves about a
+  minute unobserved, which the gate's coverage figure accounts for.
+- Each run's page shows the current gate report in its summary, and keeps the
+  database and log as a downloadable artifact for 14 days.
+- When a realistic candidate appears, and again when the 7-day window completes, the
+  workflow opens an issue in the repository (GitHub emails you). After the final
+  decision it disables itself.
+- Optional secrets (Settings → Secrets and variables → Actions): `BASE_RPC_URL` for a
+  dedicated endpoint, `ALERT_WEBHOOK_URL` for live alerts. Without them it uses the
+  public Base endpoint and alerts only through the log and the issues.
+
+Things to know: a few queued runs show as "cancelled" in the Actions list each day
+(a newer queued run replaced an older one; that is expected). If the repository is
+public, so are the logs and artifacts; they contain only public chain data, and RPC
+URLs are redacted from everything the scanner writes. Round-the-clock monitoring is
+not what Actions is designed for, so treat this as a way to run the 7-day window, not
+as permanent hosting.
+
+To stop it early: Actions → Morpho scanner → ⋯ → Disable workflow.
 
 ## Commands
 
@@ -93,7 +122,7 @@ wstETH/WETH  0x10c5…6e2c  (market 0x6aa81f51…, block 56434014)
 | `config/base.json` | Thresholds: bands, RPC limits, buffers, size ladder, alert cooldown |
 | `config/markets.base.json` | The market whitelist. Nothing outside it is read |
 | `config/svr-feeds.base.json` | Chainlink SVR-linked feed addresses on Base |
-| environment | `BASE_RPC_URL`, `ALERT_WEBHOOK_URL`, `LOG_LEVEL`, `KILL_SWITCH` (see `.env.example`) |
+| environment | `BASE_RPC_URL`, `ALERT_WEBHOOK_URL`, `LOG_LEVEL`, `KILL_SWITCH`, `MAX_RUNTIME_MIN` (see `.env.example`) |
 
 Unknown keys, malformed values and anything looser than `RULES.md` stop the process
 at startup with an explanation.
@@ -118,7 +147,7 @@ at startup with an explanation.
 
 ## Tests
 
-- `tests/unit` — 109 tests: the fixed-point math, health and sizing, config and locked
+- `tests/unit` — 116 tests: the fixed-point math, health and sizing, config and locked
   rules, backoff / circuit breaker / rate limiter, discovery, economics verdicts,
   the scan cycle (fail-closed, restart, alerts), supervision, and the gate.
 - `tests/fork` — against the real contracts on an anvil fork of Base: interest

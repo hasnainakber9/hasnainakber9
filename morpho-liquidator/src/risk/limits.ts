@@ -27,6 +27,13 @@ export const GATE_RULES = {
   minWindowHours: 168,
   /** Share of cycles that must have succeeded for the window to count. */
   minOkRatio: 0.9,
+  /**
+   * Share of the window the scanner must actually have been watching. A stretch
+   * longer than `maxGapMs` without a successful cycle (a restart, an outage, a
+   * host that runs time-limited jobs) is blind time and does not count.
+   */
+  minCoverageRatio: 0.9,
+  maxGapMs: 5 * 60_000,
 } as const
 
 export interface RiskConfig {

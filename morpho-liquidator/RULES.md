@@ -60,12 +60,14 @@ context and never counts.
 | Zero realistic candidates | **Kill the direction.** Do not keep polishing. Pick a Phase 6 pivot. |
 
 **Review window.** A KILL is only valid after **7 days** of observation with at least
-**90%** of cycles successful (`GATE_RULES`). A PROCEED needs no minimum window: one
+**90%** of cycles successful and at least **90% coverage** (`GATE_RULES`). Coverage is
+the share of the window actually watched: any stretch longer than 5 minutes without a
+successful cycle counts as blind time. A PROCEED needs no minimum window: one
 realistic candidate is enough. Until the window is valid and no candidate has
 appeared, `pnpm gate` reports `INSUFFICIENT_DATA`. There is no third outcome and no
 extension: when the window closes, the report's decision is the decision.
 
-> The 7-day window, the 90% threshold and the "realistic candidate" definition are
+> The 7-day window, the 90% thresholds and the "realistic candidate" definition are
 > not in the original brief; they were added so the gate is mechanical instead of a
 > judgement call. Amend them here and in `src/risk/limits.ts` before the window
 > starts, not after seeing the data.

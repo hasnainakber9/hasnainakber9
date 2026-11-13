@@ -26,10 +26,19 @@ export function newId(prefix: string): string {
   return `${prefix}_${randomBytes(6).toString('hex')}`
 }
 
+/**
+ * Replaces every URL in a message with a placeholder. RPC endpoints usually
+ * carry their API key in the path, and transport errors quote the endpoint;
+ * logs, the heartbeat and the database may all end up somewhere public.
+ */
+export function redactUrls(text: string): string {
+  return text.replace(/\b(?:https?|wss?):\/\/[^\s"'<>)\]]+/gi, '<url>')
+}
+
 function serialize(value: unknown): unknown {
   if (typeof value === 'bigint') return value.toString()
   if (value instanceof Error) {
-    return { name: value.name, message: value.message.slice(0, 2000) }
+    return { name: value.name, message: redactUrls(value.message).slice(0, 2000) }
   }
   return value
 }

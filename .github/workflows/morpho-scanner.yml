@@ -1,0 +1,178 @@
+name: Morpho scanner
+
+# Runs the Base liquidation scanner (morpho-liquidator/) on GitHub-hosted runners.
+#
+# A job may run for at most 6 hours, so the scanner runs as back-to-back jobs:
+#   - each job scans for MAX_RUNTIME_MIN and then stops cleanly;
+#   - the schedule fires every 2 hours, and `concurrency` makes that run wait
+#     behind the one in progress, so a successor is always queued and starts
+#     the moment the current job ends (about a minute of blind time);
+#   - scanner state (SQLite) travels from job to job in the Actions cache.
+#
+# The scanner only reads public chain data. It holds no key and cannot trade.
+# When the 7-day gate window completes, the last job opens an issue with the
+# decision and disables this workflow.
+#
+# Optional repository secrets:
+#   BASE_RPC_URL       dedicated Base RPC endpoint (default: the public one)
+#   ALERT_WEBHOOK_URL  Slack/Discord-compatible webhook for live alerts
+
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: Minutes to scan in this job (max 320)
+        default: '320'
+  pull_request:
+    paths:
+      - .github/workflows/morpho-scanner.yml
+      - morpho-liquidator/**
+
+concurrency:
+  # One scanner at a time: two would fork the saved state.
+  group: morpho-scanner-${{ github.event_name == 'pull_request' && github.ref || 'live' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: read
+      issues: write # open the gate-decision issue
+      actions: write # disable this workflow once the window is complete
+    env:
+      NODE_OPTIONS: --disable-warning=ExperimentalWarning
+      # A pull request only smoke-tests the scanner: no saved state, no issues.
+      LIVE: ${{ github.event_name != 'pull_request' }}
+    defaults:
+      run:
+        working-directory: morpho-liquidator
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: morpho-liquidator/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and unit tests
+        if: env.LIVE == 'false'
+        run: pnpm check
+
+      - name: Restore scanner state
+        if: env.LIVE == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: morpho-liquidator/data
+          # Never an exact hit: the newest saved state is picked by prefix.
+          key: morpho-scanner-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: morpho-scanner-state-
+
+      - name: Scan
+        env:
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          MAX_RUNTIME_MIN: ${{ github.event_name == 'pull_request' && '3' || inputs.minutes || '320' }}
+        run: |
+          set -o pipefail
+          mkdir -p data
+          rm -f data/scanner.lock data/KILL
+          # The scanner stops itself after MAX_RUNTIME_MIN; `timeout` is a backstop.
+          timeout --signal=TERM --kill-after=90 "$((MAX_RUNTIME_MIN + 5))m" \
+            node_modules/.bin/tsx src/main.ts | tee scanner.log
+
+      - name: Gate report
+        if: always()
+        run: |
+          rm -f data/scanner.lock
+          node_modules/.bin/tsx scripts/gate-report.ts > gate.txt || true
+          node_modules/.bin/tsx scripts/gate-report.ts --json > gate.json || true
+          {
+            echo '## Morpho scanner: Phase 3 gate'
+            echo
+            echo '```text'
+            cat gate.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save scanner state
+        if: always() && env.LIVE == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: morpho-liquidator/data
+          key: morpho-scanner-state-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload database and log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: morpho-scanner-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            morpho-liquidator/data
+            morpho-liquidator/scanner.log
+            morpho-liquidator/gate.txt
+            morpho-liquidator/gate.json
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Smoke check
+        if: env.LIVE == 'false'
+        run: |
+          # The pull-request run must have completed real cycles against Base.
+          ok=$(grep -c '"event":"cycle.ok"' scanner.log || true)
+          failed=$(grep -c '"event":"cycle.failed"' scanner.log || true)
+          echo "cycles ok: $ok, failed: $failed"
+          test "$ok" -ge 3
+          grep -q '"event":"loop.max_runtime_reached"' scanner.log
+
+      - name: Report the gate decision
+        if: always() && env.LIVE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -s gate.json || exit 0
+          decision=$(jq -r '.decision' gate.json)
+          complete=$(jq -r '.window.complete' gate.json)
+          realistic=$(jq -r '.funnel.realisticCandidates' gate.json)
+          echo "decision=$decision complete=$complete realistic=$realistic"
+
+          # Opens an issue once per title; the repository owner is notified by GitHub.
+          open_issue() {
+            local title=$1 intro=$2
+            local existing
+            existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all \
+              --search "\"$title\" in:title" --json number --jq 'length') || return 0
+            if [ "$existing" = "0" ]; then
+              printf '%s\n\n```text\n%s\n```\n\nRun: %s/%s/actions/runs/%s\n' \
+                "$intro" "$(cat gate.txt)" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > issue.md
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue.md \
+                || echo "::warning::could not open issue: $title"
+            fi
+          }
+
+          if [ "$realistic" != "0" ]; then
+            open_issue "Morpho scanner: realistic candidate found" \
+              "The scanner recorded at least one realistic candidate. Nothing was traded: there is no execution path. Under RULES.md this passes the Phase 3 gate."
+          fi
+
+          # Final once the window is complete: KILL, or PROCEED after the full 7 days.
+          if [ "$complete" = "true" ] && [ "$decision" != "INSUFFICIENT_DATA" ]; then
+            open_issue "Morpho scanner: 7-day gate decision is $decision" \
+              "The 7-day review window is complete and the gate decision is **$decision**. This workflow has disabled itself."
+            gh workflow disable morpho-scanner.yml --repo "$GITHUB_REPOSITORY" \
+              || echo "::warning::could not disable the workflow"
+          fi

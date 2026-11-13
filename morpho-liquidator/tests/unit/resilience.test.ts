@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { silentLogger } from '../../src/logger.ts'
+import { createLogger, redactUrls, silentLogger } from '../../src/logger.ts'
 import { createGuardedRequest, isRetryableRpcError, RpcUnavailableError } from '../../src/rpc/client.ts'
 import {
   backoffDelayMs,
@@ -215,5 +215,41 @@ describe('createGuardedRequest', () => {
     expect(stats().breaker.state).toBe('open')
     await expect(request({ method: 'eth_call' })).rejects.toBeInstanceOf(RpcUnavailableError)
     expect(calls).toBe(4) // no traffic while open
+  })
+})
+
+describe('secret hygiene', () => {
+  const KEYED = 'https://base-mainnet.example.com/v2/SECRET-API-KEY-123'
+
+  it('redacts URLs from text', () => {
+    expect(redactUrls(`HTTP request failed. URL: ${KEYED} status 429`)).toBe('HTTP request failed. URL: <url> status 429')
+    expect(redactUrls(`wss://node.example/ws?key=abc and (${KEYED})`)).toBe('<url> and (<url>)')
+    expect(redactUrls('no endpoint here')).toBe('no endpoint here')
+  })
+
+  it('never writes an endpoint into a log line', () => {
+    const lines: string[] = []
+    const logger = createLogger({ write: (line) => lines.push(line) })
+    logger.error('cycle.failed', { error: new Error(`fetch failed for ${KEYED}`) })
+    expect(lines[0]).not.toContain('SECRET-API-KEY-123')
+    expect(lines[0]).toContain('<url>')
+  })
+
+  it('never puts an endpoint into the error an exhausted request throws', async () => {
+    const lines: string[] = []
+    const { request } = createGuardedRequest(
+      [
+        async () => {
+          throw Object.assign(new Error(`HTTP request failed. URL: ${KEYED}`), { status: 503 })
+        },
+      ],
+      { maxRequestsPerSecond: 1000, maxRetries: 1, backoffBaseMs: 1, backoffMaxMs: 2, breakerFailureThreshold: 9, breakerCooldownMs: 10 },
+      { logger: createLogger({ write: (line) => lines.push(line) }), clock: fakeClock(), random: () => 0 },
+    )
+    const error = await request({ method: 'eth_call' }).catch((e: Error) => e)
+    expect(error).toBeInstanceOf(RpcUnavailableError)
+    expect((error as Error).message).not.toContain('SECRET-API-KEY-123')
+    expect(lines.join('\n')).not.toContain('SECRET-API-KEY-123')
+    expect(lines.length).toBeGreaterThan(0)
   })
 })

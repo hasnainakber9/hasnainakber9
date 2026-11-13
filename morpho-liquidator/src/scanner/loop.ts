@@ -14,7 +14,7 @@ import { join } from 'node:path'
 import type { Alerter } from '../alerts/alerts.ts'
 import type { Config } from '../config.ts'
 import type { Store } from '../db.ts'
-import { newId, withLogContext, type Logger } from '../logger.ts'
+import { newId, redactUrls, withLogContext, type Logger } from '../logger.ts'
 import type { RpcStats } from '../rpc/client.ts'
 import { backoffDelayMs, systemClock, type Clock } from '../util/resilience.ts'
 import type { CycleSummary, Scanner } from './scanner.ts'
@@ -156,7 +156,7 @@ export class ScanLoop {
       ok = true
     } catch (error) {
       this.consecutiveFailures += 1
-      this.lastError = error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 500) : String(error)
+      this.lastError = redactUrls(error instanceof Error ? `${error.name}: ${error.message}` : String(error)).slice(0, 500)
       this.deps.logger.error('cycle.failed', {
         tickId,
         consecutiveFailures: this.consecutiveFailures,
@@ -234,17 +234,27 @@ export class ScanLoop {
     })
   }
 
-  async run(): Promise<void> {
+  /**
+   * Runs until `stop()` is called, or for at most `maxRuntimeMs`. A bounded run
+   * ends cleanly between cycles, for hosts that only offer time-limited jobs.
+   */
+  async run(opts: { maxRuntimeMs?: number } = {}): Promise<void> {
     this.startHealthServer()
+    const deadline = opts.maxRuntimeMs ? this.clock.now() + opts.maxRuntimeMs : Infinity
     let pruneAt = 0
     while (!this.stopping) {
+      if (this.clock.now() >= deadline) {
+        this.deps.logger.info('loop.max_runtime_reached', { maxRuntimeMs: opts.maxRuntimeMs })
+        break
+      }
       await this.tick()
       if (this.clock.now() > pruneAt) {
-        this.deps.store.pruneCycles(this.clock.now() - 7 * 24 * 3600_000)
+        // Well beyond the 7-day gate window, whose start must not be pruned away.
+        this.deps.store.pruneCycles(this.clock.now() - 30 * 24 * 3600_000)
         pruneAt = this.clock.now() + 3600_000
       }
       if (this.stopping) break
-      await this.sleep(this.nextDelayMs())
+      await this.sleep(Math.max(0, Math.min(this.nextDelayMs(), deadline - this.clock.now())))
     }
     this.server?.close()
     this.deps.logger.info('loop.stopped', {})

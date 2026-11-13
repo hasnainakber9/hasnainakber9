@@ -18,6 +18,14 @@ export interface GateReport {
     okCycles: number
     failedCycles: number
     okRatio: number
+    /** Hours with no successful cycle for longer than the allowed gap. */
+    blindHours: number
+    /** Number of such gaps (restarts, outages). */
+    gaps: number
+    /** Share of the window that was actually observed. */
+    coverageRatio: number
+    /** True once the window is long enough for a decision to be final. */
+    complete: boolean
   }
   funnel: {
     /** Distinct positions seen at or below the research band. */
@@ -47,7 +55,14 @@ export interface GateReport {
   decisionReason: string
 }
 
-export function computeGate(store: Store, opts: { minWindowHours: number; minOkRatio: number }): GateReport {
+export interface GateOptions {
+  minWindowHours: number
+  minOkRatio: number
+  minCoverageRatio: number
+  maxGapMs: number
+}
+
+export function computeGate(store: Store, opts: GateOptions): GateReport {
   const one = <T>(sql: string, ...p: (string | number)[]) => store.query<T>(sql, ...p)[0]!
   const n = (sql: string, ...p: (string | number)[]) => Number(one<{ n: number }>(sql, ...p).n ?? 0)
 
@@ -59,6 +74,18 @@ export function computeGate(store: Store, opts: { minWindowHours: number; minOkR
   const failedCycles = Number(cycles.failed ?? 0)
   const hours = cycles.first !== null && cycles.last !== null ? (cycles.last - cycles.first) / 3_600_000 : 0
   const okRatio = okCycles + failedCycles === 0 ? 0 : okCycles / (okCycles + failedCycles)
+
+  // Blind time: stretches between consecutive successful cycles longer than the
+  // allowed gap. Failed cycles do not count as watching.
+  const blind = one<{ blind: number | null; gaps: number }>(
+    `SELECT SUM(gap) AS blind, COUNT(*) AS gaps FROM (
+       SELECT started_at - LAG(finished_at) OVER (ORDER BY started_at) AS gap FROM cycles WHERE ok = 1
+     ) WHERE gap > ?`,
+    opts.maxGapMs,
+  )
+  const blindHours = Number(blind.blind ?? 0) / 3_600_000
+  const coverageRatio = hours > 0 ? Math.max(0, 1 - blindHours / hours) : 0
+  const complete = hours >= opts.minWindowHours
 
   const inBand = `('research','near','liquidatable')`
   const funnel = {
@@ -115,18 +142,30 @@ export function computeGate(store: Store, opts: { minWindowHours: number; minOkR
   if (funnel.realisticCandidates > 0) {
     decision = 'PROCEED'
     decisionReason = `${funnel.realisticCandidates} realistic candidate(s) survived sized economics: proceed to the Tiny Live Path design (Phase 4).`
-  } else if (hours < opts.minWindowHours || okRatio < opts.minOkRatio) {
+  } else if (!complete || okRatio < opts.minOkRatio || coverageRatio < opts.minCoverageRatio) {
     decision = 'INSUFFICIENT_DATA'
     decisionReason =
       `No realistic candidate yet, but the window is not valid for a KILL: ${hours.toFixed(1)}h observed ` +
-      `(need ${opts.minWindowHours}h) at ${(okRatio * 100).toFixed(1)}% successful cycles (need ${(opts.minOkRatio * 100).toFixed(0)}%).`
+      `(need ${opts.minWindowHours}h), ${(okRatio * 100).toFixed(1)}% successful cycles (need ${(opts.minOkRatio * 100).toFixed(0)}%), ` +
+      `${(coverageRatio * 100).toFixed(1)}% coverage (need ${(opts.minCoverageRatio * 100).toFixed(0)}%).`
   } else {
     decision = 'KILL'
     decisionReason = `Zero realistic candidates in ${hours.toFixed(1)}h of valid observation. Kill the direction; do not keep polishing (see Phase 6 pivots).`
   }
 
   return {
-    window: { firstCycleAt: cycles.first, lastCycleAt: cycles.last, hours, okCycles, failedCycles, okRatio },
+    window: {
+      firstCycleAt: cycles.first,
+      lastCycleAt: cycles.last,
+      hours,
+      okCycles,
+      failedCycles,
+      okRatio,
+      blindHours,
+      gaps: Number(blind.gaps ?? 0),
+      coverageRatio,
+      complete,
+    },
     funnel,
     rejectionReasons,
     blockedByOracleFlagOnly,

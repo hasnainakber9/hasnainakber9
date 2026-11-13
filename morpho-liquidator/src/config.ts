@@ -150,6 +150,8 @@ export interface Config extends FileConfig {
   svrFeeds: SvrFeed[]
   rpcUrls: string[]
   alertWebhookUrl: string | null
+  /** Stop cleanly after this long; null runs until signalled. */
+  maxRuntimeMs: number | null
   logLevel: 'debug' | 'info' | 'warn' | 'error'
 }
 
@@ -222,7 +224,8 @@ export function buildConfig(input: {
     stablecoins[getAddress(token)] = usd
   }
 
-  const rpcUrls = (env.BASE_RPC_URL ?? DEFAULT_PUBLIC_RPC)
+  // An empty value (an unset CI secret arrives as "") means "not configured".
+  const rpcUrls = (env.BASE_RPC_URL?.trim() || DEFAULT_PUBLIC_RPC)
     .split(',')
     .map((u) => u.trim())
     .filter(Boolean)
@@ -235,6 +238,15 @@ export function buildConfig(input: {
     throw new ConfigError(`LOG_LEVEL must be debug|info|warn|error, got ${logLevel}`)
   }
 
+  let maxRuntimeMs: number | null = null
+  if (env.MAX_RUNTIME_MIN?.trim()) {
+    const minutes = Number(env.MAX_RUNTIME_MIN)
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      throw new ConfigError(`MAX_RUNTIME_MIN must be a positive number of minutes, got ${env.MAX_RUNTIME_MIN}`)
+    }
+    maxRuntimeMs = Math.round(minutes * 60_000)
+  }
+
   return {
     ...base,
     economics: { ...base.economics, stablecoins },
@@ -242,6 +254,7 @@ export function buildConfig(input: {
     svrFeeds: svr.feeds,
     rpcUrls,
     alertWebhookUrl: env.ALERT_WEBHOOK_URL?.trim() || null,
+    maxRuntimeMs,
     logLevel,
   }
 }

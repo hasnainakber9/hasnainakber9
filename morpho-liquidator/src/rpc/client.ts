@@ -18,7 +18,7 @@ import {
 } from 'viem'
 import { base } from 'viem/chains'
 
-import { newId, type Logger } from '../logger.ts'
+import { newId, redactUrls, type Logger } from '../logger.ts'
 import {
   backoffDelayMs,
   CircuitBreaker,
@@ -79,7 +79,8 @@ function describe(error: unknown): string {
     }
     current = (current as { cause?: unknown }).cause
   }
-  return parts.join(' | ')
+  // Never let an endpoint (and the key in its path) into a log line or message.
+  return redactUrls(parts.join(' | '))
 }
 
 function httpStatus(error: unknown): number | undefined {

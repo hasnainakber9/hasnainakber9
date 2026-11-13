@@ -36,6 +36,7 @@ if (process.argv.includes('--json')) {
     '=====================',
     `Window            ${date(w.firstCycleAt)} -> ${date(w.lastCycleAt)}  (${w.hours.toFixed(2)} h)`,
     `Cycles            ${w.okCycles} ok, ${w.failedCycles} failed (${pct(w.okRatio)} ok)`,
+    `Coverage          ${pct(w.coverageRatio)}  (${w.blindHours.toFixed(2)} h blind across ${w.gaps} gap(s) over ${GATE_RULES.maxGapMs / 60_000} min)`,
     '',
     'Funnel (distinct positions)',
     `  seen in research band (HF <= ${formatUnits(config.scanner.researchBandHf, 18)})     ${f.positionsInBand}`,

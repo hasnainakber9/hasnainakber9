@@ -6,14 +6,17 @@ import { computeGate } from '../../src/gate.ts'
 const M = `0x${'11'.repeat(32)}` as const
 const user = (n: number) => `0x${n.toString(16).padStart(40, '0')}` as const
 const HOUR = 3_600_000
-const rules = { minWindowHours: 168, minOkRatio: 0.9 }
+// Seeded cycles are 10 minutes apart, so allow gaps up to 15.
+const rules = { minWindowHours: 168, minOkRatio: 0.9, minCoverageRatio: 0.9, maxGapMs: 15 * 60_000 }
 
-function seed(opts: { hours: number; failedEvery?: number; realistic?: boolean }) {
+function seed(opts: { hours: number; failedEvery?: number; realistic?: boolean; outageHours?: [number, number] }) {
   const store = new Store(':memory:')
   const cycles = Math.max(2, Math.floor(opts.hours * 6)) // one every 10 minutes
   for (let i = 0; i < cycles; i += 1) {
     const ok = !(opts.failedEvery && i % opts.failedEvery === 0)
     const startedAt = Math.round((i * opts.hours * HOUR) / (cycles - 1))
+    // An outage: the scanner was not running at all in this stretch.
+    if (opts.outageHours && startedAt > opts.outageHours[0] * HOUR && startedAt < opts.outageHours[1] * HOUR) continue
     store.recordCycle({
       id: `c${i}`, startedAt, finishedAt: startedAt + 1, ok, block: ok ? i : null,
       positionsRead: 3, unreadable: 0, inBand: 3, near: 2, liquidatable: 1, evaluated: 2, candidates: 0,
@@ -82,13 +85,30 @@ describe('Phase 3 gate', () => {
   })
 
   it('refuses to kill on a short window', () => {
-    expect(computeGate(seed({ hours: 12 }), rules).decision).toBe('INSUFFICIENT_DATA')
+    const report = computeGate(seed({ hours: 12 }), rules)
+    expect(report.decision).toBe('INSUFFICIENT_DATA')
+    expect(report.window.complete).toBe(false)
   })
 
   it('refuses to kill when the scanner was blind too often', () => {
     const report = computeGate(seed({ hours: 200, failedEvery: 4 }), rules)
     expect(report.window.okRatio).toBeLessThan(0.9)
     expect(report.decision).toBe('INSUFFICIENT_DATA')
+  })
+
+  it('refuses to kill when the scanner was not running for much of the window', () => {
+    // 200 hours on the clock, but down from hour 50 to hour 90: 80% coverage.
+    const report = computeGate(seed({ hours: 200, outageHours: [50, 90] }), rules)
+    expect(report.window.okRatio).toBe(1)
+    expect(report.window.gaps).toBe(1)
+    expect(report.window.blindHours).toBeCloseTo(40, 0)
+    expect(report.window.coverageRatio).toBeCloseTo(0.8, 2)
+    expect(report.decision).toBe('INSUFFICIENT_DATA')
+  })
+
+  it('does not count ordinary pauses between cycles as blind time', () => {
+    const report = computeGate(seed({ hours: 200 }), rules)
+    expect(report.window).toMatchObject({ gaps: 0, blindHours: 0, coverageRatio: 1, complete: true })
   })
 
   it('proceeds on a single realistic candidate, however short the window', () => {

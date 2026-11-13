@@ -77,6 +77,7 @@ async function main(): Promise<number> {
     liveExecution: gate,
     alertWebhook: config.alertWebhookUrl !== null,
     mode: once ? 'once' : 'continuous',
+    maxRuntimeMs: config.maxRuntimeMs,
   })
   if (usingPublicRpc(config)) {
     logger.warn('startup.public_rpc', {
@@ -108,7 +109,7 @@ async function main(): Promise<number> {
     // cycle errors, and these catch anything that escapes it.
     process.on('unhandledRejection', (reason) => logger.error('process.unhandled_rejection', { error: reason }))
     process.on('uncaughtException', (error) => logger.error('process.uncaught_exception', { error }))
-    await loop.run()
+    await loop.run({ maxRuntimeMs: config.maxRuntimeMs ?? undefined })
   }
   app.store.close()
   release()

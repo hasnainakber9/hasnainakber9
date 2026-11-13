@@ -151,6 +151,19 @@ describe('validation', () => {
     expect(tamper((i) => (i.markets.chainId = 1))).toThrow(/chain 1/)
   })
 
+  it('treats an empty BASE_RPC_URL (an unset CI secret) as not configured', () => {
+    expect(buildConfig({ ...files(), env: { BASE_RPC_URL: '' } }).rpcUrls).toEqual(['https://mainnet.base.org'])
+    expect(buildConfig({ ...files(), env: { BASE_RPC_URL: '  ' } }).rpcUrls).toEqual(['https://mainnet.base.org'])
+  })
+
+  it('reads an optional maximum runtime', () => {
+    expect(buildConfig(files()).maxRuntimeMs).toBeNull()
+    expect(buildConfig({ ...files(), env: { MAX_RUNTIME_MIN: '' } }).maxRuntimeMs).toBeNull()
+    expect(buildConfig({ ...files(), env: { MAX_RUNTIME_MIN: '320' } }).maxRuntimeMs).toBe(320 * 60_000)
+    expect(() => buildConfig({ ...files(), env: { MAX_RUNTIME_MIN: 'soon' } })).toThrow(ConfigError)
+    expect(() => buildConfig({ ...files(), env: { MAX_RUNTIME_MIN: '-5' } })).toThrow(ConfigError)
+  })
+
   it('takes RPC endpoints and log level from the environment', () => {
     const config = buildConfig({ ...files(), env: { BASE_RPC_URL: 'https://a.example, https://b.example', LOG_LEVEL: 'debug' } })
     expect(config.rpcUrls).toEqual(['https://a.example', 'https://b.example'])

@@ -101,6 +101,7 @@ one.
 | Loop | a failed cycle never kills the process; delay grows with consecutive failures | `src/scanner/loop.ts` |
 | Process | single-instance lock; state restored from SQLite; graceful SIGTERM | `src/main.ts` |
 | Operator | heartbeat file every cycle, optional `/healthz`, degraded/recovered alerts | `loop.ts` |
+| Hosting | bounded runs (`MAX_RUNTIME_MIN`) chained by a scheduler; state carried between jobs; URLs redacted from logs, heartbeat and database | `loop.ts`, `logger.ts`, `.github/workflows/morpho-scanner.yml` |
 
 ### Configuration is validated, and rules are code
 `src/config.ts` validates every file with strict schemas (unknown keys are errors) and
@@ -131,7 +132,7 @@ Not taken: the executor contract, the kernel/ledger signer, aggregator venues
 | `evaluations` | every sized verdict, with rejection reasons and the per-size breakdown |
 | `realistic_candidates` | positions that met the gate's definition |
 | `alerts` | every alert, delivered or not |
-| `cycles` | per-cycle stats, ok or failed (kept 7 days) |
+| `cycles` | per-cycle stats, ok or failed (kept 30 days); the gate's window and coverage come from here |
 
 ## Layout
 
@@ -144,7 +145,7 @@ src/alerts/    alerts (transition-driven, webhook sink)
 src/rpc/       client (guarded transport)
 src/gate.ts    Phase 3 decision gate
 scripts/       evaluate-position, gate-report, refresh-markets, refresh-svr-feeds, clone-references
-tests/unit/    109 tests, no network
+tests/unit/    116 tests, no network
 tests/fork/    6 tests against an anvil fork of Base
 references/    cloned official bots (gitignored; scripts/clone-references.sh)
 ```
