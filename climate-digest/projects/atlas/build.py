@@ -128,6 +128,8 @@ for fn in sorted(glob.glob(D("shapes", "*.json"))):
 # ---------------------------------------------------------------- districts, one file per finished country
 districts, d_units, d_fem = {}, 0, 0
 os.makedirs(os.path.join(HERE, "site", "d"), exist_ok=True)
+for stale in glob.glob(os.path.join(HERE, "site", "d", "*.json")):
+    os.remove(stale)
 adm2 = {}
 for r in read(D("adm2_raw.csv")):
     adm2.setdefault(r["shapeGroup"], {})[r["shapeID"]] = r
