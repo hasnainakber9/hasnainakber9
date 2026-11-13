@@ -527,7 +527,7 @@
   function rankAsked(q) {                              // this layer is by country, so the list is of countries
     const fem = d3.rollup(units, (v) => d3.sum(v, (u) => u.fem), (u) => u.c), A = meta.asked || {};
     let rows = Object.entries(A.countries || {}).filter(([iso, a]) => a.gaps && fem.has(iso) && (q || a.gaps.length >= 2));
-    rows.sort((a, b) => b[1].gaps.length - a[1].gaps.length || fem.get(b[0]) - fem.get(a[0]));
+    rows.sort((a, b) => fem.get(b[0]) - fem.get(a[0]));
     if (q) rows = rows.filter(([iso]) => meta.names[iso].toLowerCase().includes(q));
     $('rank-title').textContent = 'Largest countries with two or more questions unanswered';
     const top = rows.slice(0, 12);
