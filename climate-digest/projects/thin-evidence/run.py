@@ -13,13 +13,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 ap.add_argument("--provider", default="adaption"); ap.add_argument("--model"); ap.add_argument("--condition", default="plain", choices=prompts.CONDITIONS)
 ap.add_argument("--sample", type=int, default=0, help="number of items (0 = all); the sample is the same for every model and condition")
+ap.add_argument("--set", default="regions", choices=("regions", "national"), help="national = the same questions about each country as a whole");
 ap.add_argument("--threads", type=int, default=4); ap.add_argument("--list-models", action="store_true"); ap.add_argument("--max-tokens", type=int, default=400)
 args = ap.parse_args()
 
 
 def items():
-    rows = list(csv.DictReader(open(os.path.join(HERE, "items.csv"), encoding="utf-8")))
-    if args.sample and args.sample < len(rows):
+    rows = list(csv.DictReader(open(os.path.join(HERE, "items_national.csv" if args.set == "national" else "items.csv"), encoding="utf-8")))
+    if args.set == "regions" and args.sample and args.sample < len(rows):
         # a fixed pseudo-random order by item id, so samples of different sizes are nested and identical across runs
         rows.sort(key=lambda r: hashlib.sha256(("s1|" + r["item"]).encode()).hexdigest())
         rows = rows[:args.sample]
@@ -103,7 +104,7 @@ def main():
         rows = [r for r in rows if r["searchable"] == "1"]          # the other conditions need a study count
     shuf = shuffled_counts(rows) if args.condition == "shuffled" else {}
     os.makedirs(os.path.join(HERE, "runs"), exist_ok=True)
-    path = os.path.join(HERE, "runs", f"{re.sub(r'[^A-Za-z0-9_.-]', '_', args.model)}__{args.condition}.jsonl")
+    path = os.path.join(HERE, "runs", f"{re.sub(r'[^A-Za-z0-9_.-]', '_', args.model)}__{args.condition if args.set == 'regions' else 'national'}.jsonl")
     done = {json.loads(l)["item"] for l in open(path)} if os.path.exists(path) else set()
     todo = [r for r in rows if r["item"] not in done]
     print(f"{args.model} {args.condition}: {len(todo)} to ask, {len(done)} done", flush=True)
@@ -117,7 +118,7 @@ def main():
                 text, usage = ask(client, r, prompts.prompt(r, args.condition, sn))
             except Exception as e:  # noqa: BLE001
                 stop[0] = str(e)[:200]; return
-            rec = {"item": r["item"], "model": args.model, "condition": args.condition, "shown_n": sn if args.condition == "shuffled" else (r["n_all"] if args.condition == "signal" else None),
+            rec = {"item": r["item"], "model": args.model, "condition": args.condition if args.set == "regions" else "national", "shown_n": sn if args.condition == "shuffled" else (r["n_all"] if args.condition == "signal" else None),
                    "raw": text, "parsed": parse(text), "usage": usage}
             with lock:
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n"); fh.flush()

@@ -25,7 +25,7 @@ def prompt(item, condition, shuffled_n=None):
     """plain: the question alone. signal: plus the true number of published studies naming the region.
     shuffled: the same sentence with another region's number. caution: a general warning with no number."""
     q = (f"According to the {item['survey_label']} Demographic and Health Survey (DHS) of {item['country']}, what was "
-         f"{definition(item)} in the region \"{item['region']}\"?")
+         f"{definition(item)} " + (f"in the region \"{item['region']}\"?" if item["region"] else "in the country as a whole?"))
     note = ""
     if condition in ("signal", "shuffled"):
         n = int(item["n_all"]) if condition == "signal" else int(shuffled_n)

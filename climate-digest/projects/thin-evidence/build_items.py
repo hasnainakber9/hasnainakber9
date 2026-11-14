@@ -9,7 +9,7 @@ Coverage      Europe PMC hit counts, 2010-2026, for studies whose title or abstr
               Uses the place-name query builder from ../atlas/research.py (preexisting). Regions with generic names
               ("North", "Central", "Region 2") are marked not searchable instead of being given a false zero.
 
-  -> items.csv
+  -> items.csv, items_national.csv (the same indicators for each country as a whole)
 """
 import csv, glob, json, os, re, sys
 from concurrent.futures import ThreadPoolExecutor
@@ -72,7 +72,7 @@ def searchable_name(name):
     return name.lower() not in AMBIG and not REMAINDER.search(name)
 
 
-items = []
+items, nationals = [], []
 for cc in sorted(iso3):
     sub, nat = pages("sub_" + cc), pages("nat_" + cc)
     if not sub:
@@ -91,6 +91,11 @@ for cc in sorted(iso3):
             same = [r for r in nat if r["IndicatorId"] == ind and r["SurveyId"] == sv and r["ByVariableLabel"] == byvar and r["Value"] is not None]
             natrow = same[0] if same else None
         s = surveys[sv]
+        if natrow is not None:              # the same question about the whole country, to separate "knows the country" from "knows the region"
+            nationals.append({"item": f"{sv}|national|{key}", "iso": iso3[cc], "country": FIX.get(cname[cc], cname[cc]), "survey": sv, "survey_label": s["SurveyYearLabel"],
+                              "year": int(s["SurveyYear"]), "fieldwork_end": s["FieldworkEnd"], "published": s["PublicationDate"], "indicator": key,
+                              "byvar": natrow["ByVariableLabel"], "region": "", "region_clean": "", "level": 0, "truth": natrow["Value"],
+                              "denominator": round(natrow["DenominatorWeighted"] or 0), "national": natrow["Value"], "searchable": 0, "n_all": "", "n_women": ""})
         for rid, r in regs.items():
             if (r["DenominatorWeighted"] or 0) < MIN_DENOM or ANNOTATED.search(r["CharacteristicLabel"].lstrip(". ").strip()):
                 continue                    # too few respondents, or a label for an old or new boundary ("Northern (pre 2022)")
@@ -121,7 +126,11 @@ for i in items:
 with open(os.path.join(HERE, "items.csv"), "w", newline="", encoding="utf-8") as fh:
     w = csv.DictWriter(fh, fieldnames=list(items[0].keys()))
     w.writeheader(); w.writerows(items)
+with open(os.path.join(HERE, "items_national.csv"), "w", newline="", encoding="utf-8") as fh:
+    w = csv.DictWriter(fh, fieldnames=list(items[0].keys()))
+    w.writeheader(); w.writerows(nationals)
 import collections  # noqa: E402
+print(len(nationals), "national questions")
 print(len(items), "items |", len({i["iso"] for i in items}), "countries |", len(places), "regions | searchable regions", sum(1 for v in cov.values() if v[0]))
 print("by indicator", dict(collections.Counter(i["indicator"] for i in items)))
 print("by year", sorted(collections.Counter(i["year"] for i in items).items()))
