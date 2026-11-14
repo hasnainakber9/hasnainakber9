@@ -35,9 +35,20 @@ Each model answers each question alone, with a best estimate and an 80% interval
 interval width, and error relative to the national figure, by how much has been published about the region.
 
 ```bash
-python3 build_items.py
+python3 build_items.py                                    # optional: items.csv is committed
 python3 run.py --provider adaption --list-models
-python3 run.py --provider adaption --model <id> --condition plain --sample 1200
-python3 analyse.py
+./stage.sh --condition plain --sample 1200                # one stage on all five models, sharing the rate limit
+./stage.sh --condition plain --set national
+./stage.sh --condition signal --sample 1200               # then shuffled, caution
+./mopup.sh                                                # asks unanswered questions again with a larger token allowance
+SAMPLE=1200 python3 analyse.py                            # results/ for the 1,200-question core every model answered
+python3 report/build_report.py "Author" "Affiliation"     # report/confident_where_nobody_looked.docx from report/report.md
 ```
-The API key is read from `ADAPTION_API_KEY`; it is never written to disk.
+The API key is read from `ADAPTION_API_KEY`; it is never written to disk. Calls are streamed, one question per call,
+paced at about 46 a minute across all models (the provider's per-user limit).
+
+## Status (15 Nov 2026)
+- Core complete: 1,200 questions x 5 models under the plain condition, 243 whole-country questions, and the 936 core
+  questions with a study count under signal, shuffled and caution. `results/` holds the core analysis.
+- `runs/pilot-*` and `results/pilot/` are the 14 Nov pilot through a different harness; they are not used in the report.
+- Report text: `report/report.md` (assembled from `report/parts_*.md`); references checked in `references.md`.

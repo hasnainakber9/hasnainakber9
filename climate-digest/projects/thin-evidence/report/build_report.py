@@ -7,7 +7,7 @@ report.md uses a small markup:
   ## Heading            template "Heading 2"          ### Heading   template "Heading 3"
   - item                bullet                         1. item       numbered item (typed number)
   ![caption](file.png)  figure from results/ with the caption underneath
-  [[table: file.csv | caption | col=Header,col=Header | digits]]   a table from results/ (rows as in the CSV)
+  [[table: file.csv | caption | col=Header;col=Header | digits]]   a table from results/ (rows as in the CSV)
   ---pagebreak---
   anything else         a paragraph; **bold** and *italic* work inline
 The author line is passed on the command line so that no personal detail sits in the repository text.
@@ -91,7 +91,7 @@ def para(style="normal"):
 
 def table(spec):
     fn, caption, cols, digits = [s.strip() for s in spec.split("|")]
-    cols = [c.split("=") for c in cols.split(",")]
+    cols = [c.split("=") for c in cols.split(";")]
     rows = list(csv.DictReader(open(os.path.join(RES, fn), encoding="utf-8")))
     cap = para(); runs(cap, caption, size=9.5); cap.paragraph_format.space_after = Pt(3); cap.paragraph_format.keep_with_next = True
     t = doc.add_table(rows=1, cols=len(cols)); t.style = "Table Grid" if "Table Grid" in [s.name for s in doc.styles] else t.style
@@ -109,9 +109,26 @@ def table(spec):
                 pass
             c.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
             runs(c.paragraphs[0], v, size=9)
-    for row in t.rows:
+    # column widths in proportion to the longest text in each column, across the full text width
+    longest = [max(max(len(c.text) for c in col.cells[1:]), max(len(w_) for w_ in col.cells[0].text.split())) for col in t.columns]   # headers may wrap
+    longest = [max(19 if j == 0 else 7, min(n + 2, 24)) for j, n in enumerate(longest)]
+    t.autofit = False
+    widths = [int(6.5 * 1440 * n / sum(longest)) for n in longest]
+    for col, wd in zip(t.columns, widths):
+        for c in col.cells:
+            c.width = wd * 635                       # twentieths of a point to EMU
+    for g, wd in zip(t._tbl.tblGrid.findall(qn("w:gridCol")), widths):
+        g.set(qn("w:w"), str(wd))
+    tblPr = t._tbl.tblPr
+    for tag, attrs in (("w:tblW", {qn("w:w"): str(sum(widths)), qn("w:type"): "dxa"}), ("w:tblLayout", {qn("w:type"): "fixed"})):
+        for e in tblPr.findall(qn(tag)):
+            tblPr.remove(e)
+        tblPr.append(tblPr.makeelement(qn(tag), attrs))
+    for k, row in enumerate(t.rows):
+        trPr = row._tr.get_or_add_trPr(); cs = trPr.makeelement(qn("w:cantSplit"), {}); trPr.append(cs)
         for c in row.cells:
             c.paragraphs[0].paragraph_format.space_after = Pt(0)
+            c.paragraphs[0].paragraph_format.keep_with_next = k < len(t.rows) - 1     # the rows travel together
     para().paragraph_format.space_after = Pt(2)
 
 
@@ -130,7 +147,7 @@ for line in content:
         m = re.match(r"!\[(.*)\]\((.*?)(?:\s*\|\s*([\d.]+))?\)", s)
         p = para(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; p.paragraph_format.keep_with_next = True
         p.add_run().add_picture(os.path.join(RES, m.group(2)), width=Inches(float(m.group(3) or 6.5)))
-        c = para(); runs(c, m.group(1), size=9.5); c.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        c = para(); runs(c, m.group(1), size=9.5); c.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; c.paragraph_format.space_after = Pt(9)
     elif s.startswith("[[table:"):
         table(s[8:-2])
     elif s.startswith("- "):
@@ -143,7 +160,7 @@ for line in content:
         p = para(); p.paragraph_format.left_indent = Inches(0.3); p.paragraph_format.first_line_indent = Inches(-0.3)
         p.paragraph_format.space_after = Pt(4); runs(p, s[5:], size=10)
     else:
-        p = para(); runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; p.paragraph_format.space_after = Pt(7)
+        p = para(); runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; p.paragraph_format.space_after = Pt(6)
 
 # python-docx appends after the section properties' predecessor; make sure sectPr stays last
 sect = [e for e in body if e.tag == W + "sectPr"][0]

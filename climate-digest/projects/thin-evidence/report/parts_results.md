@@ -1,0 +1,56 @@
+## 4. Results
+All results are for the 1,200-question core sample (a fixed pseudo-random subset of the 4,253), which every model answered under every condition; the three context conditions use the 936 core questions whose region has a study count. After a second attempt with a larger token allowance, no model lacked an answer on more than 9 of 936 questions in any condition.
+
+### 4.1 Every model is overconfident, and none beats the national figure
+Table 1 gives the plain condition. The truth falls inside the stated 80% interval between 16% and 51% of the time. To reach 80%, intervals would have to be multiplied by 1.9 (GLM 5.3 Flash) to 7.0 (Gemma 4 26B). Mean error is 11.3 to 15.8 points; quoting the same survey's national figure gives 6.8. Each model does better than the national figure on only 26% to 39% of questions.
+
+[[table: table1_main.csv | **Table 1.** Plain condition, 1,200 regional questions per model. Error is mean absolute error in points (95% interval). "National figure" is the error from answering with the same survey's national value; "Beats it" is the share of questions where the model is closer. "Widen" is the factor that would bring coverage to 80%. The last two columns are for 243 whole-country questions. | Model=Model;err=Error;base=National figure;beats=Beats it;cov=Inside interval;widen=Widen;nat_err=Country error;nat_cov=Country inside | 1]]
+
+Part of this is that the models do not know the country-level figure either: on the 243 whole-country questions error is 7.6 to 14.6 points and coverage 10% to 51% (Table 1, right). When we answer each regional question with the model's own whole-country answer, error is 11.8 to 16.5 points. The model's regional answer improves on that by at most 1.4 points. Most of what the models express about a region is their belief about the country.
+
+**Menstrual hygiene is a separate failure.** The surveys report that on average 91% of women had appropriate materials and privacy. The models answer 48% to 65% on average, with errors of 26 to 43 points and the truth inside the interval 3% to 10% of the time. The indicator has been collected only since 2021, and the same bias appears on whole-country questions (31 to 44 points too low), so this is a wrong prior about the level, not a regional effect. Excluding it, error falls to 8.8 to 14.0 points against 7.0 for the national figure, and still no model beats the baseline overall. On single indicators the best case is child marriage, where GLM 5.3 Flash beats the national figure (6.3 against 7.6) and DeepSeek V4 Flash ties it.
+
+### 4.2 Where research is thin, answers stop following the region, but stated confidence barely changes
+![**Figure 1.** Plain condition by the number of published studies naming the region (936 questions per model; 223, 440, 212 and 61 questions in the four groups). Bars are 95% intervals from resampling regions. Left: error, with the national-figure baseline dashed. Centre: share of truths inside the stated 80% interval, with the 80% target dashed. Right: mean interval width.](fig1_by_coverage.png | 6.0)
+
+Figure 1 shows three things. Error is roughly flat up to 999 studies and drops only for the 61 questions on regions with 1,000 or more, to 7.2 to 9.9 points. That is close to the national figure's 7.6 there, and no model clearly beats it. Intervals narrow as study counts rise. Coverage is flat: models are about as overconfident on a region with three studies as on one with three thousand.
+
+In regressions with country and indicator fixed effects, one more factor of ten in studies goes with 0.1 to 1.2 points less error (p < 0.05 in one model of five) and intervals 0.4 to 1.0 points narrower (p < 0.05 in four of five). Coverage shows no relation in any model (all p ≥ 0.09). Intervals move in the sensible direction, but by about a point per tenfold change, on intervals that are far too narrow everywhere.
+
+The clearer effect is on whether an answer says anything about the region at all. Table 2 gives the slope of (the model's regional answer minus its own country answer) on (the region's true difference from its country). For regions with fewer than ten studies the slope is 0.16 to 0.45: models move their answer a small fraction of the real difference. With 1,000 or more it is 0.37 to 0.70. The interaction between the true difference and log study count is positive in all five models and significant in four (p < 0.001 for Qwen 3.5 397B and GLM 5.3 Flash, p = 0.01 and 0.04 for DeepSeek V4 Flash and Gemma 4 31B, p = 0.23 for Gemma 4 26B). It is little changed without menstrual hygiene. Restricted to questions with a survey denominator of 400 or more, which halves the sample, it stays positive in all five but is no longer significant in any, so we treat it as supported but not settled.
+
+[[table: table3_tracking.csv | **Table 2.** How far regional answers follow real regional differences, by number of published studies naming the region. Slope of (regional answer minus the model's own country answer) on (regional truth minus national truth); 1 would be full tracking, 0 none. Plain condition. | Model=Model;0-9=0–9 studies;10-99=10–99;100-999=100–999;1,000+=1,000+ | 2]]
+
+**Models rank their own answers sensibly.** Within each model, wider intervals go with larger errors (Spearman correlation 0.35 to 0.49, all p < 0.001): the wider half of a model's answers has 1.7 to 2.2 times the error of the narrower half. The ordering carries information. The scale does not.
+
+### 4.3 A real reliability number works no better than a fake one
+![**Figure 2.** Effect of added context on the same 936 questions, as the change from the plain condition, with 95% intervals. "True study count" tells the model how many studies name the region; "another region's count" uses the same sentence with a different region's number; "general caution" asks for wider intervals where knowledge is thin, with no number.](fig3_conditions.png | 6.0)
+
+[[table: table2_conditions.csv | **Table 3.** Change from the plain condition on the same 936 questions, in percentage points. Width is the mean interval width; coverage is the share of truths inside the interval. Figure 2 shows the 95% intervals. | Model=Model;plain_w=Plain width;signal_w0=Width: true count;shuffled_w0=Width: other count;caution_w0=Width: caution;signal_c=Coverage: true count;shuffled_c=Coverage: other count;caution_c=Coverage: caution | 1]]
+
+**The true count and a wrong count do the same thing.** Told the true study count, three models widen their intervals by 1.0 to 2.3 points, one does not change and one narrows by 1.3 (Table 3). Told another region's count, each model does almost exactly the same. Compared directly on the same questions, the difference in width between the two conditions is between −0.1 and +0.3 points and its 95% interval includes zero in every model. What moves the interval is being reminded that evidence varies, or simply having a context sentence, not the information in it.
+
+The number is not ignored entirely. Where the true count is ten times the shuffled one, intervals are 0.2 to 0.6 points narrower under the true count (p < 0.05 in four of five models). That is a real response to the value, and it is small next to intervals that are 7 to 19 points wide and need to be two to seven times wider.
+
+**A general caution does much more.** One sentence asking for wider intervals where knowledge is thin widens them by 1.9 to 6.8 points and raises coverage by 4 to 18 points. Even so, coverage under caution is 21% to 64%, still short of 80% for every model.
+
+**Nothing improves accuracy.** Error changes by between −0.5 and +0.8 points across all models and conditions. A reliability signal placed in the prompt does not make these models' answers more accurate; at best it makes them slightly less sure.
+
+## 5. Discussion and Limitations
+**What the results mean.** First, on this task a regional figure from a model is worth less than the national figure from the survey report, and the model's interval does not reveal that. Second, the place-specific content of an answer shrinks where research is thin while the stated confidence hardly responds. Our starting hypothesis, that models would be most overconfident where nobody looked, is only partly right: they are overconfident everywhere to a similar degree, and what thin evidence removes is the regional information, not the confidence. Third, supplying an evidence count does not work as intended. The models respond to the presence of the sentence far more than to the number in it, and an unspecific instruction beats specific evidence. For trust infrastructure this is a warning: a reliability score attached to a prompt may change a model's tone without the model using the score.
+
+One result is encouraging. The ordering of a model's intervals is informative, so recalibration after the fact, multiplying intervals by a fitted factor per model and topic, is likely to help more than prompting. The menstrual hygiene result also shows that a newly collected indicator can be badly wrong at every level while looking as confident as the rest, which argues for checking models against the newest survey modules first.
+
+### Limitations
+The study count comes from one health and life-science index and is a proxy for how visible a region is, not a measure of training data. Survey figures carry sampling error. We used one English prompt format, one answer per question, and five open-weight models from one provider; the largest proprietary models were not tested and may do better. The group with 1,000 or more studies has only 61 questions. Appendix A gives the full list with dual-use and ethical considerations.
+
+## 6. Conclusion
+Asked for regional statistics on women's lives, five current open-weight models gave intervals that contained the truth 16% to 51% of the time instead of 80%, and none was more accurate than quoting the country's own figure. Where little has been published about a region, answers carried little information about that region, and the stated uncertainty did not warn of it. Telling the model how much research exists did about as much as telling it a wrong number, and neither made answers more accurate.
+
+For users, the practical advice is simple: for a subnational figure, read the survey report, and treat a model's interval as far too narrow. For builders, a reliability signal has to be tested against a placebo before anyone claims the model is using it. The natural next steps are post-hoc recalibration tested on held-out countries, frontier models and other languages, and replacing the study count with retrieved evidence.
+
+## Code and Data
+**Code repository:** [add the public link to climate-digest/projects/thin-evidence]
+**Data/Datasets:** in the repository: items.csv (4,253 questions with truth, national figure and study counts), items_national.csv, runs/ (every model answer with token usage) and results/ (all tables and figures). Source data: The DHS Program API and Europe PMC.
+**Prior work declaration:** the DHS API cache and the Europe PMC place-name query helpers were written on 13 November 2026 for a separate project by the same author. Everything else (question set, prompts, harness, analysis, all model runs and results) is new in this sprint.
+
