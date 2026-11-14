@@ -146,7 +146,7 @@ def main():
         done = {json.loads(l)["item"] for l in keep}
     todo = [r for r in rows if r["item"] not in done]
     print(f"{args.model} {args.condition}: {len(todo)} to ask, {len(done)} done", flush=True)
-    lock, n, stop = threading.Lock(), [0, 0], [None]
+    lock, n, stop = threading.Lock(), [0, 0, 0], [None]
     with open(path, "a", encoding="utf-8") as fh:
         def go(r):
             if stop[0]:
@@ -155,17 +155,23 @@ def main():
             try:
                 text, usage = ask(client, r, prompts.prompt(r, args.condition, sn))
             except Exception as e:  # noqa: BLE001
-                stop[0] = str(e)[:200]; return
+                msg = str(e)
+                if any(x in msg for x in ("401", "403", "402", "insufficient", "credit")):
+                    stop[0] = msg[:200]                 # a key or balance problem: stop the run
+                else:
+                    with lock:
+                        n[2] += 1                       # a question that failed six times is left for the next rerun
+                return
             rec = {"item": r["item"], "model": args.model, "condition": args.condition if args.set == "regions" else "national", "shown_n": sn if args.condition == "shuffled" else (r["n_all"] if args.condition == "signal" else None),
                    "raw": text, "parsed": parse(text), "usage": usage}
             with lock:
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n"); fh.flush()
                 n[0] += 1; n[1] += rec["parsed"] is None
                 if n[0] % 50 == 0:
-                    print(n[0], "/", len(todo), "| unparsed", n[1], "| rate-limited replies", LIMITED[0], time.strftime("%H:%M:%S"), flush=True)
+                    print(n[0], "/", len(todo), "| unparsed", n[1], "| failed", n[2], "| rate-limited replies", LIMITED[0], time.strftime("%H:%M:%S"), flush=True)
         with ThreadPoolExecutor(args.threads) as ex:
             list(ex.map(go, todo))
-    print("STOPPED: " + stop[0] if stop[0] else f"DONE {n[0]} asked, {n[1]} unparsed", flush=True)
+    print("STOPPED: " + stop[0] if stop[0] else f"DONE {n[0]} asked, {n[1]} unparsed, {n[2]} failed", flush=True)
 
 
 if __name__ == "__main__":
