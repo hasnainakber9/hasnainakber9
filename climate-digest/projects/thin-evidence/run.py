@@ -81,6 +81,7 @@ def text_of(resp):
 
 
 LIMITED = [0]
+FATAL = re.compile(r"Error code: (401|402|403)|insufficient|out of credit|no credits", re.I)   # a key or balance problem
 
 
 def wait_turn():
@@ -114,7 +115,7 @@ def ask(client, item, text):
                 if d.get("type") in ("response.completed", "response.incomplete"):
                     final = d["response"]
                 elif d.get("type") in ("response.failed", "error"):
-                    raise RuntimeError("stream failed: " + json.dumps(d)[:200])
+                    raise RuntimeError("stream failed: " + json.dumps((d.get("response") or d).get("error") or d.get("message") or "no detail")[:200])
             if final is None:
                 raise RuntimeError("stream ended without a final response")
             return text_of(final)
@@ -123,7 +124,7 @@ def ask(client, item, text):
             if "429" in msg or "rate limit" in msg.lower():      # the shared limit: wait and ask again, without giving up
                 LIMITED[0] += 1; time.sleep(20); continue
             k += 1
-            if any(s in msg for s in ("401", "403", "402", "insufficient", "credit")) or k == 6:
+            if FATAL.search(msg) or k == 6:
                 raise
             time.sleep(4 * k)
 
@@ -157,7 +158,7 @@ def main():
                 text, usage = ask(client, r, prompts.prompt(r, args.condition, sn))
             except Exception as e:  # noqa: BLE001
                 msg = str(e)
-                if any(x in msg for x in ("401", "403", "402", "insufficient", "credit")):
+                if FATAL.search(msg):
                     stop[0] = msg[:200]                 # a key or balance problem: stop the run
                 else:
                     with lock:
