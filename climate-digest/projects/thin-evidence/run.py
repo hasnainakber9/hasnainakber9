@@ -60,7 +60,8 @@ def make_client():
     from adaption import Adaption
     if not os.environ.get("ADAPTION_API_KEY"):
         sys.exit("ADAPTION_API_KEY is not set in this environment.")
-    return Adaption(max_retries=0, timeout=180)
+    import httpx
+    return Adaption(max_retries=0, timeout=httpx.Timeout(45.0, connect=10.0))   # 45 s without a single streamed event counts as a hang
 
 
 def text_of(resp):
