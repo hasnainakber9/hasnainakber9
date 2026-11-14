@@ -14,7 +14,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--provider", default="adaption"); ap.add_argument("--model"); ap.add_argument("--condition", default="plain", choices=prompts.CONDITIONS)
 ap.add_argument("--sample", type=int, default=0, help="number of items (0 = all); the sample is the same for every model and condition")
 ap.add_argument("--set", default="regions", choices=("regions", "national"), help="national = the same questions about each country as a whole");
-ap.add_argument("--threads", type=int, default=4); ap.add_argument("--per-minute", type=float, default=90, help="calls per minute shared by every run.py process on this machine (the API allows about 100 per user)"); ap.add_argument("--list-models", action="store_true"); ap.add_argument("--max-tokens", type=int, default=4000, help="reasoning models spend output tokens on thinking before the answer")
+ap.add_argument("--threads", type=int, default=4); ap.add_argument("--per-minute", type=float, default=55, help="calls per minute shared by every run.py process on this machine (the API allows about 60 per user)"); ap.add_argument("--list-models", action="store_true"); ap.add_argument("--max-tokens", type=int, default=4000, help="reasoning models spend output tokens on thinking before the answer")
 args = ap.parse_args()
 
 
@@ -79,18 +79,22 @@ def text_of(resp):
     return "\n".join(out) or (d.get("output_text") or ""), d.get("usage")
 
 
+LIMITED = [0]
+
+
 def wait_turn():
     """One shared queue for all processes: each call books the next free slot in a small lock file."""
-    with open(os.path.join(HERE, "runs", ".pace"), "a+") as fh:
-        fcntl.flock(fh, fcntl.LOCK_EX)
-        fh.seek(0)
+    fd = os.open(os.path.join(HERE, "runs", ".pace"), os.O_RDWR | os.O_CREAT)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
         try:
-            last = float(fh.read() or 0)
+            last = float(os.pread(fd, 64, 0).decode() or 0)
         except ValueError:
             last = 0.0
         slot = max(time.time(), last + 60.0 / args.per_minute)
-        fh.seek(0); fh.truncate(); fh.write(repr(slot)); fh.flush()
-        fcntl.flock(fh, fcntl.LOCK_UN)
+        os.ftruncate(fd, 0); os.pwrite(fd, repr(slot).encode(), 0)
+    finally:
+        os.close(fd)                                 # closing releases the lock
     time.sleep(max(0.0, slot - time.time()))
 
 
@@ -106,7 +110,7 @@ def ask(client, item, text):
         except Exception as e:  # noqa: BLE001
             msg = str(e)
             if "429" in msg or "rate limit" in msg.lower():      # the shared limit: wait and ask again, without giving up
-                time.sleep(15); continue
+                LIMITED[0] += 1; time.sleep(20); continue
             k += 1
             if any(s in msg for s in ("401", "403", "402", "insufficient", "credit")) or k == 6:
                 raise
@@ -147,8 +151,8 @@ def main():
             with lock:
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n"); fh.flush()
                 n[0] += 1; n[1] += rec["parsed"] is None
-                if n[0] % 100 == 0:
-                    print(n[0], "/", len(todo), "| unparsed", n[1], flush=True)
+                if n[0] % 50 == 0:
+                    print(n[0], "/", len(todo), "| unparsed", n[1], "| rate-limited replies", LIMITED[0], time.strftime("%H:%M:%S"), flush=True)
         with ThreadPoolExecutor(args.threads) as ex:
             list(ex.map(go, todo))
     print("STOPPED: " + stop[0] if stop[0] else f"DONE {n[0]} asked, {n[1]} unparsed", flush=True)
