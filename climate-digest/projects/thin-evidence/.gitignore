@@ -1,2 +1,4 @@
 runs/mock__*
 __pycache__/
+logs/
+runs/.pace

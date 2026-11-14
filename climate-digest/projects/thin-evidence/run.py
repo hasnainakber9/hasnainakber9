@@ -6,7 +6,7 @@ Usage: python3 run.py --provider adaption --model <id> --condition plain [--samp
 Output: runs/<model>__<condition>.jsonl, one line per item; rerun the same command to resume.
 The key is read from the environment variable ADAPTION_API_KEY and is never printed or written.
 """
-import argparse, csv, hashlib, json, os, random, re, sys, threading, time
+import argparse, csv, fcntl, hashlib, json, os, random, re, sys, threading, time
 from concurrent.futures import ThreadPoolExecutor
 import prompts
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +14,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--provider", default="adaption"); ap.add_argument("--model"); ap.add_argument("--condition", default="plain", choices=prompts.CONDITIONS)
 ap.add_argument("--sample", type=int, default=0, help="number of items (0 = all); the sample is the same for every model and condition")
 ap.add_argument("--set", default="regions", choices=("regions", "national"), help="national = the same questions about each country as a whole");
-ap.add_argument("--threads", type=int, default=4); ap.add_argument("--list-models", action="store_true"); ap.add_argument("--max-tokens", type=int, default=400)
+ap.add_argument("--threads", type=int, default=4); ap.add_argument("--per-minute", type=float, default=90, help="calls per minute shared by every run.py process on this machine (the API allows about 100 per user)"); ap.add_argument("--list-models", action="store_true"); ap.add_argument("--max-tokens", type=int, default=4000, help="reasoning models spend output tokens on thinking before the answer")
 args = ap.parse_args()
 
 
@@ -60,7 +60,7 @@ def make_client():
     from adaption import Adaption
     if not os.environ.get("ADAPTION_API_KEY"):
         sys.exit("ADAPTION_API_KEY is not set in this environment.")
-    return Adaption()
+    return Adaption(max_retries=0, timeout=180)
 
 
 def text_of(resp):
@@ -79,18 +79,38 @@ def text_of(resp):
     return "\n".join(out) or (d.get("output_text") or ""), d.get("usage")
 
 
+def wait_turn():
+    """One shared queue for all processes: each call books the next free slot in a small lock file."""
+    with open(os.path.join(HERE, "runs", ".pace"), "a+") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        fh.seek(0)
+        try:
+            last = float(fh.read() or 0)
+        except ValueError:
+            last = 0.0
+        slot = max(time.time(), last + 60.0 / args.per_minute)
+        fh.seek(0); fh.truncate(); fh.write(repr(slot)); fh.flush()
+        fcntl.flock(fh, fcntl.LOCK_UN)
+    time.sleep(max(0.0, slot - time.time()))
+
+
 def ask(client, item, text):
     if args.provider == "mock":                      # a stand-in that answers the national figure plus noise
         rnd = random.Random(item["item"]); v = max(0, min(100, float(item["national"]) + rnd.gauss(0, 6)))
         return json.dumps({"estimate": round(v, 1), "low": round(max(0, v - 8), 1), "high": round(min(100, v + 8), 1)}), None
-    for k in range(6):
+    k = 0
+    while True:
+        wait_turn()
         try:
             return text_of(client.responses.create(model=args.model, instructions=prompts.SYSTEM, input=text, max_output_tokens=args.max_tokens, store=False))
         except Exception as e:  # noqa: BLE001
             msg = str(e)
-            if any(s in msg for s in ("401", "403", "402", "insufficient", "credit")) or k == 5:
+            if "429" in msg or "rate limit" in msg.lower():      # the shared limit: wait and ask again, without giving up
+                time.sleep(15); continue
+            k += 1
+            if any(s in msg for s in ("401", "403", "402", "insufficient", "credit")) or k == 6:
                 raise
-            time.sleep(4 * (k + 1))
+            time.sleep(4 * k)
 
 
 def main():
@@ -105,7 +125,11 @@ def main():
     shuf = shuffled_counts(rows) if args.condition == "shuffled" else {}
     os.makedirs(os.path.join(HERE, "runs"), exist_ok=True)
     path = os.path.join(HERE, "runs", f"{re.sub(r'[^A-Za-z0-9_.-]', '_', args.model)}__{args.condition if args.set == 'regions' else 'national'}.jsonl")
-    done = {json.loads(l)["item"] for l in open(path)} if os.path.exists(path) else set()
+    done = set()
+    if os.path.exists(path):                        # keep answered lines only, so a rerun asks again where no answer came back
+        keep = [l for l in open(path, encoding="utf-8") if json.loads(l)["parsed"] is not None]
+        open(path, "w", encoding="utf-8").writelines(keep)
+        done = {json.loads(l)["item"] for l in keep}
     todo = [r for r in rows if r["item"] not in done]
     print(f"{args.model} {args.condition}: {len(todo)} to ask, {len(done)} done", flush=True)
     lock, n, stop = threading.Lock(), [0, 0], [None]
