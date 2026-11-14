@@ -106,7 +106,17 @@ def ask(client, item, text):
     while True:
         wait_turn()
         try:
-            return text_of(client.responses.create(model=args.model, instructions=prompts.SYSTEM, input=text, max_output_tokens=args.max_tokens, store=False))
+            # streamed, because the gateway drops a silent connection after 60 seconds and the large models think for longer
+            final = None
+            for ev in client.responses.create(model=args.model, instructions=prompts.SYSTEM, input=text, max_output_tokens=args.max_tokens, store=False, stream=True):
+                d = ev.model_dump() if hasattr(ev, "model_dump") else ev
+                if d.get("type") in ("response.completed", "response.incomplete"):
+                    final = d["response"]
+                elif d.get("type") in ("response.failed", "error"):
+                    raise RuntimeError("stream failed: " + json.dumps(d)[:200])
+            if final is None:
+                raise RuntimeError("stream ended without a final response")
+            return text_of(final)
         except Exception as e:  # noqa: BLE001
             msg = str(e)
             if "429" in msg or "rate limit" in msg.lower():      # the shared limit: wait and ask again, without giving up
