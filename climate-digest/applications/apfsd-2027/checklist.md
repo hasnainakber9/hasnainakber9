@@ -24,6 +24,16 @@ Guideline PDF: https://arrow.org.my/wp-content/uploads/2026/10/APFSD-Youth-Forum
 - [x] Work relevant to the SDGs under review (5, 3, 13, 10)
 - [x] Applicants from marginalised or hard-to-reach places are prioritised: GB/Chitral roots and Young Shapers work strengthen the application
 
+## Checked on 15 Nov against the live form and the guideline
+- Goals under review in 2027: SDGs 4, 10, 12, 15, 17, with 13, 3 and 5 as cross-cutting goals. The abstracts name
+  SDGs 5, 3, 13 and 10, so they fit (Day 2 covers 3, 4, 5, 10, 17).
+- Abstract format: title, name and affiliation, then introduction, methodology and findings of 100 words each. All
+  three PDFs follow it.
+- The general form's real fields and length limits are now in `application-answers.md` (work experience 1000
+  characters, collaboration 100 words, bio under 500 characters; all drafts are inside the limits).
+- The general form asks for passport name, date of birth, phone and WhatsApp, pronouns, passport validity, and whether
+  you can self-fund Bangkok. Only you can answer those.
+
 ## You must submit TWO forms (both by 16 Nov)
 1. [ ] **Abstract form**: https://forms.gle/71NkoUifsRBB5sjBA (needs a Google sign-in). Upload the PDF(s).
 2. [ ] **General application form**: https://forms.gle/5Y5xmRmD7mY7Yf2FA. Draft answers are in `application-answers.md`.
