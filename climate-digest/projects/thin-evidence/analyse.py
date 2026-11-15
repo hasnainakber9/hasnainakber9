@@ -276,8 +276,7 @@ if len(pairs):
                 g = g.iloc[0]
                 row[cond + "_w"] = f"{g['d_width']:+.1f} ({g['d_width_lo']:+.1f} to {g['d_width_hi']:+.1f})"
                 row[cond + "_w0"] = f"{g['d_width']:+.1f}".replace("-0.0", "0.0").replace("+0.0", "0.0"); row[cond + "_e0"] = f"{g['d_err']:+.1f}"
-                row[cond + "_c"] = row[cond + "_c"].replace("+0", "0") if row[cond + "_c"] in ("+0", "-0") else row[cond + "_c"]
-                row[cond + "_c"] = f"{g['d_hit'] * 100:+.0f}"; row[cond + "_e"] = f"{g['d_err']:+.1f}"
+                row[cond + "_c"] = f"{g['d_hit'] * 100:+.0f}".replace("+0", "0").replace("-0", "0") if abs(g['d_hit'] * 100) < 0.5 else f"{g['d_hit'] * 100:+.0f}"; row[cond + "_e"] = f"{g['d_err']:+.1f}"
                 row["plain_w"] = f"{g['width_plain']:.1f}"; row["plain_c"] = f"{g['coverage_plain'] * 100:.0f}%"
         rows_.append(row)
     save(pd.DataFrame(rows_), "table2_conditions.csv")

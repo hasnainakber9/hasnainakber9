@@ -9,7 +9,7 @@ GLM 5.3 Flash,Interval width,19.7,19.3,17.3,11.9
 GLM 5.3 Flash,Tracking slope,0.29,0.32,0.59,0.69
 DeepSeek V4 Flash,Error (points),16.5,15.2,13.8,7.7
 DeepSeek V4 Flash,Truth inside interval,44%,40%,42%,52%
-DeepSeek V4 Flash,Interval width,20.2,19.6,17.3,11.6
+DeepSeek V4 Flash,Interval width,20.2,19.7,17.3,11.6
 DeepSeek V4 Flash,Tracking slope,0.45,0.44,0.71,0.62
 Gemma 4 31B,Error (points),17.0,15.2,13.6,9.9
 Gemma 4 31B,Truth inside interval,31%,30%,32%,31%
