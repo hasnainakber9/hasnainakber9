@@ -14,7 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 HERE = os.path.dirname(os.path.abspath(__file__))
 PILOT = "--pilot" in sys.argv
-OUT = os.path.join(HERE, "results", "pilot" if PILOT else "")
+OUT = os.path.join(HERE, "results", "pilot" if PILOT else os.environ.get("OUTDIR", ""))   # OUTDIR=sample2400 keeps a second analysis apart
 os.makedirs(OUT, exist_ok=True)
 BINS, LABELS = [-1, 9, 99, 999, 1e9], ["0-9", "10-99", "100-999", "1,000+"]
 NICE = {"qwen3.5-397b": "Qwen 3.5 397B", "glm-5.3-flash": "GLM 5.3 Flash", "deepseek-v4-flash": "DeepSeek V4 Flash", "gemma-4-31b-it": "Gemma 4 31B", "gemma-4-26b-a4b-it": "Gemma 4 26B"}

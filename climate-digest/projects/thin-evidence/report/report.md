@@ -147,6 +147,8 @@ REF: Xiong M, Hu Z, Lu X, Li Y, Fu J, He J, Hooi B (2024). Can LLMs Express Thei
 
 **Recent surveys.** On the 232 core questions from surveys published in 2025 or later, error is higher in every model (15.8 to 20.6 points, against 10.2 to 14.7 for older surveys; the national baseline is 8.0 against 6.5) and coverage is about the same. Models are not simply reciting reports they have read; they are also no better calibrated on surveys they are less likely to have seen.
 
+**A larger sample.** After the main analysis was fixed we extended the plain condition to 2,400 questions per model (the core 1,200 plus the next 1,200 in the same fixed order). The results change little: error is 11.2 to 15.6 points against 6.9 for the national figure, coverage is 16% to 52%, and the widening factor is 1.8 to 6.9. The tracking slope rises with study count as before (0.22 to 0.54 with fewer than ten studies, 0.44 to 0.83 with 1,000 or more), and the interaction with log study count is significant in the same four models (p ≤ 0.002) and absent in Gemma 4 26B (p = 0.70). On large-denominator questions it is significant in one model (p = 0.01), borderline in one (p = 0.06) and not significant in three, so that caveat stands. One more factor of ten in studies goes with 0.1 to 1.2 points less error (p < 0.05 in two models) and no change in coverage.
+
 **Models not used.** Two other hosted models (GLM 5.2 and Qwen 3.8 27B) were dropped because calls timed out or took minutes per question.
 
 ## LLM Usage Statement
