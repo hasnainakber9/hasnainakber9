@@ -32,6 +32,19 @@ abstract = next(l for l in lines if l.startswith("ABSTRACT:")).replace("ABSTRACT
 content = lines[lines.index(next(l for l in lines if l.startswith("ABSTRACT:"))) + 1:]
 
 
+def link(par, url, size=8):
+    """A clickable hyperlink whose visible text is the URL itself."""
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+    rid = par.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    h = par._p.makeelement(qn("w:hyperlink"), {qn("r:id"): rid})
+    r = h.makeelement(qn("w:r"), {}); rpr = r.makeelement(qn("w:rPr"), {})
+    for tag, attrs in (("w:rFonts", {qn("w:ascii"): FONT, qn("w:hAnsi"): FONT}), ("w:color", {qn("w:val"): "1155CC"}),
+                       ("w:u", {qn("w:val"): "single"}), ("w:sz", {qn("w:val"): str(size * 2)})):
+        rpr.append(rpr.makeelement(qn(tag), attrs))
+    t = r.makeelement(qn("w:t"), {}); t.text = url
+    r.append(rpr); r.append(t); h.append(r); par._p.append(h)
+
+
 def runs(par, text, size=None, italic=False, bold=False):
     """Add text with **bold** and *italic* spans to a paragraph."""
     for part in re.split(r"(\*\*[^*]+\*\*|\*[^*]+\*)", text):
@@ -160,7 +173,14 @@ for line in content:
         p = para(); p.paragraph_format.left_indent = Inches(0.3); p.paragraph_format.first_line_indent = Inches(-0.3)
         p.paragraph_format.space_after = Pt(4); runs(p, s[5:], size=10)
     else:
-        p = para(); runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.LEFT if "https://" in s else WD_ALIGN_PARAGRAPH.JUSTIFY; p.paragraph_format.space_after = Pt(6)
+        p = para(); p.paragraph_format.space_after = Pt(6)
+        m = re.search(r"https://\S+", s)
+        if m:                                       # a URL goes on its own line as a real link, small enough not to wrap
+            runs(p, s[:m.start()].rstrip()); p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            p.add_run().add_break()
+            link(p, m.group(0)); runs(p, s[m.end():])
+        else:
+            runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
 # python-docx appends after the section properties' predecessor; make sure sectPr stays last
 sect = [e for e in body if e.tag == W + "sectPr"][0]
