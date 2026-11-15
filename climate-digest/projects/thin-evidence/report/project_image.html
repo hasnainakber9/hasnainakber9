@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+* { margin: 0; box-sizing: border-box; }
+body { width: 1920px; height: 1080px; background: #FAFAF8; font-family: 'Inter', Arial, sans-serif; color: #16181D; position: relative; overflow: hidden; }
+.label { position: absolute; left: 128px; top: 120px; font-size: 28px; font-weight: 500; color: #5B606B; }
+h1 { position: absolute; left: 128px; top: 168px; width: 1600px; font-size: 112px; font-weight: 600; line-height: 1.05; letter-spacing: -3px; }
+.sub { position: absolute; left: 128px; top: 430px; width: 1400px; font-size: 36px; line-height: 1.4; color: #5B606B; }
+.chart { position: absolute; left: 128px; top: 640px; width: 1664px; height: 260px; }
+.base { position: absolute; left: 32px; top: 132px; width: 1600px; height: 2px; background: #D9DBDF; }
+.span { position: absolute; left: 259px; top: 127px; width: 134px; height: 12px; border-radius: 6px; background: #C8461F; }
+.est { position: absolute; left: 312px; top: 119px; width: 28px; height: 28px; border-radius: 50%; background: #C8461F; }
+.truth { position: absolute; left: 1255px; top: 119px; width: 28px; height: 28px; border-radius: 50%; background: #16181D; }
+.ref { position: absolute; left: 1101px; top: 110px; width: 2px; height: 46px; background: #A0A5AE; }
+.t { position: absolute; font-size: 28px; line-height: 1.3; }
+.m { color: #C8461F; font-weight: 600; }
+.s { color: #16181D; font-weight: 600; }
+.g { color: #5B606B; }
+.ax { position: absolute; top: 160px; width: 80px; text-align: center; font-size: 26px; color: #6B7079; }
+.foot { position: absolute; left: 128px; bottom: 72px; font-size: 26px; color: #5B606B; }
+</style></head>
+<body>
+<p class="label">Apart Research · AI x Epistemics Sprint · Syed Hasnain Akber</p>
+<h1>Confident Where<br>Nobody Looked</h1>
+<p class="sub">Five language models, 4,253 survey questions on women’s lives in 61 countries. Their 80% intervals held the truth 16% to 51% of the time.</p>
+<div class="chart">
+  <div class="base"></div>
+  <div class="span"></div>
+  <div class="est"></div>
+  <div class="ref"></div>
+  <div class="truth"></div>
+  <p class="t m" style="left:259px; top:12px;">Model 18%</p>
+  <p class="t g" style="left:259px; top:50px;">80% sure: 14% to 23%</p>
+  <p class="t s" style="left:1255px; top:12px;">Survey 77%</p>
+  <p class="t g" style="left:1255px; top:50px;">the published figure</p>
+  <p class="t g" style="left:952px; top:200px; width:300px; text-align:center;">National figure 67%</p>
+  <p class="ax" style="left:-8px;">0%</p>
+  <p class="ax" style="left:392px;">25%</p>
+  <p class="ax" style="left:792px;">50%</p>
+  <p class="ax" style="left:1192px;">75%</p>
+  <p class="ax" style="left:1592px;">100%</p>
+</div>
+<p class="foot">Child marriage in Guéra, Chad (2014–15 DHS), a region named by three published studies. Answer from Gemma 4 26B.</p>
+</body></html>
