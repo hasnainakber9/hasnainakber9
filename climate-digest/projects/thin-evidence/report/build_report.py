@@ -160,7 +160,7 @@ for line in content:
         p = para(); p.paragraph_format.left_indent = Inches(0.3); p.paragraph_format.first_line_indent = Inches(-0.3)
         p.paragraph_format.space_after = Pt(4); runs(p, s[5:], size=10)
     else:
-        p = para(); runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; p.paragraph_format.space_after = Pt(6)
+        p = para(); runs(p, s); p.alignment = WD_ALIGN_PARAGRAPH.LEFT if "https://" in s else WD_ALIGN_PARAGRAPH.JUSTIFY; p.paragraph_format.space_after = Pt(6)
 
 # python-docx appends after the section properties' predecessor; make sure sectPr stays last
 sect = [e for e in body if e.tag == W + "sectPr"][0]
