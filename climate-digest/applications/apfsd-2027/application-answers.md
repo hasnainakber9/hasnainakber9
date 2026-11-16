@@ -37,6 +37,7 @@ Gender AI study (code, data, results): https://github.com/hasnainakber9/hasnaina
 AI study report (PDF): https://github.com/hasnainakber9/hasnainakber9/blob/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence/report/confident_where_nobody_looked.pdf
 Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
 Schools and flood exposure map: https://hasnainakber9.github.io/flood-schools-map/
+Atlas of the Uncounted: https://hasnainakber9.github.io/hasnainakber9/
 Menstrual health paper: https://drive.google.com/file/d/1lgAXvlcKQ6gghqFWtdCeYT8WdT7nQvQa/view?usp=sharing
 Trade and inequality paper: https://drive.google.com/file/d/1g4IgmNqiCbCoagvjupTu8xrLB2-1A6uh/view?usp=sharing
 GitHub: https://github.com/hasnainakber9
