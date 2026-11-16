@@ -1,6 +1,6 @@
 # Atlas of the Uncounted
 
-Live map: https://claude.ai/artifact/81JW693JEEk7wcUk5Sjrh1
+Live map: https://hasnainakber9.github.io/hasnainakber9/ (public, GitHub Pages; private copy: https://claude.ai/artifact/81JW693JEEk7wcUk5Sjrh1)
 
 A global map of where women and girls aged 10–49 live with cold, heat, floods, failed rains, fighting, darkness
 and long journeys to health care, and of where surveys and published research have and have not looked. Every first-level administrative unit
@@ -37,6 +37,7 @@ python3 asked.py                   # survey coverage and DHS results -> data/ask
 python3 repair.py                  # district names and missing outlines from geoBoundaries v6.0.0 -> data/adm2_names.json
 python3 research.py                # Europe PMC counts per country and province -> data/research.csv
 python3 build.py                   # -> site/atlas.json, site/adm1.json, site/d/<ISO3>.json
+./publish_pages.sh                 # -> branch gh-pages, served at https://hasnainakber9.github.io/hasnainakber9/
 ```
 `FIRST=PAK,BGD` runs those countries first; `ONLY=PAK` runs one country; `THREADS=5` sets parallel requests.
 `site/index.html` is the map page (d3 on canvas). It loads `atlas.json` and `adm1.json`, then one `d/<ISO3>.json`
