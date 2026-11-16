@@ -1,195 +1,334 @@
 <title>Atlas of the Uncounted</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-  /* Layout: a map-first working surface. Layer switches on top carry the global numbers; the map sits left,
-     the selected place and a ranked list sit right; method notes close the page. */
+  /* Layout: an Earth-observation console. A dark ground with faint column lines; the map is the hero, a layer rail on
+     the left, a readout panel on the right; findings and method below. One theme by choice: the data colours carry
+     all the colour, the interface stays monochrome. */
   :root {
-    --bg: #eef1ef; --panel: #fbfcfb; --ink: #17212a; --muted: #586671; --line: #cdd5d4;
-    --sea: #dfe7e8; --nodata: #d3d9d8; --accent: #0e5a68; --focus: #0e5a68;
-    --ramp-lo: #f2f4ef; --cold: #1c4b8a; --heat: #b3361c; --flood: #0f6f62; --care: #6a2c7b; --both: #7b1f3f; --study: #7a5200;
-    --dry: #5f6f14; --war: #4a3f3a; --night: #2f3a8f; --motor: #93356a; --asked: #1f6a8a;
-    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
-      --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
-      --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
-      --dry: #c5d86a; --war: #d6c9c2; --night: #a3adff; --motor: #f29bcb; --asked: #7ccbe8;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #12181d; --panel: #1a2228; --ink: #e8eef0; --muted: #9aa9b1; --line: #33414a;
-    --sea: #0e1418; --nodata: #2a343b; --accent: #6fc3d1; --focus: #6fc3d1;
-    --ramp-lo: #232d34; --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
-    --dry: #c5d86a; --war: #d6c9c2; --night: #a3adff; --motor: #f29bcb; --asked: #7ccbe8;
+    --bg: #070a0b; --panel: #0c1113; --panel-2: #121a1d; --line: #1a2427; --line-2: #2a383c;
+    --ink: #edf2f0; --muted: #8d9a96; --faint: #59655f;
+    --sea-in: #0a1113; --grat: #16232a; --nodata: #1b2528; --ramp-lo: #1e2b2e;
+    --cold: #86b7ff; --heat: #ff8e61; --flood: #5ed3bd; --care: #d592ea; --both: #ff86a8; --study: #f0b84a;
+    --dry: #c5d86a; --war: #e3d3c8; --night: #a3adff; --motor: #f29bcb; --asked: #7ccbe8;
+    --sans: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --gut: max(16px, env(safe-area-inset-left, 0px));
+    --gut-r: max(16px, env(safe-area-inset-right, 0px));
     color-scheme: dark;
   }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; }
   [hidden] { display: none !important; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
-  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 48px;
-    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-    display: grid; gap: 22px; }
-  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
-  h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; text-wrap: balance; }
+  a { color: inherit; }
   p { margin: 0; }
-  .head { display: grid; gap: 10px; }
-  .lede { font-size: 1.08rem; max-width: 62ch; }
-  .lede b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .muted { color: var(--muted); }
-  .small { font-size: 0.86rem; }
+  .mono { font-family: var(--mono); }
+  .label { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  :focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
 
-  .layers { display: grid; gap: 12px; }
-  .lgroup { display: grid; gap: 6px; min-width: 0; }
-  .lg-title { font-family: var(--mono); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
-  .lg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-  @media (min-width: 900px) { .lg-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-  .layer { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
-    padding: 9px 12px; cursor: pointer; display: grid; gap: 2px; min-width: 0; align-content: start; }
-  .layer:hover { border-color: var(--muted); }
-  .layer[aria-pressed="true"] { border-color: var(--lc); box-shadow: inset 0 -3px 0 var(--lc); }
-  .layer:focus-visible, .seg button:focus-visible, .zoom button:focus-visible, .rank button:focus-visible, #search:focus-visible, .pick:focus-visible, .act:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .layer-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lc); flex: none; }
-  .layer-name { font-size: 0.92rem; }
-  .layer-num { font-family: var(--mono); font-size: 1.08rem; font-variant-numeric: tabular-nums; }
-  .layer-share { font-family: var(--mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--muted); }
-  /* Phone: each group is one row that scrolls sideways inside itself, so the map stays near the top. */
-  @media (max-width: 560px) {
-    .lg-cards { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; margin-right: -16px; padding-right: 16px; }
-    .layer { flex: 0 0 148px; scroll-snap-align: start; padding: 8px 10px; }
-    .layer-num { font-size: 1rem; }
-  }
-  .showing { font-size: 0.95rem; max-width: 78ch; }
-  .showing b { font-weight: 600; }
+  /* faint column lines behind everything */
+  .cols { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+    background-size: calc((100% - 2 * var(--gut)) / 4) 100%; background-position: var(--gut) 0; opacity: 0.55; }
+  .page { position: relative; z-index: 1; }
 
-  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
-  @media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
-  .mapcol { display: grid; gap: 8px; min-width: 0; }
-  .mapbox { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; min-width: 0; }
-  #map { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; touch-action: none; cursor: grab; }
-  @media (max-width: 560px) { #map { aspect-ratio: 4 / 3; } }
-  .maptools { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap; max-width: calc(100% - 70px); }
-  .pick { font: inherit; font-size: 0.84rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
-  .act { font: inherit; font-size: 0.88rem; color: var(--panel); background: var(--accent); border: 0; border-radius: 6px; padding: 7px 12px; cursor: pointer; justify-self: start; }
-  .act.ghost { color: var(--accent); background: transparent; border: 1px solid var(--accent); }
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
-  .seg button, .zoom button { font: inherit; font-size: 0.84rem; color: var(--ink); background: transparent; border: 0; padding: 6px 10px; cursor: pointer; }
-  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
-  .zoom { position: absolute; top: 10px; right: 10px; display: grid; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
-  .zoom button { font-family: var(--mono); font-size: 1rem; padding: 4px 10px; }
-  .zoom button + button { border-top: 1px solid var(--line); }
-  .legend { position: absolute; left: 10px; bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; max-width: calc(100% - 20px); }
-  .legend-title { font-size: 0.8rem; color: var(--muted); }
-  .swatches { display: flex; gap: 2px; }
-  .swatches span { display: grid; gap: 3px; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: center; }
-  .swatches i { display: block; width: 44px; height: 10px; border-radius: 2px; }
-  .swatches.wide { gap: 8px; flex-wrap: wrap; } .swatches.wide i { width: auto; min-width: 44px; }
-  @media (max-width: 560px) { .swatches i { width: 34px; } }
-  @media (max-width: 560px) { .legend { position: static; border: 0; border-top: 1px solid var(--line); border-radius: 0; max-width: none; } }
-  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 0.84rem; line-height: 1.35; white-space: nowrap; box-shadow: 0 4px 14px rgb(0 0 0 / 0.18); }
-  .tip b { font-family: var(--mono); font-weight: 500; }
-  .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 16px; text-align: center; }
+  /* ---------- top bar */
+  .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 24px;
+    padding-block: 14px; padding-left: var(--gut); padding-right: var(--gut-r);
+    background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--bg); }
+  .mark { font-family: var(--mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
+  .mark i { font-style: normal; color: var(--faint); padding: 0 0.35em; }
+  .stats { display: flex; gap: 22px; margin-left: auto; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; }
+  .stats b { color: var(--ink); font-weight: 500; }
+  .nav { display: flex; gap: 18px; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav a { text-decoration: none; color: var(--muted); } .nav a:hover { color: var(--ink); }
+  @media (max-width: 1080px) { .stats { display: none; } .nav { margin-left: auto; } }
 
-  .side { display: grid; gap: 16px; min-width: 0; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
-  .place-name { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.15; overflow-wrap: anywhere; }
-  dl { margin: 0; display: grid; grid-template-columns: minmax(45%, 1fr) auto; gap: 6px 12px; font-size: 0.9rem; }
-  dl .sub { grid-column: 1 / -1; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
-  dl .sub:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
-  dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
-  .rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .rank button { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer;
-    display: grid; grid-template-columns: 1.6em minmax(0, 1fr) auto; gap: 8px; text-align: left; align-items: baseline; }
-  .rank button:hover { background: var(--bg); }
-  .rank .i { color: var(--muted); font-family: var(--mono); font-size: 0.8rem; }
+  /* ---------- hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 40px; align-items: end;
+    padding-block: clamp(48px, 9vh, 110px) clamp(36px, 6vh, 64px); padding-left: var(--gut); padding-right: var(--gut-r); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 12px; }
+  .eyebrow .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--flood); box-shadow: 0 0 0 0 var(--flood); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--flood) 60%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  h1 { font-weight: 500; font-size: clamp(2.5rem, 6.4vw, 6rem); line-height: 0.96; letter-spacing: -0.05em; margin: 22px 0 0; text-wrap: balance; }
+  h1 .dim { color: var(--faint); }
+  .hero-side { display: grid; gap: 22px; padding-bottom: 6px; }
+  .hero-side p { color: var(--muted); font-size: 1.02rem; max-width: 46ch; }
+  .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; font: 500 0.82rem/1 var(--sans); text-decoration: none; padding: 12px 16px; border-radius: 999px;
+    border: 1px solid var(--line-2); color: var(--ink); background: transparent; cursor: pointer; }
+  .btn.solid { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn:hover { border-color: var(--ink); }
+  .btn .arr { font-family: var(--mono); }
+  @media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
+
+  /* ---------- console */
+  .console { display: grid; grid-template-columns: 284px minmax(0, 1fr) 340px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    height: max(640px, calc(100svh - 52px)); scroll-margin-top: 52px; }
+  .rail, .hud { min-width: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+  .rail { border-right: 1px solid var(--line); padding: 18px 0 24px; background: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .hud { border-left: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .lgroup { display: grid; gap: 2px; padding: 0 12px 18px; }
+  .lg-title { display: flex; justify-content: space-between; margin: 0; padding: 0 8px 8px; }
+  .lg-cards { display: grid; gap: 2px; }
+  .layer { --lc: var(--ink); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 10px; align-items: center; text-align: left;
+    font: inherit; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 9px 10px; cursor: pointer; }
+  .layer:hover { background: var(--panel); color: var(--ink); }
+  .layer[aria-pressed="true"] { background: var(--panel-2); border-color: var(--line-2); color: var(--ink); }
+  .ln { display: flex; align-items: center; gap: 9px; font-size: 0.9rem; font-weight: 500; min-width: 0; }
+  .ln .dot { width: 7px; height: 7px; border-radius: 2px; background: var(--lc); flex: none; opacity: 0.85; }
+  .lv { font-family: var(--mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .lbar { height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .lbar i { display: block; height: 100%; background: var(--lc); opacity: 0.45; transition: opacity 0.2s; }
+  .layer[aria-pressed="true"] .lbar i { opacity: 1; }
+  .ls { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); font-variant-numeric: tabular-nums; text-align: right; min-width: 4.2em; }
+  .layer[aria-pressed="true"] .ls { color: var(--muted); }
+
+  .stage { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .stage-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+  .showing { display: grid; gap: 4px; min-width: 0; }
+  .sh-v { font-size: clamp(1.4rem, 2.4vw, 2.1rem); font-weight: 500; letter-spacing: -0.035em; line-height: 1.05; }
+  .sh-d { color: var(--muted); font-size: 0.9rem; max-width: 60ch; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex: none; }
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 2px; }
+  .seg button { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .pick { font: 0.78rem var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line-2); border-radius: 999px; padding: 7px 12px; max-width: 240px; }
+
+  .mapbox { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #map { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #map:active { cursor: grabbing; }
+  .zoom { position: absolute; right: 14px; bottom: 14px; display: grid; border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; background: color-mix(in srgb, var(--panel) 85%, transparent); backdrop-filter: blur(8px); }
+  .zoom button { font: 0.95rem var(--mono); color: var(--ink); background: transparent; border: 0; width: 36px; height: 34px; cursor: pointer; }
+  .zoom button + button { border-top: 1px solid var(--line-2); }
+  .zoom button:hover { background: var(--panel-2); }
+  .coords { position: absolute; right: 14px; top: 12px; font: 0.7rem var(--mono); color: var(--faint); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; pointer-events: none; }
+  .legend { position: absolute; left: 14px; bottom: 14px; display: grid; gap: 8px; padding: 10px 12px; max-width: min(460px, calc(100% - 90px));
+    border: 1px solid var(--line-2); border-radius: 10px; background: color-mix(in srgb, var(--panel) 85%, transparent); backdrop-filter: blur(8px); }
+  .legend-title { font-size: 0.74rem; color: var(--muted); }
+  .swatches { display: flex; gap: 3px; }
+  .swatches span { display: grid; gap: 4px; font: 0.64rem var(--mono); color: var(--faint); }
+  .swatches i { display: block; width: 46px; height: 6px; border-radius: 1px; }
+  .swatches.wide { gap: 10px; flex-wrap: wrap; } .swatches.wide i { width: auto; min-width: 46px; }
+  .tip { position: absolute; pointer-events: none; z-index: 5; display: grid; gap: 3px; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 8px;
+    background: color-mix(in srgb, var(--panel) 94%, transparent); backdrop-filter: blur(6px); font-size: 0.8rem; white-space: nowrap; box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); }
+  .tip div:first-child { font-weight: 500; }
+  .tip div:last-child { color: var(--muted); }
+  .tip b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+  .status { position: absolute; inset: 0; display: grid; place-items: center; font: 0.78rem var(--mono); color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .status::after { content: "▍"; animation: blink 1s steps(1) infinite; margin-left: 4px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .caveat { padding: 12px 20px 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.8rem; line-height: 1.45; }
+
+  .card { padding: 20px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+  .place-name { font-size: 1.7rem; font-weight: 500; letter-spacing: -0.035em; line-height: 1.05; overflow-wrap: anywhere; margin-top: 6px; }
+  .place-sub { color: var(--muted); font-size: 0.84rem; margin-top: 6px; }
+  dl { margin: 0; display: grid; grid-template-columns: minmax(48%, 1fr) auto; font-size: 0.84rem; }
+  dt, dd { padding: 7px 0; border-top: 1px solid var(--line); }
+  dt { color: var(--muted); padding-right: 12px; }
+  dd { margin: 0; font-family: var(--mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  dl .sub { grid-column: 1 / -1; font-family: var(--mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 16px 0 6px; }
+  dl .sub:first-child { padding-top: 0; }
+  .act { justify-self: start; font: 500 0.74rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 11px 14px; border-radius: 999px; cursor: pointer;
+    background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
+  .act.ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+  .note { color: var(--faint); font-size: 0.78rem; }
+  .rank-title { font-size: 1rem; font-weight: 500; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+  #search { font: 0.84rem var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px; padding: 9px 11px; width: 100%; }
+  #search::placeholder { color: var(--faint); }
+  .rank { list-style: none; margin: 0; padding: 0; display: grid; }
+  .rank button { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; border-top: 1px solid var(--line); padding: 8px 2px; cursor: pointer;
+    display: grid; grid-template-columns: 2em minmax(0, 1fr) auto; gap: 8px; text-align: left; align-items: baseline; font-size: 0.84rem; }
+  .rank button:hover { background: var(--panel); }
+  .rank .i { color: var(--faint); font: 0.7rem var(--mono); }
   .rank .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rank .v { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-  #search { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%; box-sizing: border-box; }
-  details { border-top: 1px solid var(--line); padding-top: 14px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details ul { margin: 10px 0 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 78ch; }
+  .rank .v { font: 0.8rem var(--mono); font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 1240px) {
+    .console { grid-template-columns: 250px minmax(0, 1fr); height: auto; }
+    .stage { height: max(600px, calc(100svh - 52px)); }
+    .rail { max-height: max(600px, calc(100svh - 52px)); }
+    .hud { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); overflow: visible; }
+    .hud .card { border-bottom: 0; } .hud .card + .card { border-left: 1px solid var(--line); }
+  }
+  @media (max-width: 899px) {
+    .console { grid-template-columns: minmax(0, 1fr); }
+    .rail { max-height: none; border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden;
+      padding-left: var(--gut); padding-right: var(--gut-r); scroll-snap-type: x proximity; }
+    .lgroup, .lg-cards { display: contents; }
+    .lg-title { display: none; }
+    .layer { flex: 0 0 176px; scroll-snap-align: start; border-color: var(--line); }
+    .stage { height: auto; }
+    .stage-head { flex-direction: column; padding: 16px var(--gut-r) 12px var(--gut); }
+    .controls { justify-content: flex-start; }
+    .mapbox { flex: none; aspect-ratio: 4 / 3; max-width: 100%; }
+    .legend { left: 10px; bottom: 10px; padding: 7px 9px; gap: 5px; max-width: calc(100% - 66px); }
+    .legend-title { font-size: 0.66rem; }
+    .swatches i { width: 30px; height: 5px; } .swatches span { font-size: 0.58rem; }
+    .zoom { right: 10px; bottom: 10px; } .zoom button { width: 32px; height: 30px; }
+    .coords { display: none; }
+    .caveat { padding-left: var(--gut); padding-right: var(--gut-r); }
+    .hud { grid-template-columns: minmax(0, 1fr); }
+    .hud .card { padding-left: var(--gut); padding-right: var(--gut-r); }
+    .hud .card + .card { border-left: 0; border-top: 1px solid var(--line); }
+  }
+
+  /* ---------- findings */
+  .section { padding-block: clamp(56px, 10vh, 110px) 0; padding-left: var(--gut); padding-right: var(--gut-r); scroll-margin-top: 52px; }
+  .sec-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: end; margin-bottom: 32px; }
+  h2 { font-weight: 500; font-size: clamp(2rem, 4.4vw, 3.6rem); letter-spacing: -0.045em; line-height: 1; margin: 12px 0 0; text-wrap: balance; }
+  .sec-head p { color: var(--muted); max-width: 52ch; justify-self: end; }
+  .finds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
+  .find { display: grid; grid-template-rows: auto auto 1fr auto; gap: 14px; padding: 22px; min-height: 300px; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .find:last-child { border-right: 0; }
+  .find-n { font-size: clamp(2.6rem, 4.4vw, 4rem); font-weight: 500; letter-spacing: -0.05em; line-height: 0.95; color: var(--fc); }
+  .find p { color: var(--muted); font-size: 0.9rem; }
+  .find p b { color: var(--ink); font-weight: 500; }
+  .find .btn { justify-self: start; padding: 9px 13px; font-size: 0.76rem; }
+  @media (max-width: 1080px) { .finds { grid-template-columns: repeat(2, minmax(0, 1fr)); } .find:nth-child(2) { border-right: 0; } .find:nth-child(-n+2) { border-bottom: 1px solid var(--line); } }
+  @media (max-width: 640px) { .finds { grid-template-columns: minmax(0, 1fr); } .find { border-right: 0; border-bottom: 1px solid var(--line); min-height: 0; } .find:last-child { border-bottom: 0; } .sec-head { grid-template-columns: minmax(0, 1fr); } .sec-head p { justify-self: start; } }
+
+  /* ---------- method */
+  .method { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+  .m-item { padding: 20px 22px 22px 0; border-bottom: 1px solid var(--line); display: grid; gap: 8px; align-content: start; }
+  .m-item:nth-child(3n+2), .m-item:nth-child(3n) { padding-left: 22px; border-left: 1px solid var(--line); }
+  .m-item h3 { margin: 0; font: 500 0.7rem var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+  .m-item p { color: var(--muted); font-size: 0.86rem; line-height: 1.55; }
+  @media (max-width: 1080px) { .method { grid-template-columns: repeat(2, minmax(0, 1fr)); } .m-item:nth-child(3n+2), .m-item:nth-child(3n) { padding-left: 0; border-left: 0; } .m-item:nth-child(2n) { padding-left: 22px; border-left: 1px solid var(--line); } }
+  @media (max-width: 640px) { .method { grid-template-columns: minmax(0, 1fr); } .m-item:nth-child(n) { padding-left: 0; border-left: 0; } }
+
+  .mwrap summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; padding: 14px 0; border-top: 1px solid var(--line); color: var(--ink); }
+  .mwrap summary::-webkit-details-marker { display: none; }
+  .mwrap summary::after { content: "+"; font-family: var(--mono); }
+  .mwrap[open] summary::after { content: "−"; }
+  .mwrap[open] summary { display: none; }
+  @media (max-width: 640px) { .mwrap[open] summary { display: flex; } }
+  .foot { display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: space-between; padding-block: 48px 40px; padding-left: var(--gut); padding-right: var(--gut-r); margin-top: 72px; border-top: 1px solid var(--line); }
+  .foot p { color: var(--faint); font-size: 0.8rem; max-width: 80ch; }
+
+  @media (prefers-reduced-motion: reduce) { .eyebrow .pulse, .status::after { animation: none; } .lbar i { transition: none; } }
 </style>
 
-<div class="wrap">
-  <header class="head">
-    <h1>Atlas of the Uncounted</h1>
-    <p class="lede">Where <b id="tot-fem">…</b> women and girls aged 10 to 49 live with cold, heat, floods, failed rains, fighting, darkness and long journeys to care, and where nobody has asked or studied. Every province on Earth, with districts for <b id="n-dc">…</b>.</p>
-    <p class="muted small">Estimates of exposure from satellite and population data, not measures of harm. Built <span id="built">…</span>.</p>
+<div class="cols" aria-hidden="true"></div>
+<div class="page">
+  <header class="top">
+    <a class="mark" href="#">Atlas<i>/</i>Uncounted</a>
+    <div class="stats"><span><b id="s-prov">3,202</b> provinces</span><span><b id="s-dist">49,488</b> districts</span><span><b>12</b> layers</span><span>built <b id="built">2026-11-13</b></span></div>
+    <nav class="nav"><a href="#atlas">Map</a><a href="#findings">Findings</a><a href="#method">Method</a></nav>
   </header>
 
-  <div class="layers" role="group" aria-label="Map layer" id="layers"></div>
+  <section class="hero">
+    <div>
+      <span class="eyebrow label"><span class="pulse"></span>Satellite and survey data · 2000–2025</span>
+      <h1 id="h1"><span id="tot-fem">2.40 billion</span> women and girls. <span class="dim">Twelve ways the world leaves them uncounted.</span></h1>
+    </div>
+    <div class="hero-side">
+      <p>Where women and girls aged 10 to 49 live with cold, heat, floods, failed rains, fighting, darkness and long journeys to care, and where nobody has asked or studied. Every province on Earth, and districts in <span id="n-dc">196 countries</span>.</p>
+      <div class="ctas"><a class="btn solid" href="#atlas">Open the map <span class="arr">↓</span></a><a class="btn" href="#findings">Read the findings</a></div>
+    </div>
+  </section>
 
-  <p class="showing" id="showing" aria-live="polite"></p>
+  <section class="console" id="atlas" aria-label="Map">
+    <nav class="rail" id="layers" aria-label="Map layer"></nav>
 
-  <div class="main">
-    <div class="mapcol">
-    <div class="mapbox" id="mapbox">
-      <canvas id="map" role="img" aria-label="World map of provinces shaded by the selected layer. The ranked list beside the map gives the same information as text."></canvas>
-      <div class="maptools">
-        <div class="seg" role="group" aria-label="Show">
-          <button type="button" id="m-share" aria-pressed="true">Share</button>
-          <button type="button" id="m-count" aria-pressed="false">Number</button>
+    <div class="stage">
+      <div class="stage-head">
+        <div class="showing" id="showing" aria-live="polite"></div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Show">
+            <button type="button" id="m-share" aria-pressed="true">Share</button>
+            <button type="button" id="m-count" aria-pressed="false">Number</button>
+          </div>
+          <select class="pick" id="country" aria-label="Open a country to see its districts"></select>
         </div>
-        <select class="pick" id="country" aria-label="Open a country to see its districts"></select>
       </div>
-      <div class="zoom" role="group" aria-label="Zoom">
-        <button type="button" id="z-in" aria-label="Zoom in">+</button>
-        <button type="button" id="z-out" aria-label="Zoom out">−</button>
-        <button type="button" id="z-reset" aria-label="Reset view">⟲</button>
+      <div class="mapbox" id="mapbox">
+        <canvas id="map" role="img" aria-label="World map of provinces shaded by the selected layer. The ranked list beside the map gives the same information as text."></canvas>
+        <div class="coords" id="coords" aria-hidden="true"></div>
+        <div class="zoom" role="group" aria-label="Zoom">
+          <button type="button" id="z-in" aria-label="Zoom in">+</button>
+          <button type="button" id="z-out" aria-label="Zoom out">−</button>
+          <button type="button" id="z-reset" aria-label="Reset view">⟲</button>
+        </div>
+        <div class="legend" id="legend" hidden></div>
+        <div class="tip" id="tip" hidden></div>
+        <div class="status" id="status">Loading the provinces</div>
       </div>
-      <div class="legend" id="legend" hidden></div>
-      <div class="tip" id="tip" hidden></div>
-      <div class="status" id="status">Loading the provinces…</div>
-    </div>
-    <p class="muted small" id="caveat"></p>
+      <p class="caveat" id="caveat"></p>
     </div>
 
-    <aside class="side">
+    <aside class="hud">
       <section class="card" id="place" aria-live="polite">
         <div>
+          <div class="label" id="p-kind">Overview</div>
           <div class="place-name" id="p-name">The world</div>
-          <div class="muted small" id="p-sub">Click a province on the map or in the list</div>
+          <div class="place-sub" id="p-sub">Click a province on the map or in the list</div>
         </div>
         <dl id="p-facts"></dl>
         <button type="button" class="act" id="p-open" hidden></button>
-        <p class="muted small" id="p-note" hidden></p>
+        <p class="note" id="p-note" hidden></p>
       </section>
       <section class="card">
-        <h2 id="rank-title">Highest shares</h2>
+        <h2 class="rank-title" id="rank-title">Highest shares</h2>
         <input id="search" type="search" placeholder="Filter by country or province" aria-label="Filter the list by country or province">
         <ol class="rank" id="rank"></ol>
-        <p class="muted small" id="rank-note"></p>
+        <p class="note" id="rank-note"></p>
       </section>
     </aside>
-  </div>
+  </section>
 
-  <details>
-    <summary>How these numbers are made, and their limits</summary>
-    <ul>
-      <li><b>Women and girls:</b> LandScan Global 2024 population at 1 km, multiplied by the local share of women aged 15–49 and girls aged 10–14 from GPWv4.11 (2010 census round). Age shares shift slowly, but they are a decade and a half old.</li>
-      <li><b>Freezing nights:</b> the share of MODIS Aqua 8-day night land-surface-temperature composites below 0 °C, 2016–2025, times 365. The satellite sees the ground only on clear nights, which run colder than cloudy ones.</li>
-      <li><b>Extreme heat:</b> days a year with a maximum air temperature of 35 °C or more, 2021–2025, from ERA5-Land at 9 km. It misses heat in narrow valleys and ignores humidity.</li>
-      <li><b>Flooded land:</b> the Global Flood Database maps 913 large floods seen by the MODIS satellites from 2000 to 2018, at 250 m. Land counts as flooded if it stayed under water for three days or more in at least one of them and lies within 10 m of height above the nearest river or the sea; that second test removes mountain and building shadows that the satellite mistakes for water. Each 1 km cell gets the share of its area that flooded, and women and girls are counted in proportion. The record stops in 2018, so it misses Pakistan’s 2022 floods; it also misses floods hidden by cloud, flash floods shorter than three days and most flooding inside cities. Some false alarms survive the filter, mostly tidal flats and persistent cloud shadow near coasts (Scotland’s 10% is too high).</li>
-      <li><b>Far from care:</b> walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</li>
-      <li><b>Exposed and far:</b> two hours’ walk or more from care, and living with 30 or more freezing nights a year, 30 or more hot days a year, or on land that has flooded.</li>
-      <li><b>Flood of 2022, Pakistan:</b> Sentinel-1 radar. A 100 m pixel counts as flooded if it was open water between 20 August and 15 September 2022 and not in the same weeks of 2021, is not permanent or seasonal water, and lies on flat, low ground. Radar misses water under crops, trees and between buildings, and water that came and went between satellite passes, so this is a low estimate of where water stood, not of who was affected.</li>
-      <li><b>Failed rains:</b> CHIRPS rainfall, 1981–2025, between 50°S and 50°N. A rain year runs July to June. A year counts as failed if it brought less than three quarters of the 1981–2010 average. Women and girls are counted where two or more of the last ten rain years failed, and only in rain-fed farming areas: 10% or more cropland nearby (Copernicus land cover 2019), less than half of it irrigated, and at least 200 mm of rain a year. Rainfall is not harvests; it says nothing about prices, pests or irrigation since 2010. “Rain in El Niño years” is the average of the ten strongest El Niño years since 1981 against all years, a rough guide from ten cases.</li>
-      <li><b>Far by vehicle:</b> an hour or more from the nearest health facility by motor vehicle, Malaria Atlas Project 2019. It assumes a vehicle is available and the road is open.</li>
-      <li><b>Dark at night:</b> settled places (100 or more people per square kilometre) where the VIIRS satellite recorded almost no light at night in each of the last three years (average radiance under 0.5 nW/cm²/sr, 2023–2025). Mostly places without electricity, but villages with a few dim lights also read as dark, especially in steep terrain.</li>
-      <li><b>Near fighting:</b> within 50 km of a place (a cell of about 10 km) where organised violence killed 25 or more people in 2021–2025, from the Uppsala Conflict Data Program’s georeferenced events (version 26.1), using events located to district level or better. The place card also gives the wider count, within 50 km of any deadly event. It covers wars, fighting between armed groups and attacks on civilians by them, not crime or violence at home, and it does not say that any one person was harmed.</li>
-      <li><b>Not asked:</b> four questions about women’s lives, checked country by country: how many marry before 18, where women give birth, violence by a partner, and menstruation. A question counts as unanswered if UNICEF’s global database has no national figure since 2016 (child marriage, place of birth), if the WHO found no usable survey between 2000 and 2023 (partner violence), or if neither UNICEF nor the DHS programme holds any figure (menstruation). Only low- and middle-income countries are scored, because richer countries use other statistics. A national survey that these databases do not carry would be missed, so treat “not asked” as a lead to check. Province figures on the place card come from the latest DHS survey that reports by region.</li>
-      <li><b>Unstudied:</b> for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</li>
-      <li><b>Districts:</b> 49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research and survey counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</li>
-      <li><b>Missing from the map:</b> about 125 very small islands and city districts are too small to draw at world scale. They are still counted in the totals and the list.</li>
-      <li><b>Borders and names:</b> geoBoundaries v6.0.0. They are a data source, not a position on any disputed territory.</li>
-      <li><b>What this is not:</b> a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</li>
-    </ul>
-  </details>
+  <section class="section" id="findings">
+    <div class="sec-head">
+      <div><div class="label">Findings</div><h2>What the map shows</h2></div>
+      <p>Four results from the twelve layers. Each opens the map at the place it describes. They count exposure, not harm.</p>
+    </div>
+    <div class="finds">
+      <article class="find" style="--fc: var(--flood)">
+        <div class="label">Flood of 2022 · Pakistan</div>
+        <div class="find-n">35%</div>
+        <p>of women and girls in <b>Qambar Shahdadkot</b> lived on land that radar saw under water in late August 2022. Jacobabad 31%, Dadu 29%.</p>
+        <button type="button" class="btn" data-layer="flood22" data-iso="PAK">Show on the map <span class="arr">→</span></button>
+      </article>
+      <article class="find" style="--fc: var(--war)">
+        <div class="label">Near heavy fighting</div>
+        <div class="find-n">253M</div>
+        <p>women and girls live within 50 km of a place where organised violence killed 25 or more people in 2021–2025. Most in <b>Nigeria, Mexico and Pakistan</b>.</p>
+        <button type="button" class="btn" data-layer="conf25">Show on the map <span class="arr">→</span></button>
+      </article>
+      <article class="find" style="--fc: var(--study)">
+        <div class="label">Studied, never on climate</div>
+        <div class="find-n">893</div>
+        <p>provinces are named by five or more studies on women or girls, and by none on a climate hazard. <b>Madhya Pradesh</b>: 337 studies, none.</p>
+        <button type="button" class="btn" data-layer="research">Show on the map <span class="arr">→</span></button>
+      </article>
+      <article class="find" style="--fc: var(--asked)">
+        <div class="label">Not asked</div>
+        <div class="find-n">264M</div>
+        <p>women and girls live in countries where two or more of four basic questions about their lives, from <b>child marriage to menstruation</b>, have no recent national answer.</p>
+        <button type="button" class="btn" data-layer="asked">Show on the map <span class="arr">→</span></button>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="method">
+    <div class="sec-head">
+      <div><div class="label">Method</div><h2>How the numbers are made, and their limits</h2></div>
+      <p>Population at 1 km, multiplied through each layer and summed over province and district outlines. Every layer has gaps; they are stated here and beside the map.</p>
+    </div>
+    <details class="mwrap" id="mwrap" open><summary class="label">All method notes <span class="mono">17</span></summary>
+    <div class="method"><div class="m-item"><h3>Women and girls</h3><p>LandScan Global 2024 population at 1 km, multiplied by the local share of women aged 15–49 and girls aged 10–14 from GPWv4.11 (2010 census round). Age shares shift slowly, but they are a decade and a half old.</p></div><div class="m-item"><h3>Freezing nights</h3><p>the share of MODIS Aqua 8-day night land-surface-temperature composites below 0 °C, 2016–2025, times 365. The satellite sees the ground only on clear nights, which run colder than cloudy ones.</p></div><div class="m-item"><h3>Extreme heat</h3><p>days a year with a maximum air temperature of 35 °C or more, 2021–2025, from ERA5-Land at 9 km. It misses heat in narrow valleys and ignores humidity.</p></div><div class="m-item"><h3>Flooded land</h3><p>the Global Flood Database maps 913 large floods seen by the MODIS satellites from 2000 to 2018, at 250 m. Land counts as flooded if it stayed under water for three days or more in at least one of them and lies within 10 m of height above the nearest river or the sea; that second test removes mountain and building shadows that the satellite mistakes for water. Each 1 km cell gets the share of its area that flooded, and women and girls are counted in proportion. The record stops in 2018, so it misses Pakistan’s 2022 floods; it also misses floods hidden by cloud, flash floods shorter than three days and most flooding inside cities. Some false alarms survive the filter, mostly tidal flats and persistent cloud shadow near coasts (Scotland’s 10% is too high).</p></div><div class="m-item"><h3>Far from care</h3><p>walking time to the nearest health facility, Malaria Atlas Project 2019. The facility map is incomplete in many countries, so distances can be overstated.</p></div><div class="m-item"><h3>Exposed and far</h3><p>two hours’ walk or more from care, and living with 30 or more freezing nights a year, 30 or more hot days a year, or on land that has flooded.</p></div><div class="m-item"><h3>Flood of 2022, Pakistan</h3><p>Sentinel-1 radar. A 100 m pixel counts as flooded if it was open water between 20 August and 15 September 2022 and not in the same weeks of 2021, is not permanent or seasonal water, and lies on flat, low ground. Radar misses water under crops, trees and between buildings, and water that came and went between satellite passes, so this is a low estimate of where water stood, not of who was affected.</p></div><div class="m-item"><h3>Failed rains</h3><p>CHIRPS rainfall, 1981–2025, between 50°S and 50°N. A rain year runs July to June. A year counts as failed if it brought less than three quarters of the 1981–2010 average. Women and girls are counted where two or more of the last ten rain years failed, and only in rain-fed farming areas: 10% or more cropland nearby (Copernicus land cover 2019), less than half of it irrigated, and at least 200 mm of rain a year. Rainfall is not harvests; it says nothing about prices, pests or irrigation since 2010. “Rain in El Niño years” is the average of the ten strongest El Niño years since 1981 against all years, a rough guide from ten cases.</p></div><div class="m-item"><h3>Far by vehicle</h3><p>an hour or more from the nearest health facility by motor vehicle, Malaria Atlas Project 2019. It assumes a vehicle is available and the road is open.</p></div><div class="m-item"><h3>Dark at night</h3><p>settled places (100 or more people per square kilometre) where the VIIRS satellite recorded almost no light at night in each of the last three years (average radiance under 0.5 nW/cm²/sr, 2023–2025). Mostly places without electricity, but villages with a few dim lights also read as dark, especially in steep terrain.</p></div><div class="m-item"><h3>Near fighting</h3><p>within 50 km of a place (a cell of about 10 km) where organised violence killed 25 or more people in 2021–2025, from the Uppsala Conflict Data Program’s georeferenced events (version 26.1), using events located to district level or better. The place card also gives the wider count, within 50 km of any deadly event. It covers wars, fighting between armed groups and attacks on civilians by them, not crime or violence at home, and it does not say that any one person was harmed.</p></div><div class="m-item"><h3>Not asked</h3><p>four questions about women’s lives, checked country by country: how many marry before 18, where women give birth, violence by a partner, and menstruation. A question counts as unanswered if UNICEF’s global database has no national figure since 2016 (child marriage, place of birth), if the WHO found no usable survey between 2000 and 2023 (partner violence), or if neither UNICEF nor the DHS programme holds any figure (menstruation). Only low- and middle-income countries are scored, because richer countries use other statistics. A national survey that these databases do not carry would be missed, so treat “not asked” as a lead to check. Province figures on the place card come from the latest DHS survey that reports by region.</p></div><div class="m-item"><h3>Unstudied</h3><p>for each province, the number of studies in Europe PMC (2010–2026) whose title or abstract names the province and mentions women, girls, gender, pregnancy or menstruation, and how many of those also mention a climate hazard such as flood, drought, heat, cold or cyclone. The headline counts provinces that at least five studies on women name, none of them with a climate hazard. Europe PMC indexes health and life-science research, so social science, reports and work in local languages are undercounted. Matching is by name: papers are not read. A province with a generic name such as “Central” is left out, and one that fewer than five studies name is marked “too few to tell”, because it may be unstudied or just spelled differently in the literature.</p></div><div class="m-item"><h3>Districts</h3><p>49,488 second-level units in 196 countries, from geoBoundaries v6.0.0, worked out the same way as provinces. Research and survey counts are not made for districts. Names are as the source spells them, so some are in the local script (Ukraine, Tunisia, Taiwan); 34 districts have no name in the source. Countries without a second level in the source have provinces only.</p></div><div class="m-item"><h3>Missing from the map</h3><p>about 125 very small islands and city districts are too small to draw at world scale. They are still counted in the totals and the list.</p></div><div class="m-item"><h3>Borders and names</h3><p>geoBoundaries v6.0.0. They are a data source, not a position on any disputed territory.</p></div><div class="m-item"><h3>What this is not</h3><p>a measure of harm, of what women experience, or of how well services work. It counts who lives where conditions are hard.</p></div></div>
+    </details>
+  </section>
+
+  <footer class="foot">
+    <p>Sources: LandScan Global 2024, GPWv4.11, MODIS, ERA5-Land, Global Flood Database, Sentinel-1, CHIRPS, Copernicus land cover, Malaria Atlas Project, VIIRS night lights, UCDP, DHS Program, UNICEF, WHO, Europe PMC, geoBoundaries v6.0.0.</p>
+    <p class="mono">Estimates of exposure, not measures of harm.</p>
+  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -236,13 +375,31 @@
   const fmtInt = d3.format(',');
   const fmtPct = (v) => (v == null ? '—' : (v > 0 && v < 10 ? d3.format('.1f')(v) : d3.format('.0f')(v)) + '%');
   const fmtBig = (v) => v >= 1e9 ? d3.format('.2f')(v / 1e9) + ' billion' : v >= 1e6 ? d3.format('.1f')(v / 1e6) + ' million' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + ' thousand' : fmtInt(Math.round(v));
-  const fmtShort = (v) => v >= 1e6 ? d3.format('.1f')(v / 1e6) + 'M' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + 'k' : String(Math.round(v));
-  const fmtRate = (v) => v >= 10 ? d3.format('.0f')(v) : d3.format('.1f')(v);
+  const fmtShort = (v) => v >= 1e9 ? d3.format('.2f')(v / 1e9) + 'B' : v >= 1e6 ? d3.format('.1f')(v / 1e6) + 'M' : v >= 1e3 ? d3.format('.0f')(v / 1e3) + 'k' : String(Math.round(v));
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { layer: 'cold30', metric: 'share', selected: null, hover: null, filter: '', focus: null };
-  let units = [], byId = new Map(), feats = [], featById = new Map(), meta = null, tr = d3.zoomIdentity, W = 0, H = 0, dpr = 1, zoomB = null, path = null;
+  let units = [], byId = new Map(), feats = [], featById = new Map(), meta = null, tr = d3.zoomIdentity, W = 0, H = 0, dpr = 1, zoomB = null, path = null, proj = null, sphereP = null, gratP = null;
   const dCache = new Map();            // ISO -> { units, feats, byId } for countries whose districts are loaded
   const canvas = $('map'), ctx = canvas.getContext('2d');
+
+  /* The headline settles from glyphs into words once, on load. The words are in the page from the start. */
+  function scramble(el, ms = 1100) {
+    if (reduced) return;
+    const GL = '✶✺⊹⋮·⋅+✧', nodes = [], walk = (n) => n.nodeType === 3 ? nodes.push([n, n.nodeValue]) : n.childNodes.forEach(walk);
+    walk(el);
+    const total = nodes.reduce((s, [, t]) => s + t.length, 0), t0 = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / ms); let seen = 0;
+      for (const [n, t] of nodes) {
+        let out = '';
+        for (let i = 0; i < t.length; i++, seen++) out += t[i] === ' ' || seen / total < k * 1.15 - 0.15 ? t[i] : GL[(Math.random() * GL.length) | 0];
+        n.nodeValue = out;
+      }
+      if (k < 1) requestAnimationFrame(step); else for (const [n, t] of nodes) n.nodeValue = t;
+    };
+    requestAnimationFrame(step);
+  }
 
   const layer = () => LAYERS.find((l) => l.id === state.layer);
   const isR = () => layer().kind === 'research';
@@ -265,7 +422,7 @@
   }
   function ramp() {
     const it = d3.interpolateLab(css('--ramp-lo'), css(layer().color));
-    return [0.06, 0.3, 0.55, 0.78, 1].map(it);
+    return [0.08, 0.3, 0.55, 0.78, 1].map(it);
   }
   function colorFor(u, cols) {
     const v = value(u);
@@ -281,7 +438,7 @@
     if (l.kind === 'research') return [R.none_fem, R.searchable_fem, ' of those searched'];
     if (l.kind === 'asked') return [A.two_plus_fem, A.scored_fem, ' of those scored'];
     if (l.only) return [meta.totals[l.id], d3.sum(units, (u) => (u.c === l.only ? u.fem : 0)), ' of ' + meta.names[l.only]];
-    return [meta.totals[l.id], meta.totals.fem, ' of the total'];
+    return [meta.totals[l.id], meta.totals.fem, ' of all'];
   }
   function pickLayer(l) {
     state.layer = l.id;
@@ -290,21 +447,24 @@
   }
   function buildLayers() {
     $('layers').replaceChildren(...GROUPS.map(([gid, gname]) => {
+      const ls = LAYERS.filter((l) => l.group === gid);
       const sec = document.createElement('section'); sec.className = 'lgroup';
-      const h = document.createElement('h2'); h.className = 'lg-title'; h.textContent = gname;
+      const h = document.createElement('h2'); h.className = 'lg-title label';
+      const a = document.createElement('span'); a.textContent = gname; const n = document.createElement('span'); n.textContent = String(ls.length).padStart(2, '0');
+      h.append(a, n);
       const row = document.createElement('div'); row.className = 'lg-cards'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', gname);
-      row.append(...LAYERS.filter((l) => l.group === gid).map((l) => {
+      row.append(...ls.map((l) => {
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'layer'; b.id = 'layer-' + l.id; b.style.setProperty('--lc', `var(${l.color})`); b.title = l.def;
         b.setAttribute('aria-pressed', String(l.id === state.layer));
-        const nm = document.createElement('span'); nm.className = 'layer-name';
-        const dot = document.createElement('span'); dot.className = 'dot'; nm.append(dot, l.name);
-        const num = document.createElement('span'); num.className = 'layer-num';
-        const [t, base, words] = headline(l);
-        num.textContent = t == null ? '—' : fmtBig(t);
-        const sh = document.createElement('span'); sh.className = 'layer-share';
-        sh.textContent = t == null ? 'not counted yet' : fmtPct(100 * t / base) + words;
-        b.append(nm, num, sh);
+        const [t, base, words] = headline(l), sh = t == null ? null : 100 * t / base;
+        const nm = document.createElement('span'); nm.className = 'ln';
+        const dot = document.createElement('i'); dot.className = 'dot'; nm.append(dot, l.name);
+        const v = document.createElement('span'); v.className = 'lv'; v.textContent = t == null ? '—' : fmtShort(t);
+        const bar = document.createElement('span'); bar.className = 'lbar'; const fill = document.createElement('i');
+        fill.style.width = sh == null ? '0' : Math.max(2, Math.min(100, sh)) + '%'; bar.append(fill);
+        const s = document.createElement('span'); s.className = 'ls'; s.textContent = t == null ? '—' : fmtPct(sh); s.title = t == null ? 'not counted yet' : fmtPct(sh) + words;
+        b.append(nm, v, bar, s);
         b.addEventListener('click', () => pickLayer(l));
         return b;
       }));
@@ -314,8 +474,8 @@
 
   function buildCountryPicker() {
     const sel = $('country'), isos = Object.keys(meta.districts || {}).sort((a, b) => meta.names[a].localeCompare(meta.names[b]));
-    const o0 = document.createElement('option'); o0.value = ''; o0.textContent = isos.length ? 'World: open a country’s districts…' : 'Districts are still being computed';
-    sel.replaceChildren(o0, ...isos.map((iso) => { const o = document.createElement('option'); o.value = iso; o.textContent = meta.names[iso] + ' (' + fmtInt(meta.districts[iso]) + ')'; return o; }));
+    const o0 = document.createElement('option'); o0.value = ''; o0.textContent = isos.length ? 'World · open a country' : 'Districts are still being computed';
+    sel.replaceChildren(o0, ...isos.map((iso) => { const o = document.createElement('option'); o.value = iso; o.textContent = meta.names[iso] + ' · ' + fmtInt(meta.districts[iso]); return o; }));
     sel.disabled = !isos.length;
     sel.addEventListener('change', () => (sel.value ? openCountry(sel.value) : closeCountry()));
   }
@@ -323,9 +483,11 @@
   function shape(f) { const d = path(f); f.p2d = d ? new Path2D(d) : null; f.box = d ? path.bounds(f) : null; }
   function setup() {
     const r = canvas.getBoundingClientRect();
-    W = Math.max(280, r.width); H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = Math.max(280, r.width); H = Math.max(200, r.height); dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    path = d3.geoPath(d3.geoEqualEarth().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' }));
+    proj = d3.geoEqualEarth().fitExtent([[16, 16], [W - 16, H - 16]], { type: 'Sphere' });
+    path = d3.geoPath(proj);
+    sphereP = new Path2D(path({ type: 'Sphere' })); gratP = new Path2D(path(d3.geoGraticule10()));
     feats.forEach(shape);
     for (const c of dCache.values()) c.feats.forEach(shape);
     if (!zoomB) {
@@ -340,23 +502,26 @@
     if (!feats.length) return;
     const cols = ramp(), land = css('--nodata'), edge = css('--bg'), ink = css('--ink'), fc = focus();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = css('--sea'); ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = css('--bg'); ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(dpr * tr.k, 0, 0, dpr * tr.k, dpr * tr.x, dpr * tr.y);
     ctx.lineJoin = 'round';
+    ctx.fillStyle = css('--sea-in'); ctx.fill(sphereP);
+    ctx.strokeStyle = css('--grat'); ctx.lineWidth = 0.6 / tr.k; ctx.stroke(gratP);
+    ctx.strokeStyle = css('--line-2'); ctx.lineWidth = 1 / tr.k; ctx.stroke(sphereP);
     for (const f of feats) {
       if (!f.p2d) continue;
       const u = byId.get(f.properties.id);
       ctx.fillStyle = !u || (fc && u.c === state.focus) ? land : colorFor(u, cols);
       ctx.fill(f.p2d);
     }
-    ctx.strokeStyle = edge; ctx.lineWidth = 0.35 / tr.k; ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = edge; ctx.lineWidth = 0.4 / tr.k; ctx.globalAlpha = 0.8;
     for (const f of feats) if (f.p2d) ctx.stroke(f.p2d);
     if (fc) {
       ctx.globalAlpha = 1;
       for (const f of fc.feats) { if (!f.p2d) continue; ctx.fillStyle = colorFor(fc.byId.get(f.properties.id), cols); ctx.fill(f.p2d); }
-      ctx.globalAlpha = 0.7; ctx.lineWidth = 0.3 / tr.k;
+      ctx.globalAlpha = 0.8; ctx.lineWidth = 0.3 / tr.k;
       for (const f of fc.feats) if (f.p2d) ctx.stroke(f.p2d);
-      ctx.strokeStyle = ink; ctx.globalAlpha = 0.45; ctx.lineWidth = 0.9 / tr.k;
+      ctx.strokeStyle = ink; ctx.globalAlpha = 0.5; ctx.lineWidth = 0.9 / tr.k;
       for (const f of feats) { const u = byId.get(f.properties.id); if (f.p2d && u && u.c === state.focus) ctx.stroke(f.p2d); }
     }
     ctx.globalAlpha = 1;
@@ -382,15 +547,21 @@
     ctx.restore();
     return found;
   }
+  function readout(evt) {
+    const r = canvas.getBoundingClientRect(), p = proj && proj.invert([(evt.clientX - r.left - tr.x) / tr.k, (evt.clientY - r.top - tr.y) / tr.k]);
+    if (!p || !isFinite(p[0]) || !isFinite(p[1]) || Math.abs(p[0]) > 180 || Math.abs(p[1]) > 90) { $('coords').textContent = ''; return; }
+    const f = (v, a, b) => Math.abs(v).toFixed(2).padStart(6, '0') + '° ' + (v >= 0 ? a : b);
+    $('coords').textContent = f(p[1], 'N', 'S') + '   ' + f(p[0], 'E', 'W');
+  }
 
   function zoomTo(list) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const f of list) if (f.box) { x0 = Math.min(x0, f.box[0][0]); y0 = Math.min(y0, f.box[0][1]); x1 = Math.max(x1, f.box[1][0]); y1 = Math.max(y1, f.box[1][1]); }
     if (!isFinite(x0)) return;
     const lg = $('legend'), Hu = H - (getComputedStyle(lg).position === 'absolute' && !lg.hidden ? lg.offsetHeight + 14 : 0);   // keep clear of the legend
-    const k = Math.max(1, Math.min(90, 0.88 / Math.max((x1 - x0) / W, (y1 - y0) / Hu)));
+    const k = Math.max(1, Math.min(90, 0.86 / Math.max((x1 - x0) / W, (y1 - y0) / Hu)));
     const t = d3.zoomIdentity.translate(W / 2, Hu / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
-    d3.select(canvas).transition().duration(350).call(zoomB.transform, t);
+    d3.select(canvas).transition().duration(reduced ? 0 : 450).call(zoomB.transform, t);
   }
 
   function openCountry(iso) {
@@ -404,13 +575,14 @@
       done();
     }).catch(() => { $('p-sub').textContent = 'The districts of ' + meta.names[iso] + ' did not load. Try again.'; $('country').value = state.focus || ''; });
   }
-  function closeCountry() { state.focus = null; state.selected = null; $('country').value = ''; refresh(); d3.select(canvas).transition().duration(350).call(zoomB.transform, d3.zoomIdentity); }
+  function closeCountry() { state.focus = null; state.selected = null; $('country').value = ''; refresh(); d3.select(canvas).transition().duration(reduced ? 0 : 450).call(zoomB.transform, d3.zoomIdentity); }
 
   function showTip(evt, u) {
     const tip = $('tip'), box = $('mapbox').getBoundingClientRect(), l = layer();
     tip.replaceChildren();
     const a = document.createElement('div'); a.textContent = u.n + ', ' + u.cn;
     const b = document.createElement('div'); const v = document.createElement('b');
+    b.style.whiteSpace = ''; b.style.maxWidth = '';
     if (isR()) {
       if (u.rc == null) b.append('Name too generic to search');
       else if (rclass(u) === 'thin') { v.textContent = fmtInt(u.rw); b.append('Too few studies name it to tell: ', v); }
@@ -422,24 +594,23 @@
       else { v.textContent = a.gaps.length + ' of 4'; b.append('No recent answer: ', v, ' (' + a.gaps.map((k) => Q_NAMES[k]).join(', ') + ')'); b.style.whiteSpace = 'normal'; b.style.maxWidth = '260px'; }
     } else {
       v.textContent = fmtPct(u['p_' + l.id]) + ' · ' + (count(u, l.id) == null ? '—' : fmtShort(count(u, l.id)));
-      b.append(l.name + ': ', v);
+      b.append(l.name + '  ', v);
     }
     tip.append(a, b); tip.hidden = false;
-    let x = evt.clientX - box.left + 14, y = evt.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width - 6) x = Math.max(6, evt.clientX - box.left - tip.offsetWidth - 14);
-    if (y + tip.offsetHeight > box.height - 6) y = Math.max(6, evt.clientY - box.top - tip.offsetHeight - 14);
+    let x = evt.clientX - box.left + 16, y = evt.clientY - box.top + 16;
+    if (x + tip.offsetWidth > box.width - 8) x = Math.max(8, evt.clientX - box.left - tip.offsetWidth - 16);
+    if (y + tip.offsetHeight > box.height - 8) y = Math.max(8, evt.clientY - box.top - tip.offsetHeight - 16);
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
   }
 
   function fact(dl, k, v) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
   function sub(dl, text) { const d = document.createElement('div'); d.className = 'sub'; d.textContent = text; dl.append(d); }
-  const plain = (l) => !l.kind && !l.only;
   function sumFacts(dl, list, fem) {
     for (const [gid, gname] of GROUPS) {
       const ls = LAYERS.filter((l) => l.group === gid && !l.kind && list.some((u) => count(u, l.id) != null));
       if (!ls.length) continue;
       sub(dl, gname);
-      for (const l of ls) { const t = d3.sum(list, (u) => count(u, l.id) || 0); fact(dl, l.name, fmtBig(t) + ' · ' + fmtPct(100 * t / fem)); }
+      for (const l of ls) { const t = d3.sum(list, (u) => count(u, l.id) || 0); fact(dl, l.name, fmtShort(t) + ' · ' + fmtPct(100 * t / fem)); }
     }
   }
   function askedFacts(dl, iso) {
@@ -447,7 +618,7 @@
     sub(dl, 'Last asked, nationally');
     fact(dl, 'Marriage before 18', a.cm ? a.cm[0] + ' · ' + fmtPct(a.cm[1]) : 'no figure');
     fact(dl, 'Births in a health facility', a.bi ? a.bi[0] + ' · ' + fmtPct(a.bi[1]) : 'no figure');
-    fact(dl, 'Violence by a partner, past year', a.pv != null ? fmtPct(a.pv) + ' (WHO estimate)' : 'no survey since 2000');
+    fact(dl, 'Violence by a partner, past year', a.pv != null ? fmtPct(a.pv) + ' (WHO)' : 'no survey since 2000');
     fact(dl, 'Menstruation', a.me ? String(a.me[0]) + (a.me[1] != null ? ' · ' + fmtPct(a.me[1]) + ' missed out' : '') : 'no figure');
     return true;
   }
@@ -459,6 +630,7 @@
     open.hidden = true; note.hidden = true; open.onclick = null;
     const done = () => { if (notes.length) { note.hidden = false; note.textContent = notes.join(' '); } };
     if (!u && !state.focus) {
+      $('p-kind').textContent = 'Overview';
       $('p-name').textContent = 'The world';
       $('p-sub').textContent = `${fmtInt(meta.units)} provinces in ${meta.countries} countries and territories. Click one on the map or in the list.`;
       sub(dl, 'People');
@@ -475,6 +647,7 @@
     }
     if (!u) {                                   // a country is open, nothing selected: country summary
       const iso = state.focus, list = units.filter((x) => x.c === iso), fem = d3.sum(list, (x) => x.fem), c = dCache.get(iso);
+      $('p-kind').textContent = 'Country';
       $('p-name').textContent = meta.names[iso];
       $('p-sub').textContent = `${fmtInt(list.length)} provinces` + (c ? `, ${fmtInt(c.units.length)} districts` : '') + '. Click one on the map or in the list.';
       sub(dl, 'People');
@@ -484,10 +657,11 @@
       if (askedFacts(dl, iso) && a.inc === 'HIC') notes.push('High-income country: not scored on the four questions, because these surveys are not its main source of figures.');
       const rc = (R.countries || {})[iso];
       if (rc) { sub(dl, 'Research'); fact(dl, 'Studies on women and girls naming the country', fmtInt(rc[0])); fact(dl, 'Of those, also on climate hazards', fmtInt(rc[1])); }
-      open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
+      open.hidden = false; open.className = 'act ghost'; open.textContent = '← Back to the world'; open.onclick = closeCountry;
       return done();
     }
-    $('p-name').textContent = u.n; $('p-sub').textContent = (u.d ? 'District in ' : '') + u.cn;
+    $('p-kind').textContent = u.d ? 'District' : 'Province';
+    $('p-name').textContent = u.n; $('p-sub').textContent = u.cn;
     sub(dl, 'People');
     fact(dl, 'Women aged 15–49', fmtInt(u.women)); fact(dl, 'Girls aged 10–14', fmtInt(u.girls));
     sub(dl, 'Climate');
@@ -506,7 +680,7 @@
     fact(dl, 'Exposed and far', fmtPct(u.p_far2h_exposed));
     if (u.dh) {
       const yrs = [...new Set(Object.values(u.dh).map((x) => x[1]))];
-      sub(dl, 'What surveys found here' + (yrs.length === 1 ? ' (DHS ' + yrs[0] + ')' : ''));
+      sub(dl, 'What surveys found here' + (yrs.length === 1 ? ' · DHS ' + yrs[0] : ''));
       for (const [k, name] of DH) if (u.dh[k]) fact(dl, name, fmtPct(u.dh[k][0]) + (yrs.length > 1 ? ' · ' + u.dh[k][1] : ''));
     }
     if (!u.d && isA()) askedFacts(dl, u.c);
@@ -517,9 +691,9 @@
       if (rclass(u) === 'thin') notes.push('Fewer than five studies on women name this province, so it may be unstudied, or spelled differently in the literature.');
     }
     if ((meta.districts || {})[u.c] && state.focus !== u.c) {
-      open.hidden = false; open.className = 'act'; open.textContent = 'Show the districts of ' + u.cn; open.onclick = () => openCountry(u.c);
+      open.hidden = false; open.className = 'act'; open.textContent = 'Show the districts of ' + u.cn + ' →'; open.onclick = () => openCountry(u.c);
     } else if (state.focus) {
-      open.hidden = false; open.className = 'act ghost'; open.textContent = 'Back to the world'; open.onclick = closeCountry;
+      open.hidden = false; open.className = 'act ghost'; open.textContent = '← Back to the world'; open.onclick = closeCountry;
     }
     if (u.cov < 90) notes.push(`Climate and walking shares cover ${d3.format('.0f')(u.cov)}% of this ${u.d ? 'district' : 'province'}'s women and girls; satellite or travel-time data is missing for the rest.`);
     done();
@@ -534,7 +708,7 @@
     const top = rows.slice(0, 12);
     $('rank').replaceChildren(...top.map(([iso, a], i) => {
       const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button';
-      const x = document.createElement('span'); x.className = 'i'; x.textContent = i + 1;
+      const x = document.createElement('span'); x.className = 'i'; x.textContent = String(i + 1).padStart(2, '0');
       const n = document.createElement('span'); n.className = 'nm'; n.textContent = meta.names[iso]; n.title = a.gaps.map((k) => Q_NAMES[k]).join(', ') || 'all four asked';
       const v = document.createElement('span'); v.className = 'v'; v.textContent = a.gaps.length + ' of 4';
       b.append(x, n, v);
@@ -564,12 +738,12 @@
       rows.sort((a, b) => value(b) - value(a) || b.fem - a.fem);
     }
     if (q) rows = rows.filter((u) => (u.n + ' ' + u.cn).toLowerCase().includes(q));
-    $('rank-title').textContent = (r ? 'Largest provinces studied, but never on climate' : (state.metric === 'share' ? 'Highest shares: ' : 'Largest numbers: ') + l.name.toLowerCase()) + where;
+    $('rank-title').textContent = (r ? 'Largest provinces studied, but never on climate' : (state.metric === 'share' ? 'Highest shares · ' : 'Largest numbers · ') + l.name.toLowerCase()) + where;
     const top = rows.slice(0, 12);
     $('rank').replaceChildren(...top.map((u, i) => {
       const li = document.createElement('li'), b = document.createElement('button');
       b.type = 'button';
-      const a = document.createElement('span'); a.className = 'i'; a.textContent = i + 1;
+      const a = document.createElement('span'); a.className = 'i'; a.textContent = String(i + 1).padStart(2, '0');
       const n = document.createElement('span'); n.className = 'nm'; n.textContent = state.focus ? u.n : u.n + ', ' + u.cn; n.title = u.n + ', ' + u.cn;
       const v = document.createElement('span'); v.className = 'v';
       v.textContent = r ? (rclass(u) === 'thin' ? 'too few' : fmtInt(u.rc) + ' of ' + fmtInt(u.rw)) : state.metric === 'share' ? fmtPct(value(u)) : fmtShort(value(u));
@@ -587,8 +761,8 @@
     const labels = r ? R_LABELS : isA() ? A_LABELS : state.metric === 'share' ? (l.labels || SHARE_LABELS) : COUNT_LABELS;
     const t = document.createElement('div'); t.className = 'legend-title';
     t.textContent = r ? 'Studies naming the province on women or girls and a climate hazard'
-      : isA() ? 'Of four questions about women’s lives, how many have no recent national answer'
-      : (state.metric === 'share' ? 'Share of women and girls: ' : 'Women and girls: ') + l.def.charAt(0).toLowerCase() + l.def.slice(1);
+      : isA() ? 'Questions about women’s lives with no recent national answer, of four'
+      : state.metric === 'share' ? 'Share of women and girls aged 10–49' : 'Women and girls aged 10–49';
     const sw = document.createElement('div'); sw.className = 'swatches' + (r || isA() ? ' wide' : '');
     cols.forEach((c, i) => { const s = document.createElement('span'), box = document.createElement('i'); box.style.background = c; s.append(box, labels[i]); sw.append(s); });
     lg.replaceChildren(t, sw); lg.hidden = false;
@@ -600,45 +774,57 @@
     $('m-count').setAttribute('aria-pressed', String(state.metric === 'count'));
     $('m-share').parentElement.hidden = special();
     const l = layer(), [t] = headline(l), c = state.focus && dCache.get(state.focus);
-    const sh = $('showing'), nm = document.createElement('b'); nm.textContent = l.name + ': ';
-    sh.replaceChildren(nm, (t == null ? 'Women and girls who live ' : fmtBig(t) + ' women and girls live ') + l.def.charAt(0).toLowerCase() + l.def.slice(1) + '.');
+    const k = document.createElement('div'); k.className = 'label'; k.textContent = GROUPS.find((g) => g[0] === l.group)[1] + '  ·  ' + l.name;
+    const v = document.createElement('div'); v.className = 'sh-v'; v.textContent = t == null ? l.name : fmtBig(t) + ' women and girls';
+    const d = document.createElement('div'); d.className = 'sh-d'; d.textContent = l.def + '.';
+    $('showing').replaceChildren(k, v, d);
     $('caveat').textContent = l.caveat + (special() && state.focus ? ' Showing provinces, because this layer is not counted for districts.'
       : c && !hasD(c) ? (l.only && l.only !== state.focus ? ' This layer covers ' + meta.names[l.only] + ' only.' : ' Showing provinces: district figures for this layer are not ready yet.') : '');
     if (state.selected && !lookup(state.selected)) state.selected = null;
+    const rail = $('layers'), cur = $('layer-' + state.layer);      // on phones the rail scrolls sideways: keep the chosen layer in view
+    if (rail.scrollWidth > rail.clientWidth + 4) rail.scrollTo({ left: Math.max(0, cur.offsetLeft - rail.offsetLeft - 16), behavior: reduced ? 'auto' : 'smooth' });
     renderLegend(); renderRank(); renderPlace(); draw();
   }
 
   canvas.addEventListener('pointermove', (e) => {
+    readout(e);
     if (e.buttons) { $('tip').hidden = true; return; }
     const id = hit(e);
     if (id !== state.hover) { state.hover = id; draw(); }
     const u = id && lookup(id);
     if (u) showTip(e, u); else $('tip').hidden = true;
   });
-  canvas.addEventListener('pointerleave', () => { state.hover = null; $('tip').hidden = true; draw(); });
+  canvas.addEventListener('pointerleave', () => { state.hover = null; $('tip').hidden = true; $('coords').textContent = ''; draw(); });
   canvas.addEventListener('click', (e) => { const id = hit(e); state.selected = id && lookup(id) ? id : null; renderPlace(); draw(); });
   $('m-share').addEventListener('click', () => { state.metric = 'share'; refresh(); });
   $('m-count').addEventListener('click', () => { state.metric = 'count'; refresh(); });
   $('z-in').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.scaleBy, 1.8));
   $('z-out').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.scaleBy, 1 / 1.8));
-  $('z-reset').addEventListener('click', () => d3.select(canvas).transition().duration(200).call(zoomB.transform, d3.zoomIdentity));
+  $('z-reset').addEventListener('click', () => (state.focus ? closeCountry() : d3.select(canvas).transition().duration(200).call(zoomB.transform, d3.zoomIdentity)));
   $('search').addEventListener('input', (e) => { state.filter = e.target.value; renderRank(); });
+  document.querySelectorAll('[data-layer]').forEach((b) => b.addEventListener('click', () => {
+    if (!meta) return;
+    $('atlas').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    const l = LAYERS.find((x) => x.id === b.dataset.layer);
+    state.layer = l.id;
+    if (b.dataset.iso && (meta.districts || {})[b.dataset.iso]) openCountry(b.dataset.iso);
+    else if (state.focus) closeCountry(); else refresh();
+  }));
 
+  if (innerWidth <= 640) $('mwrap').open = false;
+  scramble($('h1'));
   Promise.all([fetch('atlas.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
                fetch('adm1.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })])
     .then(([a, g]) => {
       meta = a.meta; units = a.units; byId = new Map(units.map((u) => [u.id, u])); feats = g.features;
       featById = new Map(feats.map((f) => [f.properties.id, f]));
       const nd = Object.keys(meta.districts || {}).length;
-      $('tot-fem').textContent = fmtBig(meta.totals.fem); $('built').textContent = meta.built;
-      $('n-dc').textContent = nd ? `${nd} ${nd === 1 ? 'country' : 'countries'}` : 'more countries on the way';
+      $('built').textContent = meta.built; $('s-prov').textContent = fmtInt(meta.units); $('s-dist').textContent = fmtInt(meta.district_units || 0);
+      $('n-dc').textContent = nd ? `${nd} ${nd === 1 ? 'country' : 'countries'}` : 'more countries soon';
       $('status').hidden = true;
       buildLayers(); buildCountryPicker(); setup(); refresh();
       new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) setup(); }).observe(canvas);
-      const redraw = () => { renderLegend(); draw(); };
-      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
-      new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     })
-    .catch(() => { $('status').textContent = 'The map data did not load. Reload the page to try again.'; });
+    .catch(() => { $('status').textContent = 'The map data did not load. Reload the page'; });
 })();
 </script>
