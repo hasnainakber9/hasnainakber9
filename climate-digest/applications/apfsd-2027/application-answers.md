@@ -32,17 +32,16 @@ SDG 5: I analysed IOM data on 12,820 flood-hit villages in Pakistan. In 36%, wom
 2. Community and religious leaders (Equitech Futures): I ran 40+ interviews in Urdu and Balti in Gilgit-Baltistan on misinformation, inequality and institutional trust, and turned them into programme recommendations.
 3. Sindh Enterprise Incubation Center: I developed data-collection tools for 5+ programmes, coordinated evidence from 10+ stakeholders and supported government-linked reporting.
 
-**References that support your work (links)**
-- AI study (Apart Research sprint), code, data and results: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence
-- AI study report (PDF): https://github.com/hasnainakber9/hasnainakber9/blob/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence/report/confident_where_nobody_looked.pdf
-- Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
-- Schools and flood exposure map: https://hasnainakber9.github.io/flood-schools-map/
-- Menstrual health paper (INMIS 2027 abstract submitted): your Drive PDF. The link is in the chat, not stored here. It already opens for anyone with the link.
-- Trade and inequality paper (presented at KSBL): your Drive PDF. The link is in the chat, not stored here. It opens for anyone with the link (checked 16 Nov 2026).
-- GitHub profile: https://github.com/hasnainakber9
-- Not stored here: the Apart project page link. Apart asks to keep it to the team until judging ends, so the GitHub links above are the safer choice.
+**References that support your work (links)** *(your list, paste as is)*
+Gender AI study (code, data, results): https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence
+AI study report (PDF): https://github.com/hasnainakber9/hasnainakber9/blob/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence/report/confident_where_nobody_looked.pdf
+Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
+Schools and flood exposure map: https://hasnainakber9.github.io/flood-schools-map/
+Menstrual health paper: https://drive.google.com/file/d/1lgAXvlcKQ6gghqFWtdCeYT8WdT7nQvQa/view?usp=sharing
+Trade and inequality paper: https://drive.google.com/file/d/1g4IgmNqiCbCoagvjupTu8xrLB2-1A6uh/view?usp=sharing
+GitHub: https://github.com/hasnainakber9
 
-All GitHub links and the map opened publicly when checked on 16 Nov 2026.
+All links opened without signing in when checked on 16 Nov 2026. The Apart project page link is not stored here (Apart asks to keep it to the team until judging ends).
 
 **In which capacity do you work?** Community / Grassroot; National; Regional (South Asia paper); International (61-country AI study, 134-country trade paper).
 
