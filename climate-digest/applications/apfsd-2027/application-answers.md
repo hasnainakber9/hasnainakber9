@@ -35,6 +35,7 @@ SDG 5: I analysed IOM data on 12,820 flood-hit villages in Pakistan. In 36%, wom
 **References that support your work (links)** *(your list, paste as is)*
 Gender AI study (code, data, results): https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence
 AI study report (PDF): https://github.com/hasnainakber9/hasnainakber9/blob/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence/report/confident_where_nobody_looked.pdf
+Apart Research AI x Epistemics sprint (Nov 2026): https://apartresearch.com/sprints/ai-x-epistemics-research-sprint-2026-11-13-to-2026-11-15
 Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
 Schools and flood exposure map: https://hasnainakber9.github.io/flood-schools-map/
 Atlas of the Uncounted: https://hasnainakber9.github.io/hasnainakber9/
