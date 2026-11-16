@@ -1,6 +1,6 @@
 # Unsafe After Dark: What 12,820 Flood-Affected Villages in Pakistan Report About Women's Sanitation, Childbirth and Protection from Abuse, and What They Are Never Asked
 
-**Name and affiliation:** Syed Hasnain Akber, Young Shapers (youth-led climate and civic initiative, Gilgit-Baltistan and Chitral), Pakistan
+**Name and affiliation:** Syed Hasnain Akber, Karachi School of Business and Leadership (KSBL), Pakistan
 
 ## Introduction
 After floods, humanitarian agencies assess thousands of villages to decide where aid goes. These assessments shape what is seen: needs that are not asked about are rarely funded. Topics surrounded by shame, such as open defecation, menstruation, childbirth and sexual exploitation by aid providers, are the easiest to leave out. This study examines what Pakistan's largest public village-level flood assessment records about women's safety and dignity, how women's situation compares with men's in the same villages, and which sensitive topics the questionnaire omits, to inform SDGs 5, 3 and 10.

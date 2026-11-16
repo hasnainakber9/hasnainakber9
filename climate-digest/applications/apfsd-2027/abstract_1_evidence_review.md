@@ -1,6 +1,6 @@
 # Where the Evidence Goes Cold: A Scoping Review of Gendered Harms in Pakistan's Climate Displacement, from Monsoon Floods to Mountain Winters
 
-**Name and affiliation:** Syed Hasnain Akber, Young Shapers (youth-led climate and civic initiative, Gilgit-Baltistan and Chitral), Pakistan
+**Name and affiliation:** Syed Hasnain Akber, Karachi School of Business and Leadership (KSBL), Pakistan
 
 ## Introduction
 Pakistan's 2022 and 2025 floods displaced millions. UN agencies warned of rising gender-based violence, child marriage and unmet maternal needs, and studies documented menstrual hardship in relief camps. Yet attention centres on lowland summer floods. In Pakistan's high mountains, glacial-lake floods and long freezing winters meet menstrual stigma, and little is known about these communities. Nepal's chhaupadi deaths from cold and smoke show how lethal that combination can be. This review maps what is known and unknown about harassment, gender-based violence and menstrual health in Pakistan's climate displacement, to inform SDGs 5, 3, 13 and 10.

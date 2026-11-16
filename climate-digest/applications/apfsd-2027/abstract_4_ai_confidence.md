@@ -1,6 +1,6 @@
 # Confident Where Nobody Looked: Do AI Chatbots Know Less About Women in Under-Researched Regions, and Do They Say So?
 
-**Name and affiliation:** Syed Hasnain Akber, Young Shapers (youth-led climate and civic initiative, Gilgit-Baltistan and Chitral), Pakistan
+**Name and affiliation:** Syed Hasnain Akber, Karachi School of Business and Leadership (KSBL), Pakistan
 
 ## Introduction
 Programme staff, journalists and students now ask AI chatbots for local statistics. For places that little research covers, often where needs are greatest, a chatbot may give a wrong number with false confidence, and that number can steer funding and attention. This study tested whether AI models know less about women in under-researched regions, whether they say so when they are unsure, and whether telling them how much research exists helps. It informs SDG 17 (data and emerging technologies), SDG 5 and SDG 10.

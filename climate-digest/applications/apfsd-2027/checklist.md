@@ -46,8 +46,7 @@ The guideline accepts only work that has been **conducted**. All three analyses 
 - [ ] Abstract 1: skim the 7 mountain items and the two harassment sources (G4, B5).
 - [ ] Abstract 2: read the "Why MODIS and not ERA5-Land" note in `extract_exposure.py`. Be ready to say the numbers are exposure estimates, and that WorldPop's count for Gilgit-Baltistan is a model estimate, not a census.
 - [ ] Abstract 3: read the limits in the project README. The key one: village key informants answer, not individual women, and their sex is not published.
-- [ ] Abstract 4: the sprint report lists KSBL; the abstract uses Young Shapers to match the general form. Pick one and keep it the same on both forms.
-- [ ] Confirm the affiliation wording: "Young Shapers" or "Independent researcher".
+- [x] Affiliation: all four abstracts now say Karachi School of Business and Leadership (KSBL), matching the sprint report and the bio ("Affiliated with KSBL"). The general form names The Dawood Foundation as your current organisation.
 
 ## Notes
 - Selected presenters may have to **self-fund** travel. The forum is hybrid (18–20 Feb 2027), and online participation is possible.

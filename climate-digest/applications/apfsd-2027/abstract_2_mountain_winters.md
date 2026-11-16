@@ -1,6 +1,6 @@
 # Below Zero and Uncounted: A Satellite Estimate of Women and Girls Living Through Freezing Winters in Gilgit-Baltistan and Chitral
 
-**Name and affiliation:** Syed Hasnain Akber, Young Shapers (youth-led climate and civic initiative, Gilgit-Baltistan and Chitral), Pakistan
+**Name and affiliation:** Syed Hasnain Akber, Karachi School of Business and Leadership (KSBL), Pakistan
 
 ## Introduction
 Research on gendered harm in Pakistan's climate disasters concentrates on lowland summer floods; a review of 55 studies found none on winter displacement. Yet women in the northern mountains manage menstruation, pregnancy and sanitation through months of frozen water, closed roads and little privacy, in districts also exposed to glacial-lake floods. The review found no count of how many women and girls live in these conditions. This study uses open satellite data to estimate that number for Gilgit-Baltistan and Chitral, and to show how unusual the current winter is, to inform SDGs 5, 3, 13 and 10.
