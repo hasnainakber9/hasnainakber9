@@ -21,11 +21,13 @@ Facts come from `../../profile/PROFILE.md`. `[[YOU]]` marks what only you can fi
 I founded Young Shapers in 2020 and lead it as a volunteer. I set its direction, design its programmes, raise funds and run its research. Young Shapers is a youth-led climate and civic initiative that has reached more than 600 young people in Gilgit-Baltistan and Chitral, Pakistan.
 
 ## Area of work
-**Focus area (check only 3):** SDG 5 (Gender Equality), SDG 13 (Climate Change), SDG 10 (Reduced Inequalities).
-*SDG 10 is one of the goals under review in 2027; 5 and 13 are named cross-cutting goals. SDG 4 is the alternative to 10 if you want to lead with GreenClassrooms.*
+**Focus area (check only 3):** SDG 5 (Gender Equality), SDG 3 (Health & Well-being), SDG 10 (Reduced Inequalities).
+*Leads with the gender, menstrual and maternal-health work. SDG 10 is under review in 2027; 5 and 3 are cross-cutting. Swap 10 for 13 if you want climate ticked as well.*
 
-**Work experience in these areas (maximum 1000 characters)**
-I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain regions far from Pakistan's decision-making centres. Our Act Clean Fellowship chose 80 fellows from over 300 applicants and backed 19 youth-led environmental actions. GreenClassrooms trained more than 50 teachers in climate education. As a research fellow with Equitech Futures I ran over 40 interviews in Urdu and Balti on misinformation, trust and exclusion. In November 2026 I completed three studies on gendered harm in climate disasters: a review of 55 studies; a satellite estimate that 479,000 women and girls in Gilgit-Baltistan and Chitral live through freezing winters; and an analysis of 12,820 flood-affected villages, where women defecate in the open in 36% and only one village in five can report abuse by aid workers. I also tested five AI models on 4,253 survey figures on women's lives; none beat the national average. I work in monitoring and evaluation, so I measure what programmes change.
+**Work experience in these areas (maximum 1000 characters)** *(930 characters; checked by script)*
+I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral; it has reached 600+ young people and backed 19 youth-led environmental actions. My research centres on women's health. My paper on menstrual resource scarcity and maternal mortality in Bangladesh, India and Pakistan (1990-2023) is submitted to INMIS 2027, and I have written on marginalisation and maternal deaths in Gilgit-Baltistan and Balochistan. In November 2026 I analysed 12,820 flood-affected villages: women defecate in the open in 36%, only one village in five can report abuse by aid workers, and assessments ask about menstruation only through a dignity-kit tick-box. I tested five AI models on 4,253 survey figures on women's lives; they put adequate menstrual hygiene at 48-65% against 91% in the surveys. I also estimated that 479,000 women and girls in Gilgit-Baltistan and Chitral live through freezing winters. I work in monitoring and evaluation.
+
+*Mahwari Nexus: the files show you registered mahwarinexus.live and drafted a USD 5,000 Rainbow Railroad budget (July 2026) for inclusive menstrual-health sessions, but nothing says what it has delivered or your role. If it has run activities, add one sentence (about 70 characters fit), e.g. "I also lead Mahwari Nexus, a menstrual-health initiative that [[what it did]]."*
 
 **1–3 examples of collaboration with government and/or other stakeholders (100 words maximum)**
 1. Schools and teachers: through GreenClassrooms, funded by a £2,000 grant, Young Shapers trained more than 50 teachers in Gilgit-Baltistan and Chitral to teach climate change.
@@ -34,23 +36,33 @@ I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain region
 *[[YOU]]: if any of these involved a government department (education office, district administration), name it; the question asks about government first.*
 
 **References that support your work (links)**
-[[YOU]]: Young Shapers website or social media; the public repository with the three studies; the Mountain Watch dashboard link. Write N/A only if you have none.
+Set each Drive file to "Anyone with the link can view" before pasting.
+- Paper: The Hidden Infrastructure of Maternal Health: A Causal Mediation Analysis of Menstrual Resource Scarcity and Healthcare-Seeking Behavior in South Asia (Drive PDF "Menstrual_Scarcity_Maternal_Mortality_Hasnain.pdf")
+- Article: "Marginalization and Maternal Mortality" (Drive PDF "Maternal Mortality - Hasnain_.pdf"; add where it was published)
+- Studies: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects (only if the repository is public)
+- Young Shapers website or social media: [[YOU]]
+- Do not list mahwarinexus.live: the domain has lapsed and now shows a parking page.
 
 **In which capacity do you work?** Community / Grassroot; National. *(Add Regional or International only if you can point to work at that level.)*
 
-**Previous APFSD Youth Forums attended:** [[YOU]] (if none: "Have not attend any of the Youth Forums")
-**In person or virtual / your role then:** [[YOU]] (if none, write "Not applicable: I have not attended before" in the required role field)
+**Previous APFSD Youth Forums attended:** 2025 *(ARROW selected you on 14 Jan 2025 for virtual participation, 19-21 Feb 2025, Online Engagement Cohort 3, and thanked you on 10 Mar 2025 for your active engagement)*
+**In person or virtual:** Online (Zoom)
+**Your role then:** Participant (online scholar, APFSD Youth Forum 2025)
 
 **Interested in being a speaker and/or country facilitator? Your expertise in the 2027 goals.**
-Yes, as a speaker. I can speak on reduced inequalities (SDG 10) and gender equality in climate disasters (SDGs 5 and 13): what flood assessments in Pakistan ask and do not ask about women, and how many women and girls in the northern mountains live through freezing winters. Under SDG 17's focus on emerging trends, I can show how AI chatbots give confident but wrong figures about women's lives in under-researched regions. I can also support Pakistan's National Youth Call to Action with evidence from mountain communities.
+Yes, as a speaker. I can speak on gender equality and health (SDGs 5 and 3): how a lack of safe, private sanitation for menstruation relates to maternal care in South Asia, and what flood assessments in Pakistan ask and do not ask about women, including menstruation. On reduced inequalities (SDG 10), I can show how women in Gilgit-Baltistan and Chitral are left out of data, including the 479,000 women and girls who live through freezing winters. Under SDG 17's focus on emerging trends, I can show how AI chatbots give confident but wrong figures about women's lives, such as menstrual hygiene. I can also support Pakistan's National Youth Call to Action with evidence from mountain communities.
 
-**Your brief bio (less than 500 characters)**
-Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civic initiative in Gilgit-Baltistan and Chitral, Pakistan, and works in monitoring and evaluation. He studied International Relations and Business Analytics. His research uses open data to show what disaster response and AI tools overlook about women and girls in floods, mountain winters and under-researched regions. He speaks English, Urdu and Balti.
+**Your brief bio (less than 500 characters)** *(442 characters)*
+Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civic initiative in Gilgit-Baltistan and Chitral, Pakistan, and works in monitoring and evaluation. He studied International Relations and Business Analytics. His research covers menstrual and maternal health and what disaster response and AI tools overlook about women and girls. He took part in the APFSD Youth Forum 2025 online. He speaks English, Urdu and Balti.
 *[[YOU]]: the bio uses "he/his"; change it to match the pronouns you enter on the form.*
 
 **Have you also submitted an abstract?** Yes.
 **Title of the abstract:** Unsafe After Dark: What 12,820 Flood-Affected Villages in Pakistan Report About Women's Sanitation, Childbirth and Protection from Abuse, and What They Are Never Asked *(use the title of whichever abstract you submit; list all titles if the abstract form allows more than one)*
 Abstract 4 title: Confident Where Nobody Looked: Do AI Chatbots Know Less About Women in Under-Researched Regions, and Do They Say So?
+
+## Found in your Drive but not used (check before you ever cite them)
+- "Research Abstracts for ICFP 2025" and "Draft Abstract" report results (a 24-month trial in 20 communities, a 38% rise in contraceptive use, 50,000 trees, a blockchain supply chain across 15 hubs) that appear in none of your CVs or other files. Use them only if those studies really took place.
+- The 2024 APFSD abstract mentions GAIN Pakistan, Act4Food and UN Women Pakistan. Your current CVs do not. Add them to the collaboration answer only if accurate.
 
 ## Logistics and consent: your decisions
 | Field | Note |
