@@ -5,16 +5,18 @@
 Official call: https://arrow.org.my/apfsd-youth-forum-2027-call-for-applications/
 Guideline PDF: https://arrow.org.my/wp-content/uploads/2026/10/APFSD-Youth-Forum-2027-Abstract-Sumission-Guideline.pdf
 
-## Three abstracts are ready (all on conducted work, all on taboo topics)
+## Four abstracts are ready (all on conducted work)
 
 | # | File to upload | What it is | Where the work is |
 |---|---|---|---|
 | 1 | `APFSD2027_Abstract1_EvidenceReview_Akber.pdf` | Review of 55 studies: where research on gendered harm in climate displacement stops | `evidence_table.csv`, `methods_log.md` |
 | 2 | `APFSD2027_Abstract2_MountainWinters_Akber.pdf` | Satellite estimate: 479,000 women and girls in freezing mountain winters | `../../projects/mountain-watch/` and the Mountain Watch dashboard |
 | 3 | `APFSD2027_Abstract3_FloodVillages_Akber.pdf` | 12,820 flood-affected villages: sanitation safety, childbirth, abuse reporting, and what is never asked | `../../projects/flood-villages-women/` |
+| 4 | `APFSD2027_Abstract4_AIConfidence_Akber.pdf` | Five AI models on 4,253 survey questions about women's lives (child marriage, anaemia, partner violence, menstrual hygiene): overconfident, never better than the national figure; Asia-Pacific subset (16 countries) shows the same | `../../projects/thin-evidence/` (Apart sprint report) |
 
-**Can you submit more than one?** The guideline doesn't say. Check the abstract form (it needs your Google sign-in). If it allows only one, the order I'd pick is **3, then 1, then 2**:
+**Can you submit more than one?** The guideline doesn't say. Check the abstract form (it needs your Google sign-in). If it allows only one, the order I'd pick is **3, then 4, then 1, then 2**:
 - Abstract 3 has the largest evidence base and the most direct findings on taboo topics.
+- Abstract 4 is the most rigorous and fits SDG 17 (data, emerging technologies); its topics (child marriage, menstrual hygiene, partner violence) are core to the organisers' work. It is about AI, not climate.
 - Abstract 1 frames the gap.
 - Abstract 2 is the most novel but measures exposure only.
 
@@ -44,6 +46,7 @@ The guideline accepts only work that has been **conducted**. All three analyses 
 - [ ] Abstract 1: skim the 7 mountain items and the two harassment sources (G4, B5).
 - [ ] Abstract 2: read the "Why MODIS and not ERA5-Land" note in `extract_exposure.py`. Be ready to say the numbers are exposure estimates, and that WorldPop's count for Gilgit-Baltistan is a model estimate, not a census.
 - [ ] Abstract 3: read the limits in the project README. The key one: village key informants answer, not individual women, and their sex is not published.
+- [ ] Abstract 4: the sprint report lists KSBL; the abstract uses Young Shapers to match the general form. Pick one and keep it the same on both forms.
 - [ ] Confirm the affiliation wording: "Young Shapers" or "Independent researcher".
 
 ## Notes

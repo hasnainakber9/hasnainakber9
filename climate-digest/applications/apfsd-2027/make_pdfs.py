@@ -2,10 +2,12 @@
 import glob, html, json, os, re, subprocess
 NAMES = {"abstract_1_evidence_review": "APFSD2027_Abstract1_EvidenceReview_Akber.pdf",
          "abstract_2_mountain_winters": "APFSD2027_Abstract2_MountainWinters_Akber.pdf",
-         "abstract_3_flood_villages": "APFSD2027_Abstract3_FloodVillages_Akber.pdf"}
+         "abstract_3_flood_villages": "APFSD2027_Abstract3_FloodVillages_Akber.pdf",
+         "abstract_4_ai_confidence": "APFSD2027_Abstract4_AIConfidence_Akber.pdf"}
 FOOT = {"abstract_1_evidence_review": "SDGs: 5, 3, 13, 10. Evidence table (55 coded items) available on request.",
         "abstract_2_mountain_winters": "SDGs: 5, 3, 13, 10. Data: WorldPop, NASA MODIS, geoBoundaries, via Google Earth Engine. Code and dashboard available on request.",
-        "abstract_3_flood_villages": "SDGs: 5, 3, 10. Data: IOM Displacement Tracking Matrix, Community Needs Identification (Flood Response) Rounds 6 and 7, via the Humanitarian Data Exchange."}
+        "abstract_3_flood_villages": "SDGs: 5, 3, 10. Data: IOM Displacement Tracking Matrix, Community Needs Identification (Flood Response) Rounds 6 and 7, via the Humanitarian Data Exchange.",
+        "abstract_4_ai_confidence": "SDGs: 17, 5, 10. Data: DHS Program API (ICF); Europe PMC. Code and results: github.com/hasnainakber9/hasnainakber9 (folder climate-digest/projects/thin-evidence)."}
 jobs = []
 for f in sorted(glob.glob("abstract_*.md")):
     key = f[:-3]

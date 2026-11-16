@@ -33,6 +33,8 @@ I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain region
 3. Research institute: as a fellow with Equitech Futures, I interviewed more than 40 residents of Gilgit-Baltistan in Urdu and Balti about misinformation and exclusion.
 *[[YOU]]: if any of these involved a government department (education office, district administration), name it; the question asks about government first.*
 
+*If you submit Abstract 4, add this sentence before the last one (still under 1000 characters if you drop "in eight districts" above): "I also tested five AI models on 4,253 survey figures on women's lives; none beat the national average."*
+
 **References that support your work (links)**
 [[YOU]]: Young Shapers website or social media; the public repository with the three studies; the Mountain Watch dashboard link. Write N/A only if you have none.
 
@@ -50,6 +52,7 @@ Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civi
 
 **Have you also submitted an abstract?** Yes.
 **Title of the abstract:** Unsafe After Dark: What 12,820 Flood-Affected Villages in Pakistan Report About Women's Sanitation, Childbirth and Protection from Abuse, and What They Are Never Asked *(use the title of whichever abstract you submit; list all titles if the abstract form allows more than one)*
+Abstract 4 title: Confident Where Nobody Looked: Do AI Chatbots Know Less About Women in Under-Researched Regions, and Do They Say So?
 
 ## Logistics and consent: your decisions
 | Field | Note |
@@ -65,4 +68,4 @@ Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civi
 https://forms.gle/71NkoUifsRBB5sjBA needs a Google sign-in, so its fields could not be read from here. Have ready: the
 abstract title, your name and affiliation, and the PDF. The guideline asks for a PDF with title, name and affiliation,
 introduction (rationale, objectives, SDGs; 100 words), methodology (100 words) and findings/outcome/implications
-(100 words); the three PDFs in this folder follow that format.
+(100 words); the four PDFs in this folder follow that format.
