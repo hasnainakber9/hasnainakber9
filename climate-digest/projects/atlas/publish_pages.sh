@@ -8,7 +8,7 @@ python3 - "$OUT" <<'PY'
 import os, shutil, sys
 out = sys.argv[1]
 src = open("site/index.html", encoding="utf-8").read()
-cut = src.index('<div class="wrap">')
+cut = src.index('<div')                 # title, links and style come first; the page body starts at the first div
 head = src[:cut].replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
 desc = ("Where women and girls aged 10 to 49 live with cold, heat, floods, failed rains, fighting, darkness and long "
         "journeys to care, and where nobody has asked or studied. Every province on Earth, with districts for 196 countries.")
