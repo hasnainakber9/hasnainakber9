@@ -38,7 +38,7 @@ I trained in International Relations and Business Analytics. SDG 5: I analysed I
 - Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
 - Schools and flood exposure map: https://hasnainakber9.github.io/flood-schools-map/
 - Menstrual health paper (INMIS 2027 abstract submitted): your Drive PDF. The link is in the chat, not stored here. It already opens for anyone with the link.
-- Trade and inequality paper (presented at KSBL): your Drive PDF. The link is in the chat, not stored here. Set it to "Anyone with the link can view" before you paste it.
+- Trade and inequality paper (presented at KSBL): your Drive PDF. The link is in the chat, not stored here. It opens for anyone with the link (checked 16 Nov 2026).
 - GitHub profile: https://github.com/hasnainakber9
 - Not stored here: the Apart project page link. Apart asks to keep it to the team until judging ends, so the GitHub links above are the safer choice.
 
