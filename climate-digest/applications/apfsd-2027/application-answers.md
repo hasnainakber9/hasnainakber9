@@ -12,35 +12,34 @@ Facts come from `../../profile/PROFILE.md`. `[[YOU]]` marks what only you can fi
 | Pronouns, Gender | [[YOU]] |
 | Age band, Date of birth | [[YOU]] (must be born on or after 21 February 1997) |
 | Email, alternate email, phone, WhatsApp | [[YOU]] |
-| Organisation you are currently associated with | The Dawood Foundation |
-| Position/title | Assistant Manager, Monitoring & Evaluation |
-| Approval of your organisation | Ask your manager before choosing Yes |
+| Organisation you are currently associated with | Karachi School of Business and Leadership (KSBL) *(matches the abstracts)* |
+| Position/title | Researcher; MS Business Analytics (award pending) |
+| Approval of your organisation | Yes only if KSBL (for example your supervisor) is fine with it |
 | Accessibility needs | [[YOU]] |
 
-**Briefly describe your role in the organisation.** *(your draft, reframed as research)*
-I lead monitoring and evaluation for three of The Dawood Foundation's public programmes in Karachi: TDF MagnifiScience Centre (a science centre for schools and families), TDF Ghar (a heritage house open to the public) and TDF DayCare. I treat this as research: I design the visitor, school and programme surveys, keep attendance and programme records, analyse them and write monthly and quarterly reports that guide programming, school outreach and partner decisions. I also build open-source research tools that map climate risks to schools and check survey data quality.
+**Briefly describe your role in the organisation.**
+My research is affiliated with KSBL, where I completed the MS in Business Analytics (award pending). I design and run quantitative studies on gaps in the data about women and girls, using panel regression, mediation analysis, survey data and tests of AI models. My November 2026 study for Apart Research's AI x Epistemics sprint was submitted under KSBL.
 
 ## Area of work
-**Focus area (check only 3):** SDG 5 (Gender Equality), SDG 4 (Quality Education), SDG 17 (Partnership for the Goals).
-*SDG 4 and 17 are under review in 2027; SDG 5 ties the form to both abstracts. SDG 4 is your M&E research; SDG 17 (data, emerging trends) is FieldGuard and the AI study. Swap SDG 4 for SDG 13 if you want climate ticked.*
+**Focus area (check only 3):** SDG 5 (Gender Equality), SDG 3 (Health & Well-being), SDG 17 (Partnership for the Goals).
+*Gender research (5), menstrual and maternal health (3), AI and data as an emerging trend (17, under review in 2027).*
 
-**Work experience in these areas (maximum 1000 characters)** *(903 characters; merges your draft with the studies)*
-I treat monitoring and evaluation as research. At The Dawood Foundation, Karachi, I design and analyse the visitor, school and programme surveys for the MagnifiScience Centre, TDF Ghar and TDF DayCare; my reports shape programmes and outreach to government and low-fee schools. My paper on menstrual resource scarcity and maternal mortality in Bangladesh, India and Pakistan (1990-2023) is submitted to INMIS 2027. In November 2026 I analysed 12,820 flood-affected villages in Pakistan: women defecate in the open in 36%, and only one in five can report abuse by aid workers. I tested five AI models on 4,253 survey figures on women's lives: none beat the national average, and they put menstrual hygiene at 48-65% against 91%. I built FieldGuard, an open tool that flags fabricated survey interviews, showed that AI-written fakes pass standard checks, and mapped Pakistan's schools exposed to flooding.
-*FieldGuard and the flood-schools map come from your draft; they live outside this repository, so check the wording against them.*
+**Work experience in these areas (maximum 1000 characters)** *(986 characters: background, then gender research, then wider work)*
+With roots in Gilgit-Baltistan and degrees in International Relations and Business Analytics, I research who data leaves out, above all women and girls. My paper on menstrual resource scarcity and maternal mortality in Bangladesh, India and Pakistan (1990-2023) is submitted to INMIS 2027. For Apart Research's AI x Epistemics sprint (November 2026) I built 4,253 questions from Demographic and Health Surveys on women's lives in 61 countries and tested five AI models: their 80% ranges held the truth only 16-51% of the time, none beat the national average, and they put menstrual hygiene at 48-65% against 91%. I also analysed 12,820 flood-affected villages in Pakistan: women defecate in the open in 36%, and only one in five can report abuse by aid workers. More broadly, I manage monitoring and evaluation for three Dawood Foundation programmes, ran 40+ interviews in Urdu and Balti as an Equitech Futures research fellow, and founded Young Shapers in Gilgit-Baltistan and Chitral.
 
-**1–3 examples of collaboration with government and/or other stakeholders (100 words maximum)** *(83 words)*
-1. Schools: government and private schools bring student groups to the science centre. I designed the forms that record which schools and communities we reach and what teachers say, and use the results to widen access.
-2. Research institute: with Equitech Futures I interviewed 40+ community and religious leaders in Gilgit-Baltistan in Urdu and Balti and turned the findings into programme recommendations.
-3. Civil society: with the Karachi Astronomers Society we ran public space-science events in October 2026; I evaluated turnout and feedback.
+**1–3 examples of collaboration with government and/or other stakeholders (100 words maximum)** *(88 words)*
+1. Apart Research (international research lab): in its AI x Epistemics sprint I designed and ran the study testing five AI models on 4,253 survey figures about women, and submitted the report and code.
+2. Equitech Futures (research institute): I interviewed 40+ community and religious leaders in Gilgit-Baltistan in Urdu and Balti and turned the findings into programme recommendations.
+3. Schools: government and private schools visit The Dawood Foundation's science centre; I design the surveys that record which schools are reached and what teachers say, to widen access.
 
 **References that support your work (links)**
-- FieldGuard and the AI-fabrication study: https://github.com/hasnainakber9/fieldguard/tree/sprint/ai-fabrication
+- Apart study, code and report: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence
+- Apart report (PDF): https://github.com/hasnainakber9/hasnainakber9/blob/claude/amazing-shannon-x2h4mr/climate-digest/projects/thin-evidence/report/confident_where_nobody_looked.pdf
+- Apart project page: the private link in Apart's confirmation email (15 Nov). Apart asks to keep it to the team until judging ends, so it is not stored here.
+- INMIS 2027 paper: Drive PDF "Menstrual_Scarcity_Maternal_Mortality_Hasnain.pdf" (set to "Anyone with the link can view" first)
+- Flood-village study: https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects/flood-villages-women
 - GitHub profile: https://github.com/hasnainakber9
-- Studies (flood villages, AI confidence, mountain winters): https://github.com/hasnainakber9/hasnainakber9/tree/claude/amazing-shannon-x2h4mr/climate-digest/projects (only if the repository is public)
-- Paper on menstrual scarcity and maternal health: Drive PDF "Menstrual_Scarcity_Maternal_Mortality_Hasnain.pdf" (set to "Anyone with the link can view" first)
-- TDF MagnifiScience Centre: https://www.dawoodfoundation.org
-- Your live flood-schools map link: [[YOU]]
-- Do not list mahwarinexus.live: the domain has lapsed and shows a parking page.
+The GitHub links work only if the repository is public; open one in a private window to check.
 
 **In which capacity do you work?** Community / Grassroot; National; Regional (South Asia paper); International (61-country AI study, open-source tools).
 
@@ -49,10 +48,10 @@ I treat monitoring and evaluation as research. At The Dawood Foundation, Karachi
 **Your role then:** Participant (online scholar, APFSD Youth Forum 2025)
 
 **Interested in being a speaker and/or country facilitator? Your expertise in the 2027 goals.**
-Yes, as a speaker, and I am happy to support the Pakistan delegation as a country facilitator. My expertise is research for SDG review: how open data and AI can strengthen, or quietly undermine, the evidence behind the goals. I can speak on three findings: AI chatbots give confident but wrong figures about women's lives, including menstrual hygiene (SDG 5, SDG 17 emerging trends); AI can now fabricate survey interviews that pass standard checks, and simple tests catch them (SDG 17); and flood assessments in Pakistan rarely ask women about sanitation, childbirth or abuse (SDGs 5 and 13). I can also speak on using open data to map climate risk to schools (SDG 4).
+Yes, as a speaker, and I am happy to support the Pakistan delegation as a country facilitator. My expertise is research on who the data behind the SDGs leaves out. I can speak on how AI chatbots give confident but wrong figures about women's lives in under-researched regions, such as menstrual hygiene (SDG 17's emerging trends, SDG 5); how a lack of safe sanitation for menstruation relates to maternal care in South Asia (SDGs 3 and 5); and what flood assessments in Pakistan ask women and never ask them (SDGs 5 and 13).
 
-**Your brief bio (less than 500 characters)** *(469 characters; first person, as in your draft)*
-I lead monitoring and evaluation for The Dawood Foundation's MagnifiScience Centre, TDF Ghar and TDF DayCare in Karachi, Pakistan, and treat it as research. My studies cover menstrual and maternal health and what disaster response and AI tools miss about women and girls. I build open-source tools that map climate risk to schools and catch fabricated survey data, including AI-written interviews. I took part in the APFSD Youth Forum 2025 online. Affiliated with KSBL.
+**Your brief bio (less than 500 characters)** *(498 characters; first person)*
+I am a researcher from Pakistan with roots in Gilgit-Baltistan and degrees in International Relations and Business Analytics (KSBL). My research asks who data leaves out, above all women and girls: menstrual scarcity and maternal health in South Asia (submitted to INMIS 2027), what flood assessments miss, and how AI models misstate women's lives (Apart Research, 2026). I manage M&E at The Dawood Foundation and was an Equitech Futures research fellow. I joined the APFSD Youth Forum 2025 online.
 
 **Have you also submitted an abstract?** Yes.
 **Title of the abstract:** Unsafe After Dark: What 12,820 Flood-Affected Villages in Pakistan Report About Women's Sanitation, Childbirth and Protection from Abuse, and What They Are Never Asked *(use the title of whichever abstract you submit; list all titles if the abstract form allows more than one)*
