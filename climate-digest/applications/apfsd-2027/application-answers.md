@@ -25,15 +25,13 @@ I founded Young Shapers in 2020 and lead it as a volunteer. I set its direction,
 *SDG 10 is one of the goals under review in 2027; 5 and 13 are named cross-cutting goals. SDG 4 is the alternative to 10 if you want to lead with GreenClassrooms.*
 
 **Work experience in these areas (maximum 1000 characters)**
-I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain regions far from Pakistan's decision-making centres. Our Act Clean Fellowship chose 80 fellows from over 300 applicants and backed 19 youth-led environmental actions in eight districts. GreenClassrooms trained more than 50 teachers in climate education. As a research fellow with Equitech Futures I ran over 40 interviews in Urdu and Balti on misinformation, trust and exclusion. In November 2026 I completed three studies on gendered harm in climate disasters: a review of 55 studies; a satellite estimate that 479,000 women and girls in Gilgit-Baltistan and Chitral live through freezing winters; and an analysis of 12,820 flood-affected villages, where women defecate in the open in 36% and only one village in five can report abuse by aid workers. I work in monitoring and evaluation, so I measure what programmes change.
+I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain regions far from Pakistan's decision-making centres. Our Act Clean Fellowship chose 80 fellows from over 300 applicants and backed 19 youth-led environmental actions. GreenClassrooms trained more than 50 teachers in climate education. As a research fellow with Equitech Futures I ran over 40 interviews in Urdu and Balti on misinformation, trust and exclusion. In November 2026 I completed three studies on gendered harm in climate disasters: a review of 55 studies; a satellite estimate that 479,000 women and girls in Gilgit-Baltistan and Chitral live through freezing winters; and an analysis of 12,820 flood-affected villages, where women defecate in the open in 36% and only one village in five can report abuse by aid workers. I also tested five AI models on 4,253 survey figures on women's lives; none beat the national average. I work in monitoring and evaluation, so I measure what programmes change.
 
 **1–3 examples of collaboration with government and/or other stakeholders (100 words maximum)**
 1. Schools and teachers: through GreenClassrooms, funded by a £2,000 grant, Young Shapers trained more than 50 teachers in Gilgit-Baltistan and Chitral to teach climate change.
 2. Local youth groups: the Act Clean Fellowship supported 80 fellows to carry out 19 environmental actions with their own communities in eight districts.
 3. Research institute: as a fellow with Equitech Futures, I interviewed more than 40 residents of Gilgit-Baltistan in Urdu and Balti about misinformation and exclusion.
 *[[YOU]]: if any of these involved a government department (education office, district administration), name it; the question asks about government first.*
-
-*If you submit Abstract 4, add this sentence before the last one (still under 1000 characters if you drop "in eight districts" above): "I also tested five AI models on 4,253 survey figures on women's lives; none beat the national average."*
 
 **References that support your work (links)**
 [[YOU]]: Young Shapers website or social media; the public repository with the three studies; the Mountain Watch dashboard link. Write N/A only if you have none.
@@ -44,10 +42,10 @@ I founded Young Shapers in 2020 in Gilgit-Baltistan and Chitral, mountain region
 **In person or virtual / your role then:** [[YOU]] (if none, write "Not applicable: I have not attended before" in the required role field)
 
 **Interested in being a speaker and/or country facilitator? Your expertise in the 2027 goals.**
-Yes, as a speaker. I can speak on reduced inequalities (SDG 10) and gender equality in climate disasters (SDGs 5 and 13): what flood assessments in Pakistan ask and do not ask about women, and how many women and girls in the northern mountains live through freezing winters. I can also support Pakistan's National Youth Call to Action with evidence from mountain communities.
+Yes, as a speaker. I can speak on reduced inequalities (SDG 10) and gender equality in climate disasters (SDGs 5 and 13): what flood assessments in Pakistan ask and do not ask about women, and how many women and girls in the northern mountains live through freezing winters. Under SDG 17's focus on emerging trends, I can show how AI chatbots give confident but wrong figures about women's lives in under-researched regions. I can also support Pakistan's National Youth Call to Action with evidence from mountain communities.
 
 **Your brief bio (less than 500 characters)**
-Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civic initiative in Gilgit-Baltistan and Chitral, Pakistan, and works in monitoring and evaluation. He studied International Relations and Business Analytics. His research uses open data to show what disaster response overlooks about women and girls in floods and mountain winters. He speaks English, Urdu and Balti.
+Syed Hasnain Akber is the founder of Young Shapers, a youth-led climate and civic initiative in Gilgit-Baltistan and Chitral, Pakistan, and works in monitoring and evaluation. He studied International Relations and Business Analytics. His research uses open data to show what disaster response and AI tools overlook about women and girls in floods, mountain winters and under-researched regions. He speaks English, Urdu and Balti.
 *[[YOU]]: the bio uses "he/his"; change it to match the pronouns you enter on the form.*
 
 **Have you also submitted an abstract?** Yes.
