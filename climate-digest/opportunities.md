@@ -35,6 +35,21 @@ Status key: 🔎 found · ✍️ drafting · 📤 ready for you to submit · ✅
 | 30 Mar 2027 | HEC US-Pakistan Knowledge Corridor PhD | Funded PhD (USA) | Tuition plus $19k/yr | Pakistani nationals, 35 or under. Needs **admission to a QS top-100 US university** plus GRE 300+ or HAT 60%+. US PhD deadlines fall in Dec–Jan. | 4 | 🔎 | https://www.hec.gov.pk/english/scholarshipsgrants/US-Pakcorridor |
 | Rolling (Nov 2026 – Nov 2027) | ECMWF AI Weather Quest (sub-seasonal forecasting) | Data challenge | Recognition and leaderboard | Open to students; no forecasting experience needed; needs your own compute | 4 | 🔎 | https://aiweatherquest.ecmwf.int/ |
 
+## Sprints, research programmes and conference calls (added 18 Nov 2026)
+
+Picked because the weekly data collection and the existing projects (DHS API cache, IOM DTM village data, Earth Engine exposure layers, Europe PMC counts, the AI-calibration harness in `projects/thin-evidence/`) can feed a fast entry, the way the Apart sprint did. All dates checked on the official page on 18 Nov 2026.
+
+| Deadline | Opportunity | Type | What we would bring | Fit | Status | Link |
+|---|---|---|---|---|---|---|
+| **29 Nov 2026** | AI Safety Camp 2027 (online, 12 Jan – 23 Apr 2027, about 10 h/week) | Remote research programme | Join a project team. Closest fits: "Evaluating the Evaluation: Harness Effects in AI Benchmarks", "When Does AI Safety Evidence Survive Independent Analysis?", "Whose use is misuse? Latent biases in frontier model threat intelligence reporting". The thin-evidence harness is direct evidence of eval skills. | 4 | 🔎 | https://www.aisafety.camp/ |
+| **30 Nov 2026** 23:59 EST (extended) | Understanding Risk Global Forum 2027, Abu Dhabi, 10–14 May 2027: session proposals | Conference (World Bank GFDRR) | A session on who disaster data leaves out: flood villages (IOM DTM), schools exposed to the 2022 and 2025 floods, mountain winters. Pillars include AI and technology for resilience, and human-centred resilience. Proposals usually need a panel: find 2–3 co-speakers. Travel support not stated. | 4 | 🔎 | https://www.urabudhabi.com/ |
+| **1 Dec 2026** | 25th ICSD Biennial Conference, Atlanta, 16–18 Jul 2027: abstracts | Conference (social development) | Flood-village gender abstract (already written for APFSD). In person in the USA; fees, online option and scholarships not stated. | 3 | 🔎 | https://www.socialdevelopment.net/25th-icsd-conference/ |
+| **6 Dec 2026** 23:59 AoE | Apart: Threat Intelligence & Threat Modelling Hackathon (online, 4–6 Dec) | Weekend sprint | Security topic, far from our data. Worth it only to stay visible to Apart. | 2 | 🔎 | https://apartresearch.com/sprints/threat-intelligence-threat-modelling-2026 |
+| **13 Dec 2026** 23:59 AoE | Apart: Agent Attribution Hackathon (online, 11–13 Dec) | Weekend sprint | Classifiers telling AI agents from human-steered ones. Partial fit: reuse the multi-model harness. | 2 | 🔎 | https://apartresearch.com/sprints/agent-attribution-2026 |
+| Invitation | Apart Studio, then Apart Fellowship (6–16 weeks, part-time, remote; compute, publication support and travel to present) | Fellowship | Top 5–20% of sprint projects are invited to Studio; about 40% of Studio teams become fellows. Depends on the AI x Epistemics judging (results 1–2 weeks after judging). | 5 | waiting on judging | https://apartresearch.com/fellowships/apart-fellowship |
+
+Checked and not eligible or closed (18 Nov 2026): CEGA Visiting Fellowship 2027–28 (East and West African applicants only); SVRI Early Career Research Fellowships 2027 (must be enrolled as a doctoral or postdoctoral researcher at an LMIC institution); ACM FAccT 2027 (papers closed 3 Nov 2026); POPCLIMA climate-demography conference (abstracts closed 20 Sep 2026); OECD CRP fellowships (closed).
+
 ## Watch list (deadline not yet published or not verified)
 
 - ECMWF Code for Earth 2027: applications expected to open Feb 2027. https://codeforearth.ecmwf.int/
@@ -46,6 +61,9 @@ Status key: 🔎 found · ✍️ drafting · 📤 ready for you to submit · ✅
 - Not yet announced: ESA Land Remote Sensing course, Climate Change AI Summer School, Project Pythia Cook-off, IEEE GRSS Data Fusion Contest, GroundwatCh EM master's.
 - ICIMOD and IWMI Lahore vacancies: none posted as of 12 Nov 2026; check monthly.
 - Not yet checked: DAAD EPOS, Chevening.
+- SPAR Spring 2027 (remote AI research with a mentor): mentor applications open; mentee dates not yet confirmed on the official page.
+- ACM COMPASS 2027 (computing for the Global South): 2027 call not yet posted; the 2026 deadline was in March.
+- More Apart sprints for 2027: the list shows none after 13 Dec yet; January sprints were held in 2025 and 2026.
 
 ## Closed / not eligible
 
