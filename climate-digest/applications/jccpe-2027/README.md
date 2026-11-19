@@ -16,7 +16,27 @@ The trade and inequality paper is cross-country, not city-level, and the flood-v
 2. **Urban heat and wealth in Karachi.** Land-surface temperature from Earth Engine against neighbourhood wealth and informal settlements. Themes: housing, informality. Type: original research.
 3. **Women in the urban poor: sanitation and menstrual hygiene by wealth in Pakistani cities.** DHS urban subsamples by wealth quintile, using the existing DHS API cache. Themes: services, intersectionality. Type: original research or policy brief.
 
-Recommendation: angle 1. It reuses the published map and has a clear message for mayors (where to protect schools first).
+Recommendation (revised 19 Nov 2026 after the data check below): **angle 2, heat and wealth in Karachi, with Lahore as a second city.** That is where reliable data is most plentiful for us. Angle 1 stays as a fallback for riverine cities in Sindh.
+
+## Data check (19 Nov 2026)
+
+What our access gives us, and how reliable it is at city scale:
+
+| Source | Access | City-scale reliability |
+|---|---|---|
+| Land-surface temperature (Landsat 30 m, MODIS 1 km) | Earth Engine (service-account key present; library to install) | High: global, cloud-free most of the year in Karachi and Lahore |
+| Air temperature and heat stress (ERA5, ERA5-Land) | Copernicus CDS: token works | Good for city-wide trends, too coarse (9 km) for neighbourhoods |
+| Neighbourhood wealth (Meta Relative Wealth Index, about 2.4 km cells) | Open download (HDX), fetched | Cells inside the city boxes: Karachi 545, Lahore 287, Peshawar 90, Hyderabad 49. Enough for Karachi and Lahore, thin elsewhere. Each cell has an error estimate. |
+| Population (LandScan 2024, WorldPop) | Already in the atlas pipeline | High |
+| Buildings (Google Open Buildings) | Earth Engine | Covers Pakistan; good for built-up density |
+| Night lights (VIIRS) | Earth Engine; already in the atlas | High |
+| Flood extents (Sentinel-1 2022, already computed by district; UNOSAT 2022 and 2025) | Atlas pipeline; public | **Weak inside cities**: radar misses water between buildings, and Karachi's floods are mostly rain-fed street flooding. Reliable for riverine towns (Jacobabad, Sukkur, Larkana, Dadu). |
+| Schools (OpenStreetMap) | Public; already in the schools map | Completeness varies by city; could not re-count today (the OSM query service was unreachable) |
+| Women's sanitation and wealth (DHS) | DHS API cache | Not representative at city level: province and urban/rural only |
+| Provincial MICS (Punjab 2017-18, Sindh 2018-19) | Free UNICEF registration needed (you); site blocked from here | District-level estimates, including Karachi's districts; useful for angle 3 if you register |
+| NASA Earthdata | Login failing from here today | Not needed for angles 1 or 2 |
+
+Conclusion: satellite heat, population, buildings, lights and the wealth index are plentiful and reliable for Karachi and Lahore. Urban flood data is not, and city-level survey data needs a MICS registration.
 
 ## Steps
 
