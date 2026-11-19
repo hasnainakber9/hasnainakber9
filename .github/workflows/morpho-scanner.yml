@@ -88,19 +88,55 @@ jobs:
           key: morpho-scanner-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: morpho-scanner-state-
 
+      - name: Plan the run
+        id: plan
+        if: env.LIVE == 'true'
+        env:
+          REQUESTED_MIN: ${{ inputs.minutes || '320' }}
+        run: |
+          # Scan until the 7-day window ends rather than for a fixed stint, so the
+          # lane closes at the gate and not up to 5 h after it. Two minutes of margin
+          # make sure the last cycle finishes after the 168 h mark.
+          minutes=$REQUESTED_MIN
+          first=""
+          if [ -s data/scanner.sqlite ]; then
+            first=$(node_modules/.bin/tsx scripts/gate-report.ts --json 2>/dev/null \
+              | jq -r '.window.firstCycleAt // empty' || true)
+          fi
+          if [ -n "$first" ]; then
+            end_ms=$((first + 168 * 3600 * 1000 + 120 * 1000))
+            left=$(( (end_ms - $(date +%s%3N)) / 60000 ))
+            if [ "$left" -lt 1 ]; then
+              minutes=0
+            elif [ "$left" -lt "$minutes" ]; then
+              minutes=$left
+            fi
+          fi
+          echo "window start (ms): ${first:-none}; scanning for $minutes min"
+          echo "minutes=$minutes" >> "$GITHUB_OUTPUT"
+
       - name: Queue the next run
+        id: queue
         if: env.LIVE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          PLAN_MIN: ${{ steps.plan.outputs.minutes }}
         run: |
-          # Disabling the workflow is the off switch: a queued run stops here.
+          # Disabling the workflow is the off switch: a run that finds it disabled
+          # does nothing at all (every later step checks closed).
           state=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/morpho-scanner.yml" --jq '.state' || echo active)
           if [ "$state" != "active" ]; then
-            echo "::notice::workflow is $state; cancelling this run"
-            gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || true
-            sleep 120
-            exit 1
+            echo "::notice::workflow is $state; the lane is closed, nothing to do"
+            echo "closed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Window already complete: this run only retries the closure. Queue
+          # nothing, so a failing closure cannot spin up a fast loop of runs.
+          if [ "$PLAN_MIN" = "0" ]; then
+            echo "window complete; not queueing a successor"
+            exit 0
           fi
 
           # Queue a successor unless one is already waiting. It sits behind this
@@ -118,10 +154,14 @@ jobs:
           fi
 
       - name: Scan
+        # Outputs of a skipped step are null, and null == '0' in Actions expressions
+        # (both coerce to 0), so pull-request runs, which skip the plan step, must be
+        # let through explicitly.
+        if: env.LIVE == 'false' || (steps.queue.outputs.closed != 'true' && steps.plan.outputs.minutes != '0')
         env:
           BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
-          MAX_RUNTIME_MIN: ${{ github.event_name == 'pull_request' && '3' || inputs.minutes || '320' }}
+          MAX_RUNTIME_MIN: ${{ github.event_name == 'pull_request' && '3' || steps.plan.outputs.minutes || inputs.minutes || '320' }}
         run: |
           set -o pipefail
           mkdir -p data
@@ -131,7 +171,7 @@ jobs:
             node_modules/.bin/tsx src/main.ts | tee scanner.log
 
       - name: Gate report
-        if: always()
+        if: always() && steps.queue.outputs.closed != 'true'
         run: |
           rm -f data/scanner.lock
           node_modules/.bin/tsx scripts/gate-report.ts > gate.txt || true
@@ -145,14 +185,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save scanner state
-        if: always() && env.LIVE == 'true'
+        if: always() && env.LIVE == 'true' && steps.queue.outputs.closed != 'true'
         uses: actions/cache/save@v4
         with:
           path: morpho-liquidator/data
           key: morpho-scanner-state-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload database and log
-        if: always()
+        if: always() && steps.queue.outputs.closed != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: morpho-scanner-${{ github.run_id }}-${{ github.run_attempt }}
@@ -161,7 +201,8 @@ jobs:
             morpho-liquidator/scanner.log
             morpho-liquidator/gate.txt
             morpho-liquidator/gate.json
-          retention-days: 14
+          # The final run's database is the evidence for the closure: keep it the maximum.
+          retention-days: 90
           if-no-files-found: warn
 
       - name: Smoke check
@@ -175,7 +216,7 @@ jobs:
           grep -q '"event":"loop.max_runtime_reached"' scanner.log
 
       - name: Report the gate decision
-        if: always() && env.LIVE == 'true'
+        if: always() && env.LIVE == 'true' && steps.queue.outputs.closed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -185,12 +226,13 @@ jobs:
           realistic=$(jq -r '.funnel.realisticCandidates' gate.json)
           echo "decision=$decision complete=$complete realistic=$realistic"
 
-          # Opens an issue once per title; the repository owner is notified by GitHub.
+          # Opens an issue once per exact title. Lists issues directly rather than
+          # through search, which can lag behind a just-created issue.
           open_issue() {
             local title=$1 intro=$2
             local existing
-            existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all \
-              --search "\"$title\" in:title" --json number --jq 'length') || return 0
+            existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --limit 200 \
+              --json title --jq "[.[] | select(.title == \"$title\")] | length") || existing=0
             if [ "$existing" = "0" ]; then
               printf '%s\n\n```text\n%s\n```\n\nRun: %s/%s/actions/runs/%s\n' \
                 "$intro" "$(cat gate.txt)" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > issue.md
@@ -201,13 +243,19 @@ jobs:
 
           if [ "$realistic" != "0" ]; then
             open_issue "Morpho scanner: realistic candidate found" \
-              "The scanner recorded at least one realistic candidate. Nothing was traded: there is no execution path. Under RULES.md this passes the Phase 3 gate."
+              "The scanner recorded at least one realistic candidate. Nothing was traded: there is no execution path."
           fi
 
-          # Final once the window is complete: KILL, or PROCEED after the full 7 days.
-          if [ "$complete" = "true" ] && [ "$decision" != "INSUFFICIENT_DATA" ]; then
-            open_issue "Morpho scanner: 7-day gate decision is $decision" \
-              "The 7-day review window is complete and the gate decision is **$decision**. This workflow has disabled itself."
-            gh workflow disable morpho-scanner.yml --repo "$GITHUB_REPOSITORY" \
-              || echo "::warning::could not disable the workflow"
+          # The lane closes when the 7-day window completes, whatever the report says
+          # (RULES.md, "Lane status"). Disable first, then report what actually
+          # happened, so the issue never claims a closure that did not take place.
+          if [ "$complete" = "true" ]; then
+            if gh workflow disable morpho-scanner.yml --repo "$GITHUB_REPOSITORY"; then
+              open_issue "Morpho scanner: lane closed at the 7-day gate ($decision)" \
+                "The 7-day review window is complete. Report decision: **$decision**. Under RULES.md (Lane status) the Morpho Base liquidation lane is closed and this workflow is disabled. Re-entry only through the three gates in RULES.md."
+            else
+              open_issue "Morpho scanner: lane NOT closed, disabling the workflow failed" \
+                "The 7-day window is complete but this run could not disable the workflow. Disable it by hand: Actions > Morpho scanner > ... > Disable workflow. Report decision: **$decision**."
+              exit 1
+            fi
           fi

@@ -16,8 +16,8 @@ and [`ARCHITECTURE.md`](ARCHITECTURE.md) for how it works and why.
 | 0 — Rules, references, architecture | Done |
 | 1 — Minimal robust scanner | Done; runs continuously against Base |
 | 2 — Economics + sized unwind | Done; any position can be evaluated on demand |
-| 3 — Forced decision gate | Tooling done (`pnpm gate`); the 7-day window runs on GitHub Actions |
-| 4 — Tiny live path | Not built. Only if the gate says PROCEED |
+| 3 — Forced decision gate | Lane closes at the gate on 2026-11-20 (see RULES.md, "Lane status") |
+| 4 — Tiny live path | Not built. Frozen; re-entry only through the three gates in RULES.md |
 
 ## Quick start
 
