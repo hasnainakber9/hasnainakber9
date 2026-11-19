@@ -161,7 +161,8 @@ jobs:
             morpho-liquidator/scanner.log
             morpho-liquidator/gate.txt
             morpho-liquidator/gate.json
-          retention-days: 14
+          # The final run's database is the evidence for the closure: keep it the maximum.
+          retention-days: 90
           if-no-files-found: warn
 
       - name: Smoke check
@@ -204,10 +205,16 @@ jobs:
               "The scanner recorded at least one realistic candidate. Nothing was traded: there is no execution path. Under RULES.md this passes the Phase 3 gate."
           fi
 
-          # Final once the window is complete: KILL, or PROCEED after the full 7 days.
-          if [ "$complete" = "true" ] && [ "$decision" != "INSUFFICIENT_DATA" ]; then
-            open_issue "Morpho scanner: 7-day gate decision is $decision" \
-              "The 7-day review window is complete and the gate decision is **$decision**. This workflow has disabled itself."
-            gh workflow disable morpho-scanner.yml --repo "$GITHUB_REPOSITORY" \
-              || echo "::warning::could not disable the workflow"
+          # The lane closes when the 7-day window completes, whatever the report says
+          # (decision recorded in RULES.md, "Lane status"). The issue carries the final
+          # report; disabling the workflow stops all further compute, and the run
+          # already queued cancels itself when it finds the workflow disabled.
+          if [ "$complete" = "true" ]; then
+            open_issue "Morpho scanner: lane closed at the 7-day gate ($decision)" \
+              "The 7-day review window is complete. Report decision: **$decision**. Under RULES.md (Lane status) the Morpho Base liquidation lane is now closed and this workflow has disabled itself. Re-entry only through the three gates in RULES.md."
+            if ! gh workflow disable morpho-scanner.yml --repo "$GITHUB_REPOSITORY"; then
+              # Fail loudly: a lane that did not close keeps spending compute.
+              echo "::error::could not disable the workflow; disable it by hand (Actions > Morpho scanner > Disable workflow)"
+              exit 1
+            fi
           fi
