@@ -154,7 +154,10 @@ jobs:
           fi
 
       - name: Scan
-        if: steps.queue.outputs.closed != 'true' && steps.plan.outputs.minutes != '0'
+        # Outputs of a skipped step are null, and null == '0' in Actions expressions
+        # (both coerce to 0), so pull-request runs, which skip the plan step, must be
+        # let through explicitly.
+        if: env.LIVE == 'false' || (steps.queue.outputs.closed != 'true' && steps.plan.outputs.minutes != '0')
         env:
           BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
