@@ -32,7 +32,7 @@
   "climpred": "2.6.0",
   "dask": "2026.8.0",
   "earthaccess": "0.19.0",
-  "earthengine-api": "1.7.52",
+  "earthengine-api": "1.7.53",
   "earthkit-data": "1.3.1",
   "ecmwf-datastores-client": "0.6.0",
   "flox": "0.11.2",
@@ -54,5 +54,5 @@
   "xskillscore": "0.0.29",
   "zarr": "3.4.2"
  },
- "updated": "2026-11-13"
+ "updated": "2026-11-20"
 }
