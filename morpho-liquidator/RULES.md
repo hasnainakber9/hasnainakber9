@@ -81,9 +81,9 @@ stopped scanning at 08:34:23Z, opened the closure issue with the final report an
 disabled itself.
 
 **Final report (168.03 h):** 48,943 cycles, none failed, 99.2% coverage. 41 positions
-became liquidatable while watched; all were dust or too small to size, 37 were taken
-by other liquidators and 23 episodes resolved by price recovery. Zero realistic
-candidates. Decision: **KILL**.
+became liquidatable while watched; every one sized was dust or too small to seize.
+Their liquidatable spells ended 37 times by another liquidator and 23 times by the
+price recovering. Zero realistic candidates. Decision: **KILL**.
 
 **Evidence** (analysis of 2026-11-19, covering the first 5.5 days of the window).
 
