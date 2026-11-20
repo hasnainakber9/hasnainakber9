@@ -222,6 +222,9 @@ ARCO-ERA5 on Google Cloud Storage.
 
 Lasting preferences from the user, newest first. The weekly run applies them.
 
+- 2026-11-14: At the user's request, deadline-driven application work (the Apart sprint, then APFSD) moved to one
+  dedicated session. This main chat stays the weekly digest plus the Atlas and Mountain Watch projects; the weekly
+  run itself still happens here and never opens a new session.
 - 2026-11-12: Keep all work in the one main chat; never spawn new sessions.
 - 2026-11-12: Initial setup. Newcomer framing; HKH/northern Pakistan focus; status line spec;
   opportunities tracker with drafts (user submits); breaking-change alerts; venue-quality flags;
