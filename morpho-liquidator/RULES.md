@@ -72,13 +72,18 @@ extension: when the window closes, the report's decision is the decision.
 > judgement call. Amend them here and in `src/risk/limits.ts` before the window
 > starts, not after seeing the data.
 
-## Lane status: closes at the Phase 3 gate (2026-11-20T08:32Z)
+## Lane status: CLOSED at the Phase 3 gate (2026-11-20)
 
 Decided by the rule owner on 2026-11-19: the Morpho Base liquidation lane closes when
 the 7-day window completes (2026-11-13T08:32:25Z to 2026-11-20T08:32:25Z), whatever
-the final report says. The exit criteria are met in the negative. The workflow stops
-scanning at that moment, opens a closure issue with the final report and disables
-itself. Update this heading to "CLOSED" once that issue exists.
+the final report says. The exit criteria are met in the negative. The workflow
+stopped scanning at 08:34:23Z, opened the closure issue with the final report and
+disabled itself.
+
+**Final report (168.03 h):** 48,943 cycles, none failed, 99.2% coverage. 41 positions
+became liquidatable while watched; all were dust or too small to size, 37 were taken
+by other liquidators and 23 episodes resolved by price recovery. Zero realistic
+candidates. Decision: **KILL**.
 
 **Evidence** (analysis of 2026-11-19, covering the first 5.5 days of the window).
 
@@ -168,8 +173,9 @@ are not in force until the owner accepts them, with gate 1 at the latest.
 
 ### Record
 
-- Final report: the issue the workflow opens at the gate, and the last run's
-  artifact (database and log, kept 90 days).
+- Final report: [closure issue #5](https://github.com/hasnainakber9/hasnainakber9/issues/5)
+  and the last scanning run's artifact, database and log, kept 90 days
+  ([run 44667750344](https://github.com/hasnainakber9/hasnainakber9/actions/runs/44667750344)).
 - Analysis of 2026-11-19: two independent prize measurements (protocol formula and
   market value, agreeing within 2% on the eligible set), a 26-week history of the
   eligible markets, a block-level race study, and sourced research on Base
