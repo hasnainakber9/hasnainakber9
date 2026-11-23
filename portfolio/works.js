@@ -35,9 +35,18 @@ window.WORKS = {
 
   /* Shorts grid, newest first. */
   shorts: [
-    { id: 'ep105', yt: 'wOyCDPzGqG8', title: 'How long until women and men are equal?', tag: 'Illustration' },
     { id: 'ep103', yt: 'EdiZ6BLc8Vo', title: 'Why is it winter when Earth is closest to the Sun?', tag: 'Orbit model' },
-    { id: 'ep101', yt: 'RTy4gyI-J0E', title: 'How far can you actually see?', tag: 'True-scale Earth' }
+    { id: 'ep101', yt: 'RTy4gyI-J0E', title: 'How far can you actually see?', tag: 'True-scale Earth' },
+    { id: 'ep100', yt: 'Q2QSbBjhbEU', title: 'Is Greenland really as big as Africa?', tag: 'Map projection' },
+    { id: 'ep064', yt: '8WbkU-StXzI', title: 'One rule draws all of these stars', tag: 'Islamic geometry' },
+    { id: 'ep097', yt: 'hIKeNlEEeo0', title: 'Which way do Muslims in New York pray?', tag: 'Great circles' },
+    { id: 'ep057', yt: 'JiVNThVwrlQ', title: '1,000 pendulums, 0.000001\u00b0 apart', tag: 'Chaos simulation' },
+    { id: 'ep086', yt: 'ZDY2IzZyv48', title: 'Everest vs K2: who reaches base camp first?', tag: 'Real terrain' },
+    { id: 'ep090', yt: '1yyO6_jXcto', title: 'Why does Ramadan move 11 days every year?', tag: 'Calendar maths' },
+    { id: 'ep061', yt: '7l5Lzm6wpPE', title: 'An ant follows 2 rules for 12,000 steps', tag: 'Cellular automaton' },
+    { id: 'ep056', yt: 'Q35kaXhj20Q', title: 'I gave 500 birds 3 rules. Will they flock?', tag: 'Flocking simulation' },
+    { id: 'ep095', yt: 'R81dLJaRU5Q', title: 'The host opens a goat door. Should you switch?', tag: '100,000 simulated games' },
+    { id: 'ep093', yt: '4UmYcGmLNug', title: 'How many more times will you see your parents?', tag: 'Life in days' }
   ],
 
   /* Long-form Zingkha explainers (16:9). */
@@ -47,5 +56,5 @@ window.WORKS = {
   ],
 
   /* Hero film strip: ids of previews, in order. */
-  strip: ['ep105', 'ep103', 'ep101']
+  strip: ['ep105', 'ep103', 'ep064', 'ep100', 'ep057', 'ep086', 'ep101', 'ep061', 'ep056', 'ep097']
 };
