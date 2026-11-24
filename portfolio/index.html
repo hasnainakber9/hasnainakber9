@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syed Hasnain Akber · AI animator &amp; video creator</title>
+<meta name="description" content="Short films and animated explainers by Syed Hasnain Akber: AI-made cinema and code-drawn animation, including the Zingkha series.">
+<meta property="og:title" content="Syed Hasnain Akber · AI animator & video creator">
+<meta property="og:description" content="Short films and animated explainers: AI-made cinema and code-drawn animation.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="media/films/motion-detected-2100.jpg">
+<meta name="theme-color" content="#0d0b09">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d0b09'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23ff5a36'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#films">Skip to the work</a>
+
+<header class="bar">
+  <a class="bar__mark" href="#top" aria-label="Syed Hasnain Akber, top of page">SHA</a>
+  <nav class="bar__nav" aria-label="Sections">
+    <a href="#films">Films</a>
+    <a href="#feature">Featured</a>
+    <a href="#shorts">Shorts</a>
+    <a href="#process">Process</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="bar__rec" aria-hidden="true"><i></i><span id="tc">00:00:00:00</span></div>
+</header>
+
+<main id="top">
+
+  <!-- ───────────── HERO ───────────── -->
+  <section class="hero">
+    <p class="hero__kicker"><span>AI animator</span><span>Video creator</span><span>Pakistan</span></p>
+    <h1 class="hero__name">
+      <span class="line"><span>Syed Hasnain</span></span>
+      <span class="line"><span><em>Akber</em><b class="dot" aria-hidden="true"></b></span></span>
+    </h1>
+    <div class="hero__row">
+      <p class="hero__lede">I make short films and animated explainers with AI: generated cinema for big questions, and animation drawn entirely in code for small ones.</p>
+      <ul class="hero__stats" id="stats">
+        <li><b>3</b><span>short films</span></li>
+        <li><b data-stat="episodes">71</b><span>Zingkha episodes published</span></li>
+        <li><b>2</b><span>YouTube channels</span></li>
+      </ul>
+    </div>
+
+    <div class="strip" aria-label="Showreel: moving stills from recent pieces">
+      <div class="strip__holes" aria-hidden="true"></div>
+      <div class="strip__track" id="strip"></div>
+      <div class="strip__holes" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ───────────── FILMS ───────────── -->
+  <section class="sec" id="films">
+    <header class="slate">
+      <span class="slate__no">01</span>
+      <h2>Short films</h2>
+      <p>Three films about the future. Each one takes a real, sourced fact and gives it a story.</p>
+    </header>
+    <div class="films" id="filmList"></div>
+  </section>
+
+  <!-- ───────────── FEATURE ───────────── -->
+  <section class="sec feature" id="feature">
+    <header class="slate">
+      <span class="slate__no">02</span>
+      <h2>Featured: <em>Five Generations</em></h2>
+    </header>
+    <div class="feature__grid">
+      <div class="feature__screen">
+        <div class="phone">
+          <video id="featureVideo" muted loop playsinline preload="none" poster="media/feature/five-generations.jpg">
+            <source src="media/feature/five-generations.mp4" type="video/mp4">
+          </video>
+          <button class="phone__toggle" id="featureToggle" type="button" aria-label="Pause the preview">Pause</button>
+        </div>
+      </div>
+      <div class="feature__text">
+        <p class="eyebrow">Zingkha · ep105 · Latest release</p>
+        <h3>How long until women and men are equal?</h3>
+        <p>A girl is born today on the bottom step of a staircase. At the current pace the gender gap closes in 120 years, so the film counts that time in lives: she would be 120, her daughter 92, her granddaughter 64, her great-granddaughter 35. Her great-great-granddaughter would be 7.</p>
+        <p>This is the first piece in a new illustrated form for the series. The figures are drawn by hand in code, with no generated art. The arithmetic is run in a script that ships with the film, and the numbers come from the World Economic Forum's Global Gender Gap Report 2026 and the UN's World Fertility 2024.</p>
+        <dl class="specs">
+          <div><dt>Format</dt><dd>9:16 Short</dd></div>
+          <div><dt>Made with</dt><dd>HTML canvas, Python, synthetic voice, original music</dd></div>
+          <div><dt>Preview</dt><dd>Silent here. Sound on YouTube.</dd></div>
+        </dl>
+        <div class="actions">
+          <button class="btn btn--hot" type="button" data-yt="wOyCDPzGqG8" data-shape="tall" data-title="How Long Until Women and Men Are Equal?">Watch with sound</button>
+          <a class="btn" href="https://zingkha-studio.vercel.app/code/five-generations" target="_blank" rel="noopener">Read the code</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── SHORTS ───────────── -->
+  <section class="sec" id="shorts">
+    <header class="slate">
+      <span class="slate__no">03</span>
+      <h2>Zingkha Shorts</h2>
+      <p>Big ideas, folded small. A daily series of explainers where every frame is computed: simulations, maps and hand-coded illustration. The previews below play silently. Select one to watch it with sound.</p>
+    </header>
+    <div class="grid" id="shortGrid"></div>
+    <h3 class="sub">Long-form explainers</h3>
+    <div class="longs" id="longList"></div>
+    <p class="more"><a class="btn" href="https://www.youtube.com/@zingkhaa" target="_blank" rel="noopener">All episodes on YouTube <span aria-hidden="true">↗</span></a></p>
+  </section>
+
+  <!-- ───────────── PROCESS ───────────── -->
+  <section class="sec" id="process">
+    <header class="slate">
+      <span class="slate__no">04</span>
+      <h2>How the work is made</h2>
+    </header>
+    <ol class="steps">
+      <li>
+        <span class="steps__n">A</span>
+        <h3>Start from a true number</h3>
+        <p>Every piece begins with a fact that can be checked: a census, a report, a paper. The sources go in the description, and the script that does the arithmetic is published next to the film.</p>
+      </li>
+      <li>
+        <span class="steps__n">B</span>
+        <h3>Direct the AI, shot by shot</h3>
+        <p>The short films use generative video, directed shot by shot towards one visual idea. The Zingkha pieces go the other way: AI writes the drawing code, so each figure, map and simulation is computed instead of generated.</p>
+      </li>
+      <li>
+        <span class="steps__n">C</span>
+        <h3>Render deterministically</h3>
+        <p>In the Zingkha series each frame is a pure function of time, rendered one at a time in a headless browser and assembled with FFmpeg. The same code always produces the same film.</p>
+      </li>
+      <li>
+        <span class="steps__n">D</span>
+        <h3>Finish like a film</h3>
+        <p>Zingkha narration is a synthetic voice, labelled as one. Its music and sound effects are synthesised for each piece, and captions and thumbnails come out of the same pipeline.</p>
+      </li>
+    </ol>
+    <div class="about">
+      <h3>About</h3>
+      <p>I am a researcher and analyst working across business analytics, digital innovation and climate advocacy, currently an MS Business Analytics student at KSBL. I built Mehfooz Internet, an AI platform that counters misinformation, and founded Young Shapers, a youth initiative on environmental and social equity. The films are where the data work turns into stories.</p>
+      <ul class="tools" aria-label="Tools">
+        <li>Generative video</li><li>HTML canvas</li><li>three.js</li><li>Python</li><li>FFmpeg</li><li>Synthetic voice</li><li>Procedural music</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── CONTACT ───────────── -->
+  <section class="sec contact" id="contact">
+    <p class="eyebrow">05 · Contact</p>
+    <h2 class="contact__big">Have a fact that<br>deserves a <em>film</em>?</h2>
+    <p class="contact__lede">For explainers, campaign films and animated data stories, get in touch.</p>
+    <ul class="links">
+      <li><a href="https://www.linkedin.com/in/guleakbar" target="_blank" rel="noopener"><span>LinkedIn</span><i>guleakbar</i></a></li>
+      <li><a href="https://www.youtube.com/@zingkhaa" target="_blank" rel="noopener"><span>YouTube · Zingkha</span><i>@zingkhaa</i></a></li>
+      <li><a href="https://www.youtube.com/@syedhasnainakber7126" target="_blank" rel="noopener"><span>YouTube · Films</span><i>@syedhasnainakber7126</i></a></li>
+      <li><a href="https://github.com/hasnainakber9" target="_blank" rel="noopener"><span>GitHub</span><i>hasnainakber9</i></a></li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>© <span id="year">2026</span> Syed Hasnain Akber</span>
+  <span>Narration in the Zingkha series is a synthetic voice.</span>
+  <a href="#top">Back to top ↑</a>
+</footer>
+
+<dialog class="player" id="player" aria-label="Video player">
+  <div class="player__head">
+    <span class="player__title" id="playerTitle"></span>
+    <button class="player__close" id="playerClose" type="button">Close ✕</button>
+  </div>
+  <div class="player__frame" id="playerFrame"></div>
+  <a class="player__out" id="playerOut" target="_blank" rel="noopener">Open on YouTube ↗</a>
+</dialog>
+
+<noscript>
+  <p class="noscript">This page shows the videos with JavaScript. Without it, the work is on YouTube at <a href="https://www.youtube.com/@zingkhaa">@zingkhaa</a> and <a href="https://www.youtube.com/@syedhasnainakber7126">@syedhasnainakber7126</a>.</p>
+</noscript>
+
+<script src="works.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
