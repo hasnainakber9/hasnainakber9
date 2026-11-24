@@ -167,6 +167,32 @@
     b.addEventListener('click', function () { openPlayer(b.dataset.yt, b.dataset.title || '', b.dataset.shape); });
   });
 
+  /* ---------- the avatar: loops silently; "Say hi" plays the intro from the start with sound ---------- */
+  var av = $('avatarVideo'), avBtn = $('avatarSound'), avSay = $('avatarSay'), talking = false;
+  if (av && avBtn) {
+    var track = av.textTracks && av.textTracks[0];
+    if (track) {
+      track.mode = 'hidden';
+      av.addEventListener('timeupdate', function () {
+        var c = null, cues = track.cues || [];
+        for (var i = 0; i < cues.length; i++) if (av.currentTime >= cues[i].startTime && av.currentTime < cues[i].endTime) c = cues[i];
+        if (talking && c) { if (avSay.textContent !== c.text) avSay.textContent = c.text; avSay.hidden = false; } else { avSay.hidden = true; }
+      });
+    }
+    var quiet = function () {
+      talking = false; av.muted = true; av.loop = true; avSay.hidden = true;
+      avBtn.innerHTML = 'Say hi <span aria-hidden="true">\u00b7 sound on</span>';
+      if (reduce) av.pause();
+    };
+    avBtn.addEventListener('click', function () {
+      if (talking) { quiet(); return; }
+      talking = true; av.loop = false; av.muted = false; av.currentTime = 0;
+      var p = av.play(); if (p && p.catch) p.catch(quiet);
+      avBtn.textContent = 'Sound off';
+    });
+    av.addEventListener('ended', function () { quiet(); var p = av.play(); if (p && p.catch) p.catch(function () {}); });
+  }
+
   /* ---------- small things ---------- */
   var tc = $('tc'), t0 = performance.now();
   if (tc && !reduce) {

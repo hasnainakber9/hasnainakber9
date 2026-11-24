@@ -36,11 +36,23 @@
 
   <!-- ───────────── HERO ───────────── -->
   <section class="hero">
-    <p class="hero__kicker"><span>AI animator</span><span>Video creator</span><span>Pakistan</span></p>
-    <h1 class="hero__name">
-      <span class="line"><span>Syed Hasnain</span></span>
-      <span class="line"><span><em>Akber</em><b class="dot" aria-hidden="true"></b></span></span>
-    </h1>
+    <div class="hero__head">
+      <div class="hero__title">
+        <p class="hero__kicker"><span>AI animator</span><span>Video creator</span><span>Pakistan</span></p>
+        <h1 class="hero__name">
+          <span class="line"><span>Syed Hasnain</span></span>
+          <span class="line"><span><em>Akber</em><b class="dot" aria-hidden="true"></b></span></span>
+        </h1>
+      </div>
+      <figure class="hero__avatar">
+        <video id="avatarVideo" data-auto="1" muted loop playsinline preload="metadata" poster="media/avatar.jpg" width="600" height="600" aria-label="Animated 3D avatar of Syed Hasnain Akber in a black suit, smiling and gesturing">
+          <source src="media/avatar-intro.mp4" type="video/mp4">
+          <track kind="captions" src="media/avatar-intro.vtt" srclang="en" label="English">
+        </video>
+        <p class="hero__say" id="avatarSay" aria-live="polite" hidden></p>
+        <button class="hero__hello" id="avatarSound" type="button">Say hi <span aria-hidden="true">· sound on</span></button>
+      </figure>
+    </div>
     <div class="hero__row">
       <p class="hero__lede">I make short films and animated explainers with AI: generated cinema for big questions, and animation drawn entirely in code for small ones.</p>
       <ul class="hero__stats" id="stats">
