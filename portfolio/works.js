@@ -1,7 +1,7 @@
 /* The work shown on the page. To add a piece: put its preview in media/shorts/<id>.mp4 (silent loop) and
    media/shorts/<id>.jpg (poster), then add an entry below. `yt` is the YouTube video id. */
 window.WORKS = {
-  episodesPublished: 71,
+  episodesPublished: '80+',
 
   films: [
     {
