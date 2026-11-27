@@ -78,7 +78,7 @@ Checked and not eligible or closed (18 Nov 2026): CEGA Visiting Fellowship 2027â
 
 ## Closed / not eligible
 
-- APFSD Youth Forum 2027 (16 Nov 2026): deadline passed; three abstracts were ready in `applications/apfsd-2027/`. [[TODO: record whether you submitted]]
+- APFSD Youth Forum 2027 (16 Nov 2026): âœ… submitted (general form and abstract form; no confirmation email, which is normal for Google Forms). Results expected around mid-January 2027.
 - GLODEP Erasmus Mundus (31 Jan 2027): needs 60+ ECTS of economics in the bachelor's and IELTS 7; likely ineligible.
 - Swiss Climate Summer School 2027 (12 Feb 2027): PhD students and postdocs only.
 - Columbia PhD in Sustainable Development (17 Dec 2026): needs multivariable calculus and linear algebra.
