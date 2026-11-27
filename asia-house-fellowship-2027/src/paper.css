@@ -1,0 +1,48 @@
+/* Plain academic layout for the personal statement and the research outline. */
+@page { size: A4; margin: 19mm 21mm 19mm 21mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0;
+  color: #111;
+  font-family: "Bitstream Charter", "Charter", "Liberation Serif", Georgia, serif;
+  font-size: 10.6pt;
+  line-height: 1.42;
+  text-align: justify;
+  hyphens: auto;
+}
+p { margin: 0 0 6.5pt; orphans: 2; widows: 2; }
+a { color: inherit; text-decoration: none; }
+b, strong { font-weight: 700; }
+
+/* Title block */
+.titleblock { text-align: center; margin-bottom: 10pt; hyphens: none; }
+.titleblock .title { font-size: 15pt; font-weight: 700; line-height: 1.2; margin: 0 0 3pt; }
+.titleblock .subtitle { font-size: 11.2pt; line-height: 1.3; margin: 0 0 6pt; }
+.titleblock .author { font-size: 10.6pt; margin: 0; }
+.titleblock .meta { font-size: 9.4pt; font-style: italic; margin: 1pt 0 0; }
+
+/* Letter-style heading for the statement */
+.letterhead { text-align: left; border-bottom: 0.6pt solid #111; padding-bottom: 5pt; margin-bottom: 11pt; hyphens: none; }
+.letterhead .name { font-size: 14pt; font-weight: 700; line-height: 1.2; }
+.letterhead .meta { font-size: 9.6pt; margin-top: 1.5pt; }
+
+.abstract { margin: 0 8mm 9pt; font-size: 10pt; line-height: 1.4; }
+
+h2 { font-size: 10.8pt; font-weight: 700; margin: 9.5pt 0 3pt; text-align: left; hyphens: none; break-after: avoid; }
+
+ol.rq { list-style: none; margin: 0 0 6.5pt; padding: 0; }
+ol.rq li { margin: 0 0 3pt; padding-left: 28pt; text-indent: -28pt; }
+
+table.bt { width: 100%; border-collapse: collapse; margin: 3pt 0 7pt; font-size: 9.7pt; line-height: 1.34; text-align: left; hyphens: none; break-inside: avoid; }
+table.bt caption { caption-side: top; text-align: left; font-size: 9.7pt; padding-bottom: 3pt; }
+table.bt th { font-weight: 700; text-align: left; padding: 3pt 8pt 3pt 0; border-top: 0.9pt solid #111; border-bottom: 0.5pt solid #111; }
+table.bt td { vertical-align: top; padding: 2.8pt 8pt 2.8pt 0; }
+table.bt tr:last-child td { border-bottom: 0.9pt solid #111; }
+table.bt td:last-child, table.bt th:last-child { padding-right: 0; }
+table.bt td.k { width: 62pt; font-style: italic; }
+table.bt td.m { width: 62pt; white-space: nowrap; }
+
+.refs { font-size: 8.6pt; line-height: 1.32; text-align: left; hyphens: none; }
+.refs p { margin: 0 0 1.6pt; padding-left: 15pt; text-indent: -15pt; }
+sup { font-size: 6.6pt; line-height: 0; }

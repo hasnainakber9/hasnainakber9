@@ -40,7 +40,7 @@ Why these two: the panel is choosing a researcher, so one referee should speak t
 
 ## Why this topic
 
-The proposal is *The Local Knowledge Test: do Asia's and the Gulf's sovereign AI models know their own markets better than American and Chinese ones?*
+The proposal is *Do Sovereign AI Models Know Their Home Markets? A comparative evaluation of national, American and Chinese language models in six Asian and Gulf economies.* It is laid out as a conventional academic research outline: summary, numbered sections, two plain tables and a reference list.
 
 - **It fits what the panel has been choosing.** The last two cohorts worked on China's digital landscape, Gulf–ASEAN AI infrastructure, AI adoption in Indonesia's public sector, semiconductors, and Saudi Arabia as an AI hub. This sits next to that work without repeating it.
 - **You have already done a version of it.** Almost no applicant will arrive with a working pilot, public code and results. Your Apart Research sprint paper is that.
@@ -51,16 +51,15 @@ The proposal is *The Local Knowledge Test: do Asia's and the Gulf's sovereign AI
 
 These are places where your own documents disagree with each other, or where I could not confirm a fact. Each one is in the application as written below; change it if it is wrong.
 
-1. **Young Shapers founding date.** Written as 2019 (your latest resume). Older CVs say May 2020.
-2. **Equitech Futures dates.** Written as Mar – Dec 2024 (latest resume). Two older CVs say Mar 2024 – Dec 2025.
-3. **United People Global start.** Written as Nov 2023 (latest resume). Older CVs say Sep 2023.
-4. **The Dawood Foundation start.** Written as Aug 2026. One older CV says Sep 2026.
-5. **MS degree status.** The CV says "all programme requirements and final examinations completed; formal award pending", which is what your documents said in mid-November. If the degree has been conferred, replace that sentence with the award date.
-6. **CPD Climate Week paper.** Written as "selected for the Young Scholars stream … 25 November 2026". If you presented it, change "selected for" to "presented in".
-7. **Kevin Xu Innovation Challenge.** No year is given because I could not find one. Add it.
-8. **Mehfooz Internet start year.** Written as 2024.
-9. **"More than 80 episodes" for Zingkha.** From today's resume; update if the count has moved.
-10. **Southeast Asian comparator.** The proposal leaves the sixth market to be confirmed in month 1. If you have a view (the Philippines is the obvious candidate), name it.
+1. **Equitech Futures dates.** Written as Mar – Dec 2024 (latest resume). Two older CVs say Mar 2024 – Dec 2025.
+2. **United People Global start.** Written as Nov 2023 (latest resume). Older CVs say Sep 2023.
+3. **The Dawood Foundation start.** Written as Aug 2026. One older CV says Sep 2026.
+4. **MS degree.** Listed as 2025 – 2026 with no status note. Eligibility requires the degree to be completed by October 2027, so be ready to say when the formal award is expected if the panel asks.
+5. **Kevin Xu Innovation Challenge.** No year is given because I could not find one. Add it.
+6. **Awards.** The Foundervine and Peace Champion entries and the Collective Mind fellowship are removed. The CV has room on page 2 for the stronger awards you mentioned; add them under "Programmes and affiliations".
+7. **Southeast Asian comparator.** The proposal leaves the sixth market to be confirmed in month 1. If you have a view (the Philippines is the obvious candidate), name it.
+
+Settled on 27 November: Young Shapers runs 2019 – 2022; Mehfooz Internet runs 2024 – 2025; both the GRID and CPD papers are listed as presented and lead the CV; Zingkha is not mentioned in the CV or the statement.
 
 Facts I did verify: the pilot study's numbers match the paper; the run files on your `claude/amazing-shannon-x2h4mr` branch hold 27,888 recorded answers, which supports "about 27,000"; the under-US$100 cost comes from your own funding-form draft; Dr Mustafa's and Thomas Murray's email addresses come from your Gmail and CV.
 
