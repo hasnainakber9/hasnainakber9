@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Research Project Outline · Syed Hasnain Akber</title>
+<link rel="stylesheet" href="paper.css">
+<style>
+  @page { margin: 16mm 20mm 17mm 20mm; }
+  body { font-size: 10.05pt; line-height: 1.37; }
+  p { margin-bottom: 5.5pt; }
+  h2 { margin-top: 8pt; }
+  table.bt { font-size: 9.45pt; line-height: 1.32; }
+  .abstract { font-size: 9.8pt; margin-bottom: 7pt; }
+  .titleblock { margin-bottom: 8pt; }
+</style>
+</head>
+<body>
+
+<div class="titleblock">
+  <p class="title">Do Sovereign AI Models Know Their Home Markets?</p>
+  <p class="subtitle">A comparative evaluation of national, American and Chinese language models<br>in six Asian and Gulf economies</p>
+  <p class="author">Syed Hasnain Akber</p>
+</div>
+
+<p class="abstract"><b>Summary.</b> Governments across Asia and the Gulf are funding national language models on the premise that a model built at home will understand the home market better than one built in the United States or China, and firms are beginning to procure on the same premise. The premise has not been tested independently. This project will examine sovereign, American and Chinese models on verifiable facts about six economies, at national and provincial level, in English and in local languages, and will report which models are reliable, where, and for which purposes. It extends a pilot study I completed in November 2026.</p>
+
+<h2>1. Background and motivation</h2>
+
+<p>Counterpoint Research identifies more than 170 sovereign language models in over 55 countries outside the United States and China [1]. India’s IndiaAI Mission, approved with a budget of Rs 10,372 crore, supports 20 such models [2]. Saudi Arabia (ALLaM), the United Arab Emirates (Falcon, Jais), Singapore (SEA-LION) and Indonesia (Sahabat-AI) have each released national or regional models. Existing assessments rank these models on ownership, language coverage and deployment, and published performance comparisons come largely from the developers. Whether a sovereign model is more often correct about its own economy has not been measured.</p>
+
+<p>The question carries commercial and policy weight. A bank, a manufacturer or a ministry in the region now chooses between an American API, Chinese open-weight models hosted locally, and a national model. That choice fixes a supplier, a jurisdiction for data and a long-term dependency, and it is being made on English-language benchmarks and vendor claims. Earlier research shows that language models recall national statistics less accurately for lower-income countries [3] and that accuracy follows how often a fact appears in training text [4]. No study compares model families by country of origin, and none works below national level in Asia.</p>
+
+<h2>2. Preliminary evidence</h2>
+
+<p>In a pilot study [5] I constructed 4,253 questions on published regional statistics covering 1,119 regions in 61 low- and middle-income countries. A fixed sample of 1,200 was put to five open-weight models, three Chinese and two American, and each model gave a point estimate and an 80% interval. Three results motivate this proposal. First, every model was overconfident: the true value lay inside the stated 80% interval in 16% to 51% of cases. Second, no model was more accurate than the naive answer of quoting the national figure. Third, where little had been published about a region, answers reflected the model’s belief about the country and not the region. The estimated response to a true regional difference was 0.16 to 0.45 in regions named in fewer than ten studies, against 0.37 to 0.70 in regions named in a thousand or more, and stated confidence did not change.</p>
+
+<p>The working hypothesis is that the binding constraint on local knowledge is the published evidence base and not the origin of the model. If it holds, sovereign AI programmes will deliver fluency in local languages without a matching gain in knowledge of local markets, and public investment in statistical systems would yield more. If it fails, the project will provide the first independent estimate of the advantage that sovereign models offer. Both outcomes are informative for those who fund and buy these systems.</p>
+
+<h2>3. Research questions</h2>
+
+<ol class="rq">
+  <li>RQ1.&ensp;Do sovereign models answer verifiable questions about their home economy more accurately than leading American and Chinese models, and is any advantage larger in the local language than in English?</li>
+  <li>RQ2.&ensp;Are models of any origin well calibrated in the provinces and secondary cities where data are sparse?</li>
+  <li>RQ3.&ensp;Are countries without a flagship national model served less well by all model families, and does the difference follow data availability or model origin?</li>
+  <li>RQ4.&ensp;How do firms and public agencies in these markets currently select and validate models, and what would improve those decisions?</li>
+</ol>
+
+<h2>4. Research design</h2>
+
+<p>The protocol will be published before the main data collection. To limit credit for memorised reports, a hold-out set will use statistics released after each model’s launch. Regressions will include country and indicator fixed effects with standard errors clustered by region. All questions, code and model responses will be released.</p>
+
+<table class="bt">
+  <caption><b>Table 1.</b> Study design</caption>
+  <tr><th>Component</th><th>Specification</th></tr>
+  <tr><td class="k">Markets</td><td>India, Indonesia, Saudi Arabia and the United Arab Emirates, which have flagship national models; Pakistan and one Southeast Asian comparator, to be confirmed in month 1, which do not.</td></tr>
+  <tr><td class="k">Models</td><td>About twelve: three American frontier models; three or four Chinese models (Qwen, DeepSeek, GLM); sovereign and regional models including Sarvam and BharatGen, SEA-LION and Sahabat-AI, ALLaM, Falcon-H1 Arabic and Jais 2.</td></tr>
+  <tr><td class="k">Items</td><td>About 6,000 questions drawn from statistical offices, central banks, censuses and household surveys: provincial output, prices, wages, population, electrification, financial access and trade, together with rule-based facts such as tariff lines, foreign-ownership limits and data-localisation requirements. Each item carries the national value as a baseline and a measure of how much has been published about the place.</td></tr>
+  <tr><td class="k">Languages</td><td>English, Hindi, Bahasa Indonesia, Arabic and Urdu. Translations are reviewed by native speakers.</td></tr>
+  <tr><td class="k">Measures</td><td>Error relative to the national-figure baseline; coverage of stated 80% intervals; responsiveness of answers to true regional differences; the difference between English and local-language performance.</td></tr>
+  <tr><td class="k">Interviews</td><td>25 to 30 structured interviews with model buyers (banks, consumer and industrial firms, advisory firms, government digital agencies) and developers in the six markets and in London.</td></tr>
+</table>
+
+<h2>5. Outputs and timeline</h2>
+
+<p>The principal output is a research paper for Asia House’s readership, containing a model-by-market index of local knowledge that can be read without the technical appendix. Two shorter briefings will precede it: guidance for firms deploying AI in a new Asian or Gulf market, and a note for policymakers on what sovereign AI spending can be expected to deliver. The benchmark and a public dashboard will allow the results to be updated as new models are released.</p>
+
+<table class="bt">
+  <caption><b>Table 2.</b> Timeline</caption>
+  <tr><th>Period</th><th>Activities</th></tr>
+  <tr><td class="m">Months 1–3</td><td>Protocol and pre-registration; question bank for six markets; model access; scoping interviews.</td></tr>
+  <tr><td class="m">Months 4–6</td><td>English and local-language model runs; first briefing (guidance for firms).</td></tr>
+  <tr><td class="m">Months 7–9</td><td>Interviews; analysis by market, language and data density; second briefing (note for policymakers).</td></tr>
+  <tr><td class="m">Months 10–12</td><td>Drafting and review with the Asia House research team; publication of the paper and dashboard; roundtable.</td></tr>
+</table>
+
+<h2>6. Feasibility and limitations</h2>
+
+<p>The pilot’s test harness, scoring code and data pipeline are public. The pilot generated about 27,000 model responses at an API cost of under US$100, and the main study is roughly five times larger. Most of the sovereign models are released with open weights; any model that cannot be queried reproducibly will be reported as such. Because the results will rank national models, developers will receive the method and draft results before publication, and their responses will be published. The study measures recall of published facts and the calibration of stated uncertainty. It does not assess reasoning or language quality, and it will not identify a single best model.</p>
+
+<h2>References</h2>
+
+<div class="refs">
+  <p>[1] Counterpoint Research (2026). <i>Sovereign AI LLM Index, H1 2026.</i> 30 July 2026.</p>
+  <p>[2] Government of India. IndiaAI Mission: Cabinet approval, March 2024; parliamentary replies, 2026.</p>
+  <p>[3] Moayeri, M., Tabassi, E. and Feizi, S. (2024). WorldBench: Quantifying geographic disparities in LLM factual recall. <i>FAccT 2024</i>, 1211–1228.</p>
+  <p>[4] Kandpal, N., Deng, H., Roberts, A., Wallace, E. and Raffel, C. (2023). Large language models struggle to learn long-tail knowledge. <i>ICML.</i></p>
+  <p>[5] Akber, S. H. (2026). <i>Confident Where Nobody Looked: Language Models, Women’s Lives and Thin Evidence.</i> Working paper. Code and data: github.com/hasnainakber9.</p>
+</div>
+
+</body>
+</html>
