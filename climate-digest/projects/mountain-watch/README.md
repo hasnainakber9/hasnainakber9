@@ -18,9 +18,17 @@ Weekly refresh of the current season: `python3 extract_ee.py todate && python3 a
 re-upload `out/season_now.csv` and `out/season_to_date_history.csv` to the dashboard and point the
 `season_now` and `snow_history` datasets at the new files.
 
-## Findings as of 12 Nov 2026
-- Snow cover from 1 Oct to 8 Nov 2026 is **+11.9 percentage points** above normal across Gilgit-Baltistan, the 2nd highest of 26 winters.
-- Five districts are at a record high for these dates: Diamer, Ghanche, Hunza, Kharmang and Nagar. This comes during a strong El Niño (ONI +2.46 for Aug–Oct).
+## Findings as of 27 Nov 2026
+- Snow cover from 1 Oct to the composite starting 9 Nov 2026 (data to about 16 Nov) is **+12.6 percentage points** above
+  normal across Gilgit-Baltistan (81.9% against a 69.3% mean), **the highest of 26 winters** (it was 2nd on 12 Nov).
+- Six of the ten districts are at a record high for these dates: Diamer (+26.3), Kharmang (+19.7), Gilgit (+15.6),
+  Ghanche (+14.7), Nagar (+7.6) and Hunza (+6.6). Astore and Shigar are 2nd, Skardu 3rd, and Chitral 2nd (+11.3).
+  Ghizer is the exception (+6.7, 8th highest). This comes during a strong El Niño (ONI +2.46 for Aug–Oct).
+- **An early start does not predict spring.** Across 2001–2026, snow cover from 1 Oct to mid-November is uncorrelated
+  with Mar–Apr snow cover (r = 0.01 for the region; −0.07 to 0.19 by district), and in leave-one-winter-out tests it
+  predicts Mar–Apr cover worse than the plain average in every area. Only February cover carries into spring
+  (r = 0.47 for the region). Mar–Apr cover varies little (SD 2.2 points), so snow depth or water equivalent would be a
+  better spring target. Script: `climate-digest/starter/2026-11-27_early_snow_predicts_spring.py`.
 - Links, detrended, 2001–2026, with 95% block-bootstrap intervals:
   - Gilgit-Baltistan: spring ONI → spring snow r = 0.40 [0.18, 0.62]; spring snow → Jul–Aug NDVI r = 0.48 [0.22, 0.70].
   - Chitral: the same two links are 0.34 [0.07, 0.62] and 0.59 [0.28, 0.85].
