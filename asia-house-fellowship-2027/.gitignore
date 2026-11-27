@@ -1,0 +1,6 @@
+# Build outputs and private inputs: they contain a phone number and email addresses.
+*.pdf
+editable/
+src/private.json
+src/.build-*.html
+submission-pack.private.md
