@@ -51,7 +51,7 @@ The proposal is *Do Sovereign AI Models Know Their Home Markets? A comparative e
 
 These are places where your own documents disagree with each other, or where I could not confirm a fact. Each one is in the application as written below; change it if it is wrong.
 
-1. **Equitech Futures dates.** Written as Mar – Dec 2024 (latest resume). Two older CVs say Mar 2024 – Dec 2025.
+1. **Equitech Futures dates.** Written as Mar – Dec 2024. Confirmed: the employer's certificate gives 1 March to 31 December 2024.
 2. **United People Global start.** Written as Nov 2023 (latest resume). Older CVs say Sep 2023.
 3. **The Dawood Foundation start.** Written as Aug 2026. One older CV says Sep 2026.
 4. **MS degree.** Listed as 2025 – 2026 with no status note. Eligibility requires the degree to be completed by October 2027, so be ready to say when the formal award is expected if the panel asks.
