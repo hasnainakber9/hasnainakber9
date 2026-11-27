@@ -56,13 +56,3 @@ paced at about 46 a minute across all models (the provider's per-user limit).
 ## Scope of the results (added 27 Nov 2026)
 - **Forced answers.** The system prompt says "Always give a numeric answer, even when unsure", so no model could decline. The results describe models that must answer.
 - **Which questions.** The bank has 4,253 questions. All five models answered a core sample of 1,200 (the headline results); 936 of those have a study count and were also asked under the signal, shuffled and caution conditions; 243 whole-country questions give each model's own national answer. The other 3,053 questions are released unanswered.
-
-## After the sprint: response to the judges (27 Nov 2026)
-`judges.py` reuses the saved answers (no new model calls) and writes `results/judges/`. The submitted report is unchanged.
-- **Interval score (a proper scoring rule):** models score 66 to 131 against 34 for a naive interval around the national figure. Stretching intervals after the fact brings them to 55–67 with 83–86% coverage: better than the caution note, still behind the naive interval.
-- **True against shuffled study count:** equivalent within 1 point of width and of error in every model; pooled, within 0.2 points and 1.4 percentage points of coverage.
-- **Survey sample size:** adding it to the tracking test leaves the study-count effect unchanged (0.140 per tenfold studies, p = 0.0003; sample-size term p = 0.78). On samples of 400+ the effect is smaller and not significant (0.092, p = 0.17), so the thin-evidence finding stays "supported, not settled".
-
-```bash
-SAMPLE=1200 python3 judges.py                             # results/judges/*.csv
-```
